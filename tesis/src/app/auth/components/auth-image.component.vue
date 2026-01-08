@@ -1,5 +1,7 @@
-<script>
-
+<script lang="ts">
+    defineOptions({
+        name: 'AuthImageComponent',
+    });
 </script>
 
 <template>
