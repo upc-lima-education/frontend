@@ -1,23 +1,7 @@
-/* color palette from <https://github.com/vuejs/theme> */
+@import 'variables.css';
+
+/*Main colors light*/
 :root {
-  --main-color: #1E3DAD;
-  --main-color-light: #3C5EE6;
-  --main-color-dark: #122974;
-  --secondary-color: #DA5825;
-  --secondary-color-light: #FF774D;
-  --secondary-color-dark: #A4360E;
-
-  --green-color: #4AC728;
-  --red-color: #C72835;
-  --yellow-color: #DCAE08;
-
-  --gray-01: #F7F7F7;
-  --gray-02: #E1E1E1;
-  --gray-03: #CFCFCF;
-  --gray-04: #b7b7b7;
-  --gray-05: #818181;
-  --gray-06: #383838;
-
   --background-color-default: white;
   --background-color-light: var(--gray-01);
   --background-color-medium: var(--gray-02);
@@ -29,6 +13,7 @@
   --text-color-dark: var(--gray-06);
 }
 
+/*Main colors dark*/
 @media (prefers-color-scheme: dark) {
   :root {
     --background-color-default: black;
@@ -43,14 +28,25 @@
   }
 }
 
+/*Font*/
+:root{
+  font-size: 16px;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+/*Other values*/
+
 * {
   margin: 0;
   padding: 0;
 }
 
-body {
+body{
+  height: 100vh;
+  width: 100vw;
+}
+
+#app{
   height: 100%;
   width: 100%;
-  color: var(--text-color-default);
-  background: var(--background-color-default);
 }
