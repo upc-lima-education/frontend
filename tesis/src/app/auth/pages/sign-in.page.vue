@@ -1,4 +1,4 @@
-<script lang="ts">
+<script setup lang="ts">
 import AuthImageComponent from '../components/auth-image.component.vue';
 import SignInFormComponent from '../components/sign-in-form.component.vue';
 </script>
@@ -12,8 +12,8 @@ import SignInFormComponent from '../components/sign-in-form.component.vue';
 
 <style scoped>
 .sign-in-page {
-    display: flex;
-    flex-direction: row;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
     height: 100vh;
     width: 100%;
 }

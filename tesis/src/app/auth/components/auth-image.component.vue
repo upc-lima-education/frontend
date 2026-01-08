@@ -1,7 +1,4 @@
-<script lang="ts">
-    defineOptions({
-        name: 'AuthImageComponent',
-    });
+<script setup lang="ts">
 </script>
 
 <template>
@@ -18,6 +15,8 @@
     justify-content: center;
     align-items: center;
     height: 100%;
-    background-color: var(--main-color); /* Temporary background color */
+    width: 100%;
+    background-color: var(--main-color);
+    /* Temporary background color */
 }
 </style>

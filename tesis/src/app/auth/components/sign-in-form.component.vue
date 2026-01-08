@@ -1,9 +1,5 @@
-<script lang="ts">
+<script setup lang="ts">
     import { ref } from 'vue';
-
-    defineOptions({
-        name: "SignInFormComponent"
-    });
 
     const username = ref("");
     const password = ref("");
