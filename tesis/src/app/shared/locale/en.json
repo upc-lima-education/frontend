@@ -2,6 +2,7 @@
     "auth": {
         "email": "Email",
         "password": "Password",
-        "login": "Login"
+        "login": "Login",
+        "noAccount": "Don't have an account? Sign up"
     }
 }

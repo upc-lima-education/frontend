@@ -13,10 +13,19 @@ function OnSignIn() {
 <template>
     <div class="sign-in-form-container">
         <h1>Logo (Temporary)</h1>
-        <form class="form-container" @submit.prevent="OnSignIn">
-            <input type="email" placeholder="Email" v-model="username" />
-            <input type="password" placeholder="Password" v-model="password" />
-            <button type="submit">Sign In</button>
+        <form @submit.prevent="OnSignIn">
+            <section>
+                <label for="email">{{ $t('auth.email') }}</label>
+                <input type="email" placeholder="Email" v-model="username" />
+            </section>
+            <section>
+                <label for="password">{{ $t('auth.password') }}</label>
+                <input type="password" placeholder="Password" v-model="password" />
+            </section>
+            <section>
+                <button type="submit">{{ $t('auth.login') }}</button>
+                <p>{{ $t('auth.noAccount') }}</p>
+            </section>
         </form>
     </div>
 </template>
@@ -25,7 +34,7 @@ function OnSignIn() {
 .sign-in-form-container {
     width: 100%;
     height: 100%;
-    
+
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -34,14 +43,7 @@ function OnSignIn() {
     gap: 2rem;
 }
 
-.form-container {
-    width: 80%;
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-self: center;
-    background-color: rgb(183, 187, 255);
-    /* test */
+section {
+    width: 100%;
 }
 </style>

@@ -2,6 +2,7 @@
     "auth": {
         "email": "Correo electrónico",
         "password": "Contraseña",
-        "login": "Iniciar sesión"
+        "login": "Iniciar sesión",
+        "noAccount": "¿No tienes una cuenta? Regístrate"
     }
 }
