@@ -1,40 +1,3 @@
-<script setup lang="js">
-defineProps({
-    buttonColor: {
-        type: String,
-        default: "primary",
-        validator (value) {
-            return ["primary", "secondary", "success", "danger", "info"].includes(value)
-        } 
-    },
-    buttonText: {
-        type: String,
-        default: "Button",
-        required: true
-    },
-    disabled: {
-        type: Boolean,
-        default: false
-    },
-    functionOnClick: {
-        type: Function,
-        default(){ "defaultClickBehavior" }
-    }
-});
-
-function defaultClickBehavior(){
-    console.log("Button clicked");
-}
-
-</script>
-
-<template>
-    <button :class="`button-${buttonColor}`" :disabled="disabled" @click="functionOnClick">
-        {{ buttonText }}
-    </button>
-</template>
-
-<style scoped>
 button {
     font-weight: bold;
     color: white;
@@ -91,4 +54,3 @@ button:disabled {
 .button-info:hover {
     background-color: var(--gray-06);
 }
-</style>

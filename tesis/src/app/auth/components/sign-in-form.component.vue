@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import CustomButton from '@/assets/components/CustomButton.vue';
+import CustomButton from '@/components/custom-button.component.vue';
 import { ref } from 'vue';
 
 const username = ref("");
@@ -27,7 +27,7 @@ function OnSignIn() {
                     <input type="password" placeholder="Password" v-model="password" />
                 </section>
                 <section>
-                    <CustomButton :buttonText="$t('auth.login')" buttonColor="info" :functionOnClick="OnSignIn" />
+                    <button class="button-primary" v-on:click="OnSignIn()">{{ $t('auth.login') }}</button>
                     <div class="redirects-container">
                         <RouterLink to="/">{{ $t('auth.noAccount') }}</RouterLink>
                         <RouterLink to="/">{{ $t('auth.forgotPassword') }}</RouterLink>
