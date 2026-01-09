@@ -27,5 +27,9 @@
         "title": "Página no encontrada",
         "message": "La página que buscas no existe.",
         "goHome": "Ir a Iniciar sesión"
+    },
+    "news": {
+        "title": "Novedades",
+        "subtitle": "Mantente al día con las últimas noticias y actualizaciones"
     }
 }
