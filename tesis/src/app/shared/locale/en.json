@@ -12,5 +12,14 @@
         "passwordsDoNotMatch": "Passwords do not match",
         "fillAllFields": "Please fill in all fields",
         "passwordRequirements": "Password must be at least 8 characters long, include an uppercase letter and a number"
+    },
+    "sidebar": {
+        "news": "News",
+        "jobSearch": "Job Search",
+        "jobPublish": "Publish Job",
+        "profile": "Profile",
+        "messages": "Messages",
+        "settings": "Settings",
+        "logout": "Logout"
     }
 }

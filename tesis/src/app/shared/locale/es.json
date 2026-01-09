@@ -12,5 +12,14 @@
         "passwordsDoNotMatch": "Las contraseñas no coinciden",
         "fillAllFields": "Por favor, completa todos los campos",
         "passwordRequirements": "La contraseña debe tener al menos 8 caracteres, incluir una letra mayúscula y un número"
+    },
+    "sidebar": {
+        "news": "Novedades",
+        "jobSearch": "Buscar empleo",
+        "jobPublish": "Publicar empleo",
+        "profile": "Perfil",
+        "messages": "Mensajes",
+        "settings": "Configuración",
+        "logout": "Cerrar sesión"
     }
 }
