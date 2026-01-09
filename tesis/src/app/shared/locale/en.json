@@ -1,10 +1,16 @@
 {
     "auth": {
+        "firstName": "First Name",
+        "lastName": "Last Name",
         "email": "Email",
         "password": "Password",
         "login": "Login",
+        "signUp": "Sign Up",
         "haveAccount": "Already have an account? Log in",
         "noAccount": "Don't have an account? Sign up",
-        "forgotPassword": "Forgot your password?"
+        "forgotPassword": "Forgot your password?",
+        "passwordsDoNotMatch": "Passwords do not match",
+        "fillAllFields": "Please fill in all fields",
+        "passwordRequirements": "Password must be at least 8 characters long, include an uppercase letter and a number"
     }
 }

@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import CustomButton from '@/components/custom-button.component.vue';
+import router from '@/router';
 import { ref } from 'vue';
 
-const username = ref("");
+const email = ref("");
 const password = ref("");
 
 function OnSignIn() {
-    //Logic for sign-in
+    router.push('/sign-up'); // temp
 }
 
 </script>
@@ -20,14 +20,14 @@ function OnSignIn() {
             <form @submit.prevent="OnSignIn">
                 <section>
                     <label for="email">{{ $t('auth.email') }}</label>
-                    <input type="email" placeholder="Email" v-model="username" />
+                    <input id="email" type="email" placeholder="Email" v-model="email" />
                 </section>
                 <section>
                     <label for="password">{{ $t('auth.password') }}</label>
-                    <input type="password" placeholder="Password" v-model="password" />
+                    <input id="password" type="password" placeholder="Password" v-model="password" />
                 </section>
                 <section>
-                    <button class="button-primary" v-on:click="OnSignIn()">{{ $t('auth.login') }}</button>
+                    <input class="button-primary" type="submit" :value="$t('auth.login')" />
                     <div class="redirects-container">
                         <RouterLink to="/">{{ $t('auth.noAccount') }}</RouterLink>
                         <RouterLink to="/">{{ $t('auth.forgotPassword') }}</RouterLink>

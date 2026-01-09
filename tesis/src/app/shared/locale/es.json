@@ -1,10 +1,16 @@
 {
     "auth": {
+        "firstName": "Nombre",
+        "lastName": "Apellido",
         "email": "Correo electrónico",
         "password": "Contraseña",
         "login": "Iniciar sesión",
+        "signUp": "Crear usuario",
         "haveAccount": "¿Ya tienes una cuenta? Inicia sesión",
         "noAccount": "¿No tienes una cuenta? Regístrate",
-        "forgotPassword": "¿Olvidaste tu contraseña?"
+        "forgotPassword": "¿Olvidaste tu contraseña?",
+        "passwordsDoNotMatch": "Las contraseñas no coinciden",
+        "fillAllFields": "Por favor, completa todos los campos",
+        "passwordRequirements": "La contraseña debe tener al menos 8 caracteres, incluir una letra mayúscula y un número"
     }
 }
