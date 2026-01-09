@@ -9,7 +9,8 @@ const router = createRouter({
     { path: '/', redirect: '/sign-in' },
     { path: '/sign-up', name: 'sign-up', component: SignUpPage },
     { path: '/sign-in', name: 'sign-in', component: SignInPage },
-    { path: '/:pathMatch(.*)*', name: 'not-found', component: NotFoundPage }, //If no route is matched
+    { path: '/not-found', name: 'not-found', component: NotFoundPage },
+    { path: '/:pathMatch(.*)*', redirect: '/not-found' }, //If no route is matched
   ],
 })
 

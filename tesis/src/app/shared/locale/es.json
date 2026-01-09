@@ -21,5 +21,11 @@
         "messages": "Mensajes",
         "settings": "Configuración",
         "logout": "Cerrar sesión"
+    },
+    "notfound": {
+        "number": "404",
+        "title": "Página no encontrada",
+        "message": "La página que buscas no existe.",
+        "goHome": "Ir a Iniciar sesión"
     }
 }
