@@ -3,6 +3,8 @@
         "email": "Email",
         "password": "Password",
         "login": "Login",
-        "noAccount": "Don't have an account? Sign up"
+        "haveAccount": "Already have an account? Log in",
+        "noAccount": "Don't have an account? Sign up",
+        "forgotPassword": "Forgot your password?"
     }
 }

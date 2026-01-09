@@ -3,6 +3,7 @@
 @import './components/button.css';
 @import './components/label.css';
 @import './components/form.css';
+@import './components/link.css';
 
 /*Main colors light*/
 :root {

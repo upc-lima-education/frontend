@@ -3,6 +3,8 @@
         "email": "Correo electrónico",
         "password": "Contraseña",
         "login": "Iniciar sesión",
-        "noAccount": "¿No tienes una cuenta? Regístrate"
+        "haveAccount": "¿Ya tienes una cuenta? Inicia sesión",
+        "noAccount": "¿No tienes una cuenta? Regístrate",
+        "forgotPassword": "¿Olvidaste tu contraseña?"
     }
 }
