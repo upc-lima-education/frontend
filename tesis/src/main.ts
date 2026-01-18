@@ -1,10 +1,10 @@
-import './assets/base.css'
+import './app/shared/assets/base.css'
 
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 
 import App from './App.vue'
-import router from './router'
+import router from './app/shared/router'
 import i18n from "@/app/shared/locale/i18n.ts";
 
 const app = createApp(App)

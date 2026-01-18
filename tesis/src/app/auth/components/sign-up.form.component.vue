@@ -1,6 +1,6 @@
 <script setup lang="js">
 import { ref } from 'vue';
-import router from '@/router';
+import router from '@/app/shared/router';
 const firstName = ref("");
 const lastName = ref("");
 const email = ref("");

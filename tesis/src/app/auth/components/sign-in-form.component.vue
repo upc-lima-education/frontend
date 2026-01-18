@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import router from '@/router';
+import router from '@/app/shared/router';
 import { ref } from 'vue';
 
 const email = ref("");

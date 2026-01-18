@@ -7,7 +7,7 @@
     <nav class="nav">
       <ul class="menu">
         <li>
-          <RouterLink to="/" class="link">
+          <RouterLink to="/news" class="link">
             {{ $t('sidebar.news') }}
           </RouterLink>
         </li>
