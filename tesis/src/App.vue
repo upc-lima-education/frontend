@@ -7,7 +7,9 @@ const viewsWithoutSidebar = ['/sign-in', '/sign-up', '/forgot-password', '/not-f
 <template>
   <div v-if="!viewsWithoutSidebar.includes($route.path)" class="app-container">
     <SidebarComponent />
-    <RouterView />
+    <div class="main-content">
+      <RouterView />
+    </div>
   </div>
   <div v-else class="app-container-sidebarless">
     <RouterView />
@@ -15,13 +17,18 @@ const viewsWithoutSidebar = ['/sign-in', '/sign-up', '/forgot-password', '/not-f
 </template>
 
 <style scoped>
-.app-container-sidebarless, .app-container {
+.app-container-sidebarless, .app-container, .main-content {
   height: 100%;
   width: 100%;
 }
 
 .app-container {
   display: flex;
+}
+
+.main-content {
+  margin-left: 250px;
+  padding: 50px;
 }
 
 </style>

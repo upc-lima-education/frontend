@@ -57,8 +57,10 @@
 
 <style scoped>
 .sidebar {
+  z-index: 1000;
+  position: fixed;
   width: 250px;
-  height: 100vh;
+  height: 100%;
   background-color: var(--main-color);
   box-shadow: 2px 0 8px rgba(0, 0, 0, 0.15);
   display: flex;
