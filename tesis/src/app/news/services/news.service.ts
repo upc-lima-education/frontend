@@ -1,15 +1,34 @@
 import http from '../../shared/services/base.service';
+import type { NewsRequest } from '../model/news.request';
 import { NewsResponse } from '../model/news.response';
 
 export class NewsService {
     endpoint = '/news';
 
-    getAllNews() {
-        return http.get(this.endpoint);
+    /*Should only be used for testing purposes*/
+    async getAllNews(): Promise<NewsResponse[]> {
+        return await http.get(this.endpoint);
+    }
+
+    async getNewsById(id: string): Promise<NewsResponse> {
+        return await http.get(`${this.endpoint}/${id}`);
+    }
+
+    async postNews(news: NewsRequest){
+        return await http.post(this.endpoint, news);
+    }
+
+    async updateNews(id: string, news: NewsRequest){
+        return await http.put(`${this.endpoint}/${id}`, news);
+    }
+
+    async deleteNews(id: string){
+        return await http.delete(`${this.endpoint}/${id}`);
     }
 
     //Testing
     //Methods for testing purposes
+
     async getAllNewsTest() : Promise<NewsResponse[]> {
         const newsData : NewsResponse[] = [
             new NewsResponse(1, "Pepe", "Content of news 1", new Date('2024-01-01'), 
@@ -23,6 +42,11 @@ export class NewsService {
             new NewsResponse(3, "Maria", "Content of news 3", new Date('2024-03-01'), [], "https://freesvg.org/img/female-user-icon.png")
         ];
 
+        return newsData;
+    }
+
+    async getNewsByIdTest(): Promise<NewsResponse>{
+        const newsData = new NewsResponse(3, "Maria", "Content of news 3", new Date('2024-03-01'), [], "https://freesvg.org/img/female-user-icon.png");
         return newsData;
     }
 }

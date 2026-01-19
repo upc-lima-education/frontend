@@ -4,6 +4,7 @@
 @import './components/label.css';
 @import './components/form.css';
 @import './components/link.css';
+@import './components/pages.css';
 
 /*Main colors light*/
 :root {

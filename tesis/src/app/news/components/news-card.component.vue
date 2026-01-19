@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import DialogComponent from '@/app/shared/components/dialog.component.vue';
 import { computed, ref } from 'vue';
 
 const props = defineProps({
@@ -9,26 +10,27 @@ const props = defineProps({
     images: { type: Array as () => string[], default: () => [] }
 });
 
-const formattedDate = computed(() =>
-    props.publishedAt.toLocaleString()
-);
+const formattedDate = computed(() => props.publishedAt.toLocaleString());
 
+/*Image carousel setup*/
 const currentImageIndex = ref(0);
-
-const currentImage = computed(() =>
-    props.images[currentImageIndex.value]
-);
-
+const currentImage = computed(() => props.images[currentImageIndex.value]);
 const nextImage = () => {
     if (currentImageIndex.value < props.images.length - 1) {
         currentImageIndex.value++;
     }
 };
-
 const prevImage = () => {
     if (currentImageIndex.value > 0) {
         currentImageIndex.value--;
     }
+};
+
+/*Dialog setup*/
+const dialogRef = ref<InstanceType<typeof DialogComponent>>();
+
+const heartedItem = () => {
+    alert('Hearted');
 };
 </script>
 
@@ -39,8 +41,9 @@ const prevImage = () => {
         <!-- Header -->
         <header class="post-header">
             <div class="user-info">
-                <img v-if="userImage" class="avatar" :src="userImage" alt="User avatar"/>
-                <img v-else class="avatar" src="../../shared/assets/icons/UsuarioPredeterminado.svg" alt="User avatar" />
+                <img v-if="userImage" class="avatar" :src="userImage" alt="User avatar" />
+                <img v-else class="avatar" src="../../shared/assets/icons/UsuarioPredeterminado.svg"
+                    alt="User avatar" />
                 <div>
                     <h2 class="username">{{ userName }}</h2>
                     <span class="date">{{ formattedDate }}</span>
@@ -64,15 +67,20 @@ const prevImage = () => {
                 </button>
             </div>
             <div v-if="images.length === 1" class="carousel">
-                <img class="carousel-image" :src="currentImage" alt="Post image" />
+                <img class="carousel-image" :src="currentImage" alt="Post image"/>
             </div>
 
         </section>
 
         <!-- Footer (actions placeholder) -->
         <footer class="post-footer">
-            <img src="@/app/shared/assets/icons/Corazon.svg" alt="Like" class="like-icon" />
+            <img src="@/app/shared/assets/icons/Corazon.svg" alt="Like" class="like-icon" v-on:click="dialogRef?.open()"/>
         </footer>
+
+        <DialogComponent ref="dialogRef" title="Heart Item" subtitle="This action cannot be undone" variant="default"
+            @confirm="heartedItem">
+            <p>Heart Item?</p>
+        </DialogComponent>
     </article>
 </template>
 

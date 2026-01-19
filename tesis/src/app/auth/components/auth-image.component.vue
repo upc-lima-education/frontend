@@ -3,9 +3,7 @@
 
 <template>
     <div class="auth-image">
-        <!-- temp
-        <img src="@/assets/auth-image.png" alt="Authentication Image" />
-        -->
+        <img src="../../shared//assets/icons/logo.svg" alt="Authentication Image" />
     </div>
 </template>
 
@@ -18,5 +16,10 @@
     width: 100%;
     background-color: var(--main-color);
     /* Temporary background color */
+}
+
+img{
+    width: 50%;
+    height: 50%;
 }
 </style>

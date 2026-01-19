@@ -13,9 +13,9 @@ function OnSignIn() {
 
 <template>
     <div class="sign-in-form-container">
-        <div class="logo-container">
+        <header class="logo-container">
             <h1>Logo (Temporary)</h1>
-        </div>
+        </header>
         <section>
             <form @submit.prevent="OnSignIn" class="default-form">
                 <section>

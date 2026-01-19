@@ -37,9 +37,9 @@ function validatePassword(pwd) {
 
 <template>
     <div class="sign-in-form-container">
-        <div class="logo-container">
+        <header class="logo-container">
             <h1>Logo (Temporary)</h1>
-        </div>
+        </header>
         <section>
             <form @submit.prevent="OnSignUp" class="default-form">
                 <p v-if="!areAllFieldsFilled">{{ $t('auth.fillAllFields') }}</p>
