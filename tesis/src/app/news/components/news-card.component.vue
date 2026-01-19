@@ -9,8 +9,6 @@ const props = defineProps({
     images: { type: Array as () => string[], default: () => [] }
 });
 
-const defaultAvatar = 'https://cdn-icons-png.flaticon.com/512/18114/18114378.png';
-
 const formattedDate = computed(() =>
     props.publishedAt.toLocaleString()
 );
@@ -41,7 +39,8 @@ const prevImage = () => {
         <!-- Header -->
         <header class="post-header">
             <div class="user-info">
-                <img class="avatar" :src="userImage || defaultAvatar" alt="User avatar" />
+                <img v-if="userImage" class="avatar" :src="userImage" alt="User avatar"/>
+                <img v-else class="avatar" src="../../shared/assets/icons/UsuarioPredeterminado.svg" alt="User avatar" />
                 <div>
                     <h2 class="username">{{ userName }}</h2>
                     <span class="date">{{ formattedDate }}</span>
@@ -110,7 +109,6 @@ const prevImage = () => {
     height: 44px;
     border-radius: 50%;
     object-fit: cover;
-    border: 2px solid var(--main-color-light);
 }
 
 .username {
