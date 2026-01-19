@@ -11,15 +11,15 @@ defineProps({
     includeSearchBar: {
         type: Boolean,
         default: false,
-        requiered: false
+        required: false
     },
     searchBarText: {
         type: String,
-        requiered: false
+        required: false
     },
     searchBarfunctionOnClick: {
         type: Function,
-        requiered: false
+        required: false
     }
 });
 
