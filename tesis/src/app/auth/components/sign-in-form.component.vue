@@ -17,7 +17,7 @@ function OnSignIn() {
             <h1>Logo (Temporary)</h1>
         </div>
         <section>
-            <form @submit.prevent="OnSignIn">
+            <form @submit.prevent="OnSignIn" class="default-form">
                 <section>
                     <label for="email">{{ $t('auth.email') }}</label>
                     <input id="email" type="email" placeholder="Email" v-model="email" />

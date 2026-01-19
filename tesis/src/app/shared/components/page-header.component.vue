@@ -7,8 +7,26 @@ defineProps({
     pageSubheader: {
         type: String,
         required: false
+    },
+    includeSearchBar: {
+        type: Boolean,
+        default: false,
+        requiered: false
+    },
+    searchBarText: {
+        type: String,
+        requiered: false
+    },
+    searchBarfunctionOnClick: {
+        type: Function,
+        requiered: false
     }
 });
+
+function defaultSearchBehaviour() {
+    console.log("Default search behaviour");
+}
+
 </script>
 
 <template>
@@ -18,8 +36,13 @@ defineProps({
             <p v-if="pageSubheader">{{ pageSubheader }}</p>
         </div>
 
-        <div class="actions">
-            <slot></slot>
+        <div v-if="includeSearchBar" class="actions">
+            <form :@submit.prevent="searchBarfunctionOnClick || defaultSearchBehaviour">
+                <input type="search" :placeholder="searchBarText || $t('common.search')">
+                <button class="button-info" type="submit">
+                    <img src="../assets/icons/Lupa.svg" alt="Magnifing-glass-icon" />
+                </button>
+            </form>
         </div>
     </header>
 </template>
@@ -58,5 +81,21 @@ p {
     display: flex;
     align-items: center;
     gap: 12px;
+}
+
+form {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 2rem;
+}
+
+button{
+    width: 2rem;
+}
+
+img {
+    max-width: 14px;
+    filter: invert();
 }
 </style>

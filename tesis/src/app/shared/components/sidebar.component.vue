@@ -4,49 +4,60 @@
 
 <template>
   <aside class="sidebar">
-    <nav class="nav">
+    <nav>
+      <header>
+        <img src="../assets/icons/logo.svg" alt="App Logo" class="logo" />
+        <h2 class="title">{{ $t('appName') }}</h2>
+      </header>
       <ul class="menu">
         <li>
           <RouterLink to="/news" class="link">
-            {{ $t('sidebar.news') }}
+            <img src="../assets/icons/Novedades.svg" class="sidebar-image"/>
+            <span>{{ $t('sidebar.news') }}</span>
           </RouterLink>
         </li>
 
         <!-- Solo job seekers -->
         <li>
           <RouterLink to="/job-search" class="link">
-            {{ $t('sidebar.jobSearch') }}
+            <img src="../assets/icons/Maletin.svg" class="sidebar-image"/>
+            <span>{{ $t('sidebar.jobSearch') }}</span>
           </RouterLink>
         </li>
 
         <!-- Solo employers -->
         <li>
           <RouterLink to="/job-publish" class="link">
-            {{ $t('sidebar.jobPublish') }}
+            <img src="../assets/icons/Maletin.svg" class="sidebar-image"/>
+            <span>{{ $t('sidebar.jobPublish') }}</span>
           </RouterLink>
         </li>
 
         <li>
           <RouterLink to="/profile" class="link">
-            {{ $t('sidebar.profile') }}
+            <img src="../assets/icons/Usuario.svg" class="sidebar-image"/>
+            <span>{{ $t('sidebar.profile') }}</span>
           </RouterLink>
         </li>
 
         <li>
           <RouterLink to="/messages" class="link">
-            {{ $t('sidebar.messages') }}
+            <img src="../assets/icons/Usuario.svg" class="sidebar-image"/> <!--Temp-->
+            <span>{{ $t('sidebar.messages') }}</span>
           </RouterLink>
         </li>
 
         <li>
           <RouterLink to="/settings" class="link">
-            {{ $t('sidebar.settings') }}
+            <img src="../assets/icons/Usuario.svg" class="sidebar-image"/> <!--Temp-->
+            <span>{{ $t('sidebar.settings') }}</span>
           </RouterLink>
         </li>
 
         <li class="logout">
           <RouterLink to="/logout" class="link">
-            {{ $t('sidebar.logout') }}
+            <img src="../assets/icons/Usuario.svg" class="sidebar-image"/> <!--Temp-->
+            <span>{{ $t('sidebar.logout') }}</span>
           </RouterLink>
         </li>
       </ul>
@@ -56,6 +67,7 @@
 
 
 <style scoped>
+
 .sidebar {
   z-index: 1000;
   position: fixed;
@@ -66,7 +78,32 @@
   display: flex;
 }
 
-.nav {
+/*Header*/
+header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 2px solid rgba(255, 255, 255, 0.5);
+  padding: 1rem;
+  background-color: var(--main-color-dark);
+}
+.title {
+  display: flex;
+  align-items: center;
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: white;
+  padding: 5px;
+  margin: 0;
+}
+.logo {
+  width: 40px;
+  height: 40px;
+}
+
+/*Options*/
+nav {
   width: 100%;
 }
 
@@ -80,16 +117,22 @@
   margin: 4px 0;
 }
 
+.sidebar-image{
+  filter: invert(); /*Icons are black*/
+}
 
 .link {
   display: flex;
   align-items: center;
   padding: 12px 20px;
-  
+
+  gap: 1rem;
+
   color: white;
   font-size: 1rem;
   font-weight: 500;
   text-decoration: none;
+
   transition: background-color 0.2s ease, padding-left 0.2s ease;
 }
 

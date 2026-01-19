@@ -1,4 +1,7 @@
 button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
     font-weight: bold;
     width: 100%;
     border: none;

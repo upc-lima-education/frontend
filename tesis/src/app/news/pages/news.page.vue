@@ -23,7 +23,7 @@ async function fetchNewsData() {
 
 <template>
     <div class="page-content">
-        <PageHeaderComponent :pageHeader="$t('news.title')" :pageSubheader="$t('news.subtitle')" />
+        <PageHeaderComponent :pageHeader="$t('news.title')" :pageSubheader="$t('news.subtitle')" :includeSearchBar="true" />
         <section>
             <div v-for="news in newsData" :key="news.id">
                 <NewsCardComponent :userName="news.userName" :userImage="news.userImageUrl" :content="news.content" :publishedAt="news.publishedDate"

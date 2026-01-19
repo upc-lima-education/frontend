@@ -41,7 +41,7 @@ function validatePassword(pwd) {
             <h1>Logo (Temporary)</h1>
         </div>
         <section>
-            <form @submit.prevent="OnSignUp">
+            <form @submit.prevent="OnSignUp" class="default-form">
                 <p v-if="!areAllFieldsFilled">{{ $t('auth.fillAllFields') }}</p>
                 <p v-if="!doPasswordsMatch">{{ $t('auth.passwordsDoNotMatch') }}</p>
                 <p v-if="!isPasswordValid">{{ $t('auth.passwordRequirements') }}</p>

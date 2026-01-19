@@ -1,4 +1,5 @@
 {
+    "appName": "Trabaja Ya",
     "auth": {
         "firstName": "Nombre",
         "lastName": "Apellido",
@@ -31,5 +32,8 @@
     "news": {
         "title": "Novedades",
         "subtitle": "Mantente al día con las últimas noticias y actualizaciones"
+    },
+    "common": {
+        "search": "Buscar"
     }
 }
