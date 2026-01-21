@@ -1,9 +1,43 @@
 a {
     text-decoration: none;
+}
+
+.link-filled-primary,
+.link-filled-secondary {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.5rem 1rem 0.5rem 1rem;
+    border-radius: 4px;
+    color: var(--text-color-default-inverted);
+    transition: background-color 0.1s ease;
+}
+
+.link-filled-primary {
+    background-color: var(--main-color);
+}
+
+.link-filled-primary:hover {
+    background-color: var(--main-color-dark);
+}
+
+.link-filled-secondary {
+    color: var(--text-color-default-inverted);
+    background-color: var(--gray-04);
+}
+
+.link-filled-secondary:hover {
+    background-color: var(--gray-05);
+}
+
+.link-borderless {
+    display: flex;
+    align-items: center;
+    justify-content: center;
     color: var(--text-color-dark);
     transition: color 0.1s ease;
 }
 
-a:hover {
+.link-borderless:hover {
     color: var(--main-color);
 }

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import router from '@/app/shared/router';
+import { ROUTE_CONSTANTS } from '@/app/shared/router/route-constants';
 import { ref } from 'vue';
 
 const email = ref("");
@@ -9,12 +10,14 @@ function OnSignIn() {
     router.push('/sign-up'); // temp
 }
 
+const noAccountLink : string = `${ROUTE_CONSTANTS.SIGN_UP_PAGE}/${ROUTE_CONSTANTS.SIGN_UP_USER_SELECTION}`;
+
 </script>
 
 <template>
     <div class="sign-in-form-container">
-        <header class="logo-container">
-            <h1>Logo (Temporary)</h1>
+        <header>
+            <h1>{{ $t('auth.signUp') }}</h1>
         </header>
         <section>
             <form @submit.prevent="OnSignIn" class="default-form">
@@ -29,7 +32,7 @@ function OnSignIn() {
                 <section>
                     <input class="button-primary" type="submit" :value="$t('auth.login')" />
                     <div class="redirects-container">
-                        <RouterLink to="/">{{ $t('auth.noAccount') }}</RouterLink>
+                        <RouterLink :to="noAccountLink">{{ $t('auth.noAccount') }}</RouterLink>
                         <RouterLink to="/">{{ $t('auth.forgotPassword') }}</RouterLink>
                     </div>
                 </section>

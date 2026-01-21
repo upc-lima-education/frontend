@@ -1,7 +1,17 @@
 <script setup lang="ts">
-import { RouterView } from 'vue-router'
+import { RouterView, useRouter } from 'vue-router'
 import SidebarComponent from './app/shared/components/sidebar.component.vue';
-const viewsWithoutSidebar = ['/sign-in', '/sign-up', '/forgot-password', '/not-found'];
+import { ROUTE_CONSTANTS } from './app/shared/router/route-constants';
+const viewsWithoutSidebar = [
+  ROUTE_CONSTANTS.SIGN_IN_PAGE,
+  ROUTE_CONSTANTS.SIGN_UP_PAGE,
+  `${ROUTE_CONSTANTS.SIGN_UP_PAGE}/${ROUTE_CONSTANTS.SIGN_UP_USER_SELECTION}`,
+  `${ROUTE_CONSTANTS.SIGN_UP_PAGE}/${ROUTE_CONSTANTS.SIGN_UP_EMPLOYEE}`,
+  `${ROUTE_CONSTANTS.SIGN_UP_PAGE}/${ROUTE_CONSTANTS.SIGN_UP_ORGANIZATION}`,
+  '/forgot-password',
+  '/not-found'
+];
+
 </script>
 
 <template>
@@ -17,7 +27,9 @@ const viewsWithoutSidebar = ['/sign-in', '/sign-up', '/forgot-password', '/not-f
 </template>
 
 <style scoped>
-.app-container-sidebarless, .app-container, .main-content {
+.app-container-sidebarless,
+.app-container,
+.main-content {
   height: 100%;
   width: 100%;
 }
@@ -30,5 +42,4 @@ const viewsWithoutSidebar = ['/sign-in', '/sign-up', '/forgot-password', '/not-f
   margin-left: 250px;
   padding: 50px;
 }
-
 </style>

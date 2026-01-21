@@ -14,6 +14,7 @@
   --background-color-dark: var(--gray-03);
 
   --text-color-default: black;
+  --text-color-default-inverted: white;
   --text-color-light: var(--gray-04);
   --text-color-medium: var(--gray-05);
   --text-color-dark: var(--gray-06);
@@ -28,6 +29,7 @@
     --background-color-dark: var(--gray-04);
 
     --text-color-default: white;
+    --text-color-default-inverted: black;
     --text-color-light: var(--gray-03);
     --text-color-medium: var(--gray-02);
     --text-color-dark: var(--gray-01);

@@ -12,7 +12,8 @@
         "forgotPassword": "¿Olvidaste tu contraseña?",
         "passwordsDoNotMatch": "Las contraseñas no coinciden",
         "fillAllFields": "Por favor, completa todos los campos",
-        "passwordRequirements": "La contraseña debe tener al menos 8 caracteres, incluir una letra mayúscula y un número"
+        "passwordRequirements": "La contraseña debe tener al menos 8 caracteres, incluir una letra mayúscula y un número",
+        "selectUserType": "Seleccione el tipo de usuario"
     },
     "sidebar": {
         "news": "Novedades",
@@ -34,6 +35,10 @@
         "subtitle": "Mantente al día con las últimas noticias y actualizaciones"
     },
     "common": {
-        "search": "Buscar"
+        "return": "Regresar",
+        "search": "Buscar",
+        "naturalPerson": "Persona Natural",
+        "employee": "Empleado",
+        "organization": "Empresa"
     }
 }

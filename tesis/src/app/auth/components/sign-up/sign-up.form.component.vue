@@ -1,4 +1,4 @@
-<script setup lang="js">
+<script setup lang="ts">
 import { ref } from 'vue';
 import router from '@/app/shared/router';
 const firstName = ref("");
@@ -29,7 +29,7 @@ function OnSignUp() {
     router.push('/sign-in'); // temp
 }
 
-function validatePassword(pwd) {
+function validatePassword(pwd: string) {
     const re = /^(?=.*[A-Z])(?=.*\d)[A-Za-z\d]{8,}$/;
     return re.test(pwd);
 }
@@ -37,8 +37,8 @@ function validatePassword(pwd) {
 
 <template>
     <div class="sign-in-form-container">
-        <header class="logo-container">
-            <h1>Logo (Temporary)</h1>
+        <header>
+            <h1>{{ $t('auth.login') }}</h1>
         </header>
         <section>
             <form @submit.prevent="OnSignUp" class="default-form">

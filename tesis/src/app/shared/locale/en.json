@@ -12,7 +12,8 @@
         "forgotPassword": "Forgot your password?",
         "passwordsDoNotMatch": "Passwords do not match",
         "fillAllFields": "Please fill in all fields",
-        "passwordRequirements": "Password must be at least 8 characters long, include an uppercase letter and a number"
+        "passwordRequirements": "Password must be at least 8 characters long, include an uppercase letter and a number",
+        "selectUserType": "Select the user type"
     },
     "sidebar": {
         "news": "News",
@@ -34,6 +35,10 @@
         "subtitle": "Stay updated with the latest news and updates"
     },
     "common": {
-        "search": "Search"
+        "return": "Return",
+        "search": "Search",
+        "naturalPerson": "Natural Person",
+        "employee": "Employee",
+        "organization": "Organization"
     }
 }
