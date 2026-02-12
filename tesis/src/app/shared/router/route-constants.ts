@@ -10,7 +10,8 @@ export const ROUTE_CONSTANTS = {
     FORGOT_PASSWORD: "/forgot-password",
 
     NEWS_PAGE: "/news",
-    JOB: "/job",
+    JOB_PUBLISH: "/job-publish",
+    JOB_SEARCH: "/job-search",
 
     NOT_FOUND_PAGE: "/not-found",
 }

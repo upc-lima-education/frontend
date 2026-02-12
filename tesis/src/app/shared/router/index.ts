@@ -8,6 +8,8 @@ import SignUpTypeSelectionComponent from '@/app/auth/components/sign-up/sign-up-
 import SignUpFormComponent from '@/app/auth/components/sign-up/sign-up.form.component.vue';
 import SignUpFormEmployeeComponent from '@/app/auth/components/sign-up/sign-up-form-employee.component.vue';
 import SignUpFormOrganization from '@/app/auth/components/sign-up/sign-up-form-organization.vue';
+import FindJobPage from '@/app/job/pages/find-job.page.vue';
+import PublishJobPage from '@/app/job/pages/publish-job.page.vue';
 
 
 const router = createRouter({
@@ -29,6 +31,9 @@ const router = createRouter({
     { path: ROUTE_CONSTANTS.SIGN_IN_PAGE, name: 'sign-in', component: SignInPage },
 
     { path: ROUTE_CONSTANTS.NEWS_PAGE, name: 'news', component: NewsPage },
+
+    { path: ROUTE_CONSTANTS.JOB_SEARCH, name: 'job-search', component: FindJobPage },
+    { path: ROUTE_CONSTANTS.JOB_PUBLISH, name: 'job-publish', component: PublishJobPage },
 
     { path: ROUTE_CONSTANTS.NOT_FOUND_PAGE, name: 'not-found', component: NotFoundPage },
     { path: '/:pathMatch(.*)*', redirect: ROUTE_CONSTANTS.NOT_FOUND_PAGE }, //If no route is matched
