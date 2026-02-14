@@ -39,6 +39,38 @@
         "search": "Buscar",
         "naturalPerson": "Persona Natural",
         "employee": "Empleado",
-        "organization": "Empresa"
+        "organization": "Empresa",
+        "min": "Mínimo",
+        "max": "Máximo"
+    },
+    "job": {
+        "creation": {
+            "page-title": "Crear oferta laboral",
+            "page-subtitle": "Publica tu vacante en minutos",
+            "title": "Título",
+            "company": "Empresa",
+            "description": "Descripción",
+            "role": "Rol",
+            "skills": "Habilidades",
+            "responsibilities": "Responsabilidades",
+            "benefits": "Beneficios",
+            "experience": "Experiencia",
+            "department": "Departamento",
+            "district": "Distrito",
+            "address": "Dirección",
+            "salary": "Salario",
+            "salary-period": "Frecuencia de pago",
+            "currency": "Moneda",
+            "opens-at": "Fecha de apertura",
+            "closes-at": "Fecha de cierre",
+            "visibility": "Visibilidad",
+            "header":{
+                "basic-info": "Información básica",
+                "payment": "Salario",
+                "benefits": "Beneficios",
+                "location": "Ubicación",
+                "publication": "Publicación"
+            }
+        }
     }
 }

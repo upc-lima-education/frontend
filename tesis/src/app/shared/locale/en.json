@@ -39,6 +39,38 @@
         "search": "Search",
         "naturalPerson": "Natural Person",
         "employee": "Employee",
-        "organization": "Organization"
+        "organization": "Organization",
+        "min": "Minimum",
+        "max": "Maximum"
+    },
+    "job": {
+        "creation": {
+            "page-title": "Create job offer",
+            "page-subtitle": "Publish an offer in minutes",
+            "title": "Title",
+            "company": "Organization",
+            "description": "Description",
+            "role": "Role",
+            "skills": "Skills",
+            "responsibilities": "Responsibilities",
+            "benefits": "Benefits",
+            "experience": "Experience",
+            "department": "Department",
+            "district": "District",
+            "address": "Address",
+            "salary": "Salary",
+            "salary-period": "Salary frecuency",
+            "currency": "Currency",
+            "opens-at": "Opens at",
+            "closes-at": "Closes at",
+            "visibility": "Visibility",
+            "header":{
+                "basic-info": "Basic Info",
+                "payment": "Salary",
+                "benefits": "Benefits",
+                "location": "Location",
+                "publication": "Publication"
+            }
+        }
     }
 }

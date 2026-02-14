@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { reactive, ref } from 'vue';
+import { computed, reactive, ref } from 'vue';
 import { JobService } from '../services/job.service';
 import { CreateJobRequest } from '../model/create-job.request';
-import { Currency, } from '../enums/currency.enum';
+import { Currency } from '../enums/currency.enum';
 import { Experience } from '../enums/experience.enum';
 import { JobStatus } from '../enums/job-status.enum';
 import { JobVisibility } from '../enums/job-visibility.enum';
@@ -13,11 +13,8 @@ const loading = ref(false);
 const error = ref<string | null>(null);
 const success = ref<string | null>(null);
 
-// helpers to map enum -> options
 function enumToOptions(e: any) {
-    return Object.keys(e)
-        .filter(k => isNaN(Number(k)))
-        .map(k => ({ label: k, value: e[k] }));
+    return Object.keys(e).filter(k => isNaN(Number(k))).map(k => ({ label: k, value: e[k] }));
 }
 
 const currencyOptions = enumToOptions(Currency);
@@ -87,110 +84,230 @@ async function submit() {
         loading.value = false;
     }
 }
+
+const validationErrors = computed(() => ({
+    title: !form.title.trim(),
+    description: form.description.trim().length < 20,
+    salary: form.minSalary > form.maxSalary,
+    dates: form.opensAt && form.closesAt && new Date(form.opensAt) > new Date(form.closesAt)
+}));
+
+const isValid = computed(() => !Object.values(validationErrors.value).some(Boolean));
 </script>
 
 <template>
-    <div class="default-form">
-        <h1>Crear oferta laboral</h1>
+    <div class="job-form">
+        <header class="job-form__header">
+            <h1>{{ $t('job.creation.page-title') }}</h1>
+            <p class="job-form__subtitle">{{ $t('job.creation.page-subtitle') }}</p>
+        </header>
 
-        <div v-if="error" class="error">{{ error }}</div>
-        <div v-if="success" class="success">{{ success }}</div>
+        <div v-if="error" class="form-alert form-alert--error">{{ error }}</div>
+        <div v-if="success" class="form-alert form-alert--success">{{ success }}</div>
 
-        <label>Título</label>
-        <input v-model="form.title" />
+        <section class="form-card">
+            <h2>{{ $t('job.creation.header.basic-info') }}</h2>
+            <div class="form-grid">
+                <div class="form-field full">
+                    <label>{{ $t('job.creation.title') }}</label>
+                    <input v-model="form.title" />
+                </div>
 
-        <label>ID Empresa</label>
-        <input v-model="form.companyId" />
+                <div class="form-field full">
+                    <label>{{ $t('job.creation.description') }}</label>
+                    <textarea v-model="form.description"></textarea>
+                </div>
 
-        <label>Descripción</label>
-        <textarea v-model="form.description"></textarea>
+                <div class="form-field">
+                    <label>{{ $t('job.creation.role') }}</label>
+                    <input v-model="form.role" />
+                </div>
 
-        <label>Rol</label>
-        <input v-model="form.role" />
+                <div class="form-field">
+                    <label>{{ $t('job.creation.experience') }}</label>
+                    <select v-model="form.experience">
+                        <option v-for="o in experienceOptions" :key="o.label" :value="o.value">{{ o.label }}</option>
+                    </select>
+                </div>
 
-        <label>Skills</label>
-        <textarea v-model="form.skills"></textarea>
+                <div class="form-field full">
+                    <label>{{ $t('job.creation.skills') }}</label>
+                    <textarea v-model="form.skills"></textarea>
+                </div>
+            </div>
+        </section>
 
-        <label>Responsabilidades</label>
-        <textarea v-model="form.responsibilities"></textarea>
+        <section class="form-card">
+            <h2>{{ $t('job.creation.header.payment') }}</h2>
+            <div class="form-grid">
+                <div class="form-field">
+                    <label>{{ $t('job.creation.salary-period') }}</label>
+                    <select v-model="form.salaryPeriod">
+                        <option v-for="o in salaryPeriodOptions" :key="o.label" :value="o.value">{{ o.label }}</option>
+                    </select>
+                </div>
+                <div class="form-field">
+                    <label>{{ $t('job.creation.currency') }}</label>
+                    <select v-model="form.currency">
+                        <option v-for="o in currencyOptions" :key="o.label" :value="o.value">{{ o.label }}</option>
+                    </select>
+                </div>
+                <div class="form-field">
+                    <label>Min</label>
+                    <input type="number" v-model.number="form.minSalary" />
+                </div>
+                <div class="form-field">
+                    <label>Max</label>
+                    <input type="number" v-model.number="form.maxSalary" />
+                </div>
+            </div>
+        </section>
 
-        <label>Beneficios</label>
-        <textarea v-model="form.benefits"></textarea>
+        <section class="form-card">
+            <h2>{{ $t('job.creation.header.location') }}</h2>
+            <div class="form-grid">
+                <div class="form-field">
+                    <label>{{ $t('job.creation.department') }}</label>
+                    <input v-model="form.department" />
+                </div>
+                <div class="form-field">
+                    <label>{{ $t('job.creation.district') }}</label>
+                    <input v-model="form.district" />
+                </div>
+                <div class="form-field full">
+                    <label>{{ $t('job.creation.address') }}</label>
+                    <input v-model="form.address" />
+                </div>
+            </div>
+        </section>
 
-        <label>Experiencia</label>
-        <select v-model="form.experience">
-            <option v-for="o in experienceOptions" :key="o.label" :value="o.value">{{ o.label }}</option>
-        </select>
+        <section class="form-card">
+            <h2>{{ $t('job.creation.header.publication') }}</h2>
+            <div class="form-grid">
+                <div class="form-field">
+                    <label>{{ $t('job.creation.opens-at') }}</label>
+                    <input type="date" v-model="form.opensAt" />
+                </div>
+                <div class="form-field">
+                    <label>{{ $t('job.creation.closes-at') }}</label>
+                    <input type="date" v-model="form.closesAt" />
+                </div>
+                <div class="form-field">
+                    <label>{{ $t('job.creation.visibility') }}</label>
+                    <select v-model="form.jobVisibility">
+                        <option v-for="o in visibilityOptions" :key="o.label" :value="o.value">{{ o.label }}</option>
+                    </select>
+                </div>
+                <div class="form-field">
+                    <label>Estado</label>
+                    <select v-model="form.jobStatus">
+                        <option v-for="o in statusOptions" :key="o.label" :value="o.value">{{ o.label }}</option>
+                    </select>
+                </div>
+            </div>
+        </section>
 
-        <label>Departamento</label>
-        <input v-model="form.department" />
+        <div class="sticky-footer">
+            <span v-if="!isValid" class="footer-warning">Faltan campos obligatorios o hay errores</span>
+            <button class="button-success" :disabled="loading || !isValid" @click="submit">
+                {{ loading ? 'Creando...' : 'Publicar oferta' }}
+            </button>
+        </div>
 
-        <label>Distrito</label>
-        <input v-model="form.district" />
 
-        <label>Dirección</label>
-        <input v-model="form.address" />
-
-        <label>Latitud</label>
-        <input type="number" v-model.number="form.latitude" />
-
-        <label>Longitud</label>
-        <input type="number" v-model.number="form.longitude" />
-
-        <label>Salario mínimo</label>
-        <input type="number" v-model.number="form.minSalary" />
-
-        <label>Salario máximo</label>
-        <input type="number" v-model.number="form.maxSalary" />
-
-        <label>Moneda</label>
-        <select v-model="form.currency">
-            <option v-for="o in currencyOptions" :key="o.label" :value="o.value">{{ o.label }}</option>
-        </select>
-
-        <label>Periodo salarial</label>
-        <select v-model="form.salaryPeriod">
-            <option v-for="o in salaryPeriodOptions" :key="o.label" :value="o.value">{{ o.label }}</option>
-        </select>
-
-        <label>Fecha apertura</label>
-        <input type="date" v-model="form.opensAt" />
-
-        <label>Fecha cierre</label>
-        <input type="date" v-model="form.closesAt" />
-
-        <label>Visibilidad</label>
-        <select v-model="form.jobVisibility">
-            <option v-for="o in visibilityOptions" :key="o.label" :value="o.value">{{ o.label }}</option>
-        </select>
-
-        <label>Estado</label>
-        <select v-model="form.jobStatus">
-            <option v-for="o in statusOptions" :key="o.label" :value="o.value">{{ o.label }}</option>
-        </select>
-
-        <button class="button-success" :disabled="loading" @click="submit">
-            {{ loading ? 'Creando...' : 'Crear trabajo' }}
-        </button>
     </div>
 </template>
 
 <style scoped>
+.job-form {
+    max-width: 900px;
+    margin: auto;
+    padding-bottom: 80px;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.job-form__header {
+    text-align: center;
+}
+
+.job-form__subtitle {
+    color: var(--text-color-light);
+}
+
+.form-card {
+    background: var(--background-color-light);
+    padding: 18px;
+    border-radius: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+}
+
+.form-field {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.form-field.full {
+    grid-column: span 2;
+}
+
 textarea,
-select {
+select,
+input {
     min-height: 38px;
     border: 1px solid var(--gray-03);
-    border-radius: 4px;
-    padding: 8px 12px;
-    font-size: 1rem;
-    width: 100%;
+    border-radius: 6px;
+    padding: 8px 8px;
 }
 
-.error {
+textarea {
+    min-height: 90px;
+    resize: none;
+}
+
+.invalid {
+    border-color: var(--red-color);
+}
+
+.sticky-footer {
+    position: sticky;
+    bottom: 0;
+    background: var(--background-color-default);
+    padding: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-top: 1px solid var(--gray-03);
+}
+
+.footer-warning {
     color: var(--red-color);
+    font-size: 0.9rem;
 }
 
-.success {
-    color: var(--green-color);
+.form-alert {
+    padding: 10px;
+    border-radius: 6px;
+    font-weight: 500;
+}
+
+.form-alert--error {
+    background: #ffdede;
+    color: #a40000;
+}
+
+.form-alert--success {
+    background: #e0ffe5;
+    color: #116b2f;
 }
 </style>
