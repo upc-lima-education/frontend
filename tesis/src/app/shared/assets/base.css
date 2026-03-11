@@ -18,6 +18,7 @@
   --text-color-light: var(--gray-04);
   --text-color-medium: var(--gray-05);
   --text-color-dark: var(--gray-06);
+  --text-color-darker: var(--gray-07);
 }
 
 /*Main colors dark*/
@@ -47,6 +48,7 @@
 * {
   margin: 0;
   padding: 0;
+  color: var(--text-color-default);
 }
 
 body{

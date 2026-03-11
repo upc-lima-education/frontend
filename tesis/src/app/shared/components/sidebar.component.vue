@@ -102,6 +102,10 @@ header {
   height: 40px;
 }
 
+span{
+  color: white;
+}
+
 /*Options*/
 nav {
   width: 100%;

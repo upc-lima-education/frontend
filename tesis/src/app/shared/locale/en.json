@@ -79,7 +79,7 @@
                 "name": "Job type",
                 "Remote": "Remote",
                 "Hybrid": "Hybrid",
-                "InPerson": "In person"
+                "InPerson": "On Site"
             },
             "department": "Department",
             "district": "District",
