@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, reactive, ref } from 'vue';
+import { computed, onMounted, reactive, ref } from 'vue';
 import { JobService } from '../services/job.service';
 import { CreateJobRequest } from '../model/create-job.request';
 import { Currency } from '../enums/currency.enum';
@@ -9,17 +9,21 @@ import { JobVisibility } from '../enums/job-visibility.enum';
 import { SalaryPeriod } from '../enums/salary-period';
 import { enumToOptions } from '../utils/enum-to-options.util';
 import { Department } from '../enums/department.enum';
+import { JobType } from '../enums/job-type.enum';
 
 const jobService = new JobService();
 const loading = ref(false);
 const error = ref<string | null>(null);
 const success = ref<string | null>(null);
+const companyId = ref('');
 
 const experienceOptions = enumToOptions(Experience, 'job.data.experience');
 const currencyOptions = enumToOptions(Currency, 'job.data.currency');
 const visibilityOptions = enumToOptions(JobVisibility, 'job.data.visibility');
 const salaryPeriodOptions = enumToOptions(SalaryPeriod, 'job.data.salaryPeriod');
 const departmentOptions = enumToOptions(Department, 'department');
+const jobTypeOptions = enumToOptions(JobType, 'job.data.type');
+
 
 const form = reactive({
     title: '',
@@ -42,7 +46,8 @@ const form = reactive({
     opensAt: '',
     closesAt: '',
     jobVisibility: JobVisibility.Public,
-    jobStatus: JobStatus.Active
+    jobStatus: JobStatus.Active,
+    jobType: JobType.InPerson
 });
 
 async function submit() {
@@ -57,7 +62,7 @@ async function submit() {
             : JobStatus.Active.toString();
         const request = new CreateJobRequest(
             form.title,
-            form.companyId,
+            companyId.value,
             form.description,
             form.role,
             form.skills,
@@ -67,8 +72,8 @@ async function submit() {
             form.department,
             form.district,
             form.address,
-            Number(form.latitude),
-            Number(form.longitude),
+            Number(form.latitude), //To be developed
+            Number(form.longitude), //To be developed
             Number(form.minSalary),
             Number(form.maxSalary),
             Currency[form.currency],
@@ -96,6 +101,15 @@ const validationErrors = computed(() => ({
 }));
 
 const isValid = computed(() => !Object.values(validationErrors.value).some(Boolean));
+
+async function getCompanyId(){
+    //Todo: the company id should be obtain through the session storage
+    companyId.value = '';
+}
+
+onMounted(()=> {
+    getCompanyId();
+});
 </script>
 
 <template>
@@ -111,9 +125,18 @@ const isValid = computed(() => !Object.values(validationErrors.value).some(Boole
         <section class="form-card">
             <h2>{{ $t('job.creationPage.header.basicInfo') }}</h2>
             <div class="form-grid">
-                <div class="form-field full">
+                <div class="form-field">
                     <label>{{ $t('job.data.title') }}</label>
                     <input v-model="form.title" />
+                </div>
+
+                <div class="form-field">
+                    <label>{{ $t('job.data.type.name') }}</label>
+                    <select v-model="form.jobType">
+                        <option v-for="o in jobTypeOptions" :key="o.value" :value="o.value">
+                            {{ $t(o.labelKey) }}
+                        </option>
+                    </select>
                 </div>
 
                 <div class="form-field full">
@@ -135,9 +158,17 @@ const isValid = computed(() => !Object.values(validationErrors.value).some(Boole
                     </select>
                 </div>
 
-                <div class="form-field full">
+                <div class="form-field">
                     <label>{{ $t('job.data.skills') }}</label>
-                    <textarea v-model="form.skills"></textarea>
+                    <input v-model="form.skills"/>
+                </div>
+                <div class="form-field">
+                    <label>{{ $t('job.data.responsibilities') }}</label>
+                    <input v-model="form.responsibilities"/>
+                </div>
+                <div class="form-field full">
+                    <label>{{ $t('job.data.benefits') }}</label>
+                    <input v-model="form.benefits"/>
                 </div>
             </div>
         </section>
