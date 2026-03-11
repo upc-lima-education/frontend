@@ -44,9 +44,18 @@
         "max": "Maximum"
     },
     "job": {
-        "creation": {
-            "page-title": "Create job offer",
-            "page-subtitle": "Publish an offer in minutes",
+        "creationPage": {
+            "title": "Create job offer",
+            "subtitle": "Publish an offer in minutes",
+            "header": {
+                "basicInfo": "Basic Info",
+                "payment": "Salary",
+                "benefits": "Benefits",
+                "location": "Location",
+                "publication": "Publication"
+            }
+        },
+        "data": {
             "title": "Title",
             "company": "Organization",
             "description": "Description",
@@ -54,23 +63,85 @@
             "skills": "Skills",
             "responsibilities": "Responsibilities",
             "benefits": "Benefits",
-            "experience": "Experience",
+            "experience": {
+                "name": "Experience",
+                "NoExperienceNeeded": "No experience",
+                "ThreeMonths": "3 months",
+                "SixMonths": "6 months",
+                "OneYear": "1 year",
+                "TwoYears": "2 years",
+                "ThreeYears": "3 years",
+                "FiveYears": "5 years",
+                "EightYears": "8 years",
+                "TenYears": "10 years"
+            },
+            "type": {
+                "name": "Job type",
+                "Remote": "Remote",
+                "Hybrid": "Hybrid",
+                "InPerson": "In person"
+            },
             "department": "Department",
             "district": "District",
             "address": "Address",
             "salary": "Salary",
-            "salary-period": "Salary frecuency",
-            "currency": "Currency",
-            "opens-at": "Opens at",
-            "closes-at": "Closes at",
-            "visibility": "Visibility",
-            "header":{
-                "basic-info": "Basic Info",
-                "payment": "Salary",
-                "benefits": "Benefits",
-                "location": "Location",
-                "publication": "Publication"
+            "salaryPeriod": {
+                "name": "Salary frecuency",
+                "Daily": "Daily",
+                "Weekly": "Weekly",
+                "Fortnightly": "Biweekly",
+                "Monthly": "Monthly",
+                "AfterService": "After service"
+            },
+            "currency": {
+                "name": "Currency",
+                "PEN": "Soles",
+                "USD": "USD"
+            },
+            "opensAt": "Opens at",
+            "closesAt": "Closes at",
+            "status": {
+                "name": "Job Status",
+                "Draft": "In process",
+                "Scheduled": "Scheduled",
+                "Active": "Active",
+                "Closed": "Closed",
+                "Expired": "Expired",
+                "Archived": "Archived"
+            },
+            "visibility": {
+                "name": "Visibility",
+                "Public": "Public",
+                "FollowersOnly": "Followers only",
+                "Private": "Private",
+                "Hidden": "Hidden"
             }
         }
+    },
+    "department": {
+        "Amazonas": "Amazonas",
+        "Ancash": "Ancash",
+        "Apurimac": "Apurimac",
+        "Arequipa": "Arequipa",
+        "Ayacucho": "Ayacucho",
+        "Cajamarca": "Cajamarca",
+        "Cusco": "Cusco",
+        "Huancavelica": "Huancavelica",
+        "Huanuco": "Huanuco",
+        "Ica": "Ica",
+        "Junin": "Junin",
+        "LaLibertad": "La Libertad",
+        "Lambayeque": "Lambayeque",
+        "Lima": "Lima",
+        "Loreto": "Loreto",
+        "MadreDeDios": "Madre de Dios",
+        "Moquegua": "Moquegua",
+        "Pasco": "Pasco",
+        "Piura": "Piura",
+        "Puno": "Puno",
+        "SanMartin": "San Martin",
+        "Tacna": "Tacna",
+        "Tumbes": "Tumbes",
+        "Ucayali": "Ucayali"
     }
 }

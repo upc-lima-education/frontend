@@ -44,9 +44,18 @@
         "max": "Máximo"
     },
     "job": {
-        "creation": {
-            "page-title": "Crear oferta laboral",
-            "page-subtitle": "Publica tu vacante en minutos",
+        "creationPage": {
+            "title": "Crear oferta laboral",
+            "subtitle": "Publica tu vacante en minutos",
+            "header": {
+                "basicInfo": "Información básica",
+                "payment": "Salario",
+                "benefits": "Beneficios",
+                "location": "Ubicación",
+                "publication": "Publicación"
+            }
+        },
+        "data": {
             "title": "Título",
             "company": "Empresa",
             "description": "Descripción",
@@ -54,23 +63,85 @@
             "skills": "Habilidades",
             "responsibilities": "Responsabilidades",
             "benefits": "Beneficios",
-            "experience": "Experiencia",
+            "experience": {
+                "name": "Experiencia",
+                "NoExperienceNeeded": "Sin experiencia",
+                "ThreeMonths": "3 meses",
+                "SixMonths": "6 meses",
+                "OneYear": "1 año",
+                "TwoYears": "2 años",
+                "ThreeYears": "3 años",
+                "FiveYears": "5 años",
+                "EightYears": "8 años",
+                "TenYears": "10 años"
+            },
+            "type": {
+                "name": "Tipo de trabajo",
+                "Remote": "Remoto",
+                "Hybrid": "Híbrido",
+                "InPerson": "Presencial"
+            },
             "department": "Departamento",
             "district": "Distrito",
             "address": "Dirección",
             "salary": "Salario",
-            "salary-period": "Frecuencia de pago",
-            "currency": "Moneda",
-            "opens-at": "Fecha de apertura",
-            "closes-at": "Fecha de cierre",
-            "visibility": "Visibilidad",
-            "header":{
-                "basic-info": "Información básica",
-                "payment": "Salario",
-                "benefits": "Beneficios",
-                "location": "Ubicación",
-                "publication": "Publicación"
+            "salaryPeriod": {
+                "name": "Frecuencia de pago",
+                "Daily": "Diaria",
+                "Weekly": "Semanal",
+                "Fortnightly": "Quincenal",
+                "Monthly": "Mensual",
+                "AfterService": "Por servicio"
+            },
+            "currency": {
+                "name": "Moneda",
+                "PEN": "Soles",
+                "USD": "Dólares"
+            },
+            "opensAt": "Fecha de apertura",
+            "closesAt": "Fecha de cierre",
+            "status": {
+                "name": "Estado del trabajo",
+                "Draft": "En proceso",
+                "Scheduled": "Programado",
+                "Active": "Activo",
+                "Closed": "Cerrado",
+                "Expired": "Expirado",
+                "Archived": "Archivado"
+            },
+            "visibility": {
+                "name": "Visibilidad",
+                "Public": "Público",
+                "FollowersOnly": "Solo seguidores",
+                "Private": "Privado",
+                "Hidden": "Oculto"
             }
         }
+    },
+    "department": {
+        "Amazonas": "Amazonas",
+        "Ancash": "Ancash",
+        "Apurimac": "Apurímac",
+        "Arequipa": "Arequipa",
+        "Ayacucho": "Ayacucho",
+        "Cajamarca": "Cajamarca",
+        "Cusco": "Cusco",
+        "Huancavelica": "Huancavelica",
+        "Huanuco": "Huánuco",
+        "Ica": "Ica",
+        "Junin": "Junín",
+        "LaLibertad": "La Libertad",
+        "Lambayeque": "Lambayeque",
+        "Lima": "Lima",
+        "Loreto": "Loreto",
+        "MadreDeDios": "Madre de Dios",
+        "Moquegua": "Moquegua",
+        "Pasco": "Pasco",
+        "Piura": "Piura",
+        "Puno": "Puno",
+        "SanMartin": "San Martín",
+        "Tacna": "Tacna",
+        "Tumbes": "Tumbes",
+        "Ucayali": "Ucayali"
     }
 }

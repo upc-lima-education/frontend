@@ -7,21 +7,19 @@ import { Experience } from '../enums/experience.enum';
 import { JobStatus } from '../enums/job-status.enum';
 import { JobVisibility } from '../enums/job-visibility.enum';
 import { SalaryPeriod } from '../enums/salary-period';
+import { enumToOptions } from '../utils/enum-to-options.util';
+import { Department } from '../enums/department.enum';
 
 const jobService = new JobService();
 const loading = ref(false);
 const error = ref<string | null>(null);
 const success = ref<string | null>(null);
 
-function enumToOptions(e: any) {
-    return Object.keys(e).filter(k => isNaN(Number(k))).map(k => ({ label: k, value: e[k] }));
-}
-
-const currencyOptions = enumToOptions(Currency);
-const experienceOptions = enumToOptions(Experience);
-const statusOptions = enumToOptions(JobStatus);
-const visibilityOptions = enumToOptions(JobVisibility);
-const salaryPeriodOptions = enumToOptions(SalaryPeriod);
+const experienceOptions = enumToOptions(Experience, 'job.data.experience');
+const currencyOptions = enumToOptions(Currency, 'job.data.currency');
+const visibilityOptions = enumToOptions(JobVisibility, 'job.data.visibility');
+const salaryPeriodOptions = enumToOptions(SalaryPeriod, 'job.data.salaryPeriod');
+const departmentOptions = enumToOptions(Department, 'department');
 
 const form = reactive({
     title: '',
@@ -52,6 +50,11 @@ async function submit() {
     success.value = null;
     loading.value = true;
     try {
+        const currentDate = new Date();
+        const opensAt = new Date(form.opensAt);
+        const jobStatus = (currentDate < opensAt)
+            ? JobStatus.Scheduled.toString()
+            : JobStatus.Active.toString();
         const request = new CreateJobRequest(
             form.title,
             form.companyId,
@@ -70,10 +73,10 @@ async function submit() {
             Number(form.maxSalary),
             Currency[form.currency],
             SalaryPeriod[form.salaryPeriod],
-            new Date(form.opensAt),
+            opensAt,
             new Date(form.closesAt),
             JobVisibility[form.jobVisibility],
-            JobStatus[form.jobStatus]
+            jobStatus
         );
 
         await jobService.createJob(request);
@@ -98,58 +101,64 @@ const isValid = computed(() => !Object.values(validationErrors.value).some(Boole
 <template>
     <div class="job-form">
         <header class="job-form__header">
-            <h1>{{ $t('job.creation.page-title') }}</h1>
-            <p class="job-form__subtitle">{{ $t('job.creation.page-subtitle') }}</p>
+            <h1>{{ $t('job.creationPage.title') }}</h1>
+            <p class="job-form__subtitle">{{ $t('job.creationPage.subtitle') }}</p>
         </header>
 
         <div v-if="error" class="form-alert form-alert--error">{{ error }}</div>
         <div v-if="success" class="form-alert form-alert--success">{{ success }}</div>
 
         <section class="form-card">
-            <h2>{{ $t('job.creation.header.basic-info') }}</h2>
+            <h2>{{ $t('job.creationPage.header.basicInfo') }}</h2>
             <div class="form-grid">
                 <div class="form-field full">
-                    <label>{{ $t('job.creation.title') }}</label>
+                    <label>{{ $t('job.data.title') }}</label>
                     <input v-model="form.title" />
                 </div>
 
                 <div class="form-field full">
-                    <label>{{ $t('job.creation.description') }}</label>
+                    <label>{{ $t('job.data.description') }}</label>
                     <textarea v-model="form.description"></textarea>
                 </div>
 
                 <div class="form-field">
-                    <label>{{ $t('job.creation.role') }}</label>
+                    <label>{{ $t('job.data.role') }}</label>
                     <input v-model="form.role" />
                 </div>
 
                 <div class="form-field">
-                    <label>{{ $t('job.creation.experience') }}</label>
+                    <label>{{ $t('job.data.experience.name') }}</label>
                     <select v-model="form.experience">
-                        <option v-for="o in experienceOptions" :key="o.label" :value="o.value">{{ o.label }}</option>
+                        <option v-for="o in experienceOptions" :key="o.value" :value="o.value">
+                            {{ $t(o.labelKey) }}
+                        </option>
                     </select>
                 </div>
 
                 <div class="form-field full">
-                    <label>{{ $t('job.creation.skills') }}</label>
+                    <label>{{ $t('job.data.skills') }}</label>
                     <textarea v-model="form.skills"></textarea>
                 </div>
             </div>
         </section>
 
         <section class="form-card">
-            <h2>{{ $t('job.creation.header.payment') }}</h2>
+            <h2>{{ $t('job.creationPage.header.payment') }}</h2>
             <div class="form-grid">
                 <div class="form-field">
-                    <label>{{ $t('job.creation.salary-period') }}</label>
+                    <label>{{ $t('job.data.salaryPeriod.name') }}</label>
                     <select v-model="form.salaryPeriod">
-                        <option v-for="o in salaryPeriodOptions" :key="o.label" :value="o.value">{{ o.label }}</option>
+                        <option v-for="o in salaryPeriodOptions" :key="o.value" :value="o.value">
+                            {{ $t(o.labelKey) }}
+                        </option>
                     </select>
                 </div>
                 <div class="form-field">
-                    <label>{{ $t('job.creation.currency') }}</label>
+                    <label>{{ $t('job.data.currency.name') }}</label>
                     <select v-model="form.currency">
-                        <option v-for="o in currencyOptions" :key="o.label" :value="o.value">{{ o.label }}</option>
+                        <option v-for="o in currencyOptions" :key="o.value" :value="o.value">
+                            {{ $t(o.labelKey) }}
+                        </option>
                     </select>
                 </div>
                 <div class="form-field">
@@ -164,44 +173,44 @@ const isValid = computed(() => !Object.values(validationErrors.value).some(Boole
         </section>
 
         <section class="form-card">
-            <h2>{{ $t('job.creation.header.location') }}</h2>
+            <h2>{{ $t('job.creationPage.header.location') }}</h2>
             <div class="form-grid">
                 <div class="form-field">
-                    <label>{{ $t('job.creation.department') }}</label>
-                    <input v-model="form.department" />
+                    <label>{{ $t('job.data.department') }}</label>
+                    <select v-model="form.department">
+                        <option v-for="d in departmentOptions" :key="d.value" :value="d.value">
+                            {{ $t(d.labelKey) }}
+                        </option>
+                    </select>
                 </div>
                 <div class="form-field">
-                    <label>{{ $t('job.creation.district') }}</label>
+                    <label>{{ $t('job.data.district') }}</label>
                     <input v-model="form.district" />
                 </div>
                 <div class="form-field full">
-                    <label>{{ $t('job.creation.address') }}</label>
+                    <label>{{ $t('job.data.address') }}</label>
                     <input v-model="form.address" />
                 </div>
             </div>
         </section>
 
         <section class="form-card">
-            <h2>{{ $t('job.creation.header.publication') }}</h2>
+            <h2>{{ $t('job.creationPage.header.publication') }}</h2>
             <div class="form-grid">
                 <div class="form-field">
-                    <label>{{ $t('job.creation.opens-at') }}</label>
+                    <label>{{ $t('job.data.opensAt') }}</label>
                     <input type="date" v-model="form.opensAt" />
                 </div>
                 <div class="form-field">
-                    <label>{{ $t('job.creation.closes-at') }}</label>
+                    <label>{{ $t('job.data.closesAt') }}</label>
                     <input type="date" v-model="form.closesAt" />
                 </div>
                 <div class="form-field">
-                    <label>{{ $t('job.creation.visibility') }}</label>
+                    <label>{{ $t('job.data.visibility.name') }}</label>
                     <select v-model="form.jobVisibility">
-                        <option v-for="o in visibilityOptions" :key="o.label" :value="o.value">{{ o.label }}</option>
-                    </select>
-                </div>
-                <div class="form-field">
-                    <label>Estado</label>
-                    <select v-model="form.jobStatus">
-                        <option v-for="o in statusOptions" :key="o.label" :value="o.value">{{ o.label }}</option>
+                        <option v-for="o in visibilityOptions" :key="o.value" :value="o.value">
+                            {{ $t(o.labelKey) }}
+                        </option>
                     </select>
                 </div>
             </div>
