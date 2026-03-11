@@ -1,11 +1,20 @@
-export class SignInResponse {
-    id: string;
-    userEmail: string;
-    token: string;
+import { UserResponse } from "../user.response";
 
-    constructor(id: string, username: string, token: string) {
-        this.id = id;
-        this.userEmail = username;
-        this.token = token;
+export class SignInResponse {
+    accessToken: string;
+    refreshToken: string;
+    expiresIn: number;
+    user: UserResponse;
+
+    constructor(
+        accessToken: string,
+        refreshToken: string,
+        expiresIn: number,
+        user: UserResponse
+    ) {
+        this.accessToken = accessToken;
+        this.refreshToken = refreshToken;
+        this.expiresIn = expiresIn;
+        this.user = user;
     }
 }

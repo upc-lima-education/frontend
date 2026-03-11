@@ -1,5 +1,19 @@
 <script setup lang="ts">
+import { useAuthenticationStore } from '@/app/auth/services/authentication.store';
+import { useRouter } from 'vue-router';
 
+const authStore = useAuthenticationStore();
+const router = useRouter();
+
+const handleLogout = async () => {
+    try {
+        await authStore.signOut();
+        // El push a /sign-in está en signOut(), pero confirmamos
+        // await router.push('/sign-in');
+    } catch (error) {
+        console.error('Error during logout:', error);
+    }
+};
 </script>
 
 <template>
@@ -55,10 +69,10 @@
         </li>
 
         <li class="logout">
-          <RouterLink to="/logout" class="link">
+          <button @click="handleLogout" class="link logout-btn">
             <img src="../assets/icons/Usuario.svg" class="sidebar-image"/> <!--Temp-->
             <span>{{ $t('sidebar.logout') }}</span>
-          </RouterLink>
+          </button>
         </li>
       </ul>
     </nav>
@@ -152,8 +166,22 @@ nav {
   margin-top: 30px;
 }
 
+.logout-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  width: 100%;
+  text-align: left;
+  padding: 12px 20px;
+}
+
 .logout .link:hover {
   background-color: #c0392b;
+}
+
+.logout-btn:hover {
+  background-color: #c0392b;
+  padding-left: 26px;
 }
 
 </style>

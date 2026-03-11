@@ -2,15 +2,38 @@
 import router from '@/app/shared/router';
 import { ROUTE_CONSTANTS } from '@/app/shared/router/route-constants';
 import { ref } from 'vue';
+import { useAuthenticationStore } from '@/app/auth/services/authentication.store';
+import { SignInRequest } from '@/app/auth/model/sign-in/sign-in.request';
+import GoogleLoginComponent from '../google-login.component.vue';
+
+const authStore = useAuthenticationStore();
 
 const email = ref("");
 const password = ref("");
+const loading = ref(false);
+const error = ref("");
 
-function OnSignIn() {
-    router.push('/sign-up'); // temp
+async function OnSignIn() {
+    loading.value = true;
+    error.value = "";
+    
+    try {
+        const request = new SignInRequest(email.value, password.value);
+        const success = await authStore.signIn(request);
+        
+        if (!success) {
+            error.value = "Email o contraseña incorrectos";
+        }
+    } catch (err) {
+        console.error('Login error:', err);
+        error.value = "Error al conectar con el servidor";
+    } finally {
+        loading.value = false;
+    }
 }
 
 const noAccountLink : string = `${ROUTE_CONSTANTS.SIGN_UP_PAGE}/${ROUTE_CONSTANTS.SIGN_UP_USER_SELECTION}`;
+
 
 </script>
 
@@ -30,10 +53,14 @@ const noAccountLink : string = `${ROUTE_CONSTANTS.SIGN_UP_PAGE}/${ROUTE_CONSTANT
                     <input id="password" type="password" placeholder="Password" v-model="password" />
                 </section>
                 <section>
-                    <input class="button-primary" type="submit" :value="$t('auth.login')" />
+                    <input class="button-primary" type="submit" :value="loading ? 'Ingresando...' : $t('auth.login')" :disabled="loading" />
+                    <div v-if="error" class="error-message">{{ error }}</div>
+                </section>
+                <GoogleLoginComponent />
+                <section>
                     <div class="redirects-container">
                         <RouterLink :to="noAccountLink">{{ $t('auth.noAccount') }}</RouterLink>
-                        <RouterLink to="/">{{ $t('auth.forgotPassword') }}</RouterLink>
+                        <RouterLink to="/forgot-password">{{ $t('auth.forgotPassword') }}</RouterLink>
                     </div>
                 </section>
             </form>
@@ -42,6 +69,13 @@ const noAccountLink : string = `${ROUTE_CONSTANTS.SIGN_UP_PAGE}/${ROUTE_CONSTANT
 </template>
 
 <style scoped>
+.error-message {
+    color: #dc3545;
+    font-size: 0.875rem;
+    margin-top: 0.5rem;
+    text-align: center;
+}
+
 .redirects-container {
     margin-top: 1rem;
     display: flex;

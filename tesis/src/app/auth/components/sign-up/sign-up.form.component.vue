@@ -1,6 +1,10 @@
 <script setup lang="ts">
 import { ref } from 'vue';
-import router from '@/app/shared/router';
+import { useAuthenticationStore } from '@/app/auth/services/authentication.store';
+import { SignUpRequest } from '@/app/auth/model/sign-up/sign-up.request';
+
+const authStore = useAuthenticationStore();
+
 const firstName = ref("");
 const lastName = ref("");
 const email = ref("");
@@ -9,10 +13,15 @@ const confirmPassword = ref("");
 const areAllFieldsFilled = ref(true);
 const doPasswordsMatch = ref(true);
 const isPasswordValid = ref(true);
-function OnSignUp() {
+const loading = ref(false);
+const serverError = ref("");
+
+async function OnSignUp() {
     areAllFieldsFilled.value = true;
     doPasswordsMatch.value = true;
     isPasswordValid.value = true;
+    serverError.value = "";
+    
     if(firstName.value === "" || lastName.value === "" || email.value === "" 
     || password.value === "" || confirmPassword.value === "") {
         areAllFieldsFilled.value = false;
@@ -26,7 +35,28 @@ function OnSignUp() {
         isPasswordValid.value = false;
         return;
     }
-    router.push('/sign-in'); // temp
+    
+    loading.value = true;
+    
+    try {
+        const request = new SignUpRequest(
+            email.value,
+            password.value,
+            `${firstName.value} ${lastName.value}`,
+            firstName.value,
+            lastName.value
+        );
+        const success = await authStore.signUp(request);
+        
+        if (!success) {
+            serverError.value = "Error al registrarse. Intenta nuevamente.";
+        }
+    } catch (err) {
+        console.error('Sign up error:', err);
+        serverError.value = "Error de conexión con el servidor";
+    } finally {
+        loading.value = false;
+    }
 }
 
 function validatePassword(pwd: string) {
@@ -38,13 +68,14 @@ function validatePassword(pwd: string) {
 <template>
     <div class="sign-in-form-container">
         <header>
-            <h1>{{ $t('auth.login') }}</h1>
+            <h1>{{ $t('auth.signUp') }}</h1>
         </header>
         <section>
             <form @submit.prevent="OnSignUp" class="default-form">
                 <p v-if="!areAllFieldsFilled">{{ $t('auth.fillAllFields') }}</p>
                 <p v-if="!doPasswordsMatch">{{ $t('auth.passwordsDoNotMatch') }}</p>
                 <p v-if="!isPasswordValid">{{ $t('auth.passwordRequirements') }}</p>
+                <p v-if="serverError" class="error-message">{{ serverError }}</p>
                 <section>
                     <label for="firstName">{{ $t('auth.firstName') }}</label>
                     <input id="firstName" type="text" placeholder="First Name" v-model="firstName" />
@@ -64,10 +95,10 @@ function validatePassword(pwd: string) {
                     <input id="confirmPassword" type="password" placeholder="Confirm Password" v-model="confirmPassword" />
                 </section>
                 <section>
-                    <input class="button-primary" type="submit" :value="$t('auth.signUp')" />
+                    <input class="button-primary" type="submit" :value="loading ? 'Registrando...' : $t('auth.signUp')" :disabled="loading" />
                     <div class="redirects-container">
-                        <RouterLink to="/">{{ $t('auth.noAccount') }}</RouterLink>
-                        <RouterLink to="/">{{ $t('auth.forgotPassword') }}</RouterLink>
+                        <RouterLink to="/sign-in">{{ $t('auth.alreadyHaveAccount') }}</RouterLink>
+                        <RouterLink to="/forgot-password">{{ $t('auth.forgotPassword') }}</RouterLink>
                     </div>
                 </section>
             </form>
@@ -76,6 +107,13 @@ function validatePassword(pwd: string) {
 </template>
 
 <style scoped>
+.error-message {
+    color: #dc3545;
+    font-size: 0.875rem;
+    margin-top: 0.5rem;
+    text-align: center;
+}
+
 .redirects-container {
     margin-top: 1rem;
     display: flex;
