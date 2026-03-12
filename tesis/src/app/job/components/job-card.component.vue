@@ -76,7 +76,7 @@ const closingSoon = computed(() => {
 }
 
 .job-card:hover {
-    border-color: var(--main-color-light);
+    border-color: var(--main-color-01);
     transform: translateY(-1px);
     box-shadow: 0 4px 14px rgba(0,0,0,0.08);
 }

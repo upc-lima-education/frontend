@@ -18,7 +18,7 @@ a {
 }
 
 .link-filled-primary:hover {
-    background-color: var(--main-color-dark);
+    background-color: var(--main-color-05);
 }
 
 .link-filled-secondary {

@@ -86,7 +86,7 @@ header {
   justify-content: space-between;
   border-bottom: 2px solid rgba(255, 255, 255, 0.5);
   padding: 1rem;
-  background-color: var(--main-color-dark);
+  background-color: var(--main-color-05);
 }
 .title {
   display: flex;
@@ -142,7 +142,7 @@ nav {
 
 
 .link:hover {
-  background-color: var(--main-color-dark);
+  background-color: var(--main-color-05);
   padding-left: 26px;
 }
 

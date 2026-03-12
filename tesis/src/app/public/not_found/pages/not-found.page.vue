@@ -27,7 +27,7 @@
     justify-content: center;
     background: linear-gradient(135deg,
             var(--main-color),
-            var(--main-color-dark));
+            var(--main-color-05));
     color: white;
 }
 

@@ -23,7 +23,7 @@ button:disabled {
 }
 
 .button-primary:hover {
-    background-color: var(--main-color-dark);
+    background-color: var(--main-color-04);
 }
 
 .button-secondary {
