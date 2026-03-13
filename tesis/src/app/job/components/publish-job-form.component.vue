@@ -114,11 +114,6 @@ onMounted(()=> {
 
 <template>
     <div class="job-form">
-        <header class="job-form__header">
-            <h1>{{ $t('job.creationPage.title') }}</h1>
-            <p class="job-form__subtitle">{{ $t('job.creationPage.subtitle') }}</p>
-        </header>
-
         <div v-if="error" class="form-alert form-alert--error">{{ error }}</div>
         <div v-if="success" class="form-alert form-alert--success">{{ success }}</div>
 
