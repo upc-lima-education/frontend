@@ -37,7 +37,10 @@
     "common": {
         "return": "Return",
         "search": "Search",
-        "naturalPerson": "Natural Person",
+        "advanceSearch": "Advance search",
+        "hide": "Hide",
+        "apply": "Apply",
+        "naturalPerson": "Natural person",
         "employee": "Employee",
         "organization": "Organization",
         "min": "Minimum",
@@ -54,6 +57,10 @@
                 "location": "Location",
                 "publication": "Publication"
             }
+        },
+        "findPage": {
+            "title": "Search for employment",
+            "subtitle": "Find job offers near you"
         },
         "data": {
             "title": "Job title",

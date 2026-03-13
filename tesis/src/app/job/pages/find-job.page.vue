@@ -35,7 +35,7 @@ function searchJobs() {
 </script>
 
 <template>
-  <PageHeaderComponent pageHeader="Buscar trabajos" pageSubheader="Encuentra oportunidades cerca de ti"
+  <PageHeaderComponent :pageHeader="$t('job.findPage.title')" :pageSubheader="$t('job.findPage.subtitle')"
     :includeSearchBar="true" :searchBarfunctionOnClick="searchJobs" />
   <FilterJobComponent/>
   <JobCardListComponent :jobs="jobs" />

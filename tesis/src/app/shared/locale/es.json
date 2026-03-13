@@ -37,7 +37,10 @@
     "common": {
         "return": "Regresar",
         "search": "Buscar",
-        "naturalPerson": "Persona Natural",
+        "advanceSearch": "Búsqueda avanzada",
+        "hide": "Ocultar",
+        "apply": "Aplicar",
+        "naturalPerson": "Persona natural",
         "employee": "Empleado",
         "organization": "Empresa",
         "min": "Mínimo",
@@ -54,6 +57,10 @@
                 "location": "Ubicación",
                 "publication": "Publicación"
             }
+        },
+        "findPage": {
+            "title": "Buscar empleos",
+            "subtitle": "Encuentra oportunidades cerca de ti"
         },
         "data": {
             "title": "Título del trabajo",

@@ -33,7 +33,7 @@ const jobTypeOptions = enumToOptions(JobType, 'job.data.type');
 <template>
     <div class="toolbar">
         <button class="button-primary" @click="toggleFilters">
-            {{ showFilters ? "Ocultar filtros" : "Búsqueda avanzada" }}
+            {{ showFilters ? $t('common.hide') : $t('common.advanceSearch') }}
         </button>
     </div>
     <section v-if="showFilters" class="filters">
@@ -77,7 +77,7 @@ const jobTypeOptions = enumToOptions(JobType, 'job.data.type');
         </div>
 
         <div class="filters-actions">
-            <button class="button-success" @click="searchJobs">Aplicar filtros</button>
+            <button class="button-success" @click="searchJobs">{{ $t('common.apply') }}</button>
         </div>
     </section>
 </template>
