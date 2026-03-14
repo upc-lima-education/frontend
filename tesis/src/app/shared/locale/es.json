@@ -44,7 +44,8 @@
         "employee": "Empleado",
         "organization": "Empresa",
         "min": "Mínimo",
-        "max": "Máximo"
+        "max": "Máximo",
+        "send": "Enviar"
     },
     "job": {
         "creationPage": {
@@ -124,6 +125,9 @@
                 "Hidden": "Oculto"
             }
         }
+    },
+    "message": {
+        "writeMessage": "Escribe un mensaje"
     },
     "department": {
         "Amazonas": "Amazonas",

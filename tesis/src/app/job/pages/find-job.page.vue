@@ -29,18 +29,18 @@ const jobs = [
 ];
 
 function searchJobs() {
-    console.log("Searching by company");
+  console.log("Searching by company");
 }
 
 </script>
 
 <template>
-  <PageHeaderComponent :pageHeader="$t('job.findPage.title')" :pageSubheader="$t('job.findPage.subtitle')"
-    :includeSearchBar="true" :searchBarfunctionOnClick="searchJobs" />
-  <FilterJobComponent/>
-  <JobCardListComponent :jobs="jobs" />
+  <div class="page-content-80">
+    <PageHeaderComponent :pageHeader="$t('job.findPage.title')" :pageSubheader="$t('job.findPage.subtitle')"
+      :includeSearchBar="true" :searchBarfunctionOnClick="searchJobs" />
+    <FilterJobComponent />
+    <JobCardListComponent :jobs="jobs" />
+  </div>
 </template>
 
-<style scoped>
-
-</style>
+<style scoped></style>
