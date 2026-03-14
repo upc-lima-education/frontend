@@ -10,13 +10,13 @@ viewBox="0 0 25 25"
    <![CDATA[
     .str0 {stroke:black;stroke-width:1.41;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:22.9256}
     .fil0 {fill:none}
+    .fil1 {fill:none;fill-rule:nonzero}
    ]]>
   </style>
  </defs>
  <g id="Capa_x0020_1">
   <metadata id="CorelCorpID_0Corel-Layer"/>
-  <polygon class="fil0 str0" points="0.74,5.82 24.3,5.71 24.3,24.28 0.84,24.28 "/>
-  <path class="fil0 str0" d="M0.78 12c0.71,1.44 2.08,3.03 3.63,3.05 1,0.01 2.12,0.02 3.31,0.03m9.6 0.04c1.15,0 2.23,0 3.2,-0.01 1.43,-0.02 3.08,-1.27 3.78,-2.85m-16.58 0.43l9.55 0 0 4.66 -9.55 0 0 -2.27 0 -0.02 0 -2.37z"/>
-  <polyline class="fil0 str0" points="7.72,5.6 7.72,0.72 17.27,0.72 17.27,5.6 "/>
+  <polyline class="fil0 str0" points="17.79,4.44 17.79,0.72 0.72,0.72 0.72,24.28 17.69,24.28 17.66,20.09 "/>
+  <path class="fil1 str0" d="M8.35 15.11l7.96 0 0 3.03 7.97 -6.07 -7.97 -6.08 0 3.04 -7.96 0 0 6.08zm3.98 0m3.98 1.51m3.98 -1.51m0 -6.08m-3.98 -1.52m-3.98 1.52m-3.98 3.04"/>
  </g>
 </svg>

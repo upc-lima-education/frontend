@@ -43,7 +43,7 @@
         <!-- Solo employee -->
         <li>
           <RouterLink to="/message/e" class="link">
-            <img src="../assets/icons/Usuario.svg" class="sidebar-image"/> <!--Temp-->
+            <img src="../assets/icons/Mensajes.svg" class="sidebar-image"/> <!--Temp-->
             <span>{{ $t('sidebar.messages') }}</span>
           </RouterLink>
         </li>
@@ -51,21 +51,21 @@
         <!-- Solo company -->
          <li>
           <RouterLink to="/message/c" class="link">
-            <img src="../assets/icons/Usuario.svg" class="sidebar-image"/> <!--Temp-->
+            <img src="../assets/icons/Mensajes.svg" class="sidebar-image"/> <!--Temp-->
             <span>{{ $t('sidebar.messages') }}</span>
           </RouterLink>
         </li>
 
         <li>
           <RouterLink to="/settings" class="link">
-            <img src="../assets/icons/Usuario.svg" class="sidebar-image"/> <!--Temp-->
+            <img src="../assets/icons/Configuracion.svg" class="sidebar-image"/> <!--Temp-->
             <span>{{ $t('sidebar.settings') }}</span>
           </RouterLink>
         </li>
 
         <li class="logout">
           <RouterLink to="/logout" class="link">
-            <img src="../assets/icons/Usuario.svg" class="sidebar-image"/> <!--Temp-->
+            <img src="../assets/icons/Salir.svg" class="sidebar-image"/> <!--Temp-->
             <span>{{ $t('sidebar.logout') }}</span>
           </RouterLink>
         </li>

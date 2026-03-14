@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<!-- Creator: CorelDRAW 2021 (64-Bit) -->
+<svg xmlns="http://www.w3.org/2000/svg" xml:space="preserve" width="25px" height="25px" version="1.1" style="shape-rendering:geometricPrecision; text-rendering:geometricPrecision; image-rendering:optimizeQuality; fill-rule:evenodd; clip-rule:evenodd"
+viewBox="0 0 25 25"
+ xmlns:xlink="http://www.w3.org/1999/xlink"
+ xmlns:xodm="http://www.corel.com/coreldraw/odm/2003">
+ <defs>
+  <style type="text/css">
+   <![CDATA[
+    .str0 {stroke:black;stroke-width:1.41;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:22.9256}
+    .str1 {stroke:black;stroke-width:0.02;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:22.9256}
+    .fil0 {fill:none}
+    .fil1 {fill:black}
+   ]]>
+  </style>
+ </defs>
+ <g id="Capa_x0020_1">
+  <metadata id="CorelCorpID_0Corel-Layer"/>
+  <path class="fil0 str0" d="M20.74 18.44c0.33,1.89 1.41,5.44 0.04,5.79 -1.37,0.34 -3.33,-3.77 -4.73,-5.74 -4.39,0.01 -7.31,-0.01 -9.22,0 -0.13,0 -0.25,0 -0.37,0 0.71,-0.91 1.67,-2.55 2.24,-3.18 4.39,0 7.31,-0.01 9.23,0 2.04,0.02 3.43,-0.91 3.43,-3.3 -0.01,-1.34 0.04,-5.96 -0.02,-7.96 -0.01,-0.28 -0.03,-0.54 -0.07,-0.78 0.21,0.01 0.41,0.01 0.59,0.02 1.15,0.03 2.39,1.51 2.41,3.01 0.03,2.84 -0.05,7.78 -0.07,8.99 -0.02,1.22 -1.6,2.74 -3.46,3.15z"/>
+  <g id="_2200734129440">
+   <path class="fil0 str0" d="M4.01 15.25c-0.33,1.89 -1.31,5.41 -0.47,5.64 0.84,0.23 3.53,-3.79 5.16,-5.58 4.39,0 7.31,-0.01 9.23,0 2.04,0.02 3.43,-0.91 3.43,-3.3 -0.01,-1.34 0.04,-5.96 -0.02,-7.96 -0.07,-2.32 -1.1,-3.3 -2.95,-3.28 -1.51,0.01 -4.34,0 -7.42,0.01 -3.7,0.01 -6.22,-0.01 -7.84,0.04 -1.15,0.04 -2.39,1.52 -2.4,3.02 -0.03,2.84 0.05,7.78 0.06,8.99 0.02,1.42 1.65,2.42 3.22,2.42z"/>
+   <ellipse class="fil1 str1" cx="6.15" cy="8.18" rx="1.05" ry="1.18"/>
+   <ellipse class="fil1" cx="11.01" cy="8.18" rx="1.05" ry="1.18"/>
+   <ellipse class="fil1" cx="15.91" cy="8.18" rx="1.05" ry="1.18"/>
+  </g>
+ </g>
+</svg>
