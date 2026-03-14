@@ -1,15 +1,18 @@
 <script setup lang="ts">
+import { ConversationResponse } from '../model/conversation.response';
+import ConversationItemComponent from './conversation-item.component.vue';
+
 defineProps({
-    conversations: Array
+    conversations: { type: Array<ConversationResponse>, required: true }
 })
 
-const emit = defineEmits(["select"])
+const emit = defineEmits(["select"]);
 </script>
 
 <template>
     <div class="list">
         <div v-for="c in conversations" :key="c.id" class="item" @click="$emit('select', c)">
-            <slot :conversation="c"></slot>
+            <ConversationItemComponent :id="c.id" :title="c.title" :subtitle="c.subtitle" :userImage="c.userImage" />
         </div>
     </div>
 </template>

@@ -13,5 +13,8 @@ export const ROUTE_CONSTANTS = {
     JOB_PUBLISH: "/job-publish",
     JOB_SEARCH: "/job-search",
 
+    MESSAGE_COMPANY: "/message/c",
+    MESSAGE_EMPLOYEE: "/message/e",
+
     NOT_FOUND_PAGE: "/not-found",
 }

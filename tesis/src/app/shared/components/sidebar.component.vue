@@ -17,7 +17,7 @@
           </RouterLink>
         </li>
 
-        <!-- Solo job seekers -->
+        <!-- Solo employee -->
         <li>
           <RouterLink to="/job-search" class="link">
             <img src="../assets/icons/Maletin.svg" class="sidebar-image"/>
@@ -25,7 +25,7 @@
           </RouterLink>
         </li>
 
-        <!-- Solo employers -->
+        <!-- Solo company -->
         <li>
           <RouterLink to="/job-publish" class="link">
             <img src="../assets/icons/Maletin.svg" class="sidebar-image"/>
@@ -40,8 +40,17 @@
           </RouterLink>
         </li>
 
+        <!-- Solo employee -->
         <li>
-          <RouterLink to="/messages" class="link">
+          <RouterLink to="/message/e" class="link">
+            <img src="../assets/icons/Usuario.svg" class="sidebar-image"/> <!--Temp-->
+            <span>{{ $t('sidebar.messages') }}</span>
+          </RouterLink>
+        </li>
+
+        <!-- Solo company -->
+         <li>
+          <RouterLink to="/message/c" class="link">
             <img src="../assets/icons/Usuario.svg" class="sidebar-image"/> <!--Temp-->
             <span>{{ $t('sidebar.messages') }}</span>
           </RouterLink>

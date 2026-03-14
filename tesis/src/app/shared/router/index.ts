@@ -10,6 +10,8 @@ import SignUpFormEmployeeComponent from '@/app/auth/components/sign-up/sign-up-f
 import SignUpFormOrganization from '@/app/auth/components/sign-up/sign-up-form-organization.vue';
 import FindJobPage from '@/app/job/pages/find-job.page.vue';
 import PublishJobPage from '@/app/job/pages/publish-job.page.vue';
+import MessagingCompanyPage from '@/app/message/pages/messaging-company.page.vue';
+import MessagingEmployeePage from '@/app/message/pages/messaging-employee.page.vue';
 
 
 const router = createRouter({
@@ -34,6 +36,9 @@ const router = createRouter({
 
     { path: ROUTE_CONSTANTS.JOB_SEARCH, name: 'job-search', component: FindJobPage },
     { path: ROUTE_CONSTANTS.JOB_PUBLISH, name: 'job-publish', component: PublishJobPage },
+
+    { path: ROUTE_CONSTANTS.MESSAGE_COMPANY, name: 'message-company', component: MessagingCompanyPage },
+    { path: ROUTE_CONSTANTS.MESSAGE_EMPLOYEE, name: 'message-user', component: MessagingEmployeePage },
 
     { path: ROUTE_CONSTANTS.NOT_FOUND_PAGE, name: 'not-found', component: NotFoundPage },
     { path: '/:pathMatch(.*)*', redirect: ROUTE_CONSTANTS.NOT_FOUND_PAGE }, //If no route is matched

@@ -1,13 +1,16 @@
 <script setup lang="ts">
+import { MessageResponse } from '../model/message.response';
+
 defineProps({
-    message: Object,
-    mine: Boolean
-})
+    message: { type: MessageResponse, required: true },
+    mine: {type: Boolean, required: true }
+});
 </script>
 
 <template>
     <div class="bubble" :class="{ mine }">
-        {{ message.content }}
+        <h4>{{ message.content }}</h4>
+        <span class="time">{{ message.sentAt }}</span>
     </div>
 </template>
 
@@ -21,7 +24,11 @@ defineProps({
 
 .mine {
     align-self: flex-end;
-    background: var(--main-color);
-    color: white;
+    background: var(--main-color-01);
+    color: var(--text-color-inverted);
+}
+
+.time{
+    color: var(--gray-02);
 }
 </style>

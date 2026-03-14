@@ -22,7 +22,7 @@ async function fetchNewsData() {
 </script>
 
 <template>
-    <div class="page-content">
+    <div class="page-content-80">
         <PageHeaderComponent :pageHeader="$t('news.title')" :pageSubheader="$t('news.subtitle')" :includeSearchBar="true" />
         <section>
             <div v-for="news in newsData" :key="news.id">
