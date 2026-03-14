@@ -1,94 +1,155 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue';
-import { ConversationResponse } from '../model/conversation.response';
-import ConversationListComponent from '../components/conversation-list.component.vue';
-import MessageListComponent from '../components/message-list.component.vue';
-import MessageInputComponent from '../components/message-input.component.vue';
+import { onMounted, ref } from "vue";
+
+import { ConversationResponse } from "../model/conversation.response";
+import { MessageResponse } from "../model/message.response";
+
+import ConversationListComponent from "../components/conversation-list.component.vue";
+import MessageListComponent from "../components/message-list.component.vue";
+import MessageInputComponent from "../components/message-input.component.vue";
 
 const conversations = ref<ConversationResponse[]>([]);
-const currentConversationId = ref('');
-const userId = ref('');
+const currentConversation = ref<ConversationResponse | null>(null);
 
-//Todo: connect with the backend
+const messages = ref<MessageResponse[]>([]);
+const userId = ref("");
+
 async function getConversations() {
     return [
         new ConversationResponse(
             "1234",
+            "Vendedor de pan",
             "La Tiendita de Don Pepe",
-            "",
-            "https://www.dafont.com/forum/attach/orig/9/2/928497.png"
+            "https://www.dafont.com/forum/attach/orig/9/2/928497.png",
+            0
         ),
         new ConversationResponse(
             "5678",
+            "Barrendero",
             "Minimarket Santa Rosa",
-            "",
-            "https://www.shutterstock.com/image-vector/colorful-supermarket-minimarket-logo-260nw-2398463929.jpg"
-        ),
+            "https://www.shutterstock.com/image-vector/colorful-supermarket-minimarket-logo-260nw-2398463929.jpg",
+            2
+        )
     ];
 }
 
-function asignConversationId(conversationId: string) {
-    currentConversationId.value = conversationId;
+async function getMessages(conversationId: string) {
+    //TEMP
+    return [
+        new MessageResponse("1", "1234", "9012", "Hola", new Date()),
+        new MessageResponse("2", "5678", "1467", "¿Sigue disponible?", new Date())
+    ];
 }
 
-//Todo: should be obtain through session storage
+async function selectConversation(conversation: ConversationResponse) {
+    currentConversation.value = conversation;
+    messages.value = await getMessages(conversation.id);
+}
+
+//Todo: connect with the backend
+async function sendMessage(content: string) {
+    const newMessage = new MessageResponse(
+        crypto.randomUUID(),
+        userId.value,
+        crypto.randomUUID(),
+        content,
+        new Date()
+    );
+
+    messages.value.push(newMessage);
+}
+
 async function getUserId() {
     return "1234";
 }
 
-
 onMounted(async () => {
-    try {
-        userId.value = await getUserId();
-        console.log("UserId: ", userId.value)
-    } catch (e) {
-        console.log("An error occurred while retrieving the user id: ", e);
-    }
-    try {
-        conversations.value = await getConversations();
-        console.log("Conversation retrieved: ", conversations.value.length);
-    } catch (e) {
-        console.log("An error occurred while retrieving conversations: ", e);
-    }
+    userId.value = await getUserId();
+    conversations.value = await getConversations();
 });
-
 </script>
 
 <template>
-    <div class="page-content-80">
-        <div class="message-page">
-            <aside class="conversation-list">
-                <ConversationListComponent :conversations="conversations" />
-            </aside>
-            <aside class="message-list">
-                <header>
-                    <h1>Temp</h1>
+    <div class="message-page">
+        <aside class="conversation-panel">
+            <header class="message-header">
+                <h3>Mensajes</h3>
+            </header>
+            <ConversationListComponent :conversations="conversations" :selectedId="currentConversation?.id"
+                @select="selectConversation" />
+        </aside>
+
+        <aside class="chat-panel">
+            <template v-if="currentConversation">
+                <header class="chat-header">
+                    <h3>{{ currentConversation.title }}</h3>
+                    <small>{{ currentConversation.subtitle }}</small>
                 </header>
-                <main>
-                    <MessageListComponent :userId="userId" />
+                <main class="chat-messages">
+                    <MessageListComponent :messages="messages" :userId="userId" />
                 </main>
-                <footer>
-                    <MessageInputComponent />
+                <footer class="chat-input">
+                    <MessageInputComponent @send="sendMessage" />
                 </footer>
-            </aside>
-        </div>
+            </template>
+
+            <div v-else class="empty-chat">
+                Selecciona una conversación
+            </div>
+        </aside>
     </div>
 </template>
 
 <style scoped>
-.message-page {
-    width: 100%;
+.message-header{
+    background-color: var(--main-color-04);
     display: flex;
     align-items: center;
-    justify-content: center;
-    flex-direction: row;
+    height: 50px;
+    padding: 1rem;
 }
 
-.conversation-list {
-    width: 30%;
+.message-header>h3{
+    color: white;
 }
 
-.message-list {
-    width: 70%;
+.message-page {
+    width: 100%;
+    height: 100%;
+    display: grid;
+    grid-template-columns: 320px 1fr;
+    overflow: hidden;
+}
+
+.conversation-panel {
+    border-right: 1px solid var(--gray-02);
+    display: flex;
+    flex-direction: column;
+}
+
+.chat-panel {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: 0;
+}
+
+.chat-header {
+    padding: 14px;
+    border-bottom: 1px solid var(--gray-02);
+}
+
+.chat-messages {
+    flex: 1;
+    min-height: 0;
+}
+
+.chat-input {
+    border-top: 1px solid var(--gray-02);
+}
+
+.empty-chat {
+    margin: auto;
+    color: var(--text-color-light);
 }
 </style>

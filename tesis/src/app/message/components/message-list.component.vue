@@ -1,24 +1,39 @@
 <script setup lang="ts">
-import { MessageResponse } from '../model/message.response';
-import MessageBubbleComponent from './message-bubble.component.vue';
+import { ref, watch, nextTick } from "vue";
+import { MessageResponse } from "../model/message.response";
+import MessageBubbleComponent from "./message-bubble.component.vue";
 
-defineProps({
-    userId: {type: String, required: true},
-    messages: { type: Array<MessageResponse> }
-});
+const props = defineProps<{
+    userId: string
+    messages?: MessageResponse[]
+}>();
 
-const emit = defineEmits(["send"]);
+const messagesContainer = ref<HTMLElement | null>(null);
 
+function scrollToBottom() {
+    if (!messagesContainer.value) return;
+
+    messagesContainer.value.scrollTop =
+        messagesContainer.value.scrollHeight;
+}
+
+watch(
+    () => props.messages,
+    async () => {
+        await nextTick();
+        scrollToBottom();
+    },
+    { deep: true }
+);
 </script>
 
 <template>
     <div class="chat-window">
-        <main class="messages">
-            <div v-if="messages" v-for="message in messages" :key="message.id">
-                <MessageBubbleComponent :message="message" :mine="(userId === message.userId)" />
-            </div>
-            <div v-else>
-                <p>No hay mensajes (Temp, should change)</p>
+        <main ref="messagesContainer" class="messages">
+            <MessageBubbleComponent v-for="message in messages" :key="message.id" :message="message"
+                :mine="userId === message.userId" />
+            <div v-if="!messages?.length" class="empty">
+                <p>No hay mensajes todavía</p>
             </div>
         </main>
     </div>
@@ -33,10 +48,16 @@ const emit = defineEmits(["send"]);
 
 .messages {
     flex: 1;
-    overflow-y: auto;
+    overflow-y: scroll;
     padding: 16px;
     display: flex;
     flex-direction: column;
     gap: 10px;
+}
+
+.empty {
+    margin: auto;
+    font-size: 0.9rem;
+    color: var(--text-color-light);
 }
 </style>

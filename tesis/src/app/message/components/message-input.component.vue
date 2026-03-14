@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 
 const message = ref("");
 
@@ -9,12 +9,15 @@ function send() {
     emit("send", message.value);
     message.value = "";
 }
+
+const isButtonDisabled = computed(() => {return message.value == null || message.value == ''});
+
 </script>
 
 <template>
     <div class="input-container">
         <input v-model="message" :placeholder="$t('message.writeMessage')" />
-        <button @click="send">{{ $t('common.send') }}</button>
+        <button @click="send" :disabled="isButtonDisabled">{{ $t('common.send') }}</button>
     </div>
 </template>
 
@@ -27,6 +30,10 @@ function send() {
 }
 
 input {
-    flex: 1;
+    width: 80%;
+}
+
+button{
+    width: 20%;
 }
 </style>
