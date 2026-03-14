@@ -6,10 +6,11 @@ import PublishJobFormComponent from '../components/publish-job-form.component.vu
 </script>
 
 <template>
-  <PageHeaderComponent :page-header="$t('job.creationPage.title')" :page-subheader="$t('job.creationPage.subtitle')"/>
-  <PublishJobFormComponent/>
+  <div class="page-content-80">
+    <PageHeaderComponent :page-header="$t('job.creationPage.title')"
+      :page-subheader="$t('job.creationPage.subtitle')" />
+    <PublishJobFormComponent />
+  </div>
 </template>
 
-<style scoped>
-
-</style>
+<style scoped></style>
