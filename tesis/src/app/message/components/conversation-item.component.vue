@@ -10,7 +10,7 @@ const props = defineProps({
     active: { type: Boolean, default: false }
 });
 
-const image = computed(() => props.userImage || "src/app/shared/assets/icons/UsuarioPredeterminado.svg");
+const image = computed(() => props.userImage || "/src/app/shared/assets/icons/UsuarioPredeterminado.svg");
 </script>
 
 <template>
