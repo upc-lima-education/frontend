@@ -18,17 +18,17 @@ async function getConversations() {
     return [
         new ConversationResponse(
             "1234",
+            0,
             "Vendedor de pan",
             "La Tiendita de Don Pepe",
-            "https://www.dafont.com/forum/attach/orig/9/2/928497.png",
-            0
+            "https://www.dafont.com/forum/attach/orig/9/2/928497.png"
         ),
         new ConversationResponse(
             "5678",
+            2,
             "Barrendero",
             "Minimarket Santa Rosa",
-            "https://www.shutterstock.com/image-vector/colorful-supermarket-minimarket-logo-260nw-2398463929.jpg",
-            2
+            "https://www.shutterstock.com/image-vector/colorful-supermarket-minimarket-logo-260nw-2398463929.jpg"
         )
     ];
 }
@@ -72,13 +72,9 @@ onMounted(async () => {
 <template>
     <div class="message-page">
         <aside class="conversation-panel">
-            <header class="message-header">
-                <h3>Mensajes</h3>
-            </header>
             <ConversationListComponent :conversations="conversations" :selectedId="currentConversation?.id"
                 @select="selectConversation" />
         </aside>
-
         <aside class="chat-panel">
             <template v-if="currentConversation">
                 <header class="chat-header">
@@ -101,18 +97,6 @@ onMounted(async () => {
 </template>
 
 <style scoped>
-.message-header{
-    background-color: var(--main-color-04);
-    display: flex;
-    align-items: center;
-    height: 50px;
-    padding: 1rem;
-}
-
-.message-header>h3{
-    color: white;
-}
-
 .message-page {
     width: 100%;
     height: 100%;
@@ -135,7 +119,12 @@ onMounted(async () => {
 }
 
 .chat-header {
-    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    align-items: start;
+    justify-content: center;
+    height: 10%;
+    padding-left: 1em;
     border-bottom: 1px solid var(--gray-02);
 }
 

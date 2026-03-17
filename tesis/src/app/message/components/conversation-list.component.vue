@@ -13,22 +13,39 @@ const emit = defineEmits<{
 </script>
 
 <template>
-    <div class="list" role="list">
+    <header class="conversation-header">
+        <h3>Mensajes</h3>
+    </header>
+    <main class="list" role="list">
         <ConversationItemComponent v-for="c in conversations" :key="c.id" role="listitem" :id="c.id" :title="c.title"
             :subtitle="c.subtitle" :userImage="c.userImage" :unreadCount="c.unreadCount" :active="selectedId === c.id"
             @click="emit('select', c)" />
         <div v-if="!conversations.length" class="empty">
             <p>No hay conversaciones</p>
         </div>
-    </div>
+    </main>
 </template>
 
 <style scoped>
+.conversation-header {
+    background-color: var(--main-color-04);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: start;
+    padding-left: 1em;
+    height: 10%;
+
+    >h3 {
+        color: white;
+    }
+}
+
 .list {
     display: flex;
     flex-direction: column;
     overflow-y: auto;
-    height: 100%;
+    height: 90%;
 }
 
 .empty {
