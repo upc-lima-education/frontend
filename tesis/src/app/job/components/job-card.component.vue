@@ -1,7 +1,10 @@
 <script setup lang="ts">
+import router from '@/app/shared/router';
+import { ROUTE_CONSTANTS } from '@/app/shared/router/route-constants';
 import { computed } from 'vue';
 
 const props = defineProps({
+    id: { type: String, required: true },
     companyImage: { type: String, default: '' },
     companyName: { type: String, required: true },
     title: { type: String, required: true },
@@ -31,10 +34,15 @@ const closingSoon = computed(() => {
     const diff = props.closesAt.getTime() - Date.now();
     return diff < 1000 * 60 * 60 * 24 * 3;
 });
+
+function goToDetails(){
+    router.push(`${ROUTE_CONSTANTS.JOB_COMPANY}/${props.id}`);
+}
+
 </script>
 
 <template>
-    <article class="job-card">
+    <article class="job-card" @click="goToDetails()">
 
         <div class="company-logo">
             <img :src="companyImage" alt="company-image">
@@ -63,7 +71,6 @@ const closingSoon = computed(() => {
 </template>
 
 <style scoped>
-
 .job-card {
     display: flex;
     gap: 14px;
@@ -78,7 +85,7 @@ const closingSoon = computed(() => {
 .job-card:hover {
     border-color: var(--main-color-01);
     transform: translateY(-1px);
-    box-shadow: 0 4px 14px rgba(0,0,0,0.08);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
 }
 
 /* logo */
@@ -156,5 +163,4 @@ const closingSoon = computed(() => {
     color: var(--red-color);
     font-weight: 600;
 }
-
 </style>

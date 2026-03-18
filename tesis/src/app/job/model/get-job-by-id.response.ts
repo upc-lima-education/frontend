@@ -24,6 +24,7 @@ export class GetJobByIdResponse {
     views: number;
     applications: number;
     creationDate: Date;
+    jobType: string;
 
     constructor(
         id: string,
@@ -50,7 +51,8 @@ export class GetJobByIdResponse {
         jobStatus: string,
         views: number,
         applications: number,
-        creationDate: Date
+        creationDate: Date,
+        jobType: string
     ) {
         this.id = id;
         this.companyId = companyId;
@@ -77,5 +79,6 @@ export class GetJobByIdResponse {
         this.views = views;
         this.applications = applications;
         this.creationDate = creationDate;
+        this.jobType = jobType;
     }
 }
