@@ -36,7 +36,7 @@ const closingSoon = computed(() => {
 });
 
 function goToDetails(){
-    router.push(`${ROUTE_CONSTANTS.JOB_COMPANY}/${props.id}`);
+    router.push(`${ROUTE_CONSTANTS.JOB_EMPLOYEE}/${props.id}`);
 }
 
 </script>
