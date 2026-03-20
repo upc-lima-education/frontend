@@ -11,6 +11,9 @@ export const ROUTE_CONSTANTS = {
 
     NEWS_PAGE: "/news",
     JOB: "/job",
+    
+    SETTINGS_PAGE: "/settings",
+    SETTINGS_PROFILE: "profile",
 
     NOT_FOUND_PAGE: "/not-found",
 }

@@ -22,6 +22,7 @@ export const useAuthenticationStore = defineStore('authentication', () => {
     // State
     const signedIn = ref(false);
     const user = ref<UserResponse | null>(null);
+    const userType = ref<'employee' | 'organization' | null>(localStorage.getItem('userType') as 'employee' | 'organization' | null);
     const accessToken = ref<string | null>(localStorage.getItem('accessToken'));
     const refreshToken = ref<string | null>(localStorage.getItem('refreshToken'));
 
@@ -30,6 +31,7 @@ export const useAuthenticationStore = defineStore('authentication', () => {
     const currentUser = computed(() => user.value);
     const currentUserId = computed(() => user.value?.id || '');
     const currentUserEmail = computed(() => user.value?.email || '');
+    const currentUserType = computed(() => userType.value);
     const currentAccessToken = computed(() => accessToken.value);
 
     // Actions
@@ -93,6 +95,7 @@ export const useAuthenticationStore = defineStore('authentication', () => {
         // Limpiar estado del store primero
         signedIn.value = false;
         user.value = null;
+        userType.value = null;
         accessToken.value = null;
         refreshToken.value = null;
         
@@ -101,6 +104,7 @@ export const useAuthenticationStore = defineStore('authentication', () => {
         localStorage.removeItem('idToken');
         localStorage.removeItem('refreshToken');
         localStorage.removeItem('expiresIn');
+        localStorage.removeItem('userType');
         
         console.log('🚪 Sesión cerrada. LocalStorage limpiado.');
         
@@ -151,10 +155,19 @@ export const useAuthenticationStore = defineStore('authentication', () => {
         }
     }
 
+    /**
+     * Set user type (employee or organization)
+     */
+    function setUserType(type: 'employee' | 'organization'): void {
+        userType.value = type;
+        localStorage.setItem('userType', type);
+    }
+
     return {
         // State
         signedIn,
         user,
+        userType,
         accessToken,
         refreshToken,
         
@@ -163,6 +176,7 @@ export const useAuthenticationStore = defineStore('authentication', () => {
         currentUser,
         currentUserId,
         currentUserEmail,
+        currentUserType,
         currentAccessToken,
         
         // Actions
@@ -170,6 +184,7 @@ export const useAuthenticationStore = defineStore('authentication', () => {
         signUp,
         signOut,
         requestPasswordReset,
-        loadCurrentUser
+        loadCurrentUser,
+        setUserType
     };
 });

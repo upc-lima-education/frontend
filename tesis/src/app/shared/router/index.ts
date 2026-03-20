@@ -7,6 +7,7 @@ import ForgotPasswordPage from '@/app/auth/pages/forgot-password.page.vue';
 import GoogleCallbackPage from '@/app/auth/pages/google-callback.page.vue';
 import NotFoundPage from '@/app/public/not_found/pages/not-found.page.vue';
 import NewsPage from '@/app/news/pages/news.page.vue';
+import SettingsPage from '@/app/settings/pages/settings.page.vue';
 import SignUpTypeSelectionComponent from '@/app/auth/components/sign-up/sign-up-type-selection.component.vue';
 import SignUpFormComponent from '@/app/auth/components/sign-up/sign-up.form.component.vue';
 import SignUpFormEmployeeComponent from '@/app/auth/components/sign-up/sign-up-form-employee.component.vue';
@@ -34,6 +35,7 @@ const router = createRouter({
     { path: '/auth/callback', name: 'auth-callback', component: GoogleCallbackPage },
 
     { path: ROUTE_CONSTANTS.NEWS_PAGE, name: 'news', component: NewsPage },
+    { path: ROUTE_CONSTANTS.SETTINGS_PAGE, name: 'settings', component: SettingsPage },
 
     { path: ROUTE_CONSTANTS.NOT_FOUND_PAGE, name: 'not-found', component: NotFoundPage },
     { path: '/:pathMatch(.*)*', redirect: ROUTE_CONSTANTS.NOT_FOUND_PAGE }, //If no route is matched
