@@ -12,7 +12,7 @@ const jobs = [
     "https://www.shutterstock.com/image-vector/colorful-supermarket-minimarket-logo-260nw-2398463929.jpg",
     "Repartidor",
     "Lima",
-    "San Juan de Lurigancho",
+    250401,
     "InPerson",
     "2026-03-20"
   ),
@@ -22,7 +22,7 @@ const jobs = [
     "https://www.dafont.com/forum/attach/orig/9/2/928497.png",
     "Cajero",
     "Lima",
-    "Ate",
+    250304,
     "InPerson",
     "2026-03-18"
   )

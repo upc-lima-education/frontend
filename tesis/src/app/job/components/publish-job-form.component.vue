@@ -1,53 +1,91 @@
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref } from 'vue';
+import { computed, onMounted, reactive, ref, watch } from 'vue';
 import { JobService } from '../services/job.service';
 import { CreateJobRequest } from '../model/create-job.request';
 import { Currency } from '../enums/currency.enum';
 import { Experience } from '../enums/experience.enum';
 import { JobStatus } from '../enums/job-status.enum';
-import { JobVisibility } from '../enums/job-visibility.enum';
 import { SalaryPeriod } from '../enums/salary-period';
 import { enumToOptions } from '../utils/enum-to-options.util';
-import { Department } from '../enums/department.enum';
 import { JobType } from '../enums/job-type.enum';
+import { CompensationType } from '../enums/compensation-type.enum';
+import ubigeoData from '@/app/shared/data/ubigeo.json';
 
 const jobService = new JobService();
 const loading = ref(false);
 const error = ref<string | null>(null);
 const success = ref<string | null>(null);
 const companyId = ref('');
+const latitude = ref(0);
+const longitude = ref(0);
+const selectedDepartment = ref('');
+const selectedProvince = ref('');
+const selectedDistrict = ref('');
 
 const experienceOptions = enumToOptions(Experience, 'job.data.experience');
 const currencyOptions = enumToOptions(Currency, 'job.data.currency');
-const visibilityOptions = enumToOptions(JobVisibility, 'job.data.visibility');
 const salaryPeriodOptions = enumToOptions(SalaryPeriod, 'job.data.salaryPeriod');
-const departmentOptions = enumToOptions(Department, 'department');
 const jobTypeOptions = enumToOptions(JobType, 'job.data.type');
 
 
+const departments = computed(() => {
+    return [...new Set(ubigeoData.map(u => u.sDepartamento))];
+});
+
+const provinces = computed(() => {
+    return ubigeoData
+        .filter(u => u.sDepartamento === selectedDepartment.value)
+        .map(u => u.sProvincia)
+        .filter((v, i, arr) => arr.indexOf(v) === i);
+});
+
+const districts = computed(() => {
+    return ubigeoData
+        .filter(u =>
+            u.sDepartamento === selectedDepartment.value &&
+            u.sProvincia === selectedProvince.value
+        )
+        .map(u => u.sDistrito);
+});
+
+const ubigeo = computed(() => {
+    const match = ubigeoData.find(u =>
+        u.sDepartamento === selectedDepartment.value &&
+        u.sProvincia === selectedProvince.value &&
+        u.sDistrito === selectedDistrict.value
+    );
+
+    return match ? match.sIdUbigeo : '';
+});
+
+watch(selectedDepartment, () => {
+    selectedProvince.value = '';
+    selectedDistrict.value = '';
+});
+
+watch(selectedProvince, () => {
+    selectedDistrict.value = '';
+});
+
 const form = reactive({
+    //Details
     title: '',
-    companyId: '',
     description: '',
-    role: '',
+    jobType: JobType.InPerson,
     skills: '',
-    responsibilities: '',
-    benefits: '',
     experience: Experience.NoExperienceNeeded,
-    department: '',
-    district: '',
+    //Location
     address: '',
-    latitude: 0,
-    longitude: 0,
+    //Payment
     minSalary: 0,
     maxSalary: 0,
     currency: Currency.PEN,
     salaryPeriod: SalaryPeriod.Monthly,
+    compensationType: CompensationType.Fixed,
+    //Traceability
     opensAt: '',
     closesAt: '',
-    jobVisibility: JobVisibility.Public,
-    jobStatus: JobStatus.Active,
-    jobType: JobType.InPerson
+    jobStatus: JobStatus.Active
 });
 
 async function submit() {
@@ -61,26 +99,28 @@ async function submit() {
             ? JobStatus.Scheduled.toString()
             : JobStatus.Active.toString();
         const request = new CreateJobRequest(
-            form.title,
+            //Id
             companyId.value,
+            //Details
+            form.title,
             form.description,
-            form.role,
+            JobType[form.jobType],
             form.skills,
-            form.responsibilities,
-            form.benefits,
             Experience[form.experience],
-            form.department,
-            form.district,
+            //Location
+            ubigeo.value,
             form.address,
-            Number(form.latitude), //To be developed
-            Number(form.longitude), //To be developed
+            Number(latitude.value), //To be developed
+            Number(longitude.value), //To be developed
+            //Payment
             Number(form.minSalary),
             Number(form.maxSalary),
             Currency[form.currency],
             SalaryPeriod[form.salaryPeriod],
+            CompensationType[form.compensationType],
+            //Traceability
             opensAt,
             new Date(form.closesAt),
-            JobVisibility[form.jobVisibility],
             jobStatus
         );
 
@@ -140,11 +180,6 @@ onMounted(()=> {
                 </div>
 
                 <div class="form-field">
-                    <label>{{ $t('job.data.role') }}</label>
-                    <input v-model="form.role" />
-                </div>
-
-                <div class="form-field">
                     <label>{{ $t('job.data.experience.name') }}</label>
                     <select v-model="form.experience">
                         <option v-for="o in experienceOptions" :key="o.value" :value="o.value">
@@ -156,14 +191,6 @@ onMounted(()=> {
                 <div class="form-field">
                     <label>{{ $t('job.data.skills') }}</label>
                     <input v-model="form.skills"/>
-                </div>
-                <div class="form-field">
-                    <label>{{ $t('job.data.responsibilities') }}</label>
-                    <input v-model="form.responsibilities"/>
-                </div>
-                <div class="form-field full">
-                    <label>{{ $t('job.data.benefits') }}</label>
-                    <input v-model="form.benefits"/>
                 </div>
             </div>
         </section>
@@ -199,26 +226,49 @@ onMounted(()=> {
         </section>
 
         <section class="form-card">
-            <h2>{{ $t('job.creationPage.header.location') }}</h2>
-            <div class="form-grid">
-                <div class="form-field">
-                    <label>{{ $t('job.data.department') }}</label>
-                    <select v-model="form.department">
-                        <option v-for="d in departmentOptions" :key="d.value" :value="d.value">
-                            {{ $t(d.labelKey) }}
-                        </option>
-                    </select>
-                </div>
-                <div class="form-field">
-                    <label>{{ $t('job.data.district') }}</label>
-                    <input v-model="form.district" />
-                </div>
-                <div class="form-field full">
-                    <label>{{ $t('job.data.address') }}</label>
-                    <input v-model="form.address" />
-                </div>
-            </div>
-        </section>
+    <h2>{{ $t('job.creationPage.header.location') }}</h2>
+
+    <div class="form-grid">
+        <!-- Departamento -->
+        <div class="form-field">
+            <label>{{ $t('job.data.department') }}</label>
+            <select v-model="selectedDepartment">
+                <option value="">Seleccionar</option>
+                <option v-for="d in departments" :key="d" :value="d">
+                    {{ d }}
+                </option>
+            </select>
+        </div>
+
+        <!-- Provincia -->
+        <div class="form-field">
+            <label>{{ $t('job.data.province') }}</label>
+            <select v-model="selectedProvince" :disabled="!selectedDepartment">
+                <option value="">Seleccionar</option>
+                <option v-for="p in provinces" :key="p" :value="p">
+                    {{ p }}
+                </option>
+            </select>
+        </div>
+
+        <!-- Distrito -->
+        <div class="form-field">
+            <label>{{ $t('job.data.district') }}</label>
+            <select v-model="selectedDistrict" :disabled="!selectedProvince">
+                <option value="">Seleccionar</option>
+                <option v-for="d in districts" :key="d" :value="d">
+                    {{ d }}
+                </option>
+            </select>
+        </div>
+
+        <!-- Dirección -->
+        <div class="form-field full">
+            <label>{{ $t('job.data.address') }}</label>
+            <input v-model="form.address" />
+        </div>
+    </div>
+</section>
 
         <section class="form-card">
             <h2>{{ $t('job.creationPage.header.publication') }}</h2>
@@ -230,14 +280,6 @@ onMounted(()=> {
                 <div class="form-field">
                     <label>{{ $t('job.data.closesAt') }}</label>
                     <input type="date" v-model="form.closesAt" />
-                </div>
-                <div class="form-field">
-                    <label>{{ $t('job.data.visibility.name') }}</label>
-                    <select v-model="form.jobVisibility">
-                        <option v-for="o in visibilityOptions" :key="o.value" :value="o.value">
-                            {{ $t(o.labelKey) }}
-                        </option>
-                    </select>
                 </div>
             </div>
         </section>

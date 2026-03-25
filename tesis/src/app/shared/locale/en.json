@@ -67,21 +67,14 @@
             "title": "Job title",
             "company": "Organization",
             "description": "Description",
-            "role": "Role",
             "skills": "Skills",
-            "responsibilities": "Responsibilities",
-            "benefits": "Benefits",
             "experience": {
                 "name": "Experience",
                 "NoExperienceNeeded": "No experience",
                 "ThreeMonths": "3 months",
                 "SixMonths": "6 months",
                 "OneYear": "1 year",
-                "TwoYears": "2 years",
-                "ThreeYears": "3 years",
-                "FiveYears": "5 years",
-                "EightYears": "8 years",
-                "TenYears": "10 years"
+                "TwoOrMoreYears": "2 years or more"
             },
             "type": {
                 "name": "Job type",
@@ -90,6 +83,7 @@
                 "InPerson": "On Site"
             },
             "department": "Department",
+            "province": "Province",
             "district": "District",
             "address": "Address",
             "salary": "Salary",
@@ -99,12 +93,18 @@
                 "Weekly": "Weekly",
                 "Fortnightly": "Biweekly",
                 "Monthly": "Monthly",
-                "AfterService": "After service"
+                "ForFees": "For fees"
             },
             "currency": {
                 "name": "Currency",
                 "PEN": "Soles",
                 "USD": "USD"
+            },
+            "compensationType": {
+                "name": "Compensation type",
+                "Fixed": "By salary",
+                "Commission": "By commissions",
+                "Mixed": "Salary with commissions"
             },
             "opensAt": "Opens at",
             "closesAt": "Closes at",
@@ -113,46 +113,11 @@
                 "Draft": "In process",
                 "Scheduled": "Scheduled",
                 "Active": "Active",
-                "Closed": "Closed",
-                "Expired": "Expired",
-                "Archived": "Archived"
-            },
-            "visibility": {
-                "name": "Visibility",
-                "Public": "Public",
-                "FollowersOnly": "Followers only",
-                "Private": "Private",
-                "Hidden": "Hidden"
+                "Closed": "Closed"
             }
         }
     },
     "message": {
         "writeMessage": "Send a message"
-    },
-    "department": {
-        "Amazonas": "Amazonas",
-        "Ancash": "Ancash",
-        "Apurimac": "Apurimac",
-        "Arequipa": "Arequipa",
-        "Ayacucho": "Ayacucho",
-        "Cajamarca": "Cajamarca",
-        "Cusco": "Cusco",
-        "Huancavelica": "Huancavelica",
-        "Huanuco": "Huanuco",
-        "Ica": "Ica",
-        "Junin": "Junin",
-        "LaLibertad": "La Libertad",
-        "Lambayeque": "Lambayeque",
-        "Lima": "Lima",
-        "Loreto": "Loreto",
-        "MadreDeDios": "Madre de Dios",
-        "Moquegua": "Moquegua",
-        "Pasco": "Pasco",
-        "Piura": "Piura",
-        "Puno": "Puno",
-        "SanMartin": "San Martin",
-        "Tacna": "Tacna",
-        "Tumbes": "Tumbes",
-        "Ucayali": "Ucayali"
     }
 }

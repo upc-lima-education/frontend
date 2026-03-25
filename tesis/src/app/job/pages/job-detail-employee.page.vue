@@ -1,42 +1,42 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue';
-import JobDetailDescriptionComponent from '../components/job-detail-description.component.vue';
-import JobDetailHeaderComponent from '../components/job-detail-header.component.vue';
-import JobDetailLocationComponent from '../components/job-detail-location.component.vue';
-import JobDetailPaymentComponent from '../components/job-detail-payment.component.vue';
 import { GetJobByIdResponse } from '../model/get-job-by-id.response';
+import JobDetailComponent from '../components/job-detail.component.vue';
 
 const job = ref<GetJobByIdResponse>();
+
+const companyName = 'My company (TEMP)';
+const companyImage = 'https://static.vecteezy.com/system/resources/thumbnails/047/656/219/small/abstract-logo-design-for-any-corporate-brand-business-company-vector.jpg';
 
 async function getJobById() {
     //Temp
     return new GetJobByIdResponse(
+        //Id    
         "123456789",
         "10000",
+        //Details
         "Barrendero",
         "Únete para ser parte del equipo",
-        "Barrer el suelo",
+        "Hybrid",
         "Ser bueno",
-        "Barrer todo el suelo al final del día",
-        "Seguro contra accidentes, 2 días de descanso a la semana",
         "NoExperienceNeeded",
-        "Lima",
-        "Surquillo",
+        //Location
+        "150141",
         "Add 1234",
         -17.000,
         -18.100,
+        //Payment
         1130,
         1200,
         "PEN",
         "Monthly",
+        "Mixed",
+        //Traceability
         new Date(),
         new Date(),
-        "All",
         "Open",
         10,
-        20,
-        new Date(),
-        "Hybrid"
+        new Date()
     );
 }
 
@@ -49,10 +49,11 @@ onMounted(async () => {
 <template>
     <div class="page-content-80">
         <div v-if="job">
-            <JobDetailHeaderComponent v-bind="job" />
-            <JobDetailPaymentComponent v-bind="job" />
-            <JobDetailDescriptionComponent v-bind="job" />
-            <JobDetailLocationComponent v-bind="job" />
+            <JobDetailComponent
+            :job="job"
+            :company-name="companyName"
+            :company-image="companyImage"
+            :is-company="false"/>
             <button class="button-success">Postular</button>
         </div>
         <div v-else>

@@ -1,12 +1,7 @@
-export enum Experience
-{
+export enum Experience {
     NoExperienceNeeded,
     ThreeMonths,
     SixMonths,
     OneYear,
-    TwoYears,
-    ThreeYears,
-    FiveYears,
-    EightYears,
-    TenYears
+    TwoOrMoreYears
 }
