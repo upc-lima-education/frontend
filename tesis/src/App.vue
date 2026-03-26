@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { RouterView, useRouter } from 'vue-router'
+import { RouterView } from 'vue-router'
 import SidebarComponent from './app/shared/components/sidebar.component.vue';
 import { ROUTE_CONSTANTS } from './app/shared/router/route-constants';
 const viewsWithoutSidebar = [
