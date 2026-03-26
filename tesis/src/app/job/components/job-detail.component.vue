@@ -24,121 +24,202 @@ onMounted(() => {
     }
 });
 
+function formatSalary(min: number, max: number, currency: string) {
+    const symbol = currency === 'PEN' ? 'S/' : '$';
+
+    if (min === max) return `${symbol} ${min}`;
+
+    return `${symbol} ${min} - ${symbol} ${max}`;
+}
+
+function formatDate(date: Date) {
+    return new Date(date).toLocaleDateString();
+}
+
 </script>
 
 <template>
-    <header class="job-header">
-        <img class="logo" :src="companyImage" alt="company">
-        <div class="info">
-            <h1>{{ job.title }}</h1>
-            <p class="company">{{ companyName }}</p>
+    <div class="job-container">
+    <div class="job-card">
+
+        <header class="job-header">
+            <img class="logo" :src="companyImage" alt="company">
+
+            <div class="info">
+                <h1>{{ job.title }}</h1>
+                <p class="company">{{ companyName }}</p>
+                <p class="summary">
+                    {{ district }}, {{ department }} ·
+                    {{ $t(`job.data.type.${job.jobType}`) }}
+                </p>
+            </div>
+
+            <div class="actions">
+                <button v-if="!isCompany" class="button-success">Postular</button>
+                <button v-if="isCompany" class="button-danger">Eliminar</button>
+            </div>
+        </header>
+
+        <div class="divider"></div>
+
+        <div class="salary-box">
+            {{ formatSalary(job.minSalary, job.maxSalary, job.currency) }}
+            {{ $t(`job.data.salaryPeriod.${job.salaryPeriod}`) }}
         </div>
-        <span class="type">{{ $t(`job.data.type.${job.jobType}`) }}</span>
-    </header>
-    <section class="job-section">
-        <h2>Descripción</h2>
-        <p>{{ job.description }}</p>
-        <div v-if="job.skills">
-            <h3>Habilidades</h3>
-            <p>{{ job.skills }}</p>
-        </div>
-    </section>
-    <section class="job-location">
-        <h2>Ubicación</h2>
-        <p>{{ job.address }}</p>
-        <p class="location">{{ district }}, {{ department }}</p>
-    </section>
-    <section class="job-payment">
-        <h2>Salario</h2>
-        <p class="salary">
-            {{ job.minSalary }} - {{ job.maxSalary }}
-            {{ job.currency }}
-            / {{ $t(`job.data.salaryPeriod.${job.salaryPeriod}`) }}
-        </p>
-    </section>
+
+        <div class="divider"></div>
+
+        <section class="section">
+            <h2>Sobre el trabajo</h2>
+            <p>{{ job.description }}</p>
+        </section>
+
+        <section v-if="job.skills" class="section">
+            <h2>Habilidades</h2>
+            <div class="skills">
+                <span v-for="skill in job.skills.split(',')" :key="skill" class="tag">
+                    {{ skill.trim() }}
+                </span>
+            </div>
+        </section>
+
+        <section class="section">
+            <h2>Ubicación</h2>
+            <p>{{ job.address }}</p>
+            <p class="muted">{{ district }}, {{ department }}</p>
+        </section>
+
+    </div>
+
     <section v-if="isCompany" class="job-meta">
-        <h2>Información del anuncio</h2>
-        <ul>
-            <li>Estado: {{ job.jobStatus }}</li>
-            <li>Vistas: {{ job.views }}</li>
-            <li>Publicado: {{ job.creationDate }}</li>
-            <li>Apertura: {{ job.opensAt }}</li>
-            <li>Cierre: {{ job.closesAt }}</li>
-        </ul>
+        <h2>Rendimiento del anuncio</h2>
+        <p>{{ job.views }} visualizaciones</p>
+        <p>Publicado el {{ formatDate(job.creationDate) }}</p>
+        <p>Activo desde {{ formatDate(job.opensAt) }} hasta {{ formatDate(job.closesAt) }}</p>
     </section>
+</div>
 </template>
 
 <style scoped>
+.job-container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 24px;
+}
+
+/* PANEL PRINCIPAL */
+.job-card {
+    border: 1px solid var(--gray-02);
+    border-radius: 16px;
+    padding: 20px;
+    background: var(--background-color);
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+/* HEADER */
 .job-header {
     display: flex;
     gap: 16px;
     align-items: center;
-    padding-bottom: 16px;
-    border-bottom: 1px solid var(--gray-02);
 }
 
 .logo {
-    width: 70px;
-    height: 70px;
-    border-radius: 12px;
+    width: 64px;
+    height: 64px;
+    border-radius: 14px;
     object-fit: cover;
+    border: 1px solid var(--gray-02);
 }
 
 .info {
     flex: 1;
 }
 
-.company {
-    font-weight: 500;
-    color: var(--text-color-medium);
+.info h1 {
+    font-size: 1.5rem;
+    font-weight: 600;
 }
 
-.location {
+.company {
+    color: var(--text-color-medium);
+    margin-top: 2px;
+}
+
+.summary {
+    font-size: 0.9rem;
+    color: var(--text-color-light);
+    margin-top: 4px;
+}
+
+/* ACCIONES */
+.actions {
+    display: flex;
+    gap: 10px;
+}
+
+.button-danger {
+    background: #ffe5e5;
+    color: #d11a2a;
+    border: 1px solid #f5b5b5;
+    padding: 8px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+/* DIVISOR */
+.divider {
+    height: 1px;
+    background: var(--gray-02);
+}
+
+/* SALARIO */
+.salary-box {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--green-color);
+}
+
+/* SECCIONES */
+.section {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.section h2 {
+    font-size: 1.05rem;
+    font-weight: 600;
+}
+
+/* TAGS */
+.skills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.tag {
+    background: var(--gray-02);
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 0.8rem;
+}
+
+/* UBICACIÓN */
+.muted {
     font-size: 0.9rem;
     color: var(--text-color-light);
 }
 
-.type {
-    padding: 4px 10px;
-    border-radius: 999px;
-    background: var(--gray-02);
-    font-size: 0.8rem;
-}
-.job-section {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-}
-
-h2 {
-    margin-bottom: 4px;
-}
-
-.job-location {
-    padding: 14px;
-    border-radius: 10px;
-    background: var(--background-color-light);
-}
-
-.job-payment {
-    padding: 14px;
-    border-radius: 10px;
-    background: var(--background-color-light);
-}
-
-.salary {
-    font-weight: 600;
-    font-size: 1.1rem;
-    color: var(--green-color);
-}
-
+/* META (FUERA DEL CARD) */
 .job-meta {
-    padding: 14px;
-    border-radius: 10px;
+    margin-top: 20px;
+    padding: 16px;
+    border-radius: 12px;
     border: 1px solid var(--gray-02);
-}
-
-ul {
+    background: var(--background-color-light);
     display: flex;
     flex-direction: column;
     gap: 6px;

@@ -12,8 +12,7 @@ import FindJobPage from '@/app/job/pages/find-job.page.vue';
 import PublishJobPage from '@/app/job/pages/publish-job.page.vue';
 import MessagingCompanyPage from '@/app/message/pages/messaging-company.page.vue';
 import MessagingEmployeePage from '@/app/message/pages/messaging-employee.page.vue';
-import JobDetailCompanyPage from '@/app/job/pages/job-detail-company.page.vue';
-import JobDetailEmployeePage from '@/app/job/pages/job-detail-employee.page.vue';
+import JobDetailPage from '@/app/job/pages/job-detail.page.vue';
 
 
 const router = createRouter({
@@ -36,8 +35,7 @@ const router = createRouter({
 
     { path: ROUTE_CONSTANTS.NEWS_PAGE, name: 'news', component: NewsPage },
 
-    { path: `${ROUTE_CONSTANTS.JOB_COMPANY}/:id`, name: "job-detail-company", component: JobDetailCompanyPage},
-    { path: `${ROUTE_CONSTANTS.JOB_EMPLOYEE}/:id`, name: "job-detail-employee", component: JobDetailEmployeePage},
+    { path: `${ROUTE_CONSTANTS.JOB_DETAIL}/:id`, name: "job-detail-company", component: JobDetailPage},
     { path: ROUTE_CONSTANTS.JOB_SEARCH, name: 'job-search', component: FindJobPage },
     { path: ROUTE_CONSTANTS.JOB_PUBLISH, name: 'job-publish', component: PublishJobPage },
 

@@ -21,7 +21,7 @@ async function getJobById() {
         "Ser bueno",
         "NoExperienceNeeded",
         //Location
-        "150141",
+        "140131",
         "Add 1234",
         -17.000,
         -18.100,
@@ -53,8 +53,7 @@ onMounted(async () => {
             :job="job"
             :company-name="companyName"
             :company-image="companyImage"
-            :is-company="false"/>
-            <button class="button-success">Postular</button>
+            :is-company="true"/>
         </div>
         <div v-else>
             <!--Temp-->

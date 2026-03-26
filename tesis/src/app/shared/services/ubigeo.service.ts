@@ -19,7 +19,6 @@ class UbigeoService {
 
   getLocation(ubigeo: string) {
     const item = this.map[ubigeo];
-
     if (!item) return null;
 
     return {
