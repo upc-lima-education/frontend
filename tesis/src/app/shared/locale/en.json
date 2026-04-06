@@ -35,6 +35,7 @@
         "subtitle": "Stay updated with the latest news and updates"
     },
     "common": {
+        "next": "Next",
         "return": "Return",
         "search": "Search",
         "advanceSearch": "Advance search",
@@ -45,18 +46,26 @@
         "organization": "Organization",
         "min": "Minimum",
         "max": "Maximum",
-        "send": "Send"
+        "send": "Send",
+        "add": "Add"
     },
     "job": {
         "creationPage": {
             "title": "Create job offer",
             "subtitle": "Publish an offer in minutes",
             "header": {
-                "basicInfo": "Basic Info",
+                "basicInfo": "Basic info",
+                "requirements": "Requirements",
                 "payment": "Salary",
-                "benefits": "Benefits",
                 "location": "Location",
-                "publication": "Publication"
+                "publication": "Publication date"
+            },
+            "subheader": {
+                "basicInfo": "What is the job about?",
+                "requirements": "What kind of skills does the person need?",
+                "payment": "How much are you willing to pay?",
+                "location": "Where is the job located?",
+                "publication": "Finally, when do you want your post to be seen?"
             }
         },
         "findPage": {

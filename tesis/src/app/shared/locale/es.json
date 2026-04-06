@@ -35,6 +35,7 @@
         "subtitle": "Mantente al día con las últimas noticias y actualizaciones"
     },
     "common": {
+        "next": "Siguiente",
         "return": "Regresar",
         "search": "Buscar",
         "advanceSearch": "Búsqueda avanzada",
@@ -45,7 +46,8 @@
         "organization": "Empresa",
         "min": "Mínimo",
         "max": "Máximo",
-        "send": "Enviar"
+        "send": "Enviar",
+        "add": "Añadir"
     },
     "job": {
         "creationPage": {
@@ -53,10 +55,17 @@
             "subtitle": "Publica tu vacante en minutos",
             "header": {
                 "basicInfo": "Información básica",
+                "requirements": "Requisitos",
                 "payment": "Salario",
-                "benefits": "Beneficios",
                 "location": "Ubicación",
-                "publication": "Publicación"
+                "publication": "Fecha de publicación"
+            },
+            "subheader": {
+                "basicInfo": "¿De qué trata el trabajo?",
+                "requirements": "¿Qué perfil necesitas?",
+                "payment": "¿Cuánto estás ofreciendo?",
+                "location": "¿En dónde se ubica el trabajo?",
+                "publication": "Finalmente, ¿Cuándo quieres que se vea tu publicación?"
             }
         },
         "findPage": {
