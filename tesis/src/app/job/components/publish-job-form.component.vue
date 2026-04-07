@@ -38,8 +38,8 @@ const form = reactive({
     salaryPeriod: SalaryPeriod.Monthly,
     compensationType: CompensationType.Fixed,
     //Traceability
-    opensAt: new Date(),
-    closesAt: new Date(),
+    opensAt: '',
+    closesAt: '',
     jobStatus: JobStatus.Active
 });
 
@@ -97,20 +97,32 @@ const compensationTypeOptions = enumToOptions(CompensationType, 'job.data.compen
 const skillBubbles = ref<Set<string>>(new Set());
 function addSkillBubble(skill: string) {
     if (skill && !skillBubbles.value.has(skill)) {
-        skillBubbles.value.add(skill);
+        skillBubbles.value.add(skill.trim());
         form.skills = "";
     }
 }
 function removeSkillBubble(skill: string) {
     skillBubbles.value.delete(skill);
 }
-
+function getSkillsFromSkillBubbles(){
+    let skills = "";
+    skillBubbles.value.forEach(skill => {
+        skills.concat(`${skill};`);
+    });
+    skills.slice(0,skills.lastIndexOf(';'));
+    return skills;
+}
 //Steps for dinamic effect
 const currentStep = ref(1);
 const totalSteps = 5;
 const stepValidation = computed(() => {
     switch (currentStep.value) {
-        case 1: return (!form.title.trim() || form.description.trim().length < 20);
+        case 1: return (
+            form.title.trim().length < 5 ||
+            form.title.trim().length > 120 ||
+            form.description.trim().length < 20 ||
+            form.description.trim().length > 500
+        );
         case 2: return (skillBubbles.value.size <= 0);
         case 3: return (form.minSalary > form.maxSalary);
         case 4: return (!selectedDepartment.value || !selectedProvince.value || !selectedDistrict.value);
@@ -143,9 +155,12 @@ async function submit() {
     try {
         const currentDate = new Date();
         const opensAt = new Date(form.opensAt);
+        const closesAt = new Date(form.closesAt);
         const jobStatus = (currentDate < opensAt)
             ? JobStatus.Scheduled.toString()
             : JobStatus.Active.toString();
+        const skills = getSkillsFromSkillBubbles();
+        if(skills.length <= 0) return;
         const request = new CreateJobRequest(
             //Id
             companyId.value,
@@ -153,7 +168,7 @@ async function submit() {
             form.title,
             form.description,
             JobType[form.jobType],
-            form.skills,
+            skills,
             Experience[form.experience],
             //Location
             ubigeo.value,
@@ -168,7 +183,7 @@ async function submit() {
             CompensationType[form.compensationType],
             //Traceability
             opensAt,
-            new Date(form.closesAt),
+            closesAt,
             jobStatus
         );
         await jobService.createJob(request);
@@ -190,8 +205,8 @@ onMounted(() => {
                 <p>{{ $t(`job.creationPage.subheader.${currentStepTitle}`) }}</p>
             </aside>
             <aside class="section-header-buttons">
-                <button @click="prevStep()" :disabled="currentStep - 1 <= 0">{{ $t('common.return') }}</button>
-                <button @click="nextStep()" :disabled="stepValidation">{{ $t('common.next') }}</button>
+                <button @click="prevStep()" :disabled="currentStep - 1 <= 0" :title="$t('common.return')"><</button>
+                <button @click="nextStep()" :disabled="stepValidation" :title="$t('common.next')">></button>
             </aside>
         </header>
         <section v-if="currentStep === 1">
@@ -240,8 +255,8 @@ onMounted(() => {
                         {{ $t(o.labelKey) }}
                     </option>
                 </select>
-                <label for="salary">{{ $t('job.data.salary') }}</label>
-                <div id="salary">
+                <span>{{ $t('job.data.salary') }}</span>
+                <div>
                     <input type="number" v-model.number="form.minSalary" />
                     <input type="number" v-model.number="form.maxSalary" />
                 </div>
@@ -279,9 +294,10 @@ onMounted(() => {
         </section>
         <section v-if="currentStep === 5">
             <label for="opensAt">{{ $t('job.data.opensAt') }}</label>
-            <input id="opensAt" type="date" v-model="form.opensAt" />
+            <input id="opensAt" type="datetime-local" v-model="form.opensAt" />
             <label for="closesAt">{{ $t('job.data.closesAt') }}</label>
-            <input id="closesAt" type="date" v-model="form.closesAt" />
+            <input id="closesAt" type="datetime-local" v-model="form.closesAt" />
+            <button @click="submit()" :disabled="!form.opensAt || !form.closesAt">{{ $t('common.send') }}</button>
         </section>
     </div>
     <div v-else>
