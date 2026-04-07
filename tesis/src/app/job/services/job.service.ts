@@ -45,10 +45,11 @@ export class JobService {
             response.data.Currency,
             response.data.SalaryPeriod,
             response.data.CompensationType,
-            response.data.OpensAt,
-            response.data.ClosesAt,
+            new Date(response.data.OpensAt),
+            new Date(response.data.ClosesAt),
             response.data.JobStatus,
-            response.data.Views
+            response.data.Views,
+            new Date(response.data.CreationDate)
         );
     }
 
