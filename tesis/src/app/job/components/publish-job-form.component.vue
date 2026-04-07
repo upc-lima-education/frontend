@@ -114,7 +114,6 @@ const stepValidation = computed(() => {
         case 2: return (skillBubbles.value.size <= 0);
         case 3: return (form.minSalary > form.maxSalary);
         case 4: return (!selectedDepartment.value || !selectedProvince.value || !selectedDistrict.value);
-        case 5: return (form.opensAt && form.closesAt && new Date(form.opensAt) > new Date(form.closesAt));
         default: return false;
     }
 });
@@ -196,36 +195,31 @@ onMounted(() => {
             </aside>
         </header>
         <section v-if="currentStep === 1">
-            <div class="form-field">
-                <label for="title">{{ $t('job.data.title') }}</label>
-                <input id="title" v-model="form.title" />
-            </div>
-            <div class="form-field">
-                <label for="jobType">{{ $t('job.data.type.name') }}</label>
-                <select id="jobType" v-model="form.jobType">
-                    <option v-for="o in jobTypeOptions" :key="o.value" :value="o.value">
-                        {{ $t(o.labelKey) }}
-                    </option>
-                </select>
-            </div>
-            <div class="form-field full">
-                <label for="description">{{ $t('job.data.description') }}</label>
-                <textarea id="description" v-model="form.description"></textarea>
-            </div>
+            <label for="title">{{ $t('job.data.title') }}</label>
+            <input id="title" v-model="form.title" />
+            <label for="jobType">{{ $t('job.data.type.name') }}</label>
+            <select id="jobType" v-model="form.jobType">
+                <option v-for="o in jobTypeOptions" :key="o.value" :value="o.value">
+                    {{ $t(o.labelKey) }}
+                </option>
+            </select>
+            <label for="description">{{ $t('job.data.description') }}</label>
+            <textarea id="description" v-model="form.description"></textarea>
         </section>
         <section v-if="currentStep === 2">
-            <div class="form-field">
-                <label for="name">{{ $t('job.data.experience.name') }}</label>
-                <select id="name" v-model="form.experience">
-                    <option v-for="o in experienceOptions" :key="o.value" :value="o.value"> {{ $t(o.labelKey) }}
-                    </option>
-                </select>
+            <label for="experience">{{ $t('job.data.experience.name') }}</label>
+            <select id="experience" v-model="form.experience">
+                <option v-for="o in experienceOptions" :key="o.value" :value="o.value">
+                    {{ $t(o.labelKey) }}
+                </option>
+            </select>
+            <div class="input-button-container">
+                <div class="form-field">
+                    <label for="skill">{{ $t('job.data.skills') }}</label>
+                    <input id="skill" v-model="form.skills" />
+                </div>
+                <button @click="addSkillBubble(form.skills)">{{ $t('common.add') }}</button>
             </div>
-            <div class="form-field">
-                <label for="skill">{{ $t('job.data.skills') }}</label>
-                <input id="skill" v-model="form.skills" />
-            </div>
-            <button @click="addSkillBubble(form.skills)">{{ $t('common.add') }}</button>
             <div class="skill-bubble-container">
                 <article v-for="bubble in skillBubbles" @click="removeSkillBubble(bubble)" class="skill-bubble">
                     {{ bubble }}
@@ -233,79 +227,61 @@ onMounted(() => {
             </div>
         </section>
         <section v-if="currentStep === 3">
+            <label for="compensationType">{{ $t('job.data.compensationType.name') }}</label>
+            <select id="compensationType" v-model="form.compensationType">
+                <option v-for="c in compensationTypeOptions" :key="c.value" :value="c.value">
+                    {{ $t(c.labelKey) }}
+                </option>
+            </select>
             <div class="form-field">
-                <label for="compensationType">{{ $t('job.data.compensationType.name') }}</label>
-                <select id="compensationType" v-model="form.compensationType">
-                    <option v-for="c in compensationTypeOptions" :key="c.value" :value="c.value">
-                        {{ c.labelKey }}
+                <label for="currency">{{ $t('job.data.currency.name') }}</label>
+                <select id="currency" v-model="form.currency">
+                    <option v-for="o in currencyOptions" :key="o.value" :value="o.value">
+                        {{ $t(o.labelKey) }}
                     </option>
                 </select>
-            </div>
-            <div class="form-field">
-                <div class="form-field">
-                    <label for="currency">{{ $t('job.data.currency.name') }}</label>
-                    <select id="currency" v-model="form.currency">
-                        <option v-for="o in currencyOptions" :key="o.value" :value="o.value">
-                            {{ $t(o.labelKey) }}
-                        </option>
-                    </select>
-                </div>
                 <label for="salary">{{ $t('job.data.salary') }}</label>
                 <div id="salary">
                     <input type="number" v-model.number="form.minSalary" />
                     <input type="number" v-model.number="form.maxSalary" />
                 </div>
             </div>
-            <div class="form-field">
-                <label for="salaryPeriod">{{ $t('job.data.salaryPeriod.name') }}</label>
-                <select id="salaryPeriod" v-model="form.salaryPeriod">
-                    <option v-for="o in salaryPeriodOptions" :key="o.value" :value="o.value">
-                        {{ $t(o.labelKey) }}
-                    </option>
-                </select>
-            </div>
+            <label for="salaryPeriod">{{ $t('job.data.salaryPeriod.name') }}</label>
+            <select id="salaryPeriod" v-model="form.salaryPeriod">
+                <option v-for="o in salaryPeriodOptions" :key="o.value" :value="o.value">
+                    {{ $t(o.labelKey) }}
+                </option>
+            </select>
         </section>
         <section v-if="currentStep === 4">
             <div class="form-grid">
-                <div class="form-field">
-                    <label for="department">{{ $t('job.data.department') }}</label>
-                    <select id="department" v-model="selectedDepartment">
-                        <option v-for="department in departments" :key="department" :value="department">
-                            {{ department }}
-                        </option>
-                    </select>
-                </div>
-                <div class="form-field">
-                    <label for="province">{{ $t('job.data.province') }}</label>
-                    <select id="province" v-model="selectedProvince" :disabled="!selectedDepartment">
-                        <option v-for="province in provinces" :key="province" :value="province">
-                            {{ province }} 
-                        </option>
-                    </select>
-                </div>
-                <div class="form-field">
-                    <label for="district">{{ $t('job.data.district') }}</label>
-                    <select id="district" v-model="selectedDistrict" :disabled="!selectedProvince">
-                        <option v-for="district in districts" :key="district" :value="district">
-                            {{ district }}
-                        </option>
-                    </select>
-                </div>
-                <div class="form-field full">
-                    <label for="address"> {{ $t('job.data.address') }} </label>
-                    <input id="address" v-model="form.address" />
-                </div>
+                <label for="department">{{ $t('job.data.department') }}</label>
+                <select id="department" v-model="selectedDepartment">
+                    <option v-for="department in departments" :key="department" :value="department">
+                        {{ department }}
+                    </option>
+                </select>
+                <label for="province">{{ $t('job.data.province') }}</label>
+                <select id="province" v-model="selectedProvince" :disabled="!selectedDepartment">
+                    <option v-for="province in provinces" :key="province" :value="province">
+                        {{ province }}
+                    </option>
+                </select>
+                <label for="district">{{ $t('job.data.district') }}</label>
+                <select id="district" v-model="selectedDistrict" :disabled="!selectedProvince">
+                    <option v-for="district in districts" :key="district" :value="district">
+                        {{ district }}
+                    </option>
+                </select>
+                <label for="address"> {{ $t('job.data.address') }} </label>
+                <input id="address" v-model="form.address" />
             </div>
         </section>
         <section v-if="currentStep === 5">
-            <div class="form-field">
-                <label for="opensAt">{{ $t('job.data.opensAt') }}</label>
-                <input  id="opensAt" type="date" v-model="form.opensAt" />
-            </div>
-            <div class="form-field">
-                <label for="closesAt">{{ $t('job.data.closesAt') }}</label>
-                <input id="closesAt" type="date" v-model="form.closesAt" />
-            </div>
+            <label for="opensAt">{{ $t('job.data.opensAt') }}</label>
+            <input id="opensAt" type="date" v-model="form.opensAt" />
+            <label for="closesAt">{{ $t('job.data.closesAt') }}</label>
+            <input id="closesAt" type="date" v-model="form.closesAt" />
         </section>
     </div>
     <div v-else>
@@ -327,6 +303,13 @@ onMounted(() => {
     align-items: center;
     justify-content: center;
     gap: 2rem;
+}
+
+.input-button-container {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: end;
 }
 
 .skill-bubble-container {
