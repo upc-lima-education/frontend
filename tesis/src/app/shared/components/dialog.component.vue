@@ -53,7 +53,7 @@ defineExpose({ open, close });
 
         <section class="dialog-body">
             <slot>
-                <p>{{ description }}</p>
+                {{ description }}
             </slot>
         </section>
 

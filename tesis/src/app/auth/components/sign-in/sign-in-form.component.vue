@@ -30,7 +30,7 @@ const noAccountLink : string = `${ROUTE_CONSTANTS.SIGN_UP_PAGE}/${ROUTE_CONSTANT
                     <input id="password" type="password" placeholder="Password" v-model="password" />
                 </section>
                 <section>
-                    <input class="button-primary" type="submit" :value="$t('auth.login')" />
+                    <input class="btn-primary" type="submit" :value="$t('auth.login')" />
                     <div class="redirects-container">
                         <RouterLink :to="noAccountLink">{{ $t('auth.noAccount') }}</RouterLink>
                         <RouterLink to="/">{{ $t('auth.forgotPassword') }}</RouterLink>

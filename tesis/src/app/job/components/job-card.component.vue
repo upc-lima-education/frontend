@@ -135,7 +135,7 @@ function goToDetails(){
     padding: 3px 10px;
     border-radius: 999px;
     background: var(--gray-02);
-    color: var(--text-color-darker);
+    color: var(--text-color);
     white-space: nowrap;
 }
 
@@ -156,7 +156,7 @@ function goToDetails(){
 
 .job-expiration {
     font-size: 0.8rem;
-    color: var(--text-color-medium);
+    color: var(--text-color);
 }
 
 .job-expiration.soon {

@@ -55,8 +55,8 @@ function formatDate(date: Date) {
             </div>
 
             <div class="actions">
-                <button v-if="!isCompany" class="button-success">Postular</button>
-                <button v-if="isCompany" class="button-danger">Eliminar</button>
+                <button v-if="!isCompany" class="btn-success">Postular</button>
+                <button v-if="isCompany" class="btn-danger">Eliminar</button>
             </div>
         </header>
 
@@ -143,13 +143,13 @@ function formatDate(date: Date) {
 }
 
 .company {
-    color: var(--text-color-medium);
+    color: var(--text-color);
     margin-top: 2px;
 }
 
 .summary {
     font-size: 0.9rem;
-    color: var(--text-color-light);
+    color: var(--text-color);
     margin-top: 4px;
 }
 
@@ -159,7 +159,7 @@ function formatDate(date: Date) {
     gap: 10px;
 }
 
-.button-danger {
+.btn-danger {
     background: #ffe5e5;
     color: #d11a2a;
     border: 1px solid #f5b5b5;
@@ -210,7 +210,7 @@ function formatDate(date: Date) {
 /* UBICACIÓN */
 .muted {
     font-size: 0.9rem;
-    color: var(--text-color-light);
+    color: var(--text-color);
 }
 
 /* META (FUERA DEL CARD) */
