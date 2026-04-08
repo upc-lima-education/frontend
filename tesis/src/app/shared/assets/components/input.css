@@ -43,8 +43,10 @@ label {
 
 input:focus+label,
 textarea:focus+label,
+select:focus+label,
 input:not(:placeholder-shown)+label,
-textarea:not(:placeholder-shown)+label {
+textarea:not(:placeholder-shown)+label,
+select:not(:placeholder-shown)+label {
   top: 0;
   font-size: 0.8rem;
   color: var(--main-color-01);
