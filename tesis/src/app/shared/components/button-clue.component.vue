@@ -2,7 +2,7 @@
 import TooltipComponent from './tooltip.component.vue';
 defineProps({
     text: { type: String },
-    position: { type: String, default: 'top' }
+    position: { type: String, default: 'right' }
 });
 </script>
 
