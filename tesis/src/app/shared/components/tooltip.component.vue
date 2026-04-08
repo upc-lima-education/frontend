@@ -3,7 +3,7 @@ import { ref } from 'vue';
 
 defineProps({
     text: { type: String, default: 'Asign a custom text using the text prop'},
-    position: { type: String, default: 'top' }
+    position: { type: String, default: 'right' }
 });
 
 const show = ref(false);
@@ -59,12 +59,10 @@ const show = ref(false);
     transform: translateX(-50%);
 }
 .left {
-    left: 50%;
-    transform: translateX(-100%);
+    transform: translateX(-50%);
 }
 .right {
-    left: 50%;
-    transform: translateX(100%);
+    transform: translateX(50%);
 }
 /*Fade animation*/
 .fade-enter-active,
