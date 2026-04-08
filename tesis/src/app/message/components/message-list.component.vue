@@ -58,6 +58,6 @@ watch(
 .empty {
     margin: auto;
     font-size: 0.9rem;
-    color: var(--text-color-light);
+    color: var(--text-color);
 }
 </style>

@@ -74,14 +74,14 @@ const image = computed(() => props.userImage || "/src/app/shared/assets/icons/Us
 }
 
 .title{
-    color:var(--text-color-default);
+    color:var(--text-color);
     white-space:nowrap;
     overflow:hidden;
     text-overflow:ellipsis;
 }
 
 .subtitle{
-    color:var(--text-color-light);
+    color:var(--text-color);
     white-space:nowrap;
     overflow:hidden;
     text-overflow:ellipsis;

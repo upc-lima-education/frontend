@@ -139,6 +139,6 @@ onMounted(async () => {
 
 .empty-chat {
     margin: auto;
-    color: var(--text-color-light);
+    color: var(--text-color);
 }
 </style>

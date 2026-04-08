@@ -1,8 +1,0 @@
-select{
-    border: 1px solid var(--gray-03);
-    border-radius: 6px;
-    padding: 6px 8px;
-    font-size: 1rem;
-    width: 100%;
-    box-sizing: border-box;
-}

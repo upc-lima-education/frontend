@@ -10,6 +10,7 @@ import { enumToOptions } from '../utils/enum-to-options.util';
 import { JobType } from '../enums/job-type.enum';
 import { CompensationType } from '../enums/compensation-type.enum';
 import ubigeoData from '@/app/shared/data/ubigeo.json';
+import ButtonClueComponent from '@/app/shared/components/button-clue.component.vue';
 
 const jobService = new JobService();
 //Auto computed company data
@@ -104,12 +105,12 @@ function addSkillBubble(skill: string) {
 function removeSkillBubble(skill: string) {
     skillBubbles.value.delete(skill);
 }
-function getSkillsFromSkillBubbles(){
+function getSkillsFromSkillBubbles() {
     let skills = "";
     skillBubbles.value.forEach(skill => {
         skills.concat(`${skill};`);
     });
-    skills.slice(0,skills.lastIndexOf(';'));
+    skills.slice(0, skills.lastIndexOf(';'));
     return skills;
 }
 //Steps for dinamic effect
@@ -160,7 +161,7 @@ async function submit() {
             ? JobStatus.Scheduled.toString()
             : JobStatus.Active.toString();
         const skills = getSkillsFromSkillBubbles();
-        if(skills.length <= 0) return;
+        if (skills.length <= 0) return;
         const request = new CreateJobRequest(
             //Id
             companyId.value,
@@ -205,35 +206,60 @@ onMounted(() => {
                 <p>{{ $t(`job.creationPage.subheader.${currentStepTitle}`) }}</p>
             </aside>
             <aside class="section-header-buttons">
-                <button @click="prevStep()" :disabled="currentStep - 1 <= 0" :title="$t('common.return')"><</button>
-                <button @click="nextStep()" :disabled="stepValidation" :title="$t('common.next')">></button>
+                <button @click="prevStep()" :disabled="currentStep - 1 <= 0" :title="$t('common.return')">
+                    < </button>
+                        <button @click="nextStep()" :disabled="stepValidation" :title="$t('common.next')"> > </button>
             </aside>
         </header>
         <section v-if="currentStep === 1">
-            <label for="title">{{ $t('job.data.title') }}</label>
-            <input id="title" v-model="form.title" />
-            <label for="jobType">{{ $t('job.data.type.name') }}</label>
-            <select id="jobType" v-model="form.jobType">
-                <option v-for="o in jobTypeOptions" :key="o.value" :value="o.value">
-                    {{ $t(o.labelKey) }}
-                </option>
-            </select>
-            <label for="description">{{ $t('job.data.description') }}</label>
-            <textarea id="description" v-model="form.description"></textarea>
+            <div class="input-container">
+                <div class="label-row">
+                    <label for="title">{{ $t('job.data.title') }}</label>
+                    <ButtonClueComponent text="Mín: 5 caracteres. Máx: 120 caracteres." />
+                </div>
+                <input id="title" v-model="form.title" />
+            </div>
+            <div class="input-container">
+                <div class="label-row">
+                    <label for="jobType">{{ $t('job.data.type.name') }}</label>
+                    <ButtonClueComponent text="Medio principal por el cual el empleado trabajará en su empresa." />
+                </div>
+                <select id="jobType" v-model="form.jobType">
+                    <option v-for="o in jobTypeOptions" :key="o.value" :value="o.value">
+                        {{ $t(o.labelKey) }}
+                    </option>
+                </select>
+            </div>
+            <div class="input-container">
+                <div class="label-row">
+                    <label for="description">{{ $t('job.data.description') }}</label>
+                    <ButtonClueComponent text="Mín: 20 caracteres. Máx: 500 caracteres" />
+                </div>
+                <textarea id="description" v-model="form.description"></textarea>
+            </div>
         </section>
         <section v-if="currentStep === 2">
-            <label for="experience">{{ $t('job.data.experience.name') }}</label>
-            <select id="experience" v-model="form.experience">
-                <option v-for="o in experienceOptions" :key="o.value" :value="o.value">
-                    {{ $t(o.labelKey) }}
-                </option>
-            </select>
-            <div class="input-button-container">
-                <div class="form-field">
-                    <label for="skill">{{ $t('job.data.skills') }}</label>
-                    <input id="skill" v-model="form.skills" />
+            <div class="input-container">
+                <div class="label-row">
+                    <label for="experience">{{ $t('job.data.experience.name') }}</label>
+                    <ButtonClueComponent text="La experiencia previa de la persona" />
                 </div>
-                <button @click="addSkillBubble(form.skills)">{{ $t('common.add') }}</button>
+                <select id="experience" v-model="form.experience">
+                    <option v-for="o in experienceOptions" :key="o.value" :value="o.value">
+                        {{ $t(o.labelKey) }}
+                    </option>
+                </select>
+            </div>
+            <div class="input-container">
+                <div class="label-row">
+                    <label for="skill">{{ $t('job.data.skills') }}</label>
+                    <ButtonClueComponent text="Habilidades que desea de la persona.
+                    Para agregar una, escriba en el campo de la izquierda y haga click en 'Agregar'" />
+                </div>
+                <div class="input-button-container">
+                    <input id="skill" v-model="form.skills" />
+                    <button @click="addSkillBubble(form.skills)">{{ $t('common.add') }}</button>
+                </div>
             </div>
             <div class="skill-bubble-container">
                 <article v-for="bubble in skillBubbles" @click="removeSkillBubble(bubble)" class="skill-bubble">
@@ -242,61 +268,91 @@ onMounted(() => {
             </div>
         </section>
         <section v-if="currentStep === 3">
-            <label for="compensationType">{{ $t('job.data.compensationType.name') }}</label>
-            <select id="compensationType" v-model="form.compensationType">
-                <option v-for="c in compensationTypeOptions" :key="c.value" :value="c.value">
-                    {{ $t(c.labelKey) }}
-                </option>
-            </select>
-            <div class="form-field">
-                <label for="currency">{{ $t('job.data.currency.name') }}</label>
+            <div class="input-container">
+                <div class="label-row">
+                    <label for="compensationType">{{ $t('job.data.compensationType.name') }}</label>
+                    <ButtonClueComponent text="Indica si el salario es fijo y/o incluye comisiones" />
+                </div>
+                <select id="compensationType" v-model="form.compensationType">
+                    <option v-for="c in compensationTypeOptions" :key="c.value" :value="c.value">
+                        {{ $t(c.labelKey) }}
+                    </option>
+                </select>
+            </div>
+            <div class="input-container">
+                <div class="label-row">
+                    <p>Salario</p>
+                    <ButtonClueComponent text="La remuneración del empleo" />
+                </div>
                 <select id="currency" v-model="form.currency">
                     <option v-for="o in currencyOptions" :key="o.value" :value="o.value">
                         {{ $t(o.labelKey) }}
                     </option>
                 </select>
-                <span>{{ $t('job.data.salary') }}</span>
-                <div>
-                    <input type="number" v-model.number="form.minSalary" />
-                    <input type="number" v-model.number="form.maxSalary" />
-                </div>
+                <input type="number" v-model.number="form.minSalary" />
+                <input type="number" v-model.number="form.maxSalary" />
             </div>
-            <label for="salaryPeriod">{{ $t('job.data.salaryPeriod.name') }}</label>
-            <select id="salaryPeriod" v-model="form.salaryPeriod">
-                <option v-for="o in salaryPeriodOptions" :key="o.value" :value="o.value">
-                    {{ $t(o.labelKey) }}
-                </option>
-            </select>
+            <div class="input-container">
+                <div class="label-row">
+                    <label for="salaryPeriod">{{ $t('job.data.salaryPeriod.name') }}</label>
+                    <ButtonClueComponent text="La frecuencia con la que se pagará al empleado" />
+                </div>
+                <select id="salaryPeriod" v-model="form.salaryPeriod">
+                    <option v-for="o in salaryPeriodOptions" :key="o.value" :value="o.value">
+                        {{ $t(o.labelKey) }}
+                    </option>
+                </select>
+            </div>
         </section>
         <section v-if="currentStep === 4">
-            <div class="form-grid">
+            <div class="input-container">
                 <label for="department">{{ $t('job.data.department') }}</label>
                 <select id="department" v-model="selectedDepartment">
                     <option v-for="department in departments" :key="department" :value="department">
                         {{ department }}
                     </option>
                 </select>
+            </div>
+            <div class="input-container">
                 <label for="province">{{ $t('job.data.province') }}</label>
                 <select id="province" v-model="selectedProvince" :disabled="!selectedDepartment">
                     <option v-for="province in provinces" :key="province" :value="province">
                         {{ province }}
                     </option>
                 </select>
+            </div>
+            <div class="input-container">
                 <label for="district">{{ $t('job.data.district') }}</label>
                 <select id="district" v-model="selectedDistrict" :disabled="!selectedProvince">
                     <option v-for="district in districts" :key="district" :value="district">
                         {{ district }}
                     </option>
                 </select>
-                <label for="address"> {{ $t('job.data.address') }} </label>
+            </div>
+            <div class="input-container">
+                <div class="label-row">
+                    <label for="address"> {{ $t('job.data.address') }} </label>
+                    <ButtonClueComponent text="La direccion completa del lugar de trabajo" />
+                </div>
                 <input id="address" v-model="form.address" />
             </div>
         </section>
         <section v-if="currentStep === 5">
-            <label for="opensAt">{{ $t('job.data.opensAt') }}</label>
-            <input id="opensAt" type="datetime-local" v-model="form.opensAt" />
-            <label for="closesAt">{{ $t('job.data.closesAt') }}</label>
-            <input id="closesAt" type="datetime-local" v-model="form.closesAt" />
+            <div class="input-container">
+                <div class="label-row">
+                    <label for="opensAt">{{ $t('job.data.opensAt') }}</label>
+                    <ButtonClueComponent text="Fecha desde la cual el trabajo será visible para el público" />
+                </div>
+                <input id="opensAt" type="datetime-local" v-model="form.opensAt" />
+            </div>
+            <div class="input-container">
+                <div class="label-row">
+                    <label for="closesAt">{{ $t('job.data.closesAt') }}</label>
+                    <ButtonClueComponent text="Fecha desde la cual el trabajo se ocultará para el público.
+                    No se podrán recibir más postulaciones después de esta fecha" />
+                </div>
+                <input id="closesAt" type="datetime-local" v-model="form.closesAt" />
+            </div>
             <button @click="submit()" :disabled="!form.opensAt || !form.closesAt">{{ $t('common.send') }}</button>
         </section>
     </div>
@@ -325,7 +381,8 @@ onMounted(() => {
     display: flex;
     flex-direction: row;
     justify-content: space-between;
-    align-items: end;
+    align-items: center;
+    gap: 2rem;
 }
 
 .skill-bubble-container {

@@ -64,7 +64,7 @@ function validatePassword(pwd: string) {
                     <input id="confirmPassword" type="password" placeholder="Confirm Password" v-model="confirmPassword" />
                 </section>
                 <section>
-                    <input class="button-primary" type="submit" :value="$t('auth.signUp')" />
+                    <input class="btn-primary" type="submit" :value="$t('auth.signUp')" />
                     <div class="redirects-container">
                         <RouterLink to="/">{{ $t('auth.noAccount') }}</RouterLink>
                         <RouterLink to="/">{{ $t('auth.forgotPassword') }}</RouterLink>
