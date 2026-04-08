@@ -35,12 +35,13 @@ const show = ref(false);
     border-radius: 4px;
     
     width: max-content;
-    max-width: 180px;
+    max-width: 160px;
     white-space: normal; 
     word-wrap: break-word;
     overflow-wrap: break-word;
     
     font-size: 12px;
+    text-align: justify;
     line-height: 1.4;
     pointer-events: none;
     z-index: 100;
