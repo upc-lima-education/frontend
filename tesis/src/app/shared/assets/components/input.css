@@ -1,53 +1,44 @@
-textarea {
-  height: 250px;
-  resize: none;
+.input-container {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 0.5rem;
 }
 
-input,
-textarea,
-select {
-  border: 1px solid var(--gray-03);
-  border-radius: 6px;
-  padding: 10px 8px;
-  font-size: 1rem;
-  width: 100%;
-  box-sizing: border-box;
-  transition: all 0.2s ease;
-}
-
-input:focus,
-textarea:focus,
-select:focus {
-  outline: 2px solid var(--main-color-00);
-  border-color: var(--main-color-01);
-  color: var(--main-color-07);
-}
-
-.input-group {
-  position: relative;
-  margin-top: 20px;
+.label-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
 
 label {
-  position: absolute;
-  left: 10px;
-  top: 50%;
-  transform: translateY(-50%);
-  background-color: var(--background-color-default);
-  padding: 0 4px;
   color: var(--gray-05);
+  transition: color 0.2s ease;
+}
+
+
+.input-container:focus-within label {
+  color: var(--main-color-01);
+}
+
+textarea{
+  resize: none;
+  height: 250px;
+}
+
+input, textarea, select {
+  border: 1px solid var(--gray-03);
+  border-radius: 6px;
+  padding: 10px 12px;
   font-size: 1rem;
-  pointer-events: none;
+  width: 100%;
+  box-sizing: border-box;
+  background-color: var(--background-color-default);
   transition: all 0.2s ease;
 }
 
-input:focus+label,
-textarea:focus+label,
-select:focus+label,
-input:not(:placeholder-shown)+label,
-textarea:not(:placeholder-shown)+label,
-select:not(:placeholder-shown)+label {
-  top: 0;
-  font-size: 0.8rem;
-  color: var(--main-color-01);
+input:focus, textarea:focus, select:focus {
+  outline: 2px solid var(--main-color-00);
+  border-color: var(--main-color-01);
+  color: var(--main-color-07);
 }
