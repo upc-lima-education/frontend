@@ -26,7 +26,7 @@ textarea{
   height: 250px;
 }
 
-input, textarea, select {
+input:not([type="file"]), textarea, select {
   border: 1px solid var(--gray-03);
   border-radius: 6px;
   padding: 10px 12px;
@@ -37,7 +37,7 @@ input, textarea, select {
   transition: all 0.2s ease;
 }
 
-input:focus, textarea:focus, select:focus {
+input:focus:not([type="file"]), textarea:focus, select:focus {
   outline: 2px solid var(--main-color-00);
   border-color: var(--main-color-01);
   color: var(--main-color-07);

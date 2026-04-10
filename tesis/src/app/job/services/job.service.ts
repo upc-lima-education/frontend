@@ -49,7 +49,8 @@ export class JobService {
             new Date(response.data.ClosesAt),
             response.data.JobStatus,
             response.data.Views,
-            new Date(response.data.CreationDate)
+            new Date(response.data.CreationDate),
+            response.data.ExternalURL
         );
     }
 

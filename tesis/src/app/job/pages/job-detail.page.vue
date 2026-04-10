@@ -36,7 +36,8 @@ async function getJobById() {
         new Date(),
         "Open",
         10,
-        new Date()
+        new Date(),
+        "https://google.com"
     );
 }
 
@@ -53,7 +54,7 @@ onMounted(async () => {
             :job="job"
             :company-name="companyName"
             :company-image="companyImage"
-            :is-company="true"/>
+            :is-company="false"/>
         </div>
         <div v-else>
             <!--Temp-->

@@ -2,6 +2,7 @@
 import { onMounted, ref } from 'vue';
 import { GetJobByIdResponse } from '../model/get-job-by-id.response';
 import { ubigeoService } from '@/app/shared/services/ubigeo.service';
+import DialogComponent from '@/app/shared/components/dialog.component.vue';
 
 const props = defineProps<{
     job: GetJobByIdResponse,
@@ -36,44 +37,39 @@ function formatDate(date: Date) {
     return new Date(date).toLocaleDateString();
 }
 
+//Delete job behaviour
+const deleteDialogRef = ref<InstanceType<typeof DialogComponent>>();
+function DeleteDialog() {
+    alert("Job deleted");
+}
+
+//Apply to job behaviour
+const applyJobDialogRef = ref<InstanceType<typeof DialogComponent>>();
+function ApplyToJob() {
+    alert("Job applied");
+}
+
+
 </script>
 
 <template>
-    <div class="job-container">
-    <div class="job-card">
-
-        <header class="job-header">
-            <img class="logo" :src="companyImage" alt="company">
-
-            <div class="info">
-                <h1>{{ job.title }}</h1>
-                <p class="company">{{ companyName }}</p>
-                <p class="summary">
-                    {{ district }}, {{ department }} ·
-                    {{ $t(`job.data.type.${job.jobType}`) }}
-                </p>
-            </div>
-
-            <div class="actions">
-                <button v-if="!isCompany" class="btn-success">Postular</button>
-                <button v-if="isCompany" class="btn-danger">Eliminar</button>
-            </div>
-        </header>
-
-        <div class="divider"></div>
-
-        <div class="salary-box">
-            {{ formatSalary(job.minSalary, job.maxSalary, job.currency) }}
-            {{ $t(`job.data.salaryPeriod.${job.salaryPeriod}`) }}
-        </div>
-
-        <div class="divider"></div>
-
+    <header>
+        <img :src="companyImage" alt="company" draggable="false">
+        <section class="info">
+            <h1>{{ job.title }}</h1>
+            <p class="company">{{ companyName }}</p>
+        </section>
+        <section class="actions">
+            <button v-if="!isCompany" class="btn-success" @click="applyJobDialogRef?.open()">Postular</button>
+            <button v-if="isCompany" class="btn-danger" @click="deleteDialogRef?.open()">Eliminar</button>
+        </section>
+    </header>
+    <div class="divider"></div>
+    <main>
         <section class="section">
             <h2>Sobre el trabajo</h2>
             <p>{{ job.description }}</p>
         </section>
-
         <section v-if="job.skills" class="section">
             <h2>Habilidades</h2>
             <div class="skills">
@@ -82,146 +78,77 @@ function formatDate(date: Date) {
                 </span>
             </div>
         </section>
-
+        <section>
+            <h2>Remuneración</h2>
+            <p>{{ formatSalary(job.minSalary, job.maxSalary, job.currency) }}</p>
+            <p>{{ $t(`job.data.salaryPeriod.${job.salaryPeriod}`) }}</p>
+            <p>{{ $t(`job.data.compensationType.${job.compensationType}`) }}</p>
+        </section>
         <section class="section">
             <h2>Ubicación</h2>
             <p>{{ job.address }}</p>
             <p class="muted">{{ district }}, {{ department }}</p>
         </section>
-
-    </div>
-
-    <section v-if="isCompany" class="job-meta">
+    </main>
+    <div v-if="isCompany" class="divider"></div>
+    <footer v-if="isCompany">
         <h2>Rendimiento del anuncio</h2>
         <p>{{ job.views }} visualizaciones</p>
         <p>Publicado el {{ formatDate(job.creationDate) }}</p>
         <p>Activo desde {{ formatDate(job.opensAt) }} hasta {{ formatDate(job.closesAt) }}</p>
-    </section>
-</div>
+    </footer>
+    <DialogComponent ref="deleteDialogRef" title="Delete job" subtitle="Are you sure you want to delete this job?"
+        variant="danger" @confirm="DeleteDialog()">
+        <p>This job will be deleted forever. This action is not undone</p>
+    </DialogComponent>
+    <DialogComponent ref="applyJobDialogRef" title="Apply job" variant="success" @confirm="ApplyToJob()">
+        <div v-if="job.externalURL">
+            <p>To apply to this job, go to the following page:</p>
+            <a :href="job.externalURL" target="_blank" rel="noopener noreferrer">Apply</a>
+        </div>
+        <div v-else>
+            <p>Please, attach your CV or info document in PDF format</p>
+            <input type="file" accept=".pdf">
+        </div>
+    </DialogComponent>
 </template>
 
 <style scoped>
-.job-container {
-    max-width: 800px;
-    margin: 0 auto;
-    padding: 24px;
-}
-
-/* PANEL PRINCIPAL */
-.job-card {
-    border: 1px solid var(--gray-02);
-    border-radius: 16px;
-    padding: 20px;
-    background: var(--background-color);
+header {
     display: flex;
-    flex-direction: column;
-    gap: 20px;
-}
-
-/* HEADER */
-.job-header {
-    display: flex;
-    gap: 16px;
+    flex-direction: row;
+    justify-content: space-between;
     align-items: center;
+    width: 100%;
+    gap: 1rem;
 }
 
-.logo {
+img {
     width: 64px;
     height: 64px;
-    border-radius: 14px;
-    object-fit: cover;
-    border: 1px solid var(--gray-02);
+    border-radius: 4px;
 }
 
 .info {
-    flex: 1;
-}
-
-.info h1 {
-    font-size: 1.5rem;
-    font-weight: 600;
-}
-
-.company {
-    color: var(--text-color);
-    margin-top: 2px;
-}
-
-.summary {
-    font-size: 0.9rem;
-    color: var(--text-color);
-    margin-top: 4px;
-}
-
-/* ACCIONES */
-.actions {
     display: flex;
-    gap: 10px;
+    flex-direction: column;
+    justify-content: center;
+    align-items: start;
+    object-fit: cover;
+    width: 100%;
 }
 
-.btn-danger {
-    background: #ffe5e5;
-    color: #d11a2a;
-    border: 1px solid #f5b5b5;
-    padding: 8px 12px;
-    border-radius: 8px;
-    cursor: pointer;
+main {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
 }
 
-/* DIVISOR */
 .divider {
-    height: 1px;
-    background: var(--gray-02);
-}
-
-/* SALARIO */
-.salary-box {
-    font-size: 1.3rem;
-    font-weight: 700;
-    color: var(--green-color);
-}
-
-/* SECCIONES */
-.section {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
-
-.section h2 {
-    font-size: 1.05rem;
-    font-weight: 600;
-}
-
-/* TAGS */
-.skills {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-}
-
-.tag {
-    background: var(--gray-02);
-    padding: 4px 10px;
-    border-radius: 999px;
-    font-size: 0.8rem;
-}
-
-/* UBICACIÓN */
-.muted {
-    font-size: 0.9rem;
-    color: var(--text-color);
-}
-
-/* META (FUERA DEL CARD) */
-.job-meta {
-    margin-top: 20px;
-    padding: 16px;
-    border-radius: 12px;
-    border: 1px solid var(--gray-02);
-    background: var(--background-color-light);
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
+    height: 2px;
+    width: 100%;
+    margin: 1rem 0 1rem 0;
+    background-color: var(--gray-02);
+    border-radius: 20px;
 }
 </style>

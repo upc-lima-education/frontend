@@ -26,6 +26,7 @@ export class GetJobByIdResponse {
     jobStatus: string;
     views: number;
     creationDate: Date;
+    externalURL: string;
 
     constructor(
         //Id
@@ -53,7 +54,8 @@ export class GetJobByIdResponse {
         closesAt: Date,
         jobStatus: string,
         views: number,
-        creationDate: Date
+        creationDate: Date,
+        externalURL: string
     ) {
         //Id
         this.id = id;
@@ -81,5 +83,6 @@ export class GetJobByIdResponse {
         this.jobStatus = jobStatus;
         this.views = views;
         this.creationDate = creationDate;
+        this.externalURL = externalURL
     }
 }
