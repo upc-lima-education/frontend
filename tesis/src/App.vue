@@ -40,7 +40,7 @@ const viewsWithoutSidebar = [
 .main-content {
   width: 100%;
   height: 100%;
-  margin-left: 250px;
+  margin-left: 200px;
   display: flex;
   flex-direction: column;
   align-items: center;

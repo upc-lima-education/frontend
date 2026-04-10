@@ -80,7 +80,7 @@
 .sidebar {
   z-index: 1000;
   position: fixed;
-  width: 250px;
+  width: 200px;
   height: 100%;
   background-color: var(--main-color);
   box-shadow: 2px 0 8px rgba(0, 0, 0, 0.15);
@@ -166,7 +166,7 @@ nav {
 }
 
 .logout .link:hover {
-  background-color: #c0392b;
+  background-color: var(--secondary-color-dark);
 }
 
 </style>
