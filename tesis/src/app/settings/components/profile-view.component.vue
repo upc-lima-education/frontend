@@ -1,58 +1,29 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue';
-import { useAuthenticationStore } from '@/app/auth/services/authentication.store';
-import { profileService } from '@/app/profile/services/profile.service';
+import { useProfileView } from '@/app/settings/composables/useProfileView';
 
-const authStore = useAuthenticationStore();
-const service = new profileService();
-
-const user = computed(() => authStore.currentUser);
-const profile = ref<any>(null);
-const loading = ref(true);
-
-const userDisplayName = computed(() => {
-    if (user.value?.name) return user.value.name;
-    if (user.value?.givenName || user.value?.familyName) {
-        return `${user.value.givenName || ''} ${user.value.familyName || ''}`.trim();
-    }
-    return 'Usuario';
-});
-
-const profilePictureUrl = computed(() => {
-    return profile.value?.profilePicture || user.value?.picture;
-});
-
-const isVerified = computed(() => {
-    return profile.value?.isVerified || false;
-});
-
-onMounted(async () => {
-    try {
-        if (authStore.currentUserId) {
-            const response = await service.getProfileByUserId(authStore.currentUserId);
-            profile.value = response.data;
-        }
-    } catch (error) {
-        console.error('Error loading profile:', error);
-    } finally {
-        loading.value = false;
-    }
-});
+const {
+    user,
+    profile,
+    loading,
+    userDisplayName,
+    profilePictureUrl,
+    isVerified,
+} = useProfileView();
 </script>
 
 <template>
     <div v-if="user && !loading" class="profile-view-container">
         <div class="profile-header">
-            <img 
-                v-if="profilePictureUrl" 
-                :src="profilePictureUrl" 
-                :alt="userDisplayName" 
+            <img
+                v-if="profilePictureUrl"
+                :src="profilePictureUrl"
+                :alt="userDisplayName"
                 class="profile-picture"
             />
             <div v-else class="profile-picture-placeholder">
                 <span>{{ userDisplayName.charAt(0).toUpperCase() }}</span>
             </div>
-            
+
             <div class="profile-info">
                 <div class="name-verification">
                     <h1>{{ userDisplayName }}</h1>
@@ -73,13 +44,13 @@ onMounted(async () => {
                     <label>Nombre Completo:</label>
                     <span>{{ userDisplayName }}</span>
                 </div>
-                <div v-if="user.givenName" class="detail-item">
+                <div v-if="user.firstName" class="detail-item">
                     <label>Nombre:</label>
-                    <span>{{ user.givenName }}</span>
+                    <span>{{ user.firstName }}</span>
                 </div>
-                <div v-if="user.familyName" class="detail-item">
+                <div v-if="user.lastName" class="detail-item">
                     <label>Apellido:</label>
-                    <span>{{ user.familyName }}</span>
+                    <span>{{ user.lastName }}</span>
                 </div>
                 <div class="detail-item">
                     <label>Email:</label>
@@ -91,7 +62,10 @@ onMounted(async () => {
                 </div>
             </section>
 
-            <section v-if="profile?.description || profile?.keywords || profile?.district || profile?.sector" class="detail-section">
+            <section
+                v-if="profile?.description || profile?.keywords?.length || profile?.district || profile?.sector"
+                class="detail-section"
+            >
                 <h3>Información de Perfil</h3>
                 <div v-if="profile?.description" class="detail-item">
                     <label>Descripción:</label>

@@ -1,24 +1,24 @@
 export class SignUpRequest {
     email: string;
     password: string;
-    name?: string;
-    givenName?: string;
-    familyName?: string;
-    userType?: 'employee' | 'organization';
+    firstName?: string;        // Para employees
+    lastName?: string;         // Para employees
+    companyName?: string;     // Para organizations
+    userType: 'employee' | 'organization';
 
     constructor(
         email: string,
         password: string,
-        name?: string,
-        givenName?: string,
-        familyName?: string,
+        firstName?: string,
+        lastName?: string,
+        companyName?: string,
         userType?: 'employee' | 'organization'
     ) {
         this.email = email;
         this.password = password;
-        this.name = name;
-        this.givenName = givenName;
-        this.familyName = familyName;
-        this.userType = userType;
+        this.firstName = firstName;
+        this.lastName = lastName;
+        this.companyName = companyName;
+        this.userType = userType || 'employee';
     }
 }

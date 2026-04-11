@@ -1,48 +1,53 @@
 <script setup lang="ts">
-import { computed } from 'vue';
-import { useRoute } from 'vue-router';
-import SettingsSidebarComponent from '../components/settings-sidebar.component.vue';
-import ProfileViewComponent from '../components/profile-view.component.vue';
 import ProfileEditComponent from '../components/profile-edit.component.vue';
+import { useSettingsPage } from '@/app/settings/composables/useSettingsPage';
 
-const route = useRoute();
-
-const activeSection = computed(() => {
-    return (route.query.section as string) || 'profile';
-});
+const { activeTab, profileTabLabel, setTab } = useSettingsPage();
 </script>
 
 <template>
     <div class="settings-page">
-        <header class="page-header">
-            <h1>Configuración de Perfil</h1>
-            <p>Administra tu información personal y preferencias</p>
-        </header>
+        <p class="page-tagline">{{ $t('settings.profileTagline') }}</p>
 
-        <div class="settings-container">
-            <SettingsSidebarComponent />
-            
-            <main class="settings-content">
-                <component 
-                    :is="activeSection === 'profile' ? 'div' : 'div'"
-                    class="content-section"
+        <div class="settings-card">
+            <nav class="profile-tabs" aria-label="Secciones de configuración">
+                <button
+                    type="button"
+                    class="tab"
+                    :class="{ active: activeTab === 'profile' }"
+                    @click="setTab('profile')"
                 >
-                    <ProfileViewComponent v-if="activeSection === 'profile'" key="profile-view" />
-                    <div v-else-if="activeSection === 'edit'" key="profile-edit">
-                        <ProfileEditComponent />
-                    </div>
-                    <div v-else key="placeholder" class="coming-soon">
-                        <h3>Coming Soon</h3>
-                        <p>Esta sección está en desarrollo.</p>
-                    </div>
-                </component>
+                    {{ profileTabLabel }}
+                </button>
+                <button
+                    type="button"
+                    class="tab"
+                    :class="{ active: activeTab === 'settings' }"
+                    @click="setTab('settings')"
+                >
+                    {{ $t('settings.tabSettings') }}
+                </button>
+                <button
+                    type="button"
+                    class="tab"
+                    :class="{ active: activeTab === 'privacy' }"
+                    @click="setTab('privacy')"
+                >
+                    {{ $t('settings.tabPrivacy') }}
+                </button>
+            </nav>
 
-                <div v-if="activeSection === 'profile'" class="edit-button-container">
-                    <RouterLink to="?section=edit" class="button-edit">
-                        ✏️ Editar Perfil
-                    </RouterLink>
+            <div class="tab-panel">
+                <ProfileEditComponent v-if="activeTab === 'profile'" />
+                <div v-else-if="activeTab === 'settings'" class="placeholder">
+                    <h3>{{ $t('settings.comingSoonTitle') }}</h3>
+                    <p>{{ $t('settings.comingSoonBody') }}</p>
                 </div>
-            </main>
+                <div v-else class="placeholder">
+                    <h3>{{ $t('settings.comingSoonTitle') }}</h3>
+                    <p>{{ $t('settings.comingSoonBody') }}</p>
+                </div>
+            </div>
         </div>
     </div>
 </template>
@@ -50,107 +55,88 @@ const activeSection = computed(() => {
 <style scoped>
 .settings-page {
     width: 100%;
-    min-height: 100vh;
-    background: #f9fafb;
-    padding: 0;
-}
-
-.page-header {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    padding: 3rem 2rem;
-    text-align: center;
-    margin-bottom: 2rem;
-}
-
-.page-header h1 {
-    margin: 0;
-    font-size: 2.5rem;
-    margin-bottom: 0.5rem;
-}
-
-.page-header p {
-    margin: 0;
-    font-size: 1.1rem;
-    opacity: 0.9;
-}
-
-.settings-container {
-    max-width: 1200px;
+    max-width: 920px;
     margin: 0 auto;
-    padding: 0 2rem 2rem 2rem;
-    display: grid;
-    grid-template-columns: 250px 1fr;
-    gap: 2rem;
+    padding: 1.5rem 1rem 3rem;
+    min-height: 100vh;
+    background: var(--gray-01);
 }
 
-.settings-content {
+.page-tagline {
+    font-family: Georgia, 'Times New Roman', serif;
+    font-size: 1.05rem;
+    color: var(--text-color-medium);
+    text-align: center;
+    margin: 0 0 1.5rem;
+    line-height: 1.5;
+}
+
+.settings-card {
+    background: var(--background-color-default);
+    border-radius: 14px;
+    border: 1px solid var(--gray-02);
+    box-shadow: 0 4px 20px rgba(18, 41, 116, 0.06);
+    overflow: hidden;
+}
+
+.profile-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    padding: 0.75rem;
+    background: var(--gray-01);
+    border-bottom: 1px solid var(--gray-02);
+}
+
+.tab {
     flex: 1;
-}
-
-.content-section {
-    margin-bottom: 2rem;
-}
-
-.coming-soon {
-    background: white;
-    border-radius: 8px;
-    padding: 3rem;
-    text-align: center;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-.coming-soon h3 {
-    color: #667eea;
-    margin: 0 0 1rem 0;
-}
-
-.coming-soon p {
-    color: #999;
-    margin: 0;
-}
-
-.edit-button-container {
-    margin-top: 2rem;
-    text-align: center;
-}
-
-.button-edit {
-    display: inline-block;
-    padding: 0.75rem 2rem;
-    background: #667eea;
-    color: white;
-    text-decoration: none;
-    border-radius: 4px;
+    min-width: 120px;
+    padding: 0.65rem 1rem;
+    border: none;
+    border-radius: 10px;
+    background: transparent;
+    font-size: 0.9rem;
     font-weight: 600;
-    transition: all 0.2s;
+    color: var(--text-color-medium);
     cursor: pointer;
+    transition: background 0.2s, color 0.2s;
 }
 
-.button-edit:hover {
-    background: #764ba2;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+.tab:hover {
+    color: var(--main-color-dark);
+    background: rgba(255, 255, 255, 0.7);
 }
 
-@media (max-width: 768px) {
-    .settings-container {
-        grid-template-columns: 1fr;
-        gap: 1rem;
-        padding: 0 1rem 1rem 1rem;
-    }
+.tab.active {
+    background: var(--background-color-default);
+    color: var(--text-color-default);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+}
 
-    .page-header {
-        padding: 2rem 1rem;
-        margin-bottom: 1rem;
-    }
+.tab-panel {
+    padding: 1.5rem 1.25rem 1.75rem;
+}
 
-    .page-header h1 {
-        font-size: 1.75rem;
-    }
+.placeholder {
+    text-align: center;
+    padding: 2.5rem 1rem;
+    color: var(--text-color-medium);
+}
 
-    .page-header p {
-        font-size: 1rem;
+.placeholder h3 {
+    margin: 0 0 0.5rem;
+    font-family: Georgia, 'Times New Roman', serif;
+    color: var(--text-color-dark);
+}
+
+.placeholder p {
+    margin: 0;
+    font-size: 0.95rem;
+}
+
+@media (max-width: 640px) {
+    .tab {
+        min-width: 100%;
     }
 }
 </style>

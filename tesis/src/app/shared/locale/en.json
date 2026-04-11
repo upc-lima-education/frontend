@@ -1,11 +1,12 @@
 {
-    "appName": "Trabaja Ya",
+    "appName": "ProConnect",
     "auth": {
         "firstName": "First Name",
         "lastName": "Last Name",
         "email": "Email",
         "password": "Password",
-        "login": "Login",
+        "confirmPassword": "Confirm Password",
+        "login": "Log in",
         "signUp": "Sign Up",
         "haveAccount": "Already have an account? Log in",
         "noAccount": "Don't have an account? Sign up",
@@ -15,9 +16,25 @@
         "sendRecoveryEmail": "Send Recovery Email",
         "backToSignIn": "Back to Sign In",
         "passwordsDoNotMatch": "Passwords do not match",
-        "fillAllFields": "Please fill in all fields",
+        "fillAllFields": "Please fill in all required fields",
         "passwordRequirements": "Password must be at least 8 characters long, include an uppercase letter and a number",
-        "selectUserType": "Select the user type"
+        "selectUserType": "What type of user are you?",
+        "brandName": "ProConnect",
+        "signUpPageSubtitle": "Create your account in 2 minutes",
+        "signUpCardTitle": "Create your account",
+        "signInPageSubtitle": "Log in to continue",
+        "signInCardTitle": "Log in",
+        "createAccount": "Create account",
+        "alreadyOnRecord": "Already have an account",
+        "noAccountYet": "Don't have an account?",
+        "roleQuestion": "I am…",
+        "roleEmployee": "An employee / professional",
+        "roleOrganization": "An organization",
+        "selectRoleFirst": "Choose employee or organization before continuing.",
+        "emailPlaceholder": "you{'@'}email.com",
+        "continueWithGoogle": "Continue with Google",
+        "googleConnecting": "Connecting...",
+        "googleError": "Could not connect to Google"
     },
     "sidebar": {
         "news": "News",
@@ -38,11 +55,45 @@
         "title": "News",
         "subtitle": "Stay updated with the latest news and updates"
     },
+    "settings": {
+        "profileTagline": "Set up your professional profile and start connecting",
+        "tabMyProfile": "My profile",
+        "tabCompanyProfile": "Company profile",
+        "tabSettings": "Settings",
+        "tabPrivacy": "Privacy",
+        "comingSoonTitle": "Coming soon",
+        "comingSoonBody": "This section will be available soon."
+    },
+    "profile": {
+        "selectDistrict": "Select a district",
+        "selectProfession": "Select your profession",
+        "selectIndustry": "Select an industry",
+        "selectCompanySize": "Select company size",
+        "bioPlaceholder": "Tell us about yourself, your experience and skills...",
+        "companyDescriptionPlaceholder": "Tell us about your company, mission, vision and values..."
+    },
     "common": {
         "return": "Return",
         "search": "Search",
         "naturalPerson": "Natural Person",
+        "juridicalPerson": "Juridical Person",
         "employee": "Employee",
-        "organization": "Organization"
+        "organization": "Organization",
+        "add": "Add",
+        "optional": "optional",
+        "required": "required",
+        "loading": "Loading...",
+        "save": "Save",
+        "cancel": "Cancel",
+        "edit": "Edit",
+        "delete": "Delete",
+        "passport": "Passport",
+        "selectPersonType": "Select your person type",
+        "selectIdentification": "Select your identification type",
+        "identification": "Identification",
+        "companyName": "Company Name",
+        "district": "District",
+        "description": "Description",
+        "keywords": "Keywords"
     }
 }

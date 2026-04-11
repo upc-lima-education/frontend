@@ -73,6 +73,11 @@ export const useAuthenticationStore = defineStore('authentication', () => {
             accessToken.value = signUpResponse.accessToken;
             refreshToken.value = signUpResponse.refreshToken;
             
+            // Set user type from request if not already set
+            if (!userType.value && signUpRequest.userType) {
+                setUserType(signUpRequest.userType);
+            }
+            
             // Persist tokens
             localStorage.setItem('accessToken', signUpResponse.accessToken);
             localStorage.setItem('refreshToken', signUpResponse.refreshToken);
@@ -105,12 +110,14 @@ export const useAuthenticationStore = defineStore('authentication', () => {
         localStorage.removeItem('refreshToken');
         localStorage.removeItem('expiresIn');
         localStorage.removeItem('userType');
+        localStorage.removeItem('currentRoleId');
         
-        console.log('🚪 Sesión cerrada. LocalStorage limpiado.');
+        console.log(' Sesión cerrada. LocalStorage limpiado.');
         
         // Redirigir a la página de login
         try {
             await router.push('/sign-in');
+            console.log(' Redirigido a /sign-in');
             console.log('✅ Redirigido a /sign-in');
         } catch (error) {
             console.error('❌ Error al redirigir:', error);
@@ -163,6 +170,27 @@ export const useAuthenticationStore = defineStore('authentication', () => {
         localStorage.setItem('userType', type);
     }
 
+    /**
+     * Generate role ID for profile association
+     */
+    function generateRoleId(): string {
+        const timestamp = Date.now().toString(36);
+        const randomStr = Math.random().toString(36).substring(2, 7);
+        return `${userType.value}_${timestamp}_${randomStr}`;
+    }
+
+    /**
+     * Get current role ID (generate if not exists)
+     */
+    function getCurrentRoleId(): string {
+        const storedRoleId = localStorage.getItem('currentRoleId');
+        if (storedRoleId) return storedRoleId;
+        
+        const newRoleId = generateRoleId();
+        localStorage.setItem('currentRoleId', newRoleId);
+        return newRoleId;
+    }
+
     return {
         // State
         signedIn,
@@ -185,6 +213,8 @@ export const useAuthenticationStore = defineStore('authentication', () => {
         signOut,
         requestPasswordReset,
         loadCurrentUser,
-        setUserType
+        setUserType,
+        generateRoleId,
+        getCurrentRoleId
     };
 });

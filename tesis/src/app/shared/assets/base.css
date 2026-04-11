@@ -47,19 +47,23 @@
 * {
   margin: 0;
   padding: 0;
+  box-sizing: border-box;
 }
 
 body{
   height: 100vh;
-  
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 
 #app{
   height: 100%;
   width: 100%;
+  overflow-x: hidden;
 }
 
 .page-content {
   width: 100%;
   padding-bottom: 50px;
+  overflow-x: hidden;
 }

@@ -1,16 +1,12 @@
 <script setup lang="ts">
-import { useAuthenticationStore } from '@/app/auth/services/authentication.store';
+import { useLogout } from '@/app/shared/composables/useLogout';
 
-const authStore = useAuthenticationStore();
-
-async function handleLogout() {
-    await authStore.signOut();
-}
+const { signOut } = useLogout();
 </script>
 
 <template>
     <div class="logout-button-container">
-        <button @click="handleLogout" class="logout-button">
+        <button type="button" class="logout-button" @click="signOut">
             Cerrar Sesión
         </button>
     </div>

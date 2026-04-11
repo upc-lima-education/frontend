@@ -1,4 +1,6 @@
 export const ROUTE_CONSTANTS = {
+    HOME_PAGE: "/home",
+
     SIGN_UP_PAGE: "/sign-up",
     ///sign-up/...
     SIGN_UP_USER_SELECTION: "user-selection",

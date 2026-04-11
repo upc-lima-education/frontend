@@ -1,10 +1,11 @@
 {
-    "appName": "Trabaja Ya",
+    "appName": "ProConnect",
     "auth": {
         "firstName": "Nombre",
         "lastName": "Apellido",
         "email": "Correo electrónico",
         "password": "Contraseña",
+        "confirmPassword": "Confirmar contraseña",
         "login": "Iniciar sesión",
         "signUp": "Crear usuario",
         "haveAccount": "¿Ya tienes una cuenta? Inicia sesión",
@@ -15,9 +16,25 @@
         "sendRecoveryEmail": "Enviar correo de recuperación",
         "backToSignIn": "Volver a iniciar sesión",
         "passwordsDoNotMatch": "Las contraseñas no coinciden",
-        "fillAllFields": "Por favor, completa todos los campos",
+        "fillAllFields": "Por favor, completa todos los campos requeridos",
         "passwordRequirements": "La contraseña debe tener al menos 8 caracteres, incluir una letra mayúscula y un número",
-        "selectUserType": "Seleccione el tipo de usuario"
+        "selectUserType": "¿Qué tipo de usuario eres?",
+        "brandName": "ProConnect",
+        "signUpPageSubtitle": "Crea tu cuenta en 2 minutos",
+        "signUpCardTitle": "Crea tu cuenta",
+        "signInPageSubtitle": "Inicia sesión para continuar",
+        "signInCardTitle": "Inicia sesión",
+        "createAccount": "Crear cuenta",
+        "alreadyOnRecord": "Ya tienes cuenta",
+        "noAccountYet": "¿No tienes cuenta?",
+        "roleQuestion": "¿Eres?",
+        "roleEmployee": "Un Empleado / Profesional",
+        "roleOrganization": "Una Organización",
+        "selectRoleFirst": "Indica si eres empleado o organización antes de continuar.",
+        "emailPlaceholder": "tu{'@'}email.com",
+        "continueWithGoogle": "Continuar con Google",
+        "googleConnecting": "Conectando...",
+        "googleError": "Error al conectar con Google"
     },
     "sidebar": {
         "news": "Novedades",
@@ -38,11 +55,45 @@
         "title": "Novedades",
         "subtitle": "Mantente al día con las últimas noticias y actualizaciones"
     },
+    "settings": {
+        "profileTagline": "Configura tu perfil profesional y comienza a conectar",
+        "tabMyProfile": "Mi Perfil",
+        "tabCompanyProfile": "Perfil Empresa",
+        "tabSettings": "Configuración",
+        "tabPrivacy": "Privacidad",
+        "comingSoonTitle": "Próximamente",
+        "comingSoonBody": "Esta sección estará disponible pronto."
+    },
+    "profile": {
+        "selectDistrict": "Selecciona un distrito",
+        "selectProfession": "Selecciona tu profesión",
+        "selectIndustry": "Selecciona una industria",
+        "selectCompanySize": "Selecciona el tamaño",
+        "bioPlaceholder": "Cuéntanos sobre ti, tu experiencia y habilidades...",
+        "companyDescriptionPlaceholder": "Cuéntanos sobre tu empresa, su misión, visión y valores..."
+    },
     "common": {
         "return": "Regresar",
         "search": "Buscar",
         "naturalPerson": "Persona Natural",
+        "juridicalPerson": "Persona Jurídica",
         "employee": "Empleado",
-        "organization": "Empresa"
+        "organization": "Empresa",
+        "add": "Agregar",
+        "optional": "opcional",
+        "required": "requerido",
+        "loading": "Cargando...",
+        "save": "Guardar",
+        "cancel": "Cancelar",
+        "edit": "Editar",
+        "delete": "Eliminar",
+        "passport": "Pasaporte",
+        "selectPersonType": "Selecciona tu tipo de persona",
+        "selectIdentification": "Selecciona tu tipo de identificación",
+        "identification": "Identificación",
+        "companyName": "Nombre de la Empresa",
+        "district": "Distrito",
+        "description": "Descripción",
+        "keywords": "Palabras Clave"
     }
 }

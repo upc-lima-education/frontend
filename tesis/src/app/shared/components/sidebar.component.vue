@@ -1,19 +1,7 @@
 <script setup lang="ts">
-import { useAuthenticationStore } from '@/app/auth/services/authentication.store';
-import { useRouter } from 'vue-router';
+import { useLogout } from '@/app/shared/composables/useLogout';
 
-const authStore = useAuthenticationStore();
-const router = useRouter();
-
-const handleLogout = async () => {
-    try {
-        await authStore.signOut();
-        // El push a /sign-in está en signOut(), pero confirmamos
-        // await router.push('/sign-in');
-    } catch (error) {
-        console.error('Error during logout:', error);
-    }
-};
+const { signOut } = useLogout();
 </script>
 
 <template>
@@ -31,7 +19,6 @@ const handleLogout = async () => {
           </RouterLink>
         </li>
 
-        <!-- Solo job seekers -->
         <li>
           <RouterLink to="/job-search" class="link">
             <img src="../assets/icons/Maletin.svg" class="sidebar-image"/>
@@ -39,7 +26,6 @@ const handleLogout = async () => {
           </RouterLink>
         </li>
 
-        <!-- Solo employers -->
         <li>
           <RouterLink to="/job-publish" class="link">
             <img src="../assets/icons/Maletin.svg" class="sidebar-image"/>
@@ -56,21 +42,21 @@ const handleLogout = async () => {
 
         <li>
           <RouterLink to="/messages" class="link">
-            <img src="../assets/icons/Usuario.svg" class="sidebar-image"/> <!--Temp-->
+            <img src="../assets/icons/Usuario.svg" class="sidebar-image"/>
             <span>{{ $t('sidebar.messages') }}</span>
           </RouterLink>
         </li>
 
         <li>
           <RouterLink to="/settings" class="link">
-            <img src="../assets/icons/Usuario.svg" class="sidebar-image"/> <!--Temp-->
+            <img src="../assets/icons/Usuario.svg" class="sidebar-image"/>
             <span>{{ $t('sidebar.settings') }}</span>
           </RouterLink>
         </li>
 
         <li class="logout">
-          <button @click="handleLogout" class="link logout-btn">
-            <img src="../assets/icons/Usuario.svg" class="sidebar-image"/> <!--Temp-->
+          <button type="button" class="link logout-btn" @click="signOut">
+            <img src="../assets/icons/Usuario.svg" class="sidebar-image"/>
             <span>{{ $t('sidebar.logout') }}</span>
           </button>
         </li>
@@ -92,7 +78,6 @@ const handleLogout = async () => {
   display: flex;
 }
 
-/*Header*/
 header {
   display: flex;
   flex-direction: column;
@@ -116,7 +101,6 @@ header {
   height: 40px;
 }
 
-/*Options*/
 nav {
   width: 100%;
 }
@@ -132,7 +116,7 @@ nav {
 }
 
 .sidebar-image{
-  filter: invert(); /*Icons are black*/
+  filter: invert();
 }
 
 .link {

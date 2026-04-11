@@ -15,7 +15,11 @@ export class AuthenticationService {
      * POST /api/v1/auth/sign-up
      */
     async signUp(signUpRequest: SignUpRequest): Promise<SignUpResponse> {
+        console.log('🔄 AuthService: SignUp request:', signUpRequest);
+        
         const response = await http.post(`${this.endpoint}/sign-up`, signUpRequest);
+        console.log('📦 AuthService: SignUp response:', response.data);
+        
         return new SignUpResponse(
             response.data.accessToken,
             response.data.refreshToken,
@@ -23,12 +27,12 @@ export class AuthenticationService {
             new UserResponse(
                 response.data.user.id,
                 response.data.user.email,
-                response.data.user.emailVerified,
-                response.data.user.name,
-                response.data.user.givenName,
-                response.data.user.familyName,
-                response.data.user.picture,
-                response.data.user.locale
+                response.data.user.emailVerified || false,
+                response.data.user.firstName || response.data.user.name,
+                response.data.user.firstName || response.data.user.givenName,
+                response.data.user.lastName || response.data.user.familyName,
+                response.data.user.picture || null,
+                response.data.user.locale || 'es'
             )
         );
     }
@@ -38,7 +42,11 @@ export class AuthenticationService {
      * POST /api/v1/auth/sign-in
      */
     async signIn(signInRequest: SignInRequest): Promise<SignInResponse> {
+        console.log('🔄 AuthService: SignIn request:', signInRequest);
+        
         const response = await http.post(`${this.endpoint}/sign-in`, signInRequest);
+        console.log('📦 AuthService: SignIn response:', response.data);
+        
         return new SignInResponse(
             response.data.accessToken,
             response.data.refreshToken,
@@ -46,95 +54,59 @@ export class AuthenticationService {
             new UserResponse(
                 response.data.user.id,
                 response.data.user.email,
-                response.data.user.emailVerified,
-                response.data.user.name,
-                response.data.user.givenName,
-                response.data.user.familyName,
-                response.data.user.picture,
-                response.data.user.locale
+                response.data.user.emailVerified || false,
+                response.data.user.firstName || response.data.user.name,
+                response.data.user.firstName || response.data.user.givenName,
+                response.data.user.lastName || response.data.user.familyName,
+                response.data.user.picture || null,
+                response.data.user.locale || 'es'
             )
         );
     }
 
     /**
      * Request password reset
-     * POST /api/v1/auth/password-reset
+     * POST /api/v1/auth/forgot-password
      */
     async requestPasswordReset(email: string): Promise<PasswordResetResponse> {
-        const request = new PasswordResetRequest(email);
-        const response = await http.post(`${this.endpoint}/password-reset`, request);
-        return new PasswordResetResponse(response.data.message, response.data.email);
+        console.log('🔄 AuthService: Password reset request for:', email);
+        
+        const response = await http.post(`${this.endpoint}/forgot-password`, { email });
+        console.log('📦 AuthService: Password reset response:', response.data);
+        
+        return new PasswordResetResponse(
+            response.data.message || 'Password reset email sent',
+            email
+        );
     }
 
     /**
-     * Get Google authentication URL
-     * GET /api/v1/auth/google/url
+     * Build Google OAuth authorization URL.
+     * GET /api/v1/auth/google/url?userType=employee|organization
+     * Backend encodes userType in OAuth state (Google returns state unchanged).
+     * Optional alias on backend: ?role=… — we send userType per API contract.
      */
-    async getGoogleAuthUrl(): Promise<string> {
-        const response = await http.get(`${this.endpoint}/google/url`);
-        return response.data.url;
+    async getGoogleAuthUrl(options?: { userType?: 'employee' | 'organization' }): Promise<string> {
+        const params = new URLSearchParams();
+        if (options?.userType) {
+            params.set('userType', options.userType);
+        }
+        const query = params.toString();
+        const path = query ? `${this.endpoint}/google/url?${query}` : `${this.endpoint}/google/url`;
+
+        const response = await http.get(path);
+        return response.data.authUrl || response.data.url;
     }
 
     /**
      * Exchange Google authorization code for tokens
-     * POST /api/v1/auth/google/token
-     * Then GET /api/v1/me to get user data
+     * This is handled by the backend callback, so this method is not needed
+     * The frontend just redirects to Google and the backend handles the callback
      */
     async exchangeGoogleCode(code: string): Promise<SignInResponse> {
-        try {
-            console.log('🔄 Service: POST /auth/google/token con código:', code);
-            
-            // Paso 1: Obtener tokens
-            const tokenResponse = await http.post(`${this.endpoint}/google/token`, { code });
-            
-            console.log('📦 Service: Token response status:', tokenResponse.status);
-            console.log('📦 Service: Token response data:', tokenResponse.data);
-            
-            const googleTokens = new GoogleTokenResponse(
-                tokenResponse.data.accessToken,
-                tokenResponse.data.idToken,
-                tokenResponse.data.expiresIn,
-                tokenResponse.data.tokenType,
-                tokenResponse.data.refreshToken
-            );
-            
-            console.log('✅ Service: GoogleTokenResponse creado');
-            console.log('🔄 Service: Obteniendo datos del usuario con idToken...');
-            
-            // Paso 2: Obtener datos del usuario con idToken
-            const userResponse = await http.get("/me", {
-                headers: {
-                    Authorization: `Bearer ${googleTokens.idToken}`
-                }
-            });
-            
-            console.log('📦 Service: User response:', userResponse.data);
-            
-            const user = new UserResponse(
-                userResponse.data.id,
-                userResponse.data.email,
-                userResponse.data.emailVerified,
-                userResponse.data.name,
-                userResponse.data.givenName,
-                userResponse.data.familyName,
-                userResponse.data.picture,
-                userResponse.data.locale
-            );
-            
-            // Paso 3: Retornar respuesta completa
-            const signInResponse = new SignInResponse(
-                googleTokens.accessToken,
-                googleTokens.refreshToken,
-                googleTokens.expiresIn,
-                user
-            );
-            
-            console.log('✅ Service: SignInResponse completa creada');
-            return signInResponse;
-        } catch (error) {
-            console.error('❌ Service: Error en exchangeGoogleCode:', error);
-            throw error;
-        }
+        // This method is not used in the current flow
+        // Google OAuth is handled entirely by the backend callback
+        throw new Error('Google OAuth is handled by backend callback');
     }
 
     /**
@@ -157,24 +129,28 @@ export class AuthenticationService {
 
     /**
      * Get current authenticated user
-     * GET /api/v1/me
+     * GET /api/v1/auth/me
      * Requires: Authorization header with Bearer token
      */
     async getCurrentUser(token: string): Promise<UserResponse> {
-        const response = await http.get("/me", {
+        console.log('🔄 AuthService: Getting current user with token');
+        
+        const response = await http.get(`${this.endpoint}/me`, {
             headers: {
                 Authorization: `Bearer ${token}`
             }
         });
+        console.log('📦 AuthService: Current user response:', response.data);
+        
         return new UserResponse(
-            response.data.id,
-            response.data.email,
-            response.data.emailVerified,
-            response.data.name,
-            response.data.givenName,
-            response.data.familyName,
-            response.data.picture,
-            response.data.locale
+            response.data.user.id,
+            response.data.user.email,
+            response.data.user.emailVerified || false,
+            response.data.user.firstName || response.data.user.name,
+            response.data.user.firstName || response.data.user.givenName,
+            response.data.user.lastName || response.data.user.familyName,
+            response.data.user.picture || null,
+            response.data.user.locale || 'es'
         );
     }
 }

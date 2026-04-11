@@ -1,36 +1,26 @@
 <script setup lang="ts">
-import { ref } from 'vue';
-import { AuthenticationService } from '../services/authentication.service';
+import { useGoogleLogin } from '@/app/auth/composables/useGoogleLogin';
 
-const authService = new AuthenticationService();
-const loading = ref(false);
-const error = ref("");
+const props = defineProps<{
+    prepareRedirect?: () => boolean | void;
+    labelKey?: string;
+    /** Query para GET /auth/google/url — el backend lo incluye en OAuth state. */
+    userType?: 'employee' | 'organization';
+}>();
 
-async function handleGoogleLogin() {
-    loading.value = true;
-    error.value = "";
-    
-    try {
-        const url = await authService.getGoogleAuthUrl();
-        window.location.href = url;
-    } catch (err) {
-        console.error('Google login error:', err);
-        error.value = "Error al conectar con Google";
-        loading.value = false;
-    }
-}
+const { loading, error, buttonLabel, handleGoogleLogin } = useGoogleLogin(props);
 </script>
 
 <template>
     <div class="google-login">
         <p v-if="error" class="error">{{ error }}</p>
-        <button 
-            type="button" 
-            @click="handleGoogleLogin" 
-            :disabled="loading"
+        <button
+            type="button"
             class="google-button"
+            :disabled="loading"
+            @click="handleGoogleLogin"
         >
-            {{ loading ? 'Conectando...' : 'Continuar con Google' }}
+            {{ buttonLabel }}
         </button>
     </div>
 </template>
