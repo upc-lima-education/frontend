@@ -82,14 +82,16 @@ export class AuthenticationService {
 
     /**
      * Build Google OAuth authorization URL.
-     * GET /api/v1/auth/google/url?userType=employee|organization
-     * Backend encodes userType in OAuth state (Google returns state unchanged).
-     * Optional alias on backend: ?role=… — we send userType per API contract.
+     * GET /api/v1/auth/google/url?userType=employee|organization&mode=signup|login
+     * Backend encodes userType and mode in OAuth state (Google returns state unchanged).
      */
-    async getGoogleAuthUrl(options?: { userType?: 'employee' | 'organization' }): Promise<string> {
+    async getGoogleAuthUrl(options?: { userType?: 'employee' | 'organization'; mode?: 'signup' | 'login' }): Promise<string> {
         const params = new URLSearchParams();
         if (options?.userType) {
             params.set('userType', options.userType);
+        }
+        if (options?.mode) {
+            params.set('mode', options.mode);
         }
         const query = params.toString();
         const path = query ? `${this.endpoint}/google/url?${query}` : `${this.endpoint}/google/url`;

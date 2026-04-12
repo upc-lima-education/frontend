@@ -4,11 +4,17 @@ import { useGoogleLogin } from '@/app/auth/composables/useGoogleLogin';
 const props = defineProps<{
     prepareRedirect?: () => boolean | void;
     labelKey?: string;
-    /** Query para GET /auth/google/url — el backend lo incluye en OAuth state. */
+    /** 
+     * User type for OAuth flow - REQUIRED for mode='login'
+     * Backend requires this in GET /auth/google/url?userType=…
+     * Validated via prepareRedirect callback before proceeding.
+     */
     userType?: 'employee' | 'organization';
+    /** OAuth flow mode: defaults to 'login' */
+    mode?: 'signup' | 'login';
 }>();
 
-const { loading, error, buttonLabel, handleGoogleLogin } = useGoogleLogin(props);
+const { loading, error, buttonLabel, handleGoogleLogin } = useGoogleLogin(props as any);
 </script>
 
 <template>

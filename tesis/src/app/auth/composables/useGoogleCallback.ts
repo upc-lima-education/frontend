@@ -11,6 +11,28 @@ export function useGoogleCallback() {
     const error = ref('');
 
     onMounted(async () => {
+        // 1. Verificar si el backend retornó un error
+        const backendError = route.query.error as string;
+        const backendMessage = route.query.message as string;
+
+        if (backendError) {
+            console.error('❌ Error del backend:', backendError, backendMessage);
+            
+            // Mostrar mensaje de error específico
+            if (backendError === 'EmailAlreadyExists') {
+                error.value = 'Esta cuenta ya existe. Por favor, inicia sesión.';
+                setTimeout(() => router.push(ROUTE_CONSTANTS.SIGN_IN_PAGE), 3000);
+            } else if (backendError === 'UserNotFound') {
+                error.value = 'Esta cuenta no existe. Por favor, regístrate.';
+                setTimeout(() => router.push(ROUTE_CONSTANTS.SIGN_UP_PAGE), 3000);
+            } else {
+                error.value = backendMessage || 'Error en la autenticación con Google';
+                setTimeout(() => router.push(ROUTE_CONSTANTS.SIGN_IN_PAGE), 3000);
+            }
+            return;
+        }
+
+        // 2. Extraer tokens de la URL
         const idToken = route.query.id_token as string;
         const accessToken = route.query.access_token as string;
         const expiresIn = route.query.expires_in as string;
@@ -22,11 +44,16 @@ export function useGoogleCallback() {
         }
 
         try {
+            // 3. Guardar en localStorage
             localStorage.setItem('accessToken', accessToken);
             localStorage.setItem('idToken', idToken);
             if (expiresIn) {
                 localStorage.setItem('expiresIn', expiresIn);
             }
+
+            // 4. Actualizar el estado del store directamente
+            authStore.setAccessToken(accessToken);
+            authStore.setRefreshToken(idToken);
 
             const userSuccess = await authStore.loadCurrentUser();
 

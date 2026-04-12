@@ -6,8 +6,14 @@ export type GoogleLoginProps = {
     /** If it returns false, the redirect to Google is cancelled (e.g. validation). */
     prepareRedirect?: () => boolean | void;
     labelKey?: string;
-    /** Sent as GET /auth/google/url?userType=… so the backend can put it in OAuth state. */
+    /** 
+     * Sent as GET /auth/google/url?userType=…
+     * REQUIRED for backend OAuth state, validated via prepareRedirect callback.
+     * For mode='login': must be validated before calling this function.
+     */
     userType?: 'employee' | 'organization';
+    /** OAuth flow mode: 'signup' to create new account, 'login' to authenticate existing account */
+    mode?: 'signup' | 'login';
 };
 
 export function useGoogleLogin(props: GoogleLoginProps) {
@@ -35,9 +41,13 @@ export function useGoogleLogin(props: GoogleLoginProps) {
         error.value = '';
 
         try {
-            const url = await authService.getGoogleAuthUrl(
-                props.userType ? { userType: props.userType } : undefined
-            );
+            // Use explicit mode prop if provided, otherwise infer from prepareRedirect
+            const mode = props.mode || (props.prepareRedirect ? 'signup' : 'login');
+            
+            const url = await authService.getGoogleAuthUrl({
+                userType: props.userType,
+                mode
+            });
             window.location.href = url;
         } catch (err) {
             console.error('Google login error:', err);

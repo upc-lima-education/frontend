@@ -33,6 +33,7 @@
         "selectRoleFirst": "Choose employee or organization before continuing.",
         "emailPlaceholder": "you{'@'}email.com",
         "continueWithGoogle": "Continue with Google",
+        "signUpWithGoogle": "Sign Up with Google",
         "googleConnecting": "Connecting...",
         "googleError": "Could not connect to Google"
     },

@@ -110,7 +110,6 @@ export const useAuthenticationStore = defineStore('authentication', () => {
         localStorage.removeItem('refreshToken');
         localStorage.removeItem('expiresIn');
         localStorage.removeItem('userType');
-        localStorage.removeItem('currentRoleId');
         
         console.log(' Sesión cerrada. LocalStorage limpiado.');
         
@@ -171,24 +170,19 @@ export const useAuthenticationStore = defineStore('authentication', () => {
     }
 
     /**
-     * Generate role ID for profile association
+     * Set access token (used by OAuth callback)
      */
-    function generateRoleId(): string {
-        const timestamp = Date.now().toString(36);
-        const randomStr = Math.random().toString(36).substring(2, 7);
-        return `${userType.value}_${timestamp}_${randomStr}`;
+    function setAccessToken(token: string): void {
+        accessToken.value = token;
+        localStorage.setItem('accessToken', token);
     }
 
     /**
-     * Get current role ID (generate if not exists)
+     * Set refresh token (used by OAuth callback)
      */
-    function getCurrentRoleId(): string {
-        const storedRoleId = localStorage.getItem('currentRoleId');
-        if (storedRoleId) return storedRoleId;
-        
-        const newRoleId = generateRoleId();
-        localStorage.setItem('currentRoleId', newRoleId);
-        return newRoleId;
+    function setRefreshToken(token: string): void {
+        refreshToken.value = token;
+        localStorage.setItem('refreshToken', token);
     }
 
     return {
@@ -214,7 +208,7 @@ export const useAuthenticationStore = defineStore('authentication', () => {
         requestPasswordReset,
         loadCurrentUser,
         setUserType,
-        generateRoleId,
-        getCurrentRoleId
+        setAccessToken,
+        setRefreshToken
     };
 });

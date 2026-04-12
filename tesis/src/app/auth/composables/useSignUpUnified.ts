@@ -40,24 +40,24 @@ export function useSignUpUnified() {
         );
     });
 
-    function beforeGoogleFromSignUp(): boolean {
-        if (!role.value) {
-            roleError.value = true;
-            return false;
-        }
-        roleError.value = false;
-        sessionStorage.setItem(OAUTH_SIGNUP_ROLE_KEY, role.value);
-        return true;
-    }
-
     function selectRole(selectedRole: SignUpUserRole) {
         role.value = selectedRole;
         roleError.value = false;
 
         if (selectedRole) {
             authStore.setUserType(selectedRole);
-            authStore.generateRoleId();
         }
+    }
+
+    function beforeGoogleSignUp(): boolean {
+        if (!role.value) {
+            roleError.value = true;
+            return false;
+        }
+        roleError.value = false;
+        // Guardar el tipo seleccionado para poder pasarlo en la URL de OAuth
+        sessionStorage.setItem(OAUTH_SIGNUP_ROLE_KEY, role.value);
+        return true;
     }
 
     function resetForm() {
@@ -129,7 +129,7 @@ export function useSignUpUnified() {
         isPasswordValid,
         isEmailValid,
         isFormValid,
-        beforeGoogleFromSignUp,
+        beforeGoogleSignUp,
         selectRole,
         resetForm,
         onSignUp,

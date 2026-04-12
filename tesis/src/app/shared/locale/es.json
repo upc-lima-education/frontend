@@ -33,6 +33,7 @@
         "selectRoleFirst": "Indica si eres empleado o organización antes de continuar.",
         "emailPlaceholder": "tu{'@'}email.com",
         "continueWithGoogle": "Continuar con Google",
+        "signUpWithGoogle": "Registrarse con Google",
         "googleConnecting": "Conectando...",
         "googleError": "Error al conectar con Google"
     },

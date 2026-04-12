@@ -3,7 +3,6 @@ import { ROUTE_CONSTANTS } from '@/app/shared/router/route-constants';
 import { ref } from 'vue';
 import { useAuthenticationStore } from '@/app/auth/services/authentication.store';
 import { SignInRequest } from '@/app/auth/model/sign-in/sign-in.request';
-import { OAUTH_SIGNUP_ROLE_KEY } from '@/app/auth/constants/oauth-signup-role';
 
 export function useSignInForm() {
     const authStore = useAuthenticationStore();
@@ -12,10 +11,6 @@ export function useSignInForm() {
     const password = ref('');
     const loading = ref(false);
     const error = ref('');
-
-    function clearSignupRoleBeforeGoogle() {
-        sessionStorage.removeItem(OAUTH_SIGNUP_ROLE_KEY);
-    }
 
     async function onSignIn() {
         loading.value = true;
@@ -45,7 +40,6 @@ export function useSignInForm() {
         password,
         loading,
         error,
-        clearSignupRoleBeforeGoogle,
         onSignIn,
         goToSignUp,
     };

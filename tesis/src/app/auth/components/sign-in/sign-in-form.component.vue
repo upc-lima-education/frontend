@@ -7,7 +7,6 @@ const {
     password,
     loading,
     error,
-    clearSignupRoleBeforeGoogle,
     onSignIn,
     goToSignUp,
 } = useSignInForm();
@@ -55,8 +54,7 @@ const {
                 </RouterLink>
 
                 <GoogleLoginComponent
-                    user-type="employee"
-                    :prepare-redirect="clearSignupRoleBeforeGoogle"
+                    mode="login"
                 />
             </form>
 
