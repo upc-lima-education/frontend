@@ -7,12 +7,8 @@ const { newsData } = useNewsPage();
 </script>
 
 <template>
-    <div class="page-content">
-        <PageHeaderComponent
-            :page-header="$t('news.title')"
-            :page-subheader="$t('news.subtitle')"
-            :include-search-bar="true"
-        />
+    <div class="page-content-80">
+        <PageHeaderComponent :pageHeader="$t('news.title')" :pageSubheader="$t('news.subtitle')" :includeSearchBar="true" />
         <section>
             <div v-for="news in newsData" :key="news.id">
                 <NewsCardComponent

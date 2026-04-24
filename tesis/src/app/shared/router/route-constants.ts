@@ -12,8 +12,12 @@ export const ROUTE_CONSTANTS = {
     FORGOT_PASSWORD: "/forgot-password",
 
     NEWS_PAGE: "/news",
-    JOB: "/job",
-    
+    JOB_DETAIL: "/job",
+    JOB_PUBLISH: "/job-publish",
+    JOB_SEARCH: "/job-search",
+
+    MESSAGE_COMPANY: "/message/c",
+    MESSAGE_EMPLOYEE: "/message/e",
     SETTINGS_PAGE: "/settings",
     SETTINGS_PROFILE: "profile",
 

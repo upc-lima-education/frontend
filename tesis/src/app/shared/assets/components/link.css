@@ -9,7 +9,7 @@ a {
     justify-content: center;
     padding: 0.5rem 1rem 0.5rem 1rem;
     border-radius: 4px;
-    color: var(--text-color-default-inverted);
+    color: var(--text-color-inverted);
     transition: background-color 0.1s ease;
 }
 
@@ -18,11 +18,11 @@ a {
 }
 
 .link-filled-primary:hover {
-    background-color: var(--main-color-dark);
+    background-color: var(--main-color-05);
 }
 
 .link-filled-secondary {
-    color: var(--text-color-default-inverted);
+    color: var(--text-color-inverted);
     background-color: var(--gray-04);
 }
 
@@ -34,7 +34,7 @@ a {
     display: flex;
     align-items: center;
     justify-content: center;
-    color: var(--text-color-dark);
+    color: var(--text-color);
     transition: color 0.1s ease;
 }
 

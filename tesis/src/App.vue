@@ -20,18 +20,22 @@ const { showSidebar } = useAppLayout();
 
 <style scoped>
 .app-container-sidebarless,
-.app-container,
-.main-content {
+.app-container {
   height: 100%;
   width: 100%;
 }
 
-.app-container {
+.app-container{
   display: flex;
 }
 
 .main-content {
-  margin-left: 250px;
-  padding: 50px;
+  width: 100%;
+  height: 100%;
+  margin-left: 200px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: start;
 }
 </style>

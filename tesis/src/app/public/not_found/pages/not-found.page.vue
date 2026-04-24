@@ -20,6 +20,10 @@
 
 
 <style scoped>
+h1,h2, p{
+    color: white;
+}
+
 .not-found-page {
     height: 100vh;
     display: flex;
@@ -27,8 +31,7 @@
     justify-content: center;
     background: linear-gradient(135deg,
             var(--main-color),
-            var(--main-color-dark));
-    color: white;
+            var(--main-color-05));
 }
 
 .content {

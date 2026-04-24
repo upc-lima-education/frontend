@@ -74,13 +74,20 @@
         "companyDescriptionPlaceholder": "Cuéntanos sobre tu empresa, su misión, visión y valores..."
     },
     "common": {
+        "next": "Siguiente",
         "return": "Regresar",
         "search": "Buscar",
-        "naturalPerson": "Persona Natural",
+        "advanceSearch": "Búsqueda avanzada",
+        "hide": "Ocultar",
+        "apply": "Aplicar",
+        "naturalPerson": "Persona natural",
         "juridicalPerson": "Persona Jurídica",
         "employee": "Empleado",
         "organization": "Empresa",
-        "add": "Agregar",
+        "min": "Mínimo",
+        "max": "Máximo",
+        "send": "Enviar",
+        "add": "Añadir",
         "optional": "opcional",
         "required": "requerido",
         "loading": "Cargando...",
@@ -96,5 +103,85 @@
         "district": "Distrito",
         "description": "Descripción",
         "keywords": "Palabras Clave"
+    },
+    "job": {
+        "creationPage": {
+            "title": "Crear oferta laboral",
+            "subtitle": "Publica tu vacante en minutos",
+            "header": {
+                "basicInfo": "Información básica",
+                "requirements": "Requisitos",
+                "payment": "Salario",
+                "location": "Ubicación",
+                "publication": "Fecha de publicación"
+            },
+            "subheader": {
+                "basicInfo": "¿De qué trata el trabajo?",
+                "requirements": "¿Qué perfil necesitas?",
+                "payment": "¿Cuánto estás ofreciendo?",
+                "location": "¿En dónde se ubica el trabajo?",
+                "publication": "Finalmente, ¿Cuándo quieres que se vea tu publicación?"
+            }
+        },
+        "findPage": {
+            "title": "Buscar empleos",
+            "subtitle": "Encuentra oportunidades cerca de ti"
+        },
+        "data": {
+            "title": "Título del trabajo",
+            "company": "Empresa",
+            "description": "Descripción",
+            "skills": "Habilidades",
+            "experience": {
+                "name": "Experiencia",
+                "NoExperienceNeeded": "Sin experiencia",
+                "ThreeMonths": "3 meses",
+                "SixMonths": "6 meses",
+                "OneYear": "1 año",
+                "TwoOrMoreYears": "2 years or more"
+            },
+            "type": {
+                "name": "Tipo de trabajo",
+                "Remote": "Remoto",
+                "Hybrid": "Híbrido",
+                "InPerson": "Presencial"
+            },
+            "department": "Departamento",
+            "province": "Provincia",
+            "district": "Distrito",
+            "address": "Dirección",
+            "salary": "Salario",
+            "salaryPeriod": {
+                "name": "Frecuencia de pago",
+                "Daily": "Diaria",
+                "Weekly": "Semanal",
+                "Fortnightly": "Quincenal",
+                "Monthly": "Mensual",
+                "ForFees": "Por honorarios"
+            },
+            "currency": {
+                "name": "Moneda",
+                "PEN": "Soles",
+                "USD": "Dólares"
+            },
+            "compensationType": {
+                "name": "Tipo de compensación",
+                "Fixed": "Salarial",
+                "Commission": "Por comisión",
+                "Mixed": "Salarial con comisiones"
+            },
+            "opensAt": "Fecha de apertura",
+            "closesAt": "Fecha de cierre",
+            "status": {
+                "name": "Estado del trabajo",
+                "Draft": "En proceso",
+                "Scheduled": "Programado",
+                "Active": "Activo",
+                "Closed": "Cerrado"
+            }
+        }
+    },
+    "message": {
+        "writeMessage": "Escribe un mensaje"
     }
 }

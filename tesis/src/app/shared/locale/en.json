@@ -74,9 +74,13 @@
         "companyDescriptionPlaceholder": "Tell us about your company, mission, vision and values..."
     },
     "common": {
+        "next": "Next",
         "return": "Return",
         "search": "Search",
-        "naturalPerson": "Natural Person",
+        "advanceSearch": "Advance search",
+        "hide": "Hide",
+        "apply": "Apply",
+        "naturalPerson": "Natural person",
         "juridicalPerson": "Juridical Person",
         "employee": "Employee",
         "organization": "Organization",
@@ -96,5 +100,85 @@
         "district": "District",
         "description": "Description",
         "keywords": "Keywords"
+    },
+    "job": {
+        "creationPage": {
+            "title": "Create job offer",
+            "subtitle": "Publish an offer in minutes",
+            "header": {
+                "basicInfo": "Basic info",
+                "requirements": "Requirements",
+                "payment": "Salary",
+                "location": "Location",
+                "publication": "Publication date"
+            },
+            "subheader": {
+                "basicInfo": "What is the job about?",
+                "requirements": "What kind of skills does the person need?",
+                "payment": "How much are you willing to pay?",
+                "location": "Where is the job located?",
+                "publication": "Finally, when do you want your post to be seen?"
+            }
+        },
+        "findPage": {
+            "title": "Search for employment",
+            "subtitle": "Find job offers near you"
+        },
+        "data": {
+            "title": "Job title",
+            "company": "Organization",
+            "description": "Description",
+            "skills": "Skills",
+            "experience": {
+                "name": "Experience",
+                "NoExperienceNeeded": "No experience",
+                "ThreeMonths": "3 months",
+                "SixMonths": "6 months",
+                "OneYear": "1 year",
+                "TwoOrMoreYears": "2 years or more"
+            },
+            "type": {
+                "name": "Job type",
+                "Remote": "Remote",
+                "Hybrid": "Hybrid",
+                "InPerson": "On Site"
+            },
+            "department": "Department",
+            "province": "Province",
+            "district": "District",
+            "address": "Address",
+            "salary": "Salary",
+            "salaryPeriod": {
+                "name": "Salary frecuency",
+                "Daily": "Daily",
+                "Weekly": "Weekly",
+                "Fortnightly": "Biweekly",
+                "Monthly": "Monthly",
+                "ForFees": "For fees"
+            },
+            "currency": {
+                "name": "Currency",
+                "PEN": "Soles",
+                "USD": "USD"
+            },
+            "compensationType": {
+                "name": "Compensation type",
+                "Fixed": "By salary",
+                "Commission": "By commissions",
+                "Mixed": "Salary with commissions"
+            },
+            "opensAt": "Opens at",
+            "closesAt": "Closes at",
+            "status": {
+                "name": "Job Status",
+                "Draft": "In process",
+                "Scheduled": "Scheduled",
+                "Active": "Active",
+                "Closed": "Closed"
+            }
+        }
+    },
+    "message": {
+        "writeMessage": "Send a message"
     }
 }

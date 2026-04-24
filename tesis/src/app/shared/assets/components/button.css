@@ -1,14 +1,11 @@
 button {
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    text-align: center;
     font-weight: bold;
-    width: 100%;
     border: none;
-    border-radius: 4px;
+    border-radius: 10px;
     padding: 10px 20px;
-    font-size: 1rem;
     cursor: pointer;
+    background-color: var(--gray-02);
     transition: background-color 0.2s ease;
 }
 
@@ -17,47 +14,64 @@ button:disabled {
     cursor: not-allowed;
 }
 
-.button-primary {
+button:hover{
+    background-color: var(--gray-03);
+}
+
+.btn-primary {
     background-color: var(--main-color);
     color: white;
 }
 
-.button-primary:hover {
-    background-color: var(--main-color-dark);
+.btn-primary:hover {
+    background-color: var(--main-color-04);
 }
 
-.button-secondary {
+.btn-secondary {
     background-color: var(--secondary-color);
     color: white;
 }
 
-.button-secondary:hover {
+.btn-secondary:hover {
     background-color: var(--secondary-color-dark);
 }
 
-.button-success {
+.btn-success {
     background-color: var(--green-color);
     color: white;
 }
 
-.button-success:hover {
+.btn-success:hover {
     background-color: var(--green-color-dark);
 }
 
-.button-danger {
+.btn-warning{
+    background-color: var(--yellow-color);
+    color: white;
+}
+
+.btn-warning:hover{
+    background-color: var(--yellow-color-dark);
+}
+
+.btn-danger {
     background-color: var(--red-color);
     color: white;
 }
 
-.button-danger:hover {
+.btn-danger:hover {
     background-color: var(--red-color-dark);
 }
 
-.button-info {
+.btn-info {
     background-color: var(--gray-05);
     color: white;
 }
 
-.button-info:hover {
+.btn-info:hover {
     background-color: var(--gray-06);
+}
+
+.btn-full{
+    width: 100%;
 }

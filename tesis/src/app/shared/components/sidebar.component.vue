@@ -19,6 +19,7 @@ const { signOut } = useLogout();
           </RouterLink>
         </li>
 
+        <!-- Solo employee -->
         <li>
           <RouterLink to="/job-search" class="link">
             <img src="../assets/icons/Maletin.svg" class="sidebar-image"/>
@@ -26,6 +27,7 @@ const { signOut } = useLogout();
           </RouterLink>
         </li>
 
+        <!-- Solo company -->
         <li>
           <RouterLink to="/job-publish" class="link">
             <img src="../assets/icons/Maletin.svg" class="sidebar-image"/>
@@ -40,23 +42,32 @@ const { signOut } = useLogout();
           </RouterLink>
         </li>
 
+        <!-- Solo employee -->
         <li>
-          <RouterLink to="/messages" class="link">
-            <img src="../assets/icons/Usuario.svg" class="sidebar-image"/>
+          <RouterLink to="/message/e" class="link">
+            <img src="../assets/icons/Mensajes.svg" class="sidebar-image"/> <!--Temp-->
+            <span>{{ $t('sidebar.messages') }}</span>
+          </RouterLink>
+        </li>
+
+        <!-- Solo company -->
+         <li>
+          <RouterLink to="/message/c" class="link">
+            <img src="../assets/icons/Mensajes.svg" class="sidebar-image"/> <!--Temp-->
             <span>{{ $t('sidebar.messages') }}</span>
           </RouterLink>
         </li>
 
         <li>
           <RouterLink to="/settings" class="link">
-            <img src="../assets/icons/Usuario.svg" class="sidebar-image"/>
+            <img src="../assets/icons/Configuracion.svg" class="sidebar-image"/> <!--Temp-->
             <span>{{ $t('sidebar.settings') }}</span>
           </RouterLink>
         </li>
 
         <li class="logout">
-          <button type="button" class="link logout-btn" @click="signOut">
-            <img src="../assets/icons/Usuario.svg" class="sidebar-image"/>
+          <RouterLink to="/logout" class="link">
+            <img src="../assets/icons/Salir.svg" class="sidebar-image"/> <!--Temp-->
             <span>{{ $t('sidebar.logout') }}</span>
           </button>
         </li>
@@ -71,7 +82,7 @@ const { signOut } = useLogout();
 .sidebar {
   z-index: 1000;
   position: fixed;
-  width: 250px;
+  width: 200px;
   height: 100%;
   background-color: var(--main-color);
   box-shadow: 2px 0 8px rgba(0, 0, 0, 0.15);
@@ -85,7 +96,7 @@ header {
   justify-content: space-between;
   border-bottom: 2px solid rgba(255, 255, 255, 0.5);
   padding: 1rem;
-  background-color: var(--main-color-dark);
+  background-color: var(--main-color-05);
 }
 .title {
   display: flex;
@@ -101,6 +112,14 @@ header {
   height: 40px;
 }
 
+span{
+  color: white;
+}
+
+span{
+  color: white;
+}
+/*Options*/
 nav {
   width: 100%;
 }
@@ -136,7 +155,7 @@ nav {
 
 
 .link:hover {
-  background-color: var(--main-color-dark);
+  background-color: var(--main-color-05);
   padding-left: 26px;
 }
 
@@ -160,7 +179,7 @@ nav {
 }
 
 .logout .link:hover {
-  background-color: #c0392b;
+  background-color: var(--secondary-color-dark);
 }
 
 .logout-btn:hover {
