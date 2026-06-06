@@ -69,7 +69,7 @@ const { signOut } = useLogout();
           <RouterLink to="/logout" class="link">
             <img src="../assets/icons/Salir.svg" class="sidebar-image"/> <!--Temp-->
             <span>{{ $t('sidebar.logout') }}</span>
-          </button>
+          </RouterLink>
         </li>
       </ul>
     </nav>
