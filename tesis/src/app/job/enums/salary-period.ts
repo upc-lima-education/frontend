@@ -1,8 +1,7 @@
-export enum SalaryPeriod
-{
+export enum SalaryPeriod {
     Daily,
     Weekly,
     Fortnightly,
     Monthly,
-    AfterService
+    ForFees //Por honorarios
 }

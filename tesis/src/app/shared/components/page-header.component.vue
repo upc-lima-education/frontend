@@ -39,7 +39,7 @@ function defaultSearchBehaviour() {
         <div v-if="includeSearchBar" class="actions">
             <form :@submit.prevent="searchBarfunctionOnClick || defaultSearchBehaviour">
                 <input type="search" :placeholder="searchBarText || $t('common.search')">
-                <button class="button-info" type="submit">
+                <button class="btn-info" type="submit">
                     <img src="../assets/icons/Lupa.svg" alt="Magnifing-glass-icon" />
                 </button>
             </form>

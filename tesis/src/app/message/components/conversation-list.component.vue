@@ -52,6 +52,6 @@ const emit = defineEmits<{
     padding: 20px;
     text-align: center;
     font-size: 0.9rem;
-    color: var(--text-color-light);
+    color: var(--text-color);
 }
 </style>

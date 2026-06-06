@@ -1,19 +1,41 @@
 {
-    "appName": "Trabaja Ya",
+    "appName": "ProConnect",
     "auth": {
         "firstName": "Nombre",
         "lastName": "Apellido",
         "email": "Correo electrónico",
         "password": "Contraseña",
+        "confirmPassword": "Confirmar contraseña",
         "login": "Iniciar sesión",
         "signUp": "Crear usuario",
         "haveAccount": "¿Ya tienes una cuenta? Inicia sesión",
         "noAccount": "¿No tienes una cuenta? Regístrate",
+        "alreadyHaveAccount": "¿Ya tienes una cuenta? Inicia sesión",
         "forgotPassword": "¿Olvidaste tu contraseña?",
+        "enterValidEmail": "Por favor, ingresa un correo válido",
+        "sendRecoveryEmail": "Enviar correo de recuperación",
+        "backToSignIn": "Volver a iniciar sesión",
         "passwordsDoNotMatch": "Las contraseñas no coinciden",
-        "fillAllFields": "Por favor, completa todos los campos",
+        "fillAllFields": "Por favor, completa todos los campos requeridos",
         "passwordRequirements": "La contraseña debe tener al menos 8 caracteres, incluir una letra mayúscula y un número",
-        "selectUserType": "Seleccione el tipo de usuario"
+        "selectUserType": "¿Qué tipo de usuario eres?",
+        "brandName": "ProConnect",
+        "signUpPageSubtitle": "Crea tu cuenta en 2 minutos",
+        "signUpCardTitle": "Crea tu cuenta",
+        "signInPageSubtitle": "Inicia sesión para continuar",
+        "signInCardTitle": "Inicia sesión",
+        "createAccount": "Crear cuenta",
+        "alreadyOnRecord": "Ya tienes cuenta",
+        "noAccountYet": "¿No tienes cuenta?",
+        "roleQuestion": "¿Eres?",
+        "roleEmployee": "Un Empleado / Profesional",
+        "roleOrganization": "Una Organización",
+        "selectRoleFirst": "Indica si eres empleado o organización antes de continuar.",
+        "emailPlaceholder": "tu{'@'}email.com",
+        "continueWithGoogle": "Continuar con Google",
+        "signUpWithGoogle": "Registrarse con Google",
+        "googleConnecting": "Conectando...",
+        "googleError": "Error al conectar con Google"
     },
     "sidebar": {
         "news": "Novedades",
@@ -34,18 +56,53 @@
         "title": "Novedades",
         "subtitle": "Mantente al día con las últimas noticias y actualizaciones"
     },
+    "settings": {
+        "profileTagline": "Configura tu perfil profesional y comienza a conectar",
+        "tabMyProfile": "Mi Perfil",
+        "tabCompanyProfile": "Perfil Empresa",
+        "tabSettings": "Configuración",
+        "tabPrivacy": "Privacidad",
+        "comingSoonTitle": "Próximamente",
+        "comingSoonBody": "Esta sección estará disponible pronto."
+    },
+    "profile": {
+        "selectDistrict": "Selecciona un distrito",
+        "selectProfession": "Selecciona tu profesión",
+        "selectIndustry": "Selecciona una industria",
+        "selectCompanySize": "Selecciona el tamaño",
+        "bioPlaceholder": "Cuéntanos sobre ti, tu experiencia y habilidades...",
+        "companyDescriptionPlaceholder": "Cuéntanos sobre tu empresa, su misión, visión y valores..."
+    },
     "common": {
+        "next": "Siguiente",
         "return": "Regresar",
         "search": "Buscar",
         "advanceSearch": "Búsqueda avanzada",
         "hide": "Ocultar",
         "apply": "Aplicar",
         "naturalPerson": "Persona natural",
+        "juridicalPerson": "Persona Jurídica",
         "employee": "Empleado",
         "organization": "Empresa",
         "min": "Mínimo",
         "max": "Máximo",
-        "send": "Enviar"
+        "send": "Enviar",
+        "add": "Añadir",
+        "optional": "opcional",
+        "required": "requerido",
+        "loading": "Cargando...",
+        "save": "Guardar",
+        "cancel": "Cancelar",
+        "edit": "Editar",
+        "delete": "Eliminar",
+        "passport": "Pasaporte",
+        "selectPersonType": "Selecciona tu tipo de persona",
+        "selectIdentification": "Selecciona tu tipo de identificación",
+        "identification": "Identificación",
+        "companyName": "Nombre de la Empresa",
+        "district": "Distrito",
+        "description": "Descripción",
+        "keywords": "Palabras Clave"
     },
     "job": {
         "creationPage": {
@@ -53,10 +110,17 @@
             "subtitle": "Publica tu vacante en minutos",
             "header": {
                 "basicInfo": "Información básica",
+                "requirements": "Requisitos",
                 "payment": "Salario",
-                "benefits": "Beneficios",
                 "location": "Ubicación",
-                "publication": "Publicación"
+                "publication": "Fecha de publicación"
+            },
+            "subheader": {
+                "basicInfo": "¿De qué trata el trabajo?",
+                "requirements": "¿Qué perfil necesitas?",
+                "payment": "¿Cuánto estás ofreciendo?",
+                "location": "¿En dónde se ubica el trabajo?",
+                "publication": "Finalmente, ¿Cuándo quieres que se vea tu publicación?"
             }
         },
         "findPage": {
@@ -67,21 +131,14 @@
             "title": "Título del trabajo",
             "company": "Empresa",
             "description": "Descripción",
-            "role": "Rol",
             "skills": "Habilidades",
-            "responsibilities": "Responsabilidades",
-            "benefits": "Beneficios",
             "experience": {
                 "name": "Experiencia",
                 "NoExperienceNeeded": "Sin experiencia",
                 "ThreeMonths": "3 meses",
                 "SixMonths": "6 meses",
                 "OneYear": "1 año",
-                "TwoYears": "2 años",
-                "ThreeYears": "3 años",
-                "FiveYears": "5 años",
-                "EightYears": "8 años",
-                "TenYears": "10 años"
+                "TwoOrMoreYears": "2 years or more"
             },
             "type": {
                 "name": "Tipo de trabajo",
@@ -90,6 +147,7 @@
                 "InPerson": "Presencial"
             },
             "department": "Departamento",
+            "province": "Provincia",
             "district": "Distrito",
             "address": "Dirección",
             "salary": "Salario",
@@ -99,12 +157,18 @@
                 "Weekly": "Semanal",
                 "Fortnightly": "Quincenal",
                 "Monthly": "Mensual",
-                "AfterService": "Por servicio"
+                "ForFees": "Por honorarios"
             },
             "currency": {
                 "name": "Moneda",
                 "PEN": "Soles",
                 "USD": "Dólares"
+            },
+            "compensationType": {
+                "name": "Tipo de compensación",
+                "Fixed": "Salarial",
+                "Commission": "Por comisión",
+                "Mixed": "Salarial con comisiones"
             },
             "opensAt": "Fecha de apertura",
             "closesAt": "Fecha de cierre",
@@ -113,46 +177,11 @@
                 "Draft": "En proceso",
                 "Scheduled": "Programado",
                 "Active": "Activo",
-                "Closed": "Cerrado",
-                "Expired": "Expirado",
-                "Archived": "Archivado"
-            },
-            "visibility": {
-                "name": "Visibilidad",
-                "Public": "Público",
-                "FollowersOnly": "Solo seguidores",
-                "Private": "Privado",
-                "Hidden": "Oculto"
+                "Closed": "Cerrado"
             }
         }
     },
     "message": {
         "writeMessage": "Escribe un mensaje"
-    },
-    "department": {
-        "Amazonas": "Amazonas",
-        "Ancash": "Ancash",
-        "Apurimac": "Apurímac",
-        "Arequipa": "Arequipa",
-        "Ayacucho": "Ayacucho",
-        "Cajamarca": "Cajamarca",
-        "Cusco": "Cusco",
-        "Huancavelica": "Huancavelica",
-        "Huanuco": "Huánuco",
-        "Ica": "Ica",
-        "Junin": "Junín",
-        "LaLibertad": "La Libertad",
-        "Lambayeque": "Lambayeque",
-        "Lima": "Lima",
-        "Loreto": "Loreto",
-        "MadreDeDios": "Madre de Dios",
-        "Moquegua": "Moquegua",
-        "Pasco": "Pasco",
-        "Piura": "Piura",
-        "Puno": "Puno",
-        "SanMartin": "San Martín",
-        "Tacna": "Tacna",
-        "Tumbes": "Tumbes",
-        "Ucayali": "Ucayali"
     }
 }

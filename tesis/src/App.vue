@@ -1,21 +1,13 @@
 <script setup lang="ts">
-import { RouterView, useRouter } from 'vue-router'
+import { RouterView } from 'vue-router';
 import SidebarComponent from './app/shared/components/sidebar.component.vue';
-import { ROUTE_CONSTANTS } from './app/shared/router/route-constants';
-const viewsWithoutSidebar = [
-  ROUTE_CONSTANTS.SIGN_IN_PAGE,
-  ROUTE_CONSTANTS.SIGN_UP_PAGE,
-  `${ROUTE_CONSTANTS.SIGN_UP_PAGE}/${ROUTE_CONSTANTS.SIGN_UP_USER_SELECTION}`,
-  `${ROUTE_CONSTANTS.SIGN_UP_PAGE}/${ROUTE_CONSTANTS.SIGN_UP_EMPLOYEE}`,
-  `${ROUTE_CONSTANTS.SIGN_UP_PAGE}/${ROUTE_CONSTANTS.SIGN_UP_ORGANIZATION}`,
-  '/forgot-password',
-  '/not-found'
-];
+import { useAppLayout } from './app/shared/composables/useAppLayout';
 
+const { showSidebar } = useAppLayout();
 </script>
 
 <template>
-  <div v-if="!viewsWithoutSidebar.includes($route.path)" class="app-container">
+  <div v-if="showSidebar" class="app-container">
     <SidebarComponent />
     <div class="main-content">
       <RouterView />
@@ -40,7 +32,7 @@ const viewsWithoutSidebar = [
 .main-content {
   width: 100%;
   height: 100%;
-  margin-left: 250px;
+  margin-left: 200px;
   display: flex;
   flex-direction: column;
   align-items: center;

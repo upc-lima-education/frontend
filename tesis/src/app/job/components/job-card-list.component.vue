@@ -17,6 +17,7 @@ defineProps({
     <JobCardComponent v-else
       v-for="job in jobs"
       :key="job.id"
+      :id="job.id"
       :company-image="job.companyImage"
       :company-name="job.companyName"
       :title="job.title"

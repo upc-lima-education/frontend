@@ -1,11 +1,9 @@
 @import 'variables.css';
 @import './components/input.css';
 @import './components/button.css';
-@import './components/label.css';
 @import './components/form.css';
 @import './components/link.css';
 @import './components/pages.css';
-@import './components/select.css';
 
 /*Main colors light*/
 :root {
@@ -13,13 +11,9 @@
   --background-color-light: var(--gray-01);
   --background-color-medium: var(--gray-02);
   --background-color-dark: var(--gray-03);
-
-  --text-color-default: black;
-  --text-color-default-inverted: white;
-  --text-color-light: var(--gray-04);
-  --text-color-medium: var(--gray-05);
-  --text-color-dark: var(--gray-06);
-  --text-color-darker: var(--gray-07);
+  
+  --text-color: black;
+  --text-color-inverted: white;
 }
 
 /*Main colors dark*/
@@ -30,18 +24,14 @@
     --background-color-medium: var(--gray-05);
     --background-color-dark: var(--gray-04);
 
-    --text-color-default: white;
-    --text-color-default-inverted: black;
-    --text-color-light: var(--gray-03);
-    --text-color-medium: var(--gray-02);
-    --text-color-dark: var(--gray-01);
+    --text-color: white;
+    --text-color-inverted: black;
   }
 }
 
 /*Font*/
 :root{
   font-size: 16px;
-  font-family: Arial, Helvetica, sans-serif;
 }
 
 /*Other values*/
@@ -49,15 +39,18 @@
 * {
   margin: 0;
   padding: 0;
-  color: var(--text-color-default);
+  color: var(--text-color);
+  font-family: Arial, Helvetica, sans-serif;
 }
 
 body{
   height: 100vh;
-  
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 
 #app{
   height: 100%;
   width: 100%;
+  overflow-x: hidden;
 }

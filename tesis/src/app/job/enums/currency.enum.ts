@@ -1,5 +1,4 @@
-export enum Currency
-{
+export enum Currency {
     PEN,
     USD
 }

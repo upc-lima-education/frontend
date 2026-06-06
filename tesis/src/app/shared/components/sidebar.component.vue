@@ -1,5 +1,7 @@
 <script setup lang="ts">
+import { useLogout } from '@/app/shared/composables/useLogout';
 
+const { signOut } = useLogout();
 </script>
 
 <template>
@@ -67,7 +69,7 @@
           <RouterLink to="/logout" class="link">
             <img src="../assets/icons/Salir.svg" class="sidebar-image"/> <!--Temp-->
             <span>{{ $t('sidebar.logout') }}</span>
-          </RouterLink>
+          </button>
         </li>
       </ul>
     </nav>
@@ -80,14 +82,13 @@
 .sidebar {
   z-index: 1000;
   position: fixed;
-  width: 250px;
+  width: 200px;
   height: 100%;
   background-color: var(--main-color);
   box-shadow: 2px 0 8px rgba(0, 0, 0, 0.15);
   display: flex;
 }
 
-/*Header*/
 header {
   display: flex;
   flex-direction: column;
@@ -115,6 +116,9 @@ span{
   color: white;
 }
 
+span{
+  color: white;
+}
 /*Options*/
 nav {
   width: 100%;
@@ -131,7 +135,7 @@ nav {
 }
 
 .sidebar-image{
-  filter: invert(); /*Icons are black*/
+  filter: invert();
 }
 
 .link {
@@ -165,8 +169,22 @@ nav {
   margin-top: 30px;
 }
 
+.logout-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  width: 100%;
+  text-align: left;
+  padding: 12px 20px;
+}
+
 .logout .link:hover {
+  background-color: var(--secondary-color-dark);
+}
+
+.logout-btn:hover {
   background-color: #c0392b;
+  padding-left: 26px;
 }
 
 </style>

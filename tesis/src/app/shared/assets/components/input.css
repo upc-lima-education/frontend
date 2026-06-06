@@ -1,8 +1,44 @@
-input{
-    border: 1px solid var(--gray-03);
-    border-radius: 6px;
-    padding: 6px 8px;
-    font-size: 1rem;
-    width: 100%;
-    box-sizing: border-box;
+.input-container {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 0.5rem;
+}
+
+.label-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+label {
+  color: var(--gray-05);
+  transition: color 0.2s ease;
+}
+
+
+.input-container:focus-within label {
+  color: var(--main-color-01);
+}
+
+textarea{
+  resize: none;
+  height: 250px;
+}
+
+input:not([type="file"]), textarea, select {
+  border: 1px solid var(--gray-03);
+  border-radius: 6px;
+  padding: 10px 12px;
+  font-size: 1rem;
+  width: 100%;
+  box-sizing: border-box;
+  background-color: var(--background-color-default);
+  transition: all 0.2s ease;
+}
+
+input:focus:not([type="file"]), textarea:focus, select:focus {
+  outline: 2px solid var(--main-color-00);
+  border-color: var(--main-color-01);
+  color: var(--main-color-07);
 }

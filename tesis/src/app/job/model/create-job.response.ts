@@ -6,7 +6,6 @@ export class CreateJobResponse {
     address: string;
     minSalary: number;
     maxSalary: number;
-    jobVisibility: string;
     jobStatus: string;
     creationDate: Date;
 
@@ -18,7 +17,6 @@ export class CreateJobResponse {
         address: string,
         minSalary: number,
         maxSalary: number,
-        jobVisibility: string,
         jobStatus: string,
         creationDate: Date
     ){
@@ -29,7 +27,6 @@ export class CreateJobResponse {
         this.address = address;
         this.minSalary = minSalary;
         this.maxSalary = maxSalary;
-        this.jobVisibility = jobVisibility;
         this.jobStatus = jobStatus;
         this.creationDate = creationDate;
     }

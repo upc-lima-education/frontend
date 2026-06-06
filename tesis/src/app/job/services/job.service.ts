@@ -14,68 +14,64 @@ export class JobService {
     async createJob(request: CreateJobRequest): Promise<CreateJobResponse> {
         const response = await http.post(this.endpoint, request);
         return new CreateJobResponse(
-            response.data.id,
-            response.data.companyId,
-            response.data.title,
-            response.data.description,
-            response.data.address,
-            response.data.minSalary,
-            response.data.maxSalary,
-            response.data.jobVisibility,
-            response.data.jobStatus,
-            new Date(response.data.creationDate)
+            response.data.Id,
+            response.data.CompanyId,
+            response.data.Title,
+            response.data.Description,
+            response.data.Address,
+            response.data.MinSalary,
+            response.data.MaxSalary,
+            response.data.JobStatus,
+            new Date(response.data.CreationDate)
         );
     }
 
     async getJobById(request: GetJobByIdRequest): Promise<GetJobByIdResponse> {
         const response = await http.get(`${this.endpoint}/${request.id}`);
         return new GetJobByIdResponse(
-            response.data.id,
-            response.data.companyId,
-            response.data.title,
-            response.data.description,
-            response.data.role,
-            response.data.skills,
-            response.data.responsibilities,
-            response.data.benefits,
-            response.data.experience,
-            response.data.department,
-            response.data.district,
-            response.data.address,
-            response.data.latitude,
-            response.data.longitude,
-            response.data.minSalary,
-            response.data.maxSalary,
-            response.data.currency,
-            response.data.salaryPeriod,
-            new Date(response.data.opensAt),
-            new Date(response.data.closesAt),
-            response.data.jobVisibility,
-            response.data.jobStatus,
-            response.data.views || 0,
-            response.data.applications || 0,
-            new Date(response.data.creationDate)
+            response.data.Id,
+            response.data.CompanyId,
+            response.data.Title,
+            response.data.Description,
+            response.data.JobType,
+            response.data.Skills,
+            response.data.Experience,
+            response.data.Ubigeo,
+            response.data.Address,
+            response.data.Latitude,
+            response.data.Longitude,
+            response.data.MinSalary,
+            response.data.MaxSalary,
+            response.data.Currency,
+            response.data.SalaryPeriod,
+            response.data.CompensationType,
+            new Date(response.data.OpensAt),
+            new Date(response.data.ClosesAt),
+            response.data.JobStatus,
+            response.data.Views,
+            new Date(response.data.CreationDate),
+            response.data.ExternalURL
         );
     }
 
     async updateJob(request: UpdateJobRequest): Promise<UpdateJobResponse> {
         const response = await http.put(this.endpoint, request);
         return new UpdateJobResponse(
-            response.data.id,
-            response.data.companyId,
-            response.data.title,
-            response.data.description,
-            response.data.address,
-            response.data.minSalary,
-            response.data.maxSalary,
-            response.data.jobVisibility,
-            response.data.jobStatus
+            response.data.Id,
+            response.data.CompanyId,
+            response.data.Title,
+            response.data.Description,
+            response.data.Address,
+            response.data.MinSalary,
+            response.data.MaxSalary,
+            response.data.JobStatus,
+            new Date(response.data.CreationDate)
         );
     }
 
     async deleteJob(request: DeleteJobRequest): Promise<DeleteJobResponse> {
         const response = await http.delete(`${this.endpoint}/${request.id}`);
-        return new DeleteJobResponse(response.data.response);
+        return new DeleteJobResponse(response.data.Response);
     }
 
 }

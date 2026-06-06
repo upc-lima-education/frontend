@@ -12,9 +12,9 @@ const jobs = [
     "https://www.shutterstock.com/image-vector/colorful-supermarket-minimarket-logo-260nw-2398463929.jpg",
     "Repartidor",
     "Lima",
-    "San Juan de Lurigancho",
+    "Miraflores",
     "InPerson",
-    "2026-03-20"
+    "2026-04-20"
   ),
   new LightJobResponse(
     "2",
@@ -22,9 +22,9 @@ const jobs = [
     "https://www.dafont.com/forum/attach/orig/9/2/928497.png",
     "Cajero",
     "Lima",
-    "Ate",
+    "San Isidro",
     "InPerson",
-    "2026-03-18"
+    "2026-04-18"
   )
 ];
 
