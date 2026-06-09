@@ -1,11 +1,11 @@
-export class LightJobResponse {
+export class JobListItemResponse {
     id: string;
     companyName: string;
     companyImage: string;
     title: string;
-    department: string;
-    district: string;
-    type: string;
+    ubigeo: string;
+    jobType: string;
+    originPage: string;
     closesAt: string;
 
     constructor(
@@ -13,18 +13,18 @@ export class LightJobResponse {
         companyName: string,
         companyImage: string,
         title: string,
-        department: string,
-        district: string,
+        ubigeo: string,
         type: string,
+        originPage: string,
         closesAt: string
     ){
         this.id = id;
         this.companyName = companyName;
         this.companyImage = companyImage;
         this.title = title;
-        this.department = department;
-        this.district = district;
-        this.type = type;
+        this.ubigeo = ubigeo;
+        this.jobType = type;
+        this.originPage = originPage;
         this.closesAt = closesAt;
     }
 }

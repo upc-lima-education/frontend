@@ -3,14 +3,14 @@ export class UpdateJobRequest {
     title: string;
     description: string;
     jobType: string;
+    workHours: string;
     //Requirements
-    skills: string;
+    skills: Array<string>;
     experience: string;
+    educationLevel: string;
     //Location
     ubigeo: string;
     address: string;
-    latitude: number;
-    longitude: number;
     //Payment
     minSalary: number;
     maxSalary: number;
@@ -27,13 +27,14 @@ export class UpdateJobRequest {
         title: string,
         description: string,
         jobType: string,
-        skills: string,
+        workHours: string,
+        //Requirements
+        skills: Array<string>,
         experience: string,
+        educationLevel: string,
         //Location
         ubigeo: string,
         address: string,
-        latitude: number,
-        longitude: number,
         //Payment
         minSalary: number,
         maxSalary: number,
@@ -49,13 +50,14 @@ export class UpdateJobRequest {
         this.title = title;
         this.description = description;
         this.jobType = jobType;
+        this.workHours = workHours;
+        //Requirements
         this.skills = skills;
         this.experience = experience;
+        this.educationLevel = educationLevel;
         //Location
         this.ubigeo = ubigeo;
         this.address = address;
-        this.latitude = latitude;
-        this.longitude = longitude;
         //Payment
         this.minSalary = minSalary;
         this.maxSalary = maxSalary;

@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import PageHeaderComponent from '@/app/shared/components/page-header.component.vue';
 import JobCardListComponent from '../components/job-card-list.component.vue';
-import { LightJobResponse } from '../model/light-job.response';
+import { JobListItemResponse } from '../model/job-list-item.response.ts';
 import FilterJobComponent from '../components/filter-job.component.vue';
 
 //Temp
 const jobs = [
-  new LightJobResponse(
+  new JobListItemResponse(
     "1",
     "Minimarket Santa Rosa",
     "https://www.shutterstock.com/image-vector/colorful-supermarket-minimarket-logo-260nw-2398463929.jpg",
@@ -16,7 +16,7 @@ const jobs = [
     "InPerson",
     "2026-04-20"
   ),
-  new LightJobResponse(
+  new JobListItemResponse(
     "2",
     "Panadería Don Pepe",
     "https://www.dafont.com/forum/attach/orig/9/2/928497.png",

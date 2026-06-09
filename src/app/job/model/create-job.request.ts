@@ -5,14 +5,14 @@ export class CreateJobRequest {
     title: string;
     description: string;
     jobType: string;
+    workHours: string;
     //Requirements
-    skills: string;
+    skills: Array<string>;
     experience: string;
+    educationLevel: string;
     //Location
     ubigeo: string;
     address: string;
-    latitude: number;
-    longitude: number;
     //Payment
     minSalary: number;
     maxSalary: number;
@@ -23,6 +23,9 @@ export class CreateJobRequest {
     opensAt: Date;
     closesAt: Date;
     jobStatus: string;
+    originPage: string;
+    //External
+    externalUrl: string;
 
     constructor(
         //Id
@@ -31,13 +34,14 @@ export class CreateJobRequest {
         title: string,
         description: string,
         jobType: string,
-        skills: string,
+        workHours: string,
+        //Requirements
+        skills: Array<string>,
         experience: string,
+        educationLevel: string,
         //Location
         ubigeo: string,
         address: string,
-        latitude: number,
-        longitude: number,
         //Payment
         minSalary: number,
         maxSalary: number,
@@ -47,7 +51,10 @@ export class CreateJobRequest {
         //Traceability
         opensAt: Date,
         closesAt: Date,
-        jobStatus: string
+        jobStatus: string,
+        originPage: string,
+        //External
+        externalUrl: string
     ) {
         //Id
         this.companyId = companyId;
@@ -55,13 +62,14 @@ export class CreateJobRequest {
         this.title = title;
         this.description = description;
         this.jobType = jobType;
+        this.workHours = workHours;
+        //Requirements
         this.skills = skills;
         this.experience = experience;
+        this.educationLevel = educationLevel;
         //Location
         this.ubigeo = ubigeo;
         this.address = address;
-        this.latitude = latitude;
-        this.longitude = longitude;
         //Payment
         this.minSalary = minSalary;
         this.maxSalary = maxSalary;
@@ -72,5 +80,7 @@ export class CreateJobRequest {
         this.opensAt = opensAt;
         this.closesAt = closesAt;
         this.jobStatus = jobStatus;
+        this.originPage = originPage;
+        this.externalUrl = externalUrl;
     }
 }

@@ -6,14 +6,14 @@ export class GetJobByIdResponse {
     title: string;
     description: string;
     jobType: string;
+    workHours: string;
     //Requirements
-    skills: string;
+    skills: Array<string>;
     experience: string;
+    educationLevel: string;
     //Location
     ubigeo: string;
     address: string;
-    latitude: number;
-    longitude: number;
     //Payment
     minSalary: number;
     maxSalary: number;
@@ -24,8 +24,9 @@ export class GetJobByIdResponse {
     opensAt: Date;
     closesAt: Date;
     jobStatus: string;
-    views: number;
     creationDate: Date;
+    originPage: string;
+    views: number;
     externalURL: string;
 
     constructor(
@@ -36,13 +37,14 @@ export class GetJobByIdResponse {
         title: string,
         description: string,
         jobType: string,
-        skills: string,
+        workHours: string,
+        //Requirements
+        skills: Array<string>,
         experience: string,
+        educationLevel: string,
         //Location
         ubigeo: string,
         address: string,
-        latitude: number,
-        longitude: number,
         //Payment
         minSalary: number,
         maxSalary: number,
@@ -53,8 +55,10 @@ export class GetJobByIdResponse {
         opensAt: Date,
         closesAt: Date,
         jobStatus: string,
-        views: number,
         creationDate: Date,
+        originPage: string,
+        views: number,
+        //External
         externalURL: string
     ) {
         //Id
@@ -64,13 +68,14 @@ export class GetJobByIdResponse {
         this.title = title;
         this.description = description;
         this.jobType = jobType;
+        this.workHours = workHours;
+        //Requirements
         this.skills = skills;
         this.experience = experience;
+        this.educationLevel = educationLevel;
         //Location
         this.ubigeo = ubigeo;
         this.address = address;
-        this.latitude = latitude;
-        this.longitude = longitude;
         //Payment
         this.minSalary = minSalary;
         this.maxSalary = maxSalary;
@@ -81,8 +86,10 @@ export class GetJobByIdResponse {
         this.opensAt = opensAt;
         this.closesAt = closesAt;
         this.jobStatus = jobStatus;
-        this.views = views;
         this.creationDate = creationDate;
+        this.originPage = originPage;
+        this.views = views;
+        //External
         this.externalURL = externalURL
     }
 }

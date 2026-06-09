@@ -7,7 +7,6 @@ export class UpdateJobResponse {
     minSalary: number;
     maxSalary: number;
     jobStatus: string;
-    creationDate: Date;
 
     constructor(
         id: string,
@@ -17,8 +16,7 @@ export class UpdateJobResponse {
         address: string,
         minSalary: number,
         maxSalary: number,
-        jobStatus: string,
-        creationDate: Date
+        jobStatus: string
     ){
         this.id = id;
         this.companyId = companyId;
@@ -28,6 +26,5 @@ export class UpdateJobResponse {
         this.minSalary = minSalary;
         this.maxSalary = maxSalary;
         this.jobStatus = jobStatus;
-        this.creationDate = creationDate;
     }
 }

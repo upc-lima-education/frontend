@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import { LightJobResponse } from '../model/light-job.response';
+import { JobListItemResponse } from '../model/job-list-item.response.ts';
 import JobCardComponent from './job-card.component.vue';
 defineProps({
   jobs: {
-    type: Array<LightJobResponse>,
+    type: Array<JobListItemResponse>,
     required: true
   }
 });
@@ -23,7 +23,7 @@ defineProps({
       :title="job.title"
       :department="job.department"
       :district="job.district"
-      :type="job.type"
+      :type="job.jobType"
       :closes-at="new Date(job.closesAt)"
     />
     

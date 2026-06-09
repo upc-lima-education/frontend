@@ -29,27 +29,35 @@ export class JobService {
     async getJobById(request: GetJobByIdRequest): Promise<GetJobByIdResponse> {
         const response = await http.get(`${this.endpoint}/${request.id}`);
         return new GetJobByIdResponse(
+            //Id
             response.data.Id,
             response.data.CompanyId,
+            //Details
             response.data.Title,
             response.data.Description,
             response.data.JobType,
+            response.data.WorkHours,
+            //Requirements
             response.data.Skills,
             response.data.Experience,
+            response.data.EducationLevel,
+            //Location
             response.data.Ubigeo,
             response.data.Address,
-            response.data.Latitude,
-            response.data.Longitude,
+            //Payment
             response.data.MinSalary,
             response.data.MaxSalary,
             response.data.Currency,
             response.data.SalaryPeriod,
             response.data.CompensationType,
+            //Traceability
             new Date(response.data.OpensAt),
             new Date(response.data.ClosesAt),
             response.data.JobStatus,
-            response.data.Views,
             new Date(response.data.CreationDate),
+            response.data.OriginPage,
+            response.data.Views,
+            //External
             response.data.ExternalURL
         );
     }
@@ -64,8 +72,7 @@ export class JobService {
             response.data.Address,
             response.data.MinSalary,
             response.data.MaxSalary,
-            response.data.JobStatus,
-            new Date(response.data.CreationDate)
+            response.data.JobStatus
         );
     }
 
