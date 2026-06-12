@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { reactive, ref } from 'vue';
-import { enumToOptions } from '../utils/enum-to-options.util';
+import { enumToOptions } from '../../shared/utils/enum-to-options.util';
 import { JobType } from '../enums/job-type.enum';
 
 const showFilters = ref(false);

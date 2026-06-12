@@ -73,7 +73,7 @@ function ApplyToJob() {
         <section v-if="job.skills" class="section">
             <h2>Habilidades</h2>
             <div class="skills">
-                <span v-for="skill in job.skills.split(',')" :key="skill" class="tag">
+                <span v-for="skill in job.skills" :key="skill" class="tag">
                     {{ skill.trim() }}
                 </span>
             </div>

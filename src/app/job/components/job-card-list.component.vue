@@ -21,8 +21,7 @@ defineProps({
       :company-image="job.companyImage"
       :company-name="job.companyName"
       :title="job.title"
-      :department="job.department"
-      :district="job.district"
+      :ubigeo="job.ubigeo"
       :type="job.jobType"
       :closes-at="new Date(job.closesAt)"
     />

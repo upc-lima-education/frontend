@@ -6,11 +6,14 @@ import { Currency } from '../enums/currency.enum';
 import { Experience } from '../enums/experience.enum';
 import { JobStatus } from '../enums/job-status.enum';
 import { SalaryPeriod } from '../enums/salary-period';
-import { enumToOptions } from '../utils/enum-to-options.util';
+import { enumToOptions } from '../../shared/utils/enum-to-options.util';
 import { JobType } from '../enums/job-type.enum';
 import { CompensationType } from '../enums/compensation-type.enum';
 import ubigeoData from '@/app/shared/data/ubigeo.json';
 import ButtonClueComponent from '@/app/shared/components/button-clue.component.vue';
+import { WorkHours } from '../enums/work-hours.enum';
+import { EducationLevel } from '../enums/education-level.enum';
+import { OriginPage } from '../enums/origin-page.enum';
 
 const jobService = new JobService();
 //Auto computed company data
@@ -28,8 +31,11 @@ const form = reactive({
     title: '',
     description: '',
     jobType: JobType.InPerson,
+    workHours: WorkHours.FullTime,
+    //Requirements
     skills: '',
     experience: Experience.NoExperienceNeeded,
+    educationLevel: EducationLevel.Unspecified,
     //Location
     address: '',
     //Payment
@@ -50,16 +56,16 @@ const longitude = ref(0);
 
 const ubigeo = computed(() => {
     const match = ubigeoData.find(u =>
-        u.sDepartamento === selectedDepartment.value &&
-        u.sProvincia === selectedProvince.value &&
-        u.sDistrito === selectedDistrict.value
+        u.Departamento === selectedDepartment.value &&
+        u.Provincia === selectedProvince.value &&
+        u.Distrito === selectedDistrict.value
     );
-    return match ? match.sIdUbigeo : '';
+    return match ? match.Ubigeo : '';
 });
 
 const selectedDepartment = ref('');
 const departments = computed(() => {
-    return [...new Set(ubigeoData.map(u => u.sDepartamento))];
+    return [...new Set(ubigeoData.map(u => u.Departamento))];
 });
 watch(selectedDepartment, () => {
     selectedProvince.value = '';
@@ -69,8 +75,8 @@ watch(selectedDepartment, () => {
 const selectedProvince = ref('');
 const provinces = computed(() => {
     return ubigeoData
-        .filter(u => u.sDepartamento === selectedDepartment.value)
-        .map(u => u.sProvincia)
+        .filter(u => u.Departamento === selectedDepartment.value)
+        .map(u => u.Provincia)
         .filter((v, i, arr) => arr.indexOf(v) === i);
 });
 watch(selectedProvince, () => {
@@ -81,10 +87,10 @@ const selectedDistrict = ref('');
 const districts = computed(() => {
     return ubigeoData
         .filter(u =>
-            u.sDepartamento === selectedDepartment.value &&
-            u.sProvincia === selectedProvince.value
+            u.Departamento === selectedDepartment.value &&
+            u.Provincia === selectedProvince.value
         )
-        .map(u => u.sDistrito);
+        .map(u => u.Distrito);
 });
 
 //Enums to <select> options
@@ -169,13 +175,14 @@ async function submit() {
             form.title,
             form.description,
             JobType[form.jobType],
-            skills,
+            WorkHours[form.workHours],
+            //Requirements
+            Array(skills),
             Experience[form.experience],
+            EducationLevel[form.educationLevel],
             //Location
             ubigeo.value,
             form.address,
-            Number(latitude.value), //To be developed
-            Number(longitude.value), //To be developed
             //Payment
             Number(form.minSalary),
             Number(form.maxSalary),
@@ -185,7 +192,9 @@ async function submit() {
             //Traceability
             opensAt,
             closesAt,
-            jobStatus
+            jobStatus,
+            OriginPage[OriginPage.Internal],
+            ""
         );
         await jobService.createJob(request);
     } catch (e: any) {

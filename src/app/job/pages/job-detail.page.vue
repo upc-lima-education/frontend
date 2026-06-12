@@ -1,44 +1,23 @@
 <script setup lang="ts">
+import router from '@/app/shared/router/index.ts';
 import { onMounted, ref } from 'vue';
 import { GetJobByIdResponse } from '../model/get-job-by-id.response';
 import JobDetailComponent from '../components/job-detail.component.vue';
+import { JobService } from '../services/job.service.ts';
+import { GetJobByIdRequest } from '../model/get-job-by-id.request.ts';
 
 const job = ref<GetJobByIdResponse>();
+const jobId = ref("");
+const jobService = new JobService();
 
+//Temp
 const companyName = 'My company (TEMP)';
 const companyImage = 'https://static.vecteezy.com/system/resources/thumbnails/047/656/219/small/abstract-logo-design-for-any-corporate-brand-business-company-vector.jpg';
 
-async function getJobById() {
-    //Temp
-    return new GetJobByIdResponse(
-        //Id    
-        "123456789",
-        "10000",
-        //Details
-        "Barrendero",
-        "Únete para ser parte del equipo",
-        "Hybrid",
-        "Ser bueno",
-        "NoExperienceNeeded",
-        //Location
-        "140131",
-        "Add 1234",
-        -17.000,
-        -18.100,
-        //Payment
-        1130,
-        1200,
-        "PEN",
-        "Monthly",
-        "Mixed",
-        //Traceability
-        new Date(),
-        new Date(),
-        "Open",
-        10,
-        new Date(),
-        "https://google.com"
-    );
+async function getJobById(){
+    jobId.value = String(router.currentRoute.value.params.id);
+    const getJobByIdRequest = new GetJobByIdRequest(jobId.value);
+    return jobService.getJobById(getJobByIdRequest);
 }
 
 onMounted(async () => {

@@ -2,14 +2,14 @@
 import router from '@/app/shared/router';
 import { ROUTE_CONSTANTS } from '@/app/shared/router/route-constants';
 import { computed } from 'vue';
+import { ubigeoToLocation } from '@/app/shared/utils/ubigeo-to-location';
 
 const props = defineProps({
     id: { type: String, required: true },
     companyImage: { type: String, default: '' },
     companyName: { type: String, required: true },
     title: { type: String, required: true },
-    department: { type: String, required: true },
-    district: { type: String, required: true },
+    ubigeo: { type: String, required: true},
     type: { type: String, required: true },
     closesAt: { type: Date, required: true }
 });
@@ -39,6 +39,10 @@ function goToDetails(){
     router.push(`${ROUTE_CONSTANTS.JOB_DETAIL}/${props.id}`);
 }
 
+const location = computed(() => {
+    return ubigeoToLocation(props.ubigeo);
+});
+
 </script>
 
 <template>
@@ -58,7 +62,8 @@ function goToDetails(){
             <div class="job-meta">
                 <span class="company">{{ companyName }}</span>
                 <span>•</span>
-                <span>{{ district }} ({{ department }})</span>
+                <span v-if="location">{{ location.Distrito}} ({{ location.Departamento }})</span>
+                <span v-else>Sin ubicacion</span>
             </div>
 
             <div class="job-footer">
