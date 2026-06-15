@@ -25,7 +25,8 @@ export class CreateJobRequest {
     jobStatus: string;
     originPage: string;
     //External
-    externalUrl: string;
+    sourceUrl: string;
+    applyUrl: string;
 
     constructor(
         //Id
@@ -54,7 +55,8 @@ export class CreateJobRequest {
         jobStatus: string,
         originPage: string,
         //External
-        externalUrl: string
+        sourceUrl: string,
+        applyUrl: string
     ) {
         //Id
         this.companyId = companyId;
@@ -81,6 +83,7 @@ export class CreateJobRequest {
         this.closesAt = closesAt;
         this.jobStatus = jobStatus;
         this.originPage = originPage;
-        this.externalUrl = externalUrl;
+        this.sourceUrl = sourceUrl;
+        this.applyUrl = applyUrl;
     }
 }
