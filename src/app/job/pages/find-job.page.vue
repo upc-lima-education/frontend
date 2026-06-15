@@ -19,6 +19,17 @@ const jobs = [
   ),
   new JobListItemResponse(
     "2",
+    "KURAX S.A.C.",
+    "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSAoT3cvT6w-njkCT7oFJaD8xW9AsxS6Vy1iQ&s",
+    "Desarrollador Fullstack Tacna",
+    "220101",
+    "InPerson",
+    "Active",
+    "EmpleosPeru",
+    new Date("2026-06-09")
+  ),
+  new JobListItemResponse(
+    "3",
     "GRUPO HNG CORPORACION S.A.C",
     "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSAoT3cvT6w-njkCT7oFJaD8xW9AsxS6Vy1iQ&s",
     "AI Developer – Full Stack",
@@ -29,7 +40,7 @@ const jobs = [
     new Date("2026-06-23")
   ),
   new JobListItemResponse(
-    "3",
+    "4",
     "INDRA PERU",
     "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSAoT3cvT6w-njkCT7oFJaD8xW9AsxS6Vy1iQ&s",
     "Desarrollador Message Broker Senior",
@@ -40,7 +51,7 @@ const jobs = [
     new Date("2026-09-06")
   ),
   new JobListItemResponse(
-    "3",
+    "5",
     "Moventi",
     "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSAoT3cvT6w-njkCT7oFJaD8xW9AsxS6Vy1iQ&s",
     "Desarrollador Backend (Node.js)",
@@ -51,7 +62,7 @@ const jobs = [
     new Date("2026-08-26")
   ),
   new JobListItemResponse(
-    "4",
+    "6",
     "Moventi",
     "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSAoT3cvT6w-njkCT7oFJaD8xW9AsxS6Vy1iQ&s",
     "Desarrollador IOS",

@@ -70,14 +70,14 @@ function formatTitleCase(text: string): string {
                 <span class="company">{{ job.companyName }}</span>
                 
                 <div class="origin-wrapper">
-                    <img src="../../shared/assets/icons/Lupa.svg" class="info-icon" alt="Origen"/>
+                    <img src="../../shared/assets/icons/Enlace.svg" class="info-icon" alt="Origen"/>
                     <span class="origin">{{ job.originPage }}</span>
                 </div>
             </div>
 
             <div class="job-info">
                 <div class="info-row">
-                    <img src="../../shared/assets/icons/Lupa.svg" class="info-icon" alt="Ubicación"/>
+                    <img src="../../shared/assets/icons/Ubicacion.svg" class="info-icon" alt="Ubicación"/>
                     <span v-if="location">
                         {{ formatTitleCase(location.Distrito) }}, {{ formatTitleCase(location.Departamento) }}
                     </span>
@@ -85,7 +85,7 @@ function formatTitleCase(text: string): string {
                 </div>
                 
                 <div class="info-row">
-                    <img src="../../shared/assets/icons/Lupa.svg" class="info-icon" alt="Modalidad"/>
+                    <img src="../../shared/assets/icons/Edificio.svg" class="info-icon" alt="Modalidad"/>
                     <span>{{ $t(jobType.labelKey) }}</span>
                 </div>
             </div>
