@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref, watch } from 'vue';
 import { JobService } from '../services/job.service';
-import { CreateJobRequest } from '../model/create-job.request';
+import { CreateJobRequest } from '../model/job/create-job.request';
 import { Currency } from '../enums/currency.enum';
 import { Experience } from '../enums/experience.enum';
 import { JobStatus } from '../enums/job-status.enum';
@@ -194,6 +194,7 @@ async function submit() {
             closesAt,
             jobStatus,
             OriginPage[OriginPage.Internal],
+            "",
             ""
         );
         await jobService.createJob(request);

@@ -1,30 +1,65 @@
 <script setup lang="ts">
 import PageHeaderComponent from '@/app/shared/components/page-header.component.vue';
 import JobCardListComponent from '../components/job-card-list.component.vue';
-import { JobListItemResponse } from '../model/job-list-item.response.ts';
+import { JobListItemResponse } from '../model/job/job-list-item.response.ts';
 import FilterJobComponent from '../components/filter-job.component.vue';
 
 //Temp
 const jobs = [
   new JobListItemResponse(
     "1",
-    "Minimarket Santa Rosa",
-    "https://www.shutterstock.com/image-vector/colorful-supermarket-minimarket-logo-260nw-2398463929.jpg",
-    "Repartidor",
-    "Lima",
-    "Miraflores",
+    "GEATEL TELECOM",
+    "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSAoT3cvT6w-njkCT7oFJaD8xW9AsxS6Vy1iQ&s",
+    "Senior Laravel Developer (Backend Engineer) – San Juan de Lurigancho",
+    "140137",
     "InPerson",
-    "2026-04-20"
+    "Active",
+    "Computrabajo",
+    new Date("2026-06-17")
   ),
   new JobListItemResponse(
     "2",
-    "Panadería Don Pepe",
-    "https://www.dafont.com/forum/attach/orig/9/2/928497.png",
-    "Cajero",
-    "Lima",
-    "San Isidro",
+    "GRUPO HNG CORPORACION S.A.C",
+    "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSAoT3cvT6w-njkCT7oFJaD8xW9AsxS6Vy1iQ&s",
+    "AI Developer – Full Stack",
+    "140130",
     "InPerson",
-    "2026-04-18"
+    "Active",
+    "Computrabajo",
+    new Date("2026-06-23")
+  ),
+  new JobListItemResponse(
+    "3",
+    "INDRA PERU",
+    "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSAoT3cvT6w-njkCT7oFJaD8xW9AsxS6Vy1iQ&s",
+    "Desarrollador Message Broker Senior",
+    "140101",
+    "InPerson",
+    "Active",
+    "Bumeran",
+    new Date("2026-09-06")
+  ),
+  new JobListItemResponse(
+    "3",
+    "Moventi",
+    "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSAoT3cvT6w-njkCT7oFJaD8xW9AsxS6Vy1iQ&s",
+    "Desarrollador Backend (Node.js)",
+    "140101",
+    "Hybrid",
+    "Active",
+    "Bumeran",
+    new Date("2026-08-26")
+  ),
+  new JobListItemResponse(
+    "4",
+    "Moventi",
+    "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSAoT3cvT6w-njkCT7oFJaD8xW9AsxS6Vy1iQ&s",
+    "Desarrollador IOS",
+    "140101",
+    "Hybrid",
+    "Active",
+    "Bumeran",
+    new Date("2026-09-02")
   )
 ];
 

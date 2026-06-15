@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { JobListItemResponse } from '../model/job-list-item.response.ts';
+import { JobListItemResponse } from '../model/job/job-list-item.response.ts';
 import JobCardComponent from './job-card.component.vue';
 defineProps({
   jobs: {
@@ -17,16 +17,8 @@ defineProps({
     <JobCardComponent v-else
       v-for="job in jobs"
       :key="job.id"
-      :id="job.id"
-      :company-image="job.companyImage"
-      :company-name="job.companyName"
-      :title="job.title"
-      :ubigeo="job.ubigeo"
-      :type="job.jobType"
-      :closes-at="new Date(job.closesAt)"
+      :job="job"
     />
-    
-
   </section>
 </template>
 

@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import router from '@/app/shared/router/index.ts';
 import { onMounted, ref } from 'vue';
-import { GetJobByIdResponse } from '../model/get-job-by-id.response';
+import { GetJobByIdResponse } from '../model/job/get-job-by-id.response.ts';
 import JobDetailComponent from '../components/job-detail.component.vue';
 import { JobService } from '../services/job.service.ts';
-import { GetJobByIdRequest } from '../model/get-job-by-id.request.ts';
+import { GetJobByIdRequest } from '../model/job/get-job-by-id.request.ts';
 
 const job = ref<GetJobByIdResponse>();
 const jobId = ref("");

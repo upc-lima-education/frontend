@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue';
-import { GetJobByIdResponse } from '../model/get-job-by-id.response';
+import { GetJobByIdResponse } from '../model/job/get-job-by-id.response';
 import { ubigeoService } from '@/app/shared/services/ubigeo.service';
 import DialogComponent from '@/app/shared/components/dialog.component.vue';
 
@@ -102,9 +102,9 @@ function ApplyToJob() {
         <p>This job will be deleted forever. This action is not undone</p>
     </DialogComponent>
     <DialogComponent ref="applyJobDialogRef" title="Apply job" variant="success" @confirm="ApplyToJob()">
-        <div v-if="job.externalURL">
+        <div v-if="job.sourceUrl">
             <p>To apply to this job, go to the following page:</p>
-            <a :href="job.externalURL" target="_blank" rel="noopener noreferrer">Apply</a>
+            <a :href="job.sourceUrl" target="_blank" rel="noopener noreferrer">Apply</a>
         </div>
         <div v-else>
             <p>Please, attach your CV or info document in PDF format</p>
