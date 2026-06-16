@@ -15,8 +15,8 @@ viewBox="0 0 25 25"
  </defs>
  <g id="Capa_x0020_1">
   <metadata id="CorelCorpID_0Corel-Layer"/>
-  <polygon class="fil0 str0" points="0.71,17.65 9.69,17.65 12.54,22.89 15.38,17.65 24.29,17.65 24.29,24.3 0.71,24.3 "/>
-  <path class="fil0 str0" d="M12.54 22.89l-6.29 -11.57c-2.07,-3.81 -0.36,-10.82 6.5,-10.6 6.04,0.2 8.25,6.56 5.9,10.91l-6.11 11.26z"/>
-  <ellipse class="fil0 str0" cx="12.52" cy="7.82" rx="3.34" ry="3.31"/>
+  <path class="fil0 str0" d="M12.54 24.29l-6.69 -12.31c-2.2,-4.04 -0.37,-11.5 6.92,-11.26 6.42,0.22 8.77,6.98 6.26,11.6l-6.49 11.97z"/>
+  <ellipse class="fil0 str0" cx="12.52" cy="8.27" rx="3.55" ry="3.52"/>
+  <rect class="fil0" x="0.08" width="24.83" height="25"/>
  </g>
 </svg>

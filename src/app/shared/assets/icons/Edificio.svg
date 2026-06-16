@@ -9,26 +9,18 @@ viewBox="0 0 25 25"
   <style type="text/css">
    <![CDATA[
     .str0 {stroke:black;stroke-width:1.41;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:22.9256}
-    .str2 {stroke:black;stroke-width:0.31;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:22.9256}
-    .str1 {stroke:black;stroke-width:0.12;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:22.9256}
-    .str3 {stroke:black;stroke-width:1.41;stroke-linecap:square;stroke-linejoin:round;stroke-miterlimit:22.9256}
     .fil0 {fill:none}
-    .fil1 {fill:black}
    ]]>
   </style>
  </defs>
  <g id="Capa_x0020_1">
   <metadata id="CorelCorpID_0Corel-Layer"/>
+  <rect class="fil0" x="0.08" width="24.83" height="25"/>
   <rect class="fil0 str0" x="2.83" y="0.76" width="19.34" height="23.5"/>
-  <rect class="fil1 str1" x="6.08" y="3.63" width="3.94" height="1.97"/>
-  <rect class="fil1 str1" x="14.97" y="3.63" width="3.94" height="1.97"/>
-  <rect class="fil1 str1" x="6.08" y="8" width="3.94" height="1.97"/>
-  <rect class="fil1 str1" x="14.97" y="8" width="3.94" height="1.97"/>
-  <rect class="fil1 str1" x="6.08" y="12.4" width="3.94" height="1.97"/>
-  <rect class="fil1 str1" x="14.97" y="12.4" width="3.94" height="1.97"/>
-  <rect class="fil1 str1" x="6.08" y="16.84" width="3.94" height="1.9"/>
-  <rect class="fil1 str1" x="14.97" y="16.84" width="3.94" height="1.9"/>
-  <rect class="fil1 str2" x="10.6" y="19.95" width="3.79" height="4.22"/>
-  <line class="fil0 str3" x1="0.71" y1="24.29" x2="24.29" y2= "24.29" />
+  <rect class="fil0 str0" x="5.8" y="4.09" width="4.66" height="4.39"/>
+  <rect class="fil0 str0" x="14.53" y="4.09" width="4.66" height="4.39"/>
+  <rect class="fil0 str0" x="5.8" y="11.31" width="4.66" height="4.39"/>
+  <rect class="fil0 str0" x="14.53" y="11.31" width="4.66" height="4.39"/>
+  <rect class="fil0 str0" x="10.23" y="19.34" width="4.75" height="4.74"/>
  </g>
 </svg>
