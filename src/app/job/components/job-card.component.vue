@@ -62,7 +62,8 @@ function formatTitleCase(text: string): string {
 
         <div class="card-body">
             <div class="company-logo">
-                <img :src="job.companyImage" alt="company-image" draggable="false">
+                <img v-if="job.companyImage" :src="job.companyImage" alt="company-image" draggable="false">
+                <img v-else src="../../shared/assets/icons/Empresa.svg" class="info-icon" alt="Origen"/>
             </div>
 
             <div class="job-main">

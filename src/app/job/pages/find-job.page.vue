@@ -9,7 +9,7 @@ const jobs = [
   new JobListItemResponse(
     "1",
     "GEATEL TELECOM",
-    "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSAoT3cvT6w-njkCT7oFJaD8xW9AsxS6Vy1iQ&s",
+    "",
     "Senior Laravel Developer (Backend Engineer) – San Juan de Lurigancho",
     "140137",
     "InPerson",
@@ -20,7 +20,7 @@ const jobs = [
   new JobListItemResponse(
     "2",
     "KURAX S.A.C.",
-    "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSAoT3cvT6w-njkCT7oFJaD8xW9AsxS6Vy1iQ&s",
+    "",
     "Desarrollador Fullstack Tacna",
     "220101",
     "InPerson",
@@ -31,7 +31,7 @@ const jobs = [
   new JobListItemResponse(
     "3",
     "GRUPO HNG CORPORACION S.A.C",
-    "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSAoT3cvT6w-njkCT7oFJaD8xW9AsxS6Vy1iQ&s",
+    "",
     "AI Developer – Full Stack",
     "140130",
     "InPerson",
@@ -42,7 +42,7 @@ const jobs = [
   new JobListItemResponse(
     "4",
     "INDRA PERU",
-    "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSAoT3cvT6w-njkCT7oFJaD8xW9AsxS6Vy1iQ&s",
+    "",
     "Desarrollador Message Broker Senior",
     "140101",
     "InPerson",
@@ -53,7 +53,7 @@ const jobs = [
   new JobListItemResponse(
     "5",
     "Moventi",
-    "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSAoT3cvT6w-njkCT7oFJaD8xW9AsxS6Vy1iQ&s",
+    "",
     "Desarrollador Backend (Node.js)",
     "140101",
     "Hybrid",
@@ -64,7 +64,7 @@ const jobs = [
   new JobListItemResponse(
     "6",
     "Moventi",
-    "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSAoT3cvT6w-njkCT7oFJaD8xW9AsxS6Vy1iQ&s",
+    "",
     "Desarrollador IOS",
     "140101",
     "Hybrid",
