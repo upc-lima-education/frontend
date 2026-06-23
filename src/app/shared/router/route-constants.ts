@@ -18,6 +18,7 @@ export const ROUTE_CONSTANTS = {
 
     MESSAGE_COMPANY: "/message/c",
     MESSAGE_EMPLOYEE: "/message/e",
+    PROFILE_PAGE: "/profile",
     SETTINGS_PAGE: "/settings",
     SETTINGS_PROFILE: "profile",
 

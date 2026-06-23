@@ -1,30 +1,111 @@
 :root {
-    --gray-01: #F7F7F7;
-    --gray-02: #E1E1E1;
-    --gray-03: #CFCFCF;
-    --gray-04: #b7b7b7;
-    --gray-05: #818181;
-    --gray-06: #5c5c5c;
-    --gray-07: #3c3c3c;
-    --gray-08: #252525;
-    
-    --main-color: #1E3DAD;
-    --main-color-00: #b9c8fd;
-    --main-color-01: #4463d3;
-    --main-color-02: #3251c1;
-    --main-color-03: #2a46a7;
-    --main-color-04: #1f368b;
-    --main-color-05: #192c71;
-    --main-color-06: #111e4f;
-    --main-color-07: #0c1639;
-    --secondary-color: #ec4e10;
-    --secondary-color-light: #FF774D;
-    --secondary-color-dark: #d0420e;
+    /* ============================================================
+       PALETA OFICIAL LLANQUI — fuente de verdad. No cambiar.
+       ============================================================ */
+    --color-primary:        #1E2BAA;   /* azul profundo, panel y elementos clave */
+    --color-primary-dark:   #16217A;   /* hover y estados activos */
+    --color-accent:         #2D3AC7;   /* botones de accion principal */
+    --color-accent-hover:   #3D4DD4;   /* hover de botones */
+    --color-bg:             #E8EAF2;   /* fondo general de la app */
+    --color-surface:        #FFFFFF;   /* tarjetas, formularios, paneles */
+    --color-text-primary:   #0F0F1A;   /* titulos y texto principal */
+    --color-text-secondary: #4A5080;   /* texto de apoyo */
+    --color-text-muted:     #8890B8;   /* labels, placeholders */
+    --color-border:         #D0D4E8;   /* bordes de inputs y divisores */
+    --color-lavender:       #B8C0E8;   /* acentos decorativos suaves */
 
-    --green-color: #3b9c20;
-    --green-color-dark: #307d1b;
-    --red-color: #d22626;
-    --red-color-dark: #b01616;
-    --yellow-color: #DCAE08;
-    --yellow-color-dark: #c29810;
+    /* Estados semanticos. El naranja vive SOLO aqui, nunca en branding. */
+    --color-state-alert:        #EC4E10;   /* alertas / acentos de estado */
+    --color-state-alert-dark:   #D0420E;
+    --color-state-success:      #3B9C20;
+    --color-state-success-dark: #307D1B;
+    --color-state-error:        #D22626;
+    --color-state-error-dark:   #B01616;
+    --color-state-warning:      #DCAE08;
+    --color-state-warning-dark: #C29810;
+
+    /* Componentes de IA (tratamiento visual diferenciado) */
+    --color-ai-border:  #2D3AC7;   /* borde izquierdo 3px */
+    --color-ai-bg:      #F0F2FA;   /* fondo de bloques de sugerencia */
+    --color-ai-outline: #B8C0E8;   /* borde 1px de bloques de IA */
+    --color-ai-label:   #4A5080;   /* texto del label "IA" */
+
+    /* ============================================================
+       TIPOGRAFIA — una sola familia para todo.
+       ============================================================ */
+    --font-family: 'Inter', sans-serif;
+
+    --fw-regular:  400;
+    --fw-medium:   500;
+    --fw-semibold: 600;
+    --fw-bold:     700;
+
+    --fs-caption:  12px;   /* caption */
+    --fs-body-sm:  14px;   /* body sm */
+    --fs-body:     16px;   /* body */
+    --fs-subtitle: 20px;   /* subtitle */
+    --fs-title:    28px;   /* title */
+    --fs-display:  40px;   /* display */
+
+    /* ============================================================
+       FORMA Y ESPACIADO
+       ============================================================ */
+    --radius-button: 6px;
+    --radius-card:   8px;
+    --radius-input:  8px;
+    --radius-navbar: 0px;
+
+    /* Unica sombra permitida: tarjetas de contenido principal. */
+    --shadow-card: 0 1px 3px rgba(30, 43, 170, 0.08);
+
+    /* Sistema de espaciado de 8px */
+    --space-1: 8px;
+    --space-2: 16px;
+    --space-3: 24px;
+    --space-4: 32px;
+    --space-5: 40px;
+    --space-6: 48px;
+
+    /* Transicion unica permitida: solo estados */
+    --transition: all 0.15s ease;
+
+    /* ============================================================
+       CAPA DE COMPATIBILIDAD — los nombres legacy apuntan a la
+       paleta oficial para no romper componentes aun sin refactor.
+       A medida que migremos cada componente, eliminar su uso.
+       ============================================================ */
+    --gray-01: #F7F7F7;
+    --gray-02: #E8EAF2;
+    --gray-03: #D0D4E8;
+    --gray-04: #B8C0E8;
+    --gray-05: #8890B8;
+    --gray-06: #4A5080;
+    --gray-07: #0F0F1A;
+    --gray-08: #0F0F1A;
+
+    --main-color:    var(--color-primary);
+    --main-color-00: var(--color-lavender);
+    --main-color-01: var(--color-accent-hover);
+    --main-color-02: var(--color-accent);
+    --main-color-03: var(--color-primary);
+    --main-color-04: var(--color-primary-dark);
+    --main-color-05: #16217A;
+    --main-color-06: #111A5C;
+    --main-color-07: #0C1145;
+
+    /* Naranja legacy -> reservado a estados. */
+    --secondary-color:       var(--color-state-alert);
+    --secondary-color-light: #FF774D;
+    --secondary-color-dark:  var(--color-state-alert-dark);
+
+    --green-color:       var(--color-state-success);
+    --green-color-dark:  var(--color-state-success-dark);
+    --red-color:         var(--color-state-error);
+    --red-color-dark:    var(--color-state-error-dark);
+    --yellow-color:      var(--color-state-warning);
+    --yellow-color-dark: var(--color-state-warning-dark);
+
+    /* Antes Bricolage Grotesque; ahora unificado a Inter. */
+    --font-display: var(--font-family);
+    --font-body:    var(--font-family);
 }

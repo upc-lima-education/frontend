@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import ProfileOverviewComponent from '../components/profile-overview.component.vue';
 import ProfileEditComponent from '../components/profile-edit.component.vue';
 import { useSettingsPage } from '@/app/settings/composables/useSettingsPage';
 
@@ -7,46 +8,47 @@ const { activeTab, profileTabLabel, setTab } = useSettingsPage();
 
 <template>
     <div class="settings-page">
-        <p class="page-tagline">{{ $t('settings.profileTagline') }}</p>
+        <nav class="tabs" aria-label="Perfil y configuración">
+            <button
+                type="button"
+                class="tab"
+                :class="{ active: activeTab === 'profile' }"
+                @click="setTab('profile')"
+            >
+                {{ profileTabLabel }}
+            </button>
+            <button
+                type="button"
+                class="tab"
+                :class="{ active: activeTab === 'edit' }"
+                @click="setTab('edit')"
+            >
+                {{ $t('settings.tabEdit') }}
+            </button>
+            <button
+                type="button"
+                class="tab"
+                :class="{ active: activeTab === 'settings' }"
+                @click="setTab('settings')"
+            >
+                {{ $t('settings.tabSettings') }}
+            </button>
+            <button
+                type="button"
+                class="tab"
+                :class="{ active: activeTab === 'privacy' }"
+                @click="setTab('privacy')"
+            >
+                {{ $t('settings.tabPrivacy') }}
+            </button>
+        </nav>
 
-        <div class="settings-card">
-            <nav class="profile-tabs" aria-label="Secciones de configuración">
-                <button
-                    type="button"
-                    class="tab"
-                    :class="{ active: activeTab === 'profile' }"
-                    @click="setTab('profile')"
-                >
-                    {{ profileTabLabel }}
-                </button>
-                <button
-                    type="button"
-                    class="tab"
-                    :class="{ active: activeTab === 'settings' }"
-                    @click="setTab('settings')"
-                >
-                    {{ $t('settings.tabSettings') }}
-                </button>
-                <button
-                    type="button"
-                    class="tab"
-                    :class="{ active: activeTab === 'privacy' }"
-                    @click="setTab('privacy')"
-                >
-                    {{ $t('settings.tabPrivacy') }}
-                </button>
-            </nav>
-
-            <div class="tab-panel">
-                <ProfileEditComponent v-if="activeTab === 'profile'" />
-                <div v-else-if="activeTab === 'settings'" class="placeholder">
-                    <h3>{{ $t('settings.comingSoonTitle') }}</h3>
-                    <p>{{ $t('settings.comingSoonBody') }}</p>
-                </div>
-                <div v-else class="placeholder">
-                    <h3>{{ $t('settings.comingSoonTitle') }}</h3>
-                    <p>{{ $t('settings.comingSoonBody') }}</p>
-                </div>
+        <div class="panel">
+            <ProfileOverviewComponent v-if="activeTab === 'profile'" />
+            <ProfileEditComponent v-else-if="activeTab === 'edit'" />
+            <div v-else class="placeholder">
+                <h3>{{ $t('settings.comingSoonTitle') }}</h3>
+                <p>{{ $t('settings.comingSoonBody') }}</p>
             </div>
         </div>
     </div>
@@ -55,83 +57,74 @@ const { activeTab, profileTabLabel, setTab } = useSettingsPage();
 <style scoped>
 .settings-page {
     width: 100%;
-    max-width: 920px;
+    max-width: 960px;
     margin: 0 auto;
-    padding: 1.5rem 1rem 3rem;
-    min-height: 100vh;
-    background: var(--gray-01);
+    padding: var(--space-6) var(--space-3);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
 }
 
-.page-tagline {
-    font-family: Georgia, 'Times New Roman', serif;
-    font-size: 1.05rem;
-    color: var(--text-color-medium);
-    text-align: center;
-    margin: 0 0 1.5rem;
-    line-height: 1.5;
-}
-
-.settings-card {
-    background: var(--background-color-default);
-    border-radius: 14px;
-    border: 1px solid var(--gray-02);
-    box-shadow: 0 4px 20px rgba(18, 41, 116, 0.06);
-    overflow: hidden;
-}
-
-.profile-tabs {
+.tabs {
     display: flex;
     flex-wrap: wrap;
-    gap: 0.35rem;
-    padding: 0.75rem;
-    background: var(--gray-01);
-    border-bottom: 1px solid var(--gray-02);
+    gap: 4px;
+    padding: 6px;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-card);
 }
 
 .tab {
     flex: 1;
     min-width: 120px;
-    padding: 0.65rem 1rem;
+    padding: 10px 16px;
     border: none;
-    border-radius: 10px;
+    border-radius: var(--radius-button);
     background: transparent;
-    font-size: 0.9rem;
-    font-weight: 600;
-    color: var(--text-color-medium);
+    font-family: var(--font-family);
+    font-size: var(--fs-body-sm);
+    font-weight: var(--fw-medium);
+    color: var(--color-text-secondary);
     cursor: pointer;
-    transition: background 0.2s, color 0.2s;
+    transition: var(--transition);
 }
 
 .tab:hover {
-    color: var(--main-color-dark);
-    background: rgba(255, 255, 255, 0.7);
+    color: var(--color-text-primary);
+    background: var(--color-bg);
 }
 
 .tab.active {
-    background: var(--background-color-default);
-    color: var(--text-color-default);
-    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+    background: var(--color-accent);
+    color: #fff;
+    font-weight: var(--fw-semibold);
 }
 
-.tab-panel {
-    padding: 1.5rem 1.25rem 1.75rem;
+.panel {
+    min-height: 200px;
 }
 
 .placeholder {
     text-align: center;
-    padding: 2.5rem 1rem;
-    color: var(--text-color-medium);
+    padding: var(--space-6) var(--space-3);
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-card);
+    box-shadow: var(--shadow-card);
 }
 
 .placeholder h3 {
-    margin: 0 0 0.5rem;
-    font-family: Georgia, 'Times New Roman', serif;
-    color: var(--text-color-dark);
+    margin: 0 0 8px;
+    font-size: var(--fs-subtitle);
+    font-weight: var(--fw-semibold);
+    color: var(--color-text-primary);
 }
 
 .placeholder p {
     margin: 0;
-    font-size: 0.95rem;
+    font-size: var(--fs-body-sm);
+    color: var(--color-text-secondary);
 }
 
 @media (max-width: 640px) {

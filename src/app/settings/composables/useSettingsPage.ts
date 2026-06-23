@@ -13,7 +13,7 @@ export function useSettingsPage() {
 
     const activeTab = computed(() => {
         const tab = route.query.tab as string;
-        if (tab === 'settings' || tab === 'privacy') return tab;
+        if (tab === 'edit' || tab === 'settings' || tab === 'privacy') return tab;
         return 'profile';
     });
 

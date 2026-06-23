@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import GoogleLoginComponent from '../google-login.component.vue';
+import AuthBrandPanelComponent from '../auth-brand-panel.component.vue';
 import { useSignInForm } from '@/app/auth/composables/useSignInForm';
 
 const {
@@ -13,14 +14,21 @@ const {
 </script>
 
 <template>
-    <div class="auth-card-wrap">
-        <div class="brand-block">
-            <h1 class="brand-title">{{ $t('auth.brandName') }}</h1>
-            <p class="brand-sub">{{ $t('auth.signInPageSubtitle') }}</p>
-        </div>
+    <div class="auth-card">
+        <AuthBrandPanelComponent
+            :title="$t('auth.signInBrandTitle')"
+            :note="$t('auth.signInBrandNote')"
+        />
 
-        <div class="auth-card">
-            <h2 class="card-title">{{ $t('auth.signInCardTitle') }}</h2>
+        <section class="form-panel">
+            <header class="form-head">
+                <span class="form-eyebrow">{{ $t('auth.welcomeBack') }}</span>
+                <h1 class="welcome">{{ $t('auth.signInCardTitle') }}</h1>
+            </header>
+
+            <GoogleLoginComponent mode="login" />
+
+            <div class="divider"><span>{{ $t('auth.orWithEmail') }}</span></div>
 
             <form class="auth-form" @submit.prevent="onSignIn">
                 <div class="field">
@@ -40,152 +48,93 @@ const {
                         v-model="password"
                         type="password"
                         autocomplete="current-password"
+                        placeholder="••••••••"
                     />
+                </div>
+
+                <div class="form-options">
+                    <RouterLink class="forgot-link" to="/forgot-password">
+                        {{ $t('auth.forgotPassword') }}
+                    </RouterLink>
                 </div>
 
                 <div v-if="error" class="error">{{ error }}</div>
 
                 <button type="submit" class="btn-primary" :disabled="loading">
-                    {{ loading ? $t('common.loading') : $t('auth.login') }}
+                    <span>{{ loading ? $t('common.loading') : $t('auth.login') }}</span>
+                    <svg v-if="!loading" class="btn-arrow" viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M5 12h14M13 6l6 6-6 6" fill="none" stroke="currentColor"
+                              stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                    </svg>
                 </button>
-
-                <RouterLink class="forgot-link" to="/forgot-password">
-                    {{ $t('auth.forgotPassword') }}
-                </RouterLink>
-
-                <GoogleLoginComponent
-                    mode="login"
-                />
             </form>
 
-            <div class="divider">
-                <span>{{ $t('auth.noAccountYet') }}</span>
-            </div>
-
-            <button type="button" class="btn-outline" @click="goToSignUp">
-                {{ $t('auth.createAccount') }}
-            </button>
-        </div>
+            <p class="foot-note">
+                {{ $t('auth.noAccountYet') }}
+                <button type="button" class="link-btn" @click="goToSignUp">
+                    {{ $t('auth.createAccount') }}
+                </button>
+            </p>
+        </section>
     </div>
 </template>
 
 <style scoped>
-.auth-card-wrap {
-    width: 100%;
-    max-width: 440px;
-    margin: 0 auto;
-    display: flex;
-    flex-direction: column;
-    gap: 1.75rem;
-}
-
-.brand-block {
-    text-align: center;
-}
-
-.brand-title {
-    font-family: Georgia, 'Times New Roman', serif;
-    font-size: 1.85rem;
-    font-weight: 700;
-    color: var(--main-color-dark);
-    margin: 0 0 0.35rem;
-    letter-spacing: -0.02em;
-}
-
-.brand-sub {
-    margin: 0;
-    font-size: 0.95rem;
-    color: var(--text-color-medium);
-}
-
 .auth-card {
-    background: var(--background-color-default);
-    border-radius: 12px;
-    padding: 1.75rem 1.5rem 1.5rem;
-    box-shadow: 0 4px 24px rgba(18, 41, 116, 0.08);
-    border: 1px solid var(--gray-02);
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    max-width: 940px;
+    display: grid;
+    grid-template-columns: 1.05fr 1fr;
+    background: #ffffff;
+    border-radius: 22px;
+    box-shadow: 0 30px 70px -24px rgba(12, 22, 57, 0.45);
+    overflow: hidden;
 }
 
-.card-title {
-    font-family: Georgia, 'Times New Roman', serif;
-    font-size: 1.25rem;
-    font-weight: 700;
-    color: var(--text-color-default);
-    margin: 0 0 1.25rem;
+.auth-card :where(h1, p, span, label, input, button, a, small) {
+    font-family: var(--font-body);
 }
 
-.auth-form {
+/* Form panel */
+.form-panel {
+    padding: 3rem 2.75rem;
     display: flex;
     flex-direction: column;
-    gap: 1rem;
+    gap: 1.1rem;
 }
 
-.field label {
-    display: block;
-    font-size: 0.875rem;
+.form-head {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    margin-bottom: 0.4rem;
+}
+
+.form-eyebrow {
+    font-size: 0.72rem;
     font-weight: 600;
-    color: var(--text-color-dark);
-    margin-bottom: 0.35rem;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--secondary-color);
 }
 
-.field input {
-    width: 100%;
-    padding: 0.65rem 0.75rem;
-    border: 1px solid var(--gray-02);
-    border-radius: 8px;
-    font-size: 1rem;
-    background: var(--background-color-default);
-    color: var(--text-color-default);
-}
-
-.field input:focus {
-    outline: none;
-    border-color: var(--main-color);
-    box-shadow: 0 0 0 3px rgba(30, 61, 173, 0.12);
-}
-
-.btn-primary {
-    width: 100%;
-    margin-top: 0.25rem;
-    padding: 0.75rem 1rem;
-    border: none;
-    border-radius: 10px;
-    background: #5a6d8a;
-    color: #fff;
-    font-size: 1rem;
+.welcome {
+    font-family: var(--font-display);
+    font-size: 1.9rem;
     font-weight: 600;
-    cursor: pointer;
-    transition: background 0.2s, opacity 0.2s;
-}
-
-.btn-primary:hover:not(:disabled) {
-    background: #4a5c78;
-}
-
-.btn-primary:disabled {
-    opacity: 0.65;
-    cursor: not-allowed;
-}
-
-.forgot-link {
-    text-align: center;
-    font-size: 0.875rem;
-    color: var(--main-color);
-    text-decoration: none;
-    margin-top: 0.25rem;
-}
-
-.forgot-link:hover {
-    text-decoration: underline;
+    color: var(--main-color-07);
+    margin: 0;
+    letter-spacing: -0.02em;
 }
 
 .divider {
     display: flex;
     align-items: center;
-    gap: 1rem;
-    margin: 1.25rem 0 1rem;
-    color: var(--text-color-medium);
-    font-size: 0.85rem;
+    gap: 0.9rem;
+    color: var(--gray-05);
+    font-size: 0.78rem;
 }
 
 .divider::before,
@@ -196,21 +145,126 @@ const {
     background: var(--gray-02);
 }
 
-.btn-outline {
+.auth-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.field label {
+    display: block;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--gray-07);
+    margin-bottom: 0.4rem;
+}
+
+.field input {
     width: 100%;
-    padding: 0.7rem 1rem;
-    border-radius: 10px;
-    border: 2px solid var(--main-color);
-    background: transparent;
+    padding: 0.8rem 0.9rem;
+    border: 1px solid var(--gray-02);
+    border-radius: 12px;
+    font-size: 0.95rem;
+    background: var(--gray-01);
+    color: var(--main-color-07);
+    transition: border-color 0.18s, box-shadow 0.18s, background 0.18s;
+}
+
+.field input::placeholder {
+    color: var(--gray-04);
+}
+
+.field input:focus {
+    outline: none;
+    background: #fff;
+    border-color: var(--main-color);
+    box-shadow: 0 0 0 3px rgba(236, 78, 16, 0.16);
+}
+
+.form-options {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: -0.35rem;
+}
+
+.forgot-link {
+    font-size: 0.83rem;
     color: var(--main-color);
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.forgot-link:hover {
+    text-decoration: underline;
+}
+
+.btn-primary {
+    width: 100%;
+    margin-top: 0.35rem;
+    padding: 0.9rem 1rem;
+    border: none;
+    border-radius: 12px;
+    background: var(--main-color);
+    color: #fff;
     font-size: 1rem;
     font-weight: 600;
     cursor: pointer;
-    transition: background 0.2s;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    transition: background 0.18s, transform 0.1s, box-shadow 0.18s;
 }
 
-.btn-outline:hover {
-    background: rgba(30, 61, 173, 0.06);
+.btn-primary:hover:not(:disabled) {
+    background: var(--main-color-04);
+    box-shadow: 0 10px 22px -10px rgba(30, 61, 173, 0.7);
+}
+
+.btn-primary:hover:not(:disabled) .btn-arrow {
+    transform: translateX(3px);
+}
+
+.btn-primary:active:not(:disabled) {
+    transform: translateY(1px);
+}
+
+.btn-primary:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* base.css `* { color: black }` repaints inner span/svg — keep them white. */
+.btn-primary span,
+.btn-primary .btn-arrow {
+    color: #fff;
+}
+
+.btn-arrow {
+    width: 18px;
+    height: 18px;
+    transition: transform 0.18s ease;
+}
+
+.foot-note {
+    margin: 0.25rem 0 0;
+    font-size: 0.9rem;
+    color: var(--gray-06);
+    text-align: center;
+}
+
+.link-btn {
+    background: none;
+    border: none;
+    padding: 0;
+    color: var(--main-color);
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.link-btn:hover {
+    text-decoration: underline;
 }
 
 .error {
@@ -218,5 +272,24 @@ const {
     font-size: 0.8125rem;
     margin: 0;
     text-align: center;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .btn-arrow,
+    .btn-primary {
+        transition: none;
+    }
+}
+
+/* Responsive: stack panel above form */
+@media (max-width: 860px) {
+    .auth-card {
+        grid-template-columns: 1fr;
+        max-width: 440px;
+    }
+
+    .form-panel {
+        padding: 2.25rem 1.75rem;
+    }
 }
 </style>

@@ -26,7 +26,13 @@ const { loading, error, buttonLabel, handleGoogleLogin } = useGoogleLogin(props 
             :disabled="loading"
             @click="handleGoogleLogin"
         >
-            {{ buttonLabel }}
+            <svg class="google-icon" viewBox="0 0 24 24" aria-hidden="true">
+                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.27-4.74 3.27-8.1z"/>
+                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84A11 11 0 0 0 12 23z"/>
+                <path fill="#FBBC05" d="M5.84 14.09a6.6 6.6 0 0 1 0-4.18V7.07H2.18a11 11 0 0 0 0 9.86l3.66-2.84z"/>
+                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84C6.71 7.31 9.14 5.38 12 5.38z"/>
+            </svg>
+            <span>{{ buttonLabel }}</span>
         </button>
     </div>
 </template>
@@ -34,11 +40,14 @@ const { loading, error, buttonLabel, handleGoogleLogin } = useGoogleLogin(props 
 <style scoped>
 .google-login {
     width: 100%;
-    margin: 1rem 0;
+}
+
+.google-login :where(p, span, button) {
+    font-family: var(--font-body);
 }
 
 .error {
-    color: #dc3545;
+    color: var(--red-color);
     font-size: 0.875rem;
     margin-bottom: 0.5rem;
     text-align: center;
@@ -46,22 +55,35 @@ const { loading, error, buttonLabel, handleGoogleLogin } = useGoogleLogin(props 
 
 .google-button {
     width: 100%;
-    padding: 0.75rem;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    background: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.6rem;
+    padding: 0.8rem 1rem;
+    border: 1px solid var(--gray-02);
+    border-radius: 12px;
+    background: #fff;
+    color: var(--gray-07);
     cursor: pointer;
-    font-size: 1rem;
-    transition: all 0.3s;
+    font-size: 0.95rem;
+    font-weight: 600;
+    transition: background 0.18s, border-color 0.18s, box-shadow 0.18s;
 }
 
 .google-button:hover:not(:disabled) {
-    background: #f8f9fa;
-    border-color: #999;
+    background: var(--gray-01);
+    border-color: var(--gray-03);
+    box-shadow: 0 6px 16px -8px rgba(18, 41, 116, 0.25);
 }
 
 .google-button:disabled {
     opacity: 0.6;
     cursor: not-allowed;
+}
+
+.google-icon {
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
 }
 </style>

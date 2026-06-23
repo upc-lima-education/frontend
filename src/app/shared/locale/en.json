@@ -35,7 +35,14 @@
         "continueWithGoogle": "Continue with Google",
         "signUpWithGoogle": "Sign Up with Google",
         "googleConnecting": "Connecting...",
-        "googleError": "Could not connect to Google"
+        "googleError": "Could not connect to Google",
+        "brandEyebrow": "Jobs & opportunities",
+        "signInBrandTitle": "Where work meets the people who need it.",
+        "signInBrandNote": "Workers and companies, connected in one place.",
+        "signUpBrandTitle": "Create your account and start connecting.",
+        "signUpBrandNote": "People looking for work. Companies looking for staff.",
+        "welcomeBack": "Welcome back",
+        "orWithEmail": "or with your email"
     },
     "sidebar": {
         "news": "News",
@@ -45,6 +52,32 @@
         "messages": "Messages",
         "settings": "Settings",
         "logout": "Logout"
+    },
+    "navbar": {
+        "news": "News",
+        "messages": "Messages",
+        "findJob": "Find a job",
+        "publishJob": "Publish job",
+        "notifications": "Notifications",
+        "account": "My account",
+        "profile": "Profile",
+        "settings": "Settings",
+        "logout": "Logout",
+        "menu": "Menu"
+    },
+    "cv": {
+        "aiLabel": "AI",
+        "title": "CV Generator",
+        "subtitle": "We build your CV from your profile data.",
+        "promptLabel": "Additional details (optional)",
+        "promptPlaceholder": "E.g.: highlight my customer service experience and immediate availability.",
+        "generate": "Generate CV",
+        "generating": "Generating your CV…",
+        "generatingHint": "This may take a few seconds. Don't close this page.",
+        "download": "Download",
+        "regenerate": "Generate again",
+        "retry": "Retry",
+        "previewAlt": "CV preview"
     },
     "notfound": {
         "number": "404",
@@ -60,12 +93,16 @@
         "profileTagline": "Set up your professional profile and start connecting",
         "tabMyProfile": "My profile",
         "tabCompanyProfile": "Company profile",
+        "tabEdit": "Edit profile",
         "tabSettings": "Settings",
         "tabPrivacy": "Privacy",
         "comingSoonTitle": "Coming soon",
         "comingSoonBody": "This section will be available soon."
     },
     "profile": {
+        "personalInfo": "Personal information",
+        "verified": "Verified",
+        "noData": "No profile data found.",
         "selectDistrict": "Select a district",
         "selectProfession": "Select your profession",
         "selectIndustry": "Select an industry",
