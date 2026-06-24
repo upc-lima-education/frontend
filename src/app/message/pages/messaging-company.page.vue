@@ -7,6 +7,7 @@ import { MessageResponse } from "../model/message.response";
 import ConversationListComponent from "../components/conversation-list.component.vue";
 import MessageListComponent from "../components/message-list.component.vue";
 import MessageInputComponent from "../components/message-input.component.vue";
+import { MessageCircle } from "lucide-vue-next";
 
 const conversations = ref<ConversationResponse[]>([]);
 const currentConversation = ref<ConversationResponse | null>(null);
@@ -75,11 +76,19 @@ onMounted(async () => {
             <ConversationListComponent :conversations="conversations" :selectedId="currentConversation?.id"
                 @select="selectConversation" />
         </aside>
+        
         <aside class="chat-panel">
             <template v-if="currentConversation">
                 <header class="chat-header">
-                    <h3>{{ currentConversation.title }}</h3>
-                    <small>{{ currentConversation.subtitle }}</small>
+                    <img 
+                        :src="currentConversation.userImage || '/src/app/shared/assets/icons/UsuarioPredeterminado.svg'" 
+                        alt="Avatar de contacto" 
+                        class="chat-contact-avatar"
+                    />
+                    <div class="chat-contact-info">
+                        <h3 class="chat-contact-name">{{ currentConversation.title }}</h3>
+                        <small class="chat-contact-status">{{ currentConversation.subtitle }}</small>
+                    </div>
                 </header>
                 <main class="chat-messages">
                     <MessageListComponent :messages="messages" :userId="userId" />
@@ -90,7 +99,13 @@ onMounted(async () => {
             </template>
 
             <div v-else class="empty-chat">
-                Selecciona una conversación
+                <div class="empty-chat-content">
+                    <div class="empty-icon-circle">
+                        <MessageCircle :size="36" />
+                    </div>
+                    <h3>Tus Conversaciones</h3>
+                    <p>Selecciona una conversación del panel izquierdo para comenzar a chatear.</p>
+                </div>
             </div>
         </aside>
     </div>
@@ -99,46 +114,122 @@ onMounted(async () => {
 <style scoped>
 .message-page {
     width: 100%;
-    height: 100%;
+    height: calc(100vh - 65px);
     display: grid;
     grid-template-columns: 320px 1fr;
     overflow: hidden;
+    background: var(--color-surface);
 }
 
 .conversation-panel {
-    border-right: 1px solid var(--gray-02);
+    border-right: 1px solid var(--color-border);
     display: flex;
     flex-direction: column;
+    height: 100%;
 }
 
 .chat-panel {
     display: flex;
     flex-direction: column;
     height: 100%;
-    min-height: 0;
+    background: #ffffff;
 }
 
 .chat-header {
     display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px var(--space-2);
+    border-bottom: 1px solid var(--color-border);
+    background: var(--color-surface);
+}
+
+.chat-contact-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 1px solid var(--color-border);
+}
+
+.chat-contact-info {
+    display: flex;
     flex-direction: column;
-    align-items: start;
-    justify-content: center;
-    height: 10%;
-    padding-left: 1em;
-    border-bottom: 1px solid var(--gray-02);
+}
+
+.chat-contact-name {
+    margin: 0;
+    font-size: var(--fs-body-sm);
+    font-weight: var(--fw-bold);
+    color: var(--color-text-primary);
+}
+
+.chat-contact-status {
+    font-size: 11px;
+    color: var(--color-text-secondary);
 }
 
 .chat-messages {
     flex: 1;
-    min-height: 0;
+    overflow-y: auto;
+    background: #f8f9fc;
 }
 
 .chat-input {
-    border-top: 1px solid var(--gray-02);
+    background: var(--color-surface);
 }
 
 .empty-chat {
-    margin: auto;
-    color: var(--text-color);
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f8f9fc;
+    padding: var(--space-4);
+    text-align: center;
+}
+
+.empty-chat-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    max-width: 320px;
+}
+
+.empty-icon-circle {
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    background: var(--color-ai-bg);
+    color: var(--color-accent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--color-ai-outline);
+    box-shadow: var(--shadow-card);
+}
+
+.empty-chat-content h3 {
+    margin: 0;
+    font-size: var(--fs-subtitle);
+    font-weight: var(--fw-semibold);
+    color: var(--color-text-primary);
+}
+
+.empty-chat-content p {
+    margin: 0;
+    font-size: var(--fs-body-sm);
+    color: var(--color-text-secondary);
+    line-height: 1.5;
+}
+
+@media (max-width: 640px) {
+    .message-page {
+        grid-template-columns: 1fr;
+    }
+    .conversation-panel {
+        display: none; /* In production, we'd add toggles, but this follows grid constraints nicely */
+    }
 }
 </style>

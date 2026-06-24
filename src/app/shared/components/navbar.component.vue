@@ -185,8 +185,8 @@ async function handleLogout() {
     align-items: center;
     gap: var(--space-3);
     height: 64px;
-    padding: 0 var(--space-3);
-    max-width: 1280px;
+    padding: 0 var(--page-gutter);
+    max-width: var(--page-max);
     margin: 0 auto;
 }
 

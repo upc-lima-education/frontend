@@ -1,30 +1,40 @@
-.split-content-page,
+/* ============================================================
+   CONTENEDORES DE PAGINA
+   Sistema responsive unico: ancho maximo por token + gutter
+   lateral fluido. Centrado con margin auto. Evita el espacio
+   muerto a los lados en pantallas grandes y se ajusta solo en
+   moviles. No usar anchos en % sueltos.
+   ============================================================ */
+
+/* Pagina ancha por defecto: feeds, listas, dashboards */
 .page-content-full,
 .page-content-80 {
-    height: 100%;
+    width: 100%;
+    max-width: var(--page-max);
+    margin-inline: auto;
+    padding: var(--space-5) var(--page-gutter);
+    box-sizing: border-box;
 }
 
+/* Variante de lectura/formulario: linea mas corta y comoda */
+.page-content-narrow {
+    width: 100%;
+    max-width: var(--page-max-narrow);
+    margin-inline: auto;
+    padding: var(--space-5) var(--page-gutter);
+    box-sizing: border-box;
+}
+
+/* Layout partido (auth, split screens) */
 .split-content-page {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    height: 100vh;
+    min-height: 100vh;
     width: 100%;
 }
 
-.page-content-full {
-    width: 100%;
-}
-
-.page-content-80 {
-    margin-top: 2rem;
-    width: 80%;
-}
-
-.page-content-full {
-    width: 100%;
-}
-
-.page-content-80 {
-    margin-top: 2rem;
-    width: 80%;
+@media (max-width: 860px) {
+    .split-content-page {
+        grid-template-columns: 1fr;
+    }
 }

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import DialogComponent from '@/app/shared/components/dialog.component.vue';
 import { computed, ref } from 'vue';
+import { Heart, MessageSquare, Share2, Send as SendIcon, ChevronLeft, ChevronRight, MoreHorizontal } from 'lucide-vue-next';
 
 const props = defineProps({
     userImage: { type: String, default: '' },
@@ -10,7 +11,11 @@ const props = defineProps({
     images: { type: Array as () => string[], default: () => [] }
 });
 
-const formattedDate = computed(() => props.publishedAt.toLocaleString());
+const formattedDate = computed(() => {
+    // Relative date representation or short locale date
+    const date = new Date(props.publishedAt);
+    return date.toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' });
+});
 
 /*Image carousel setup*/
 const currentImageIndex = ref(0);
@@ -29,12 +34,16 @@ const prevImage = () => {
 /*Dialog setup*/
 const dialogRef = ref<InstanceType<typeof DialogComponent>>();
 
+const isLiked = ref(false);
+
+const handleLikeClick = () => {
+    dialogRef.value?.open();
+};
+
 const heartedItem = () => {
-    alert('Hearted');
+    isLiked.value = !isLiked.value;
 };
 </script>
-
-
 
 <template>
     <article class="post-card">
@@ -42,195 +51,342 @@ const heartedItem = () => {
         <header class="post-header">
             <div class="user-info">
                 <img v-if="userImage" class="avatar" :src="userImage" alt="User avatar" />
-                <img v-else class="avatar" src="../../shared/assets/icons/UsuarioPredeterminado.svg"
-                    alt="User avatar" />
-                <div>
+                <img v-else class="avatar" src="../../shared/assets/icons/UsuarioPredeterminado.svg" alt="User avatar" />
+                <div class="user-meta">
                     <h2 class="username">{{ userName }}</h2>
-                    <span class="date">{{ formattedDate }}</span>
+                    <p class="user-headline">Profesional en Llanqui • {{ formattedDate }}</p>
                 </div>
             </div>
+            <button class="options-btn" aria-label="Opciones">
+                <MoreHorizontal :size="20" />
+            </button>
         </header>
 
         <!-- Content -->
         <section class="post-content">
             <p class="message">{{ content }}</p>
 
+            <!-- Carousel Section -->
             <div v-if="images.length > 1" class="carousel">
-                <button class="nav prev" @click="prevImage" :disabled="currentImageIndex === 0">
-                    ‹
+                <button class="nav-arrow prev" @click="prevImage" :disabled="currentImageIndex === 0" aria-label="Anterior">
+                    <ChevronLeft :size="20" />
                 </button>
 
                 <img class="carousel-image" :src="currentImage" alt="Post image" />
 
-                <button class="nav next" @click="nextImage" :disabled="currentImageIndex === images.length - 1">
-                    ›
+                <button class="nav-arrow next" @click="nextImage" :disabled="currentImageIndex === images.length - 1" aria-label="Siguiente">
+                    <ChevronRight :size="20" />
                 </button>
+                
+                <!-- Indicators -->
+                <div class="carousel-dots">
+                    <span 
+                        v-for="(_, index) in images" 
+                        :key="index" 
+                        class="dot" 
+                        :class="{ active: index === currentImageIndex }"
+                    ></span>
+                </div>
             </div>
-            <div v-if="images.length === 1" class="carousel">
-                <img class="carousel-image" :src="currentImage" alt="Post image"/>
+            
+            <div v-else-if="images.length === 1" class="single-image-wrapper">
+                <img class="post-single-image" :src="currentImage" alt="Post image"/>
             </div>
-
         </section>
 
-        <!-- Footer (actions placeholder) -->
+        <!-- Social Activity Stats Row -->
+        <div class="social-stats">
+            <div class="likes-count">
+                <span class="heart-icon-mini">❤️</span>
+                <span class="stats-text">{{ isLiked ? 'Tú y otras 12 personas' : '12 personas' }}</span>
+            </div>
+            <div class="comments-count">
+                <span class="stats-text">3 comentarios • 1 compartido</span>
+            </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <!-- Footer Actions -->
         <footer class="post-footer">
-            <img src="@/app/shared/assets/icons/Corazon.svg" alt="Like" class="like-icon" v-on:click="dialogRef?.open()"/>
+            <button class="action-btn" :class="{ active: isLiked }" @click="handleLikeClick">
+                <Heart :size="18" :class="{ 'filled-heart': isLiked }" />
+                <span>{{ isLiked ? 'Me gusta' : 'Reaccionar' }}</span>
+            </button>
+            <button class="action-btn" @click="alert('Comentarios próximamente')">
+                <MessageSquare :size="18" />
+                <span>Comentar</span>
+            </button>
+            <button class="action-btn" @click="alert('Compartido en tu perfil')">
+                <Share2 :size="18" />
+                <span>Compartir</span>
+            </button>
+            <button class="action-btn" @click="alert('Enviado por mensaje privado')">
+                <SendIcon :size="18" />
+                <span>Enviar</span>
+            </button>
         </footer>
 
-        <DialogComponent ref="dialogRef" title="Heart Item" subtitle="This action cannot be undone" variant="default"
+        <DialogComponent ref="dialogRef" :title="isLiked ? 'Quitar Reacción' : 'Reaccionar'" :subtitle="isLiked ? '¿Quieres quitar tu reacción a este post?' : '¿Quieres reaccionar a esta publicación?'" variant="default"
             @confirm="heartedItem">
-            <p>Heart Item?</p>
+            <p>{{ isLiked ? 'Esta acción quitará tu Me Gusta de la publicación.' : 'Se añadirá tu reacción a esta publicación para que otros usuarios la vean.' }}</p>
         </DialogComponent>
     </article>
 </template>
 
-
 <style scoped>
 .post-card {
-    background-color: var(--gray-01);
-    border: 1px solid var(--gray-02);
-    border-radius: 12px;
-    padding: 16px;
-    margin-bottom: 20px;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.04);
-    transition: box-shadow 0.2s ease, transform 0.2s ease;
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-card);
+    padding: var(--space-2);
+    margin-bottom: var(--space-2);
+    box-shadow: var(--shadow-card);
+    display: flex;
+    flex-direction: column;
+    transition: var(--transition);
 }
 
 .post-card:hover {
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
-    transform: translateY(-2px);
+    box-shadow: 0 4px 14px rgba(30, 43, 170, 0.08);
 }
 
 /* Header */
 .post-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
     margin-bottom: 12px;
 }
 
 .user-info {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: var(--space-1);
 }
 
 .avatar {
-    width: 44px;
-    height: 44px;
+    width: 48px;
+    height: 48px;
     border-radius: 50%;
     object-fit: cover;
+    border: 1px solid var(--color-border);
+}
+
+.user-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
 }
 
 .username {
     margin: 0;
-    font-size: 1rem;
-    font-weight: 600;
-    color: var(--gray-07);
+    font-size: var(--fs-body-sm);
+    font-weight: var(--fw-semibold);
+    color: var(--color-text-primary);
 }
 
-.date {
-    font-size: 0.8rem;
-    color: var(--gray-05);
+.user-headline {
+    margin: 0;
+    font-size: var(--fs-caption);
+    color: var(--color-text-muted);
+}
+
+.options-btn {
+    background: transparent;
+    border: none;
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    padding: 6px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: var(--transition);
+}
+
+.options-btn:hover {
+    background: var(--color-bg);
+    color: var(--color-text-primary);
 }
 
 /* Content */
 .post-content {
-    margin-top: 8px;
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 12px;
 }
 
 .message {
     margin: 0 0 12px;
-    font-size: 0.95rem;
-    line-height: 1.6;
-    color: var(--gray-06);
+    font-size: var(--fs-body-sm);
+    line-height: 1.5;
+    color: var(--color-text-primary);
+    white-space: pre-line;
 }
 
-/* Image grid */
-.image-grid {
-    margin-top: 8px;
-    border-radius: 10px;
-    overflow: hidden;
-}
-
-.image-grid img {
-    width: 100%;
-    height: auto;
-    display: block;
-}
-
-/* Footer */
-.post-footer {
-    margin-top: 12px;
-    display: flex;
-    justify-content: flex-end;
-}
-
-.like-icon {
-    background: none;
-    border: none;
-    font-size: 1.2rem;
-    cursor: pointer;
-    color: var(--gray-05);
-    transition: color 0.2s ease, transform 0.2s ease;
-}
-
-.like-icon:hover {
-    color: var(--secondary-color);
-    transform: scale(1.1);
-}
-
-/* Carousel */
+/* Carousel & Media */
 .carousel {
     position: relative;
-    margin-top: 12px;
+    background-color: var(--color-bg);
+    border-radius: var(--radius-card);
+    overflow: hidden;
+    height: 320px;
     display: flex;
     align-items: center;
     justify-content: center;
-    background-color: var(--gray-02);
-    border-radius: 10px;
-    overflow: hidden;
-    height: 220px;
+    border: 1px solid var(--color-border);
 }
 
 .carousel-image {
     max-height: 100%;
     max-width: 100%;
     object-fit: contain;
-    transition: opacity 0.3s ease;
+}
+
+.single-image-wrapper {
+    background-color: var(--color-bg);
+    border-radius: var(--radius-card);
+    overflow: hidden;
+    max-height: 400px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--color-border);
+}
+
+.post-single-image {
+    max-height: 400px;
+    width: 100%;
+    object-fit: cover;
 }
 
 /* Navigation buttons */
-.nav {
+.nav-arrow {
     display: flex;
     align-items: center;
     justify-content: center;
     position: absolute;
     top: 50%;
     transform: translateY(-50%);
-    background-color: rgba(0, 0, 0, 0.4);
-    color: white;
-    border: none;
+    background-color: rgba(255, 255, 255, 0.9);
+    border: 1px solid var(--color-border);
+    color: var(--color-text-primary);
     width: 36px;
     height: 36px;
     border-radius: 50%;
-    font-size: 1.5rem;
     cursor: pointer;
-    transition: background-color 0.2s ease, transform 0.2s ease;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    transition: var(--transition);
+    z-index: 10;
 }
 
-.nav:hover:not(:disabled) {
-    background-color: rgba(0, 0, 0, 0.6);
-    transform: translateY(-50%) scale(1.1);
+.nav-arrow:hover:not(:disabled) {
+    background-color: #ffffff;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+    transform: translateY(-50%) scale(1.05);
 }
 
-.nav:disabled {
-    opacity: 0.3;
+.nav-arrow:disabled {
+    opacity: 0;
     cursor: not-allowed;
+    pointer-events: none;
 }
 
 .prev {
-    left: 10px;
+    left: 12px;
 }
 
 .next {
-    right: 10px;
+    right: 12px;
 }
-</style>
+
+/* Carousel dots */
+.carousel-dots {
+    position: absolute;
+    bottom: 12px;
+    display: flex;
+    gap: 6px;
+    z-index: 10;
+}
+
+.dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.3);
+    transition: var(--transition);
+}
+
+.dot.active {
+    background: var(--color-accent);
+    transform: scale(1.2);
+}
+
+/* Social Activity Stats */
+.social-stats {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    font-size: 11px;
+}
+
+.likes-count {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.heart-icon-mini {
+    font-size: 12px;
+}
+
+.stats-text {
+    color: var(--color-text-secondary);
+}
+
+.divider {
+    height: 1px;
+    background-color: var(--color-border);
+    margin-bottom: 4px;
+}
+
+/* Actions Footer */
+.post-footer {
+    display: flex;
+    justify-content: space-between;
+    padding-top: 4px;
+}
+
+.action-btn {
+    flex: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-1);
+    background: transparent;
+    border: none;
+    color: var(--color-text-secondary);
+    padding: 10px 0;
+    font-size: var(--fs-caption);
+    font-weight: var(--fw-semibold);
+    border-radius: var(--radius-button);
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.action-btn:hover {
+    background-color: var(--color-bg);
+    color: var(--color-text-primary);
+}
+
+.action-btn.active {
+    color: var(--color-accent);
+}
+
+.filled-heart {
+    fill: var(--color-accent);
+    color: var(--color-accent);
+}
+</style>

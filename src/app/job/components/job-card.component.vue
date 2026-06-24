@@ -2,6 +2,7 @@
 import router from '@/app/shared/router';
 import { ROUTE_CONSTANTS } from '@/app/shared/router/route-constants';
 import { computed } from 'vue';
+import { MapPin, Briefcase, Clock } from 'lucide-vue-next';
 
 const props = defineProps({
     id: { type: String, required: true },
@@ -38,129 +39,163 @@ const closingSoon = computed(() => {
 function goToDetails(){
     router.push(`${ROUTE_CONSTANTS.JOB_DETAIL}/${props.id}`);
 }
-
 </script>
 
 <template>
     <article class="job-card" @click="goToDetails()">
-
-        <div class="company-logo">
-            <img :src="companyImage" alt="company-image">
+        <div class="company-logo-container">
+            <img v-if="companyImage" :src="companyImage" alt="Logo de la empresa" class="company-logo">
+            <div v-else class="company-logo-placeholder">
+                <Briefcase :size="24" />
+            </div>
         </div>
 
         <div class="job-content">
-
             <header class="job-header">
-                <h4 class="job-title">{{ title }}</h4>
+                <h3 class="job-title">{{ title }}</h3>
                 <span class="job-type-badge">{{ $t(jobType.labelKey) }}</span>
             </header>
 
+            <p class="company-name">{{ companyName }}</p>
+
             <div class="job-meta">
-                <span class="company">{{ companyName }}</span>
-                <span>•</span>
-                <span>{{ district }} ({{ department }})</span>
+                <span class="meta-item">
+                    <MapPin :size="14" />
+                    <span>{{ district }}, {{ department }}</span>
+                </span>
+                <span class="meta-item">
+                    <Clock :size="14" />
+                    <span :class="{ 'closing-soon': closingSoon }">{{ timeLeft }}</span>
+                </span>
             </div>
-
-            <div class="job-footer">
-                <span class="job-expiration" :class="{ soon: closingSoon }">{{ timeLeft }}</span>
-            </div>
-
         </div>
-
     </article>
 </template>
 
 <style scoped>
 .job-card {
     display: flex;
-    gap: 14px;
-    padding: 16px;
-    border-radius: 10px;
-    border: 1px solid var(--gray-02);
-    background: var(--background-color-default);
+    gap: var(--space-2);
+    padding: var(--space-2);
+    border-radius: var(--radius-card);
+    border: 1px solid var(--color-border);
+    background: var(--color-surface);
     cursor: pointer;
-    transition: all 0.18s ease;
+    transition: var(--transition);
 }
 
 .job-card:hover {
-    border-color: var(--main-color-01);
-    transform: translateY(-1px);
-    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+    border-color: var(--color-accent);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(30, 43, 170, 0.08);
 }
 
-/* logo */
-
-.company-logo {
+/* Logo container */
+.company-logo-container {
     flex-shrink: 0;
     display: flex;
     justify-content: center;
     align-items: center;
 }
 
-.company-logo img {
-    width: 60px;
-    height: 60px;
-    border-radius: 10px;
+.company-logo {
+    width: 56px;
+    height: 56px;
+    border-radius: 8px;
     object-fit: cover;
-    border: 1px solid var(--gray-02);
+    border: 1px solid var(--color-border);
+    background: #fff;
 }
 
-/* content */
+.company-logo-placeholder {
+    width: 56px;
+    height: 56px;
+    border-radius: 8px;
+    border: 1px solid var(--color-border);
+    background: var(--color-bg);
+    color: var(--color-text-secondary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
 
+/* Content */
 .job-content {
     flex: 1;
     display: flex;
     flex-direction: column;
     gap: 6px;
+    min-width: 0;
 }
 
-/* header */
-
+/* Header */
 .job-header {
     display: flex;
     justify-content: space-between;
-    align-items: center;
-    gap: 10px;
+    align-items: flex-start;
+    gap: var(--space-1);
 }
 
 .job-title {
-    font-weight: bold;
-    color: var(--main-color);
+    margin: 0;
+    font-size: var(--fs-body-sm);
+    font-weight: var(--fw-semibold);
+    color: var(--color-text-primary);
+    transition: var(--transition);
 }
 
-/* badge */
+.job-card:hover .job-title {
+    color: var(--color-accent);
+}
 
+/* Badge */
 .job-type-badge {
-    font-size: 0.75rem;
+    font-size: 11px;
+    font-weight: var(--fw-semibold);
     padding: 3px 10px;
     border-radius: 999px;
-    background: var(--gray-02);
-    color: var(--text-color);
+    background: var(--color-ai-bg);
+    color: var(--color-accent);
+    border: 1px solid var(--color-ai-outline);
     white-space: nowrap;
 }
 
-/* meta */
+.company-name {
+    margin: 0;
+    font-size: var(--fs-caption);
+    font-weight: var(--fw-medium);
+    color: var(--color-text-secondary);
+}
 
+/* Meta info */
 .job-meta {
     display: flex;
-    gap: 10px;
-    font-size: 0.85rem;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-top: 4px;
 }
 
-/* footer */
-
-.job-footer {
-    display: flex;
-    justify-content: flex-start;
+.meta-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: var(--fs-caption);
+    color: var(--color-text-muted);
 }
 
-.job-expiration {
-    font-size: 0.8rem;
-    color: var(--text-color);
+.closing-soon {
+    color: var(--color-state-error);
+    font-weight: var(--fw-semibold);
 }
 
-.job-expiration.soon {
-    color: var(--red-color);
-    font-weight: 600;
+@media (max-width: 576px) {
+    .job-card {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--space-1);
+    }
+    .company-logo-container {
+        align-self: flex-start;
+    }
 }
-</style>
+</style>

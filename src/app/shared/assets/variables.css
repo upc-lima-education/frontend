@@ -66,6 +66,15 @@
     --space-5: 40px;
     --space-6: 48px;
 
+    /* ============================================================
+       LAYOUT — ancho de pagina unificado y gutter lateral fluido.
+       Toda vista debe usar estos tokens para no dejar espacio
+       muerto a los lados ni desalinearse del navbar.
+       ============================================================ */
+    --page-max:        1200px;  /* feeds, listas, paginas anchas */
+    --page-max-narrow: 820px;   /* formularios y lectura (65-75ch) */
+    --page-gutter:     clamp(16px, 4vw, 32px); /* padding lateral fluido */
+
     /* Transicion unica permitida: solo estados */
     --transition: all 0.15s ease;
 

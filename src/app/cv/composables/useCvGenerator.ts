@@ -14,6 +14,8 @@ const MAX_POLLS = 40; // ~2 minutos
 export function useCvGenerator() {
     const state = ref<CvState>('idle');
     const errorMessage = ref('');
+    const errorStatus = ref<number | null>(null);
+    const isCreditError = ref(false);
     const cvId = ref<string | null>(null);
     const previewUrl = ref<string | null>(null);
 
@@ -39,12 +41,24 @@ export function useCvGenerator() {
         revokePreview();
         cvId.value = null;
         errorMessage.value = '';
+        errorStatus.value = null;
+        isCreditError.value = false;
         state.value = 'idle';
     }
 
-    function fail(message: string) {
+    function fail(message: string, status?: number) {
         stopPolling();
         errorMessage.value = message;
+        errorStatus.value = status || null;
+        const msgLower = message.toLowerCase();
+        isCreditError.value = 
+            status === 402 || 
+            msgLower.includes('credit') || 
+            msgLower.includes('crédit') || 
+            msgLower.includes('saldo') || 
+            msgLower.includes('pagar') ||
+            msgLower.includes('paga') ||
+            msgLower.includes('insuficiente');
         state.value = 'error';
     }
 
@@ -52,12 +66,15 @@ export function useCvGenerator() {
         reset();
         state.value = 'generating';
         try {
-            const res = await cvService.generate({ prompt: prompt?.trim() || null });
+            const res = await cvService.generate({ 
+                mode: 'General', 
+                prompt: prompt?.trim() || null 
+            });
             cvId.value = res.cvGenerationId;
             pollCount = 0;
             schedulePoll();
         } catch (e: any) {
-            fail(e?.response?.data?.message || 'No se pudo iniciar la generación del CV.');
+            fail(e?.response?.data?.message || 'No se pudo iniciar la generación del CV.', e?.response?.status);
         }
     }
 
@@ -116,5 +133,5 @@ export function useCvGenerator() {
         revokePreview();
     });
 
-    return { state, errorMessage, previewUrl, generate, download, reset };
+    return { state, errorMessage, isCreditError, previewUrl, generate, download, reset };
 }

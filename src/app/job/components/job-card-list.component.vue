@@ -34,9 +34,10 @@ defineProps({
 <style scoped>
 
 .job-list {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: var(--space-2);
+  align-items: start;
 }
 
 </style>

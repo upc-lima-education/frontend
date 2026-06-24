@@ -120,7 +120,7 @@ const {
     align-items: flex-start;
     gap: 2rem;
     padding: 2rem;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-accent) 100%);
     color: white;
     border-radius: 8px;
     margin-bottom: 2rem;
@@ -217,7 +217,7 @@ const {
     font-size: 1.25rem;
     margin-bottom: 1.5rem;
     color: #333;
-    border-bottom: 2px solid #667eea;
+    border-bottom: 2px solid var(--color-accent);
     padding-bottom: 0.5rem;
 }
 
@@ -249,7 +249,7 @@ const {
 
 .keyword-tag {
     display: inline-block;
-    background: #667eea;
+    background: var(--color-accent);
     color: white;
     padding: 0.4rem 0.8rem;
     border-radius: 20px;

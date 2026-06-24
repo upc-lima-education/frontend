@@ -19,7 +19,7 @@
         "fillAllFields": "Por favor, completa todos los campos requeridos",
         "passwordRequirements": "La contraseña debe tener al menos 8 caracteres, incluir una letra mayúscula y un número",
         "selectUserType": "¿Qué tipo de usuario eres?",
-        "brandName": "ProConnect",
+        "brandName": "Llanqui",
         "signUpPageSubtitle": "Crea tu cuenta en 2 minutos",
         "signUpCardTitle": "Crea tu cuenta",
         "signInPageSubtitle": "Inicia sesión para continuar",
@@ -35,14 +35,7 @@
         "continueWithGoogle": "Continuar con Google",
         "signUpWithGoogle": "Registrarse con Google",
         "googleConnecting": "Conectando...",
-        "googleError": "Error al conectar con Google",
-        "brandEyebrow": "Empleo y oportunidades",
-        "signInBrandTitle": "Donde el trabajo encuentra a quién lo necesita.",
-        "signInBrandNote": "Trabajadores y empresas, conectados en un solo lugar.",
-        "signUpBrandTitle": "Crea tu cuenta y empieza a conectar.",
-        "signUpBrandNote": "Personas que buscan trabajo. Empresas que buscan personal.",
-        "welcomeBack": "Bienvenido de vuelta",
-        "orWithEmail": "o con tu correo"
+        "googleError": "Error al conectar con Google"
     },
     "sidebar": {
         "news": "Novedades",
@@ -52,32 +45,6 @@
         "messages": "Mensajes",
         "settings": "Configuración",
         "logout": "Cerrar sesión"
-    },
-    "navbar": {
-        "news": "Novedades",
-        "messages": "Mensajes",
-        "findJob": "Buscar empleo",
-        "publishJob": "Publicar empleo",
-        "notifications": "Notificaciones",
-        "account": "Mi cuenta",
-        "profile": "Perfil",
-        "settings": "Configuración",
-        "logout": "Cerrar sesión",
-        "menu": "Menú"
-    },
-    "cv": {
-        "aiLabel": "IA",
-        "title": "Generador de CV",
-        "subtitle": "Creamos tu CV a partir de los datos de tu perfil.",
-        "promptLabel": "Detalles adicionales (opcional)",
-        "promptPlaceholder": "Ej.: resalta mi experiencia en atención al cliente y disponibilidad inmediata.",
-        "generate": "Generar CV",
-        "generating": "Generando tu CV…",
-        "generatingHint": "Esto puede tardar unos segundos. No cierres esta página.",
-        "download": "Descargar",
-        "regenerate": "Generar de nuevo",
-        "retry": "Reintentar",
-        "previewAlt": "Vista previa del CV"
     },
     "notfound": {
         "number": "404",
@@ -93,16 +60,26 @@
         "profileTagline": "Configura tu perfil profesional y comienza a conectar",
         "tabMyProfile": "Mi Perfil",
         "tabCompanyProfile": "Perfil Empresa",
-        "tabEdit": "Editar perfil",
         "tabSettings": "Configuración",
         "tabPrivacy": "Privacidad",
+        "tabEdit": "Editar Perfil",
+        "tabPayments": "Comprar Créditos",
         "comingSoonTitle": "Próximamente",
         "comingSoonBody": "Esta sección estará disponible pronto."
     },
+    "cv": {
+        "aiLabel": "Optimización con IA",
+        "title": "Generador de CV Inteligente",
+        "subtitle": "Crea y optimiza tu currículum adaptado a estándares de reclutadores con inteligencia artificial de Llanqui.",
+        "promptLabel": "Instrucciones de optimización (Opcional)",
+        "promptPlaceholder": "Ej: Destacar experiencia en React y metodologías ágiles, o enfocar a un perfil de líder técnico...",
+        "generate": "Generar CV con IA",
+        "generating": "Optimizando Currículum...",
+        "download": "Descargar PDF",
+        "regenerate": "Volver a generar",
+        "retry": "Reintentar"
+    },
     "profile": {
-        "personalInfo": "Información personal",
-        "verified": "Verificado",
-        "noData": "No se encontraron datos del perfil.",
         "selectDistrict": "Selecciona un distrito",
         "selectProfession": "Selecciona tu profesión",
         "selectIndustry": "Selecciona una industria",

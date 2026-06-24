@@ -48,7 +48,7 @@ onMounted(async () => {
 </script>
 
 <template>
-    <div class="page-content-80">
+    <div class="page-content-full">
         <div v-if="job">
             <JobDetailComponent
             :job="job"

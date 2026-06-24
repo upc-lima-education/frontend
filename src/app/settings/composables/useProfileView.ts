@@ -11,6 +11,12 @@ export type ProfileViewData = {
     district?: string;
     sector?: string;
     ruc?: string;
+    personType?: string;
+    identificationType?: string;
+    identification?: string;
+    companyName?: string;
+    isRucVerified?: boolean;
+    isIdentificationVerified?: boolean;
 };
 
 export function useProfileView() {
@@ -41,7 +47,7 @@ export function useProfileView() {
         try {
             if (authStore.currentUserId) {
                 const response = await profileService.getProfileByUserId(authStore.currentUserId);
-                profile.value = response.data as ProfileViewData;
+                profile.value = (response.data?.data || response.data) as ProfileViewData;
             }
         } catch (error) {
             console.error('Error loading profile:', error);

@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import ProfileOverviewComponent from '../components/profile-overview.component.vue';
 import ProfileEditComponent from '../components/profile-edit.component.vue';
+import NotificationSettingsComponent from '../components/notification-settings.component.vue';
+import PaymentsSettingsComponent from '../components/payments-settings.component.vue';
 import { useSettingsPage } from '@/app/settings/composables/useSettingsPage';
 
 const { activeTab, profileTabLabel, setTab } = useSettingsPage();
@@ -36,6 +38,14 @@ const { activeTab, profileTabLabel, setTab } = useSettingsPage();
             <button
                 type="button"
                 class="tab"
+                :class="{ active: activeTab === 'payments' }"
+                @click="setTab('payments')"
+            >
+                {{ $t('settings.tabPayments') }}
+            </button>
+            <button
+                type="button"
+                class="tab"
                 :class="{ active: activeTab === 'privacy' }"
                 @click="setTab('privacy')"
             >
@@ -46,6 +56,8 @@ const { activeTab, profileTabLabel, setTab } = useSettingsPage();
         <div class="panel">
             <ProfileOverviewComponent v-if="activeTab === 'profile'" />
             <ProfileEditComponent v-else-if="activeTab === 'edit'" />
+            <NotificationSettingsComponent v-else-if="activeTab === 'settings'" />
+            <PaymentsSettingsComponent v-else-if="activeTab === 'payments'" />
             <div v-else class="placeholder">
                 <h3>{{ $t('settings.comingSoonTitle') }}</h3>
                 <p>{{ $t('settings.comingSoonBody') }}</p>
@@ -59,7 +71,7 @@ const { activeTab, profileTabLabel, setTab } = useSettingsPage();
     width: 100%;
     max-width: 960px;
     margin: 0 auto;
-    padding: var(--space-6) var(--space-3);
+    padding: var(--space-6) var(--page-gutter);
     display: flex;
     flex-direction: column;
     gap: var(--space-3);
