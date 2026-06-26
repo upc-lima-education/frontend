@@ -35,7 +35,12 @@
         "continueWithGoogle": "Continue with Google",
         "signUpWithGoogle": "Sign Up with Google",
         "googleConnecting": "Connecting...",
-        "googleError": "Could not connect to Google"
+        "googleError": "Could not connect to Google",
+        "brandEyebrow": "JOB PORTAL",
+        "signInBrandTitle": "Connecting local talent with verified opportunities",
+        "signInBrandNote": "Llanqui is the work network for everyone. We connect people of any educational background or experience level directly with organizations.",
+        "welcomeBack": "Welcome back",
+        "orWithEmail": "or with email"
     },
     "sidebar": {
         "news": "News",
@@ -45,6 +50,18 @@
         "messages": "Messages",
         "settings": "Settings",
         "logout": "Logout"
+    },
+    "navbar": {
+        "news": "News",
+        "messages": "Messages",
+        "publishJob": "Publish Job",
+        "findJob": "Find Job",
+        "profile": "Profile",
+        "settings": "Settings",
+        "logout": "Logout",
+        "notifications": "Notifications",
+        "account": "Account menu",
+        "menu": "Menu"
     },
     "notfound": {
         "number": "404",

@@ -35,7 +35,12 @@
         "continueWithGoogle": "Continuar con Google",
         "signUpWithGoogle": "Registrarse con Google",
         "googleConnecting": "Conectando...",
-        "googleError": "Error al conectar con Google"
+        "googleError": "Error al conectar con Google",
+        "brandEyebrow": "PORTAL LABORAL",
+        "signInBrandTitle": "Conectamos talento local con oportunidades verificadas",
+        "signInBrandNote": "Llanqui es la red de trabajo para todos. Conectamos a personas de cualquier nivel educativo o de experiencia directamente con organizaciones de manera sencilla.",
+        "welcomeBack": "Te damos la bienvenida",
+        "orWithEmail": "o con correo electrónico"
     },
     "sidebar": {
         "news": "Novedades",
@@ -45,6 +50,18 @@
         "messages": "Mensajes",
         "settings": "Configuración",
         "logout": "Cerrar sesión"
+    },
+    "navbar": {
+        "news": "Novedades",
+        "messages": "Mensajes",
+        "publishJob": "Publicar empleo",
+        "findJob": "Buscar empleo",
+        "profile": "Perfil",
+        "settings": "Configuración",
+        "logout": "Cerrar sesión",
+        "notifications": "Notificaciones",
+        "account": "Menú de cuenta",
+        "menu": "Menú"
     },
     "notfound": {
         "number": "404",

@@ -387,13 +387,15 @@ const completenessColor = computed(() => {
 }
 
 .avatar {
-  width: 112px;
-  height: 112px;
+  display: block;
+  width: 100%;
+  height: 100%;
   border-radius: 50%;
   object-fit: cover;
   border: 4px solid var(--color-surface);
   box-shadow: 0 6px 16px rgba(30, 43, 170, 0.15);
   background: #fff;
+  box-sizing: border-box;
 }
 
 .avatar--placeholder {
