@@ -1,26 +1,33 @@
-import http from '@/app/shared/services/base.service';
 import type {
     SendNotificationRequest,
     NotificationResponse,
 } from '../model/notification.model';
 
-/**
- * Servicio de notificaciones (incluye WhatsApp del proceso de selección).
- * Endpoints: /api/v1/notifications[...]
- */
-export class NotificationService {
-    private endpoint = '/notifications';
+// MOCK DATA — pedido explícito (2026-07-01): mientras tanto Notifications no
+// pega al backend real. Endpoints reales documentados para revertir esto
+// cuando se decida reconectar:
+//   GET  /api/v1/notifications
+//   POST /api/v1/notifications/send
+let mockCounter = 0;
 
+export class NotificationService {
     /** GET /notifications — lista de notificaciones del usuario actual. */
     async getNotifications(): Promise<NotificationResponse[]> {
-        const { data } = await http.get(this.endpoint);
-        return data;
+        return [];
     }
 
     /** POST /notifications/send — envía una notificación (WhatsApp/email/in-app). */
     async send(request: SendNotificationRequest): Promise<NotificationResponse> {
-        const { data } = await http.post(`${this.endpoint}/send`, request);
-        return data;
+        console.log('🔕 [MOCK] Notificación simulada (no enviada de verdad):', request);
+        return {
+            id: `mock-notif-${++mockCounter}`,
+            userId: request.userId,
+            message: request.message || '',
+            type: request.type,
+            status: 'Sent',
+            createdAt: new Date().toISOString(),
+            sentAt: new Date().toISOString(),
+        };
     }
 }
 
