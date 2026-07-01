@@ -1,12 +1,16 @@
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import NewsCardComponent from '../components/news-card.component.vue';
+import DialogComponent from '@/app/shared/components/dialog.component.vue';
 import { useNewsPage } from '@/app/news/composables/useNewsPage';
 import { useAuthenticationStore } from '@/app/auth/services/authentication.store';
 import { Image, Video, Calendar, FileText, ArrowRight } from 'lucide-vue-next';
 
-const { newsData, toggleHeart } = useNewsPage();
+const { newsData, posting, error, toggleHeart, createPost } = useNewsPage();
 const auth = useAuthenticationStore();
+
+const createPostDialogRef = ref<InstanceType<typeof DialogComponent>>();
+const postContent = ref('');
 
 function handleToggleHeart(postId: string, isHearted: boolean) {
     toggleHeart(postId, auth.currentUserId, isHearted);
@@ -29,6 +33,16 @@ const initials = computed(() => {
 
 function openCreatePostAlert() {
     alert("¡Funcionalidad de publicación próximamente!");
+}
+
+function openCreatePostDialog() {
+    postContent.value = '';
+    createPostDialogRef.value?.open();
+}
+
+async function handleCreatePost() {
+    if (!postContent.value.trim()) return;
+    await createPost(postContent.value);
 }
 </script>
 
@@ -79,7 +93,7 @@ function openCreatePostAlert() {
                     <div class="post-input-row">
                         <img v-if="auth.currentUser?.picture" :src="auth.currentUser.picture" class="post-avatar" alt="Avatar" />
                         <span v-else class="post-avatar-placeholder">{{ initials }}</span>
-                        <button class="post-trigger-btn" @click="openCreatePostAlert">
+                        <button class="post-trigger-btn" @click="openCreatePostDialog">
                             ¿De qué quieres hablar hoy, {{ auth.currentUser?.firstName || 'profesional' }}?
                         </button>
                     </div>
@@ -102,6 +116,8 @@ function openCreatePostAlert() {
                         </button>
                     </div>
                 </div>
+
+                <p v-if="error" class="feed-error">{{ error }}</p>
 
                 <!-- Feed list -->
                 <div class="posts-list">
@@ -174,6 +190,22 @@ function openCreatePostAlert() {
                 </div>
             </aside>
         </div>
+
+        <DialogComponent
+            ref="createPostDialogRef"
+            title="Crear publicación"
+            subtitle="Comparte una novedad con la comunidad de Llanqui"
+            variant="default"
+            @confirm="handleCreatePost"
+        >
+            <textarea
+                v-model="postContent"
+                class="post-textarea"
+                rows="5"
+                placeholder="¿Qué quieres compartir hoy?"
+                :disabled="posting"
+            ></textarea>
+        </DialogComponent>
     </div>
 </template>
 
@@ -434,6 +466,32 @@ function openCreatePostAlert() {
     padding: var(--space-4);
     text-align: center;
     color: var(--color-text-secondary);
+}
+
+.feed-error {
+    margin: 0;
+    padding: var(--space-2);
+    border-radius: var(--radius-card);
+    background: rgba(225, 86, 86, 0.1);
+    color: #e15656;
+    font-size: var(--fs-caption);
+}
+
+.post-textarea {
+    width: 100%;
+    min-height: 120px;
+    padding: var(--space-2);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-button);
+    font: inherit;
+    color: var(--color-text-primary);
+    resize: vertical;
+    box-sizing: border-box;
+}
+
+.post-textarea:focus {
+    outline: none;
+    border-color: var(--color-accent);
 }
 
 /* Sidebar Right */
