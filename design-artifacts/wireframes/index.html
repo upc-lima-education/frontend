@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wireframes — Llanqui</title>
+<link rel="stylesheet" href="_wireframe.css">
+<style>
+.grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:18px; margin-top:24px; }
+.tile { display:block; text-decoration:none; color:inherit; border:2px solid var(--wf-line); border-radius:10px; overflow:hidden; background:#fff; transition:.15s; }
+.tile:hover { transform:translateY(-3px); box-shadow:0 8px 20px rgba(0,0,0,.1); }
+.thumb { height:120px; background:var(--wf-fill); display:grid; place-items:center; color:var(--wf-muted); font-size:13px; border-bottom:2px solid var(--wf-line); }
+.tile .meta { padding:12px 14px; } .tile .meta b { display:block; font-size:14px; } .tile .meta small { color:var(--wf-muted); font-size:12px; }
+.modtag { display:inline-block; font-size:10px; text-transform:uppercase; letter-spacing:.08em; color:var(--wf-muted); border:1px solid var(--wf-line); border-radius:4px; padding:1px 6px; margin-bottom:4px; }
+h1 { margin:0 0 4px; } .lead { color:var(--wf-muted); margin:0; }
+</style>
+</head>
+<body>
+<div class="wf-toolbar"><strong>WIREFRAMES</strong><span class="tag">Llanqui / ProConnect</span><span>15 views · lo-fi grayscale</span><a href="../mockups/index.html">view mockups →</a></div>
+<div class="wf-canvas">
+    <h1>View wireframes</h1>
+    <p class="lead">Structure and hierarchy without brand color. Generated from each <code>.page.vue</code> template.</p>
+    <div class="grid">
+        <a class="tile" href="01-sign-in.html"><div class="thumb">Split card · login</div><div class="meta"><span class="modtag">auth</span><b>01 · Sign in</b><small>sign-in.page.vue</small></div></a>
+        <a class="tile" href="02-sign-up.html"><div class="thumb">Login + role toggle</div><div class="meta"><span class="modtag">auth</span><b>02 · Sign up</b><small>sign-up.page.vue</small></div></a>
+        <a class="tile" href="03-forgot-password.html"><div class="thumb">Split image + form</div><div class="meta"><span class="modtag">auth</span><b>03 · Forgot password</b><small>forgot-password.page.vue</small></div></a>
+        <a class="tile" href="04-google-callback.html"><div class="thumb">Loading spinner</div><div class="meta"><span class="modtag">auth</span><b>04 · Google callback</b><small>google-callback.page.vue</small></div></a>
+        <a class="tile" href="05-home.html"><div class="thumb">Header + 3 cards</div><div class="meta"><span class="modtag">public</span><b>05 · Home</b><small>home.page.vue</small></div></a>
+        <a class="tile" href="06-news.html"><div class="thumb">3-column feed</div><div class="meta"><span class="modtag">news</span><b>06 · News feed</b><small>news.page.vue</small></div></a>
+        <a class="tile" href="07-find-job.html"><div class="thumb">Filters + card list</div><div class="meta"><span class="modtag">job</span><b>07 · Find a job</b><small>find-job.page.vue</small></div></a>
+        <a class="tile" href="08-job-detail.html"><div class="thumb">Banner + 2 columns</div><div class="meta"><span class="modtag">job</span><b>08 · Job detail</b><small>job-detail.page.vue</small></div></a>
+        <a class="tile" href="09-publish-job.html"><div class="thumb">5-step wizard</div><div class="meta"><span class="modtag">job</span><b>09 · Publish a job</b><small>publish-job.page.vue</small></div></a>
+        <a class="tile" href="10-applications-tracking.html"><div class="thumb">Kanban board</div><div class="meta"><span class="modtag">recruitment</span><b>10 · Application tracking</b><small>applications-tracking.page.vue</small></div></a>
+        <a class="tile" href="11-settings.html"><div class="thumb">Tabs + profile</div><div class="meta"><span class="modtag">settings</span><b>11 · Settings / Profile</b><small>settings.page.vue</small></div></a>
+        <a class="tile" href="12-messaging-company.html"><div class="thumb">2-pane chat</div><div class="meta"><span class="modtag">message</span><b>12 · Messaging (company)</b><small>messaging-company.page.vue</small></div></a>
+        <a class="tile" href="13-messaging-employee.html"><div class="thumb">2-pane chat</div><div class="meta"><span class="modtag">message</span><b>13 · Messaging (employee)</b><small>messaging-employee.page.vue</small></div></a>
+        <a class="tile" href="14-not-found.html"><div class="thumb">Centered 404</div><div class="meta"><span class="modtag">public</span><b>14 · Not found</b><small>not-found.page.vue</small></div></a>
+        <a class="tile" href="15-password.html"><div class="thumb">Stub (empty view)</div><div class="meta"><span class="modtag">auth</span><b>15 · Reset password</b><small>password.page.vue ⚠ empty</small></div></a>
+    </div>
+</div>
+</body>
+</html>

@@ -23,7 +23,7 @@ const {
         <section class="form-panel">
             <header class="form-head">
                 <span class="form-eyebrow">{{ $t('auth.welcomeBack') }}</span>
-                <h1 class="welcome">{{ $t('auth.signInCardTitle') }}</h1>
+                <h1 class="welcome">{{ $t('auth.signInCardTitle') }}</h1>   
             </header>
 
             <GoogleLoginComponent mode="login" />

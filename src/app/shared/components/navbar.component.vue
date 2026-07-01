@@ -17,7 +17,11 @@ type NavLink = { to: string; label: string };
 const links = computed<NavLink[]>(() => {
     const news: NavLink = { to: ROUTE_CONSTANTS.NEWS_PAGE, label: 'navbar.news' };
     if (auth.currentUserType === 'organization') {
-        return [news, { to: ROUTE_CONSTANTS.MESSAGE_COMPANY, label: 'navbar.messages' }];
+        return [
+            news,
+            { to: ROUTE_CONSTANTS.RECRUITMENT_APPLICATIONS, label: 'navbar.applications' },
+            { to: ROUTE_CONSTANTS.MESSAGE_COMPANY, label: 'navbar.messages' },
+        ];
     }
     return [news, { to: ROUTE_CONSTANTS.MESSAGE_EMPLOYEE, label: 'navbar.messages' }];
 });
@@ -38,8 +42,8 @@ const displayName = computed(() => {
 const initials = computed(() => {
     const name = displayName.value.trim();
     if (!name) return '';
-    const parts = name.split(/\s+/);
-    const chars = parts.length > 1 ? parts[0][0] + parts[1][0] : name.slice(0, 2);
+    const parts = name.split(/\s+/).filter(Boolean);
+    const chars = parts.length > 1 ? (parts[0]?.[0] ?? '') + (parts[1]?.[0] ?? '') : name.slice(0, 2);
     return chars.toUpperCase();
 });
 

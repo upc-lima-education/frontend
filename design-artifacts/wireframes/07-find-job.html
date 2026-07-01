@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wireframe — Find a job</title>
+<link rel="stylesheet" href="_wireframe.css">
+</head>
+<body>
+<div class="wf-toolbar"><strong>WIREFRAME</strong><span class="tag">job</span><span>07 · Find a job (find-job.page.vue)</span><a href="index.html">← index</a></div>
+<div class="wf-canvas">
+    <div class="wf-screen">
+        <div class="wf-nav">
+            <div class="logo"><div class="mark"></div><div class="wf-line" style="width:70px;"></div></div>
+            <div class="nav-links"><span>News</span><span>Messages</span></div>
+            <div class="actions"><div class="icon">🔔</div><div class="cta">Find a job</div><div class="avatar"></div></div>
+        </div>
+        <div class="wf-body">
+            <!-- PageHeader with searchbar -->
+            <div style="display:flex; justify-content:space-between; align-items:flex-end; gap:16px; border-bottom:2px solid var(--wf-line-soft); padding-bottom:16px; margin-bottom:24px;">
+                <div class="wf-lines"><div class="wf-line" style="width:200px; height:22px;"></div><div class="wf-line sm" style="width:280px;"></div></div>
+                <div style="display:flex; gap:8px;"><div class="wf-input" style="width:260px;">Search…</div><div class="wf-btn">🔍</div></div>
+            </div>
+            <!-- FilterJob toggle -->
+            <div style="margin-bottom:16px;"><span class="wf-btn ghost sm">⚙ Advanced search</span></div>
+            <!-- Filters panel (expandable) -->
+            <div class="wf-card soft" style="margin-bottom:24px;">
+                <span class="wf-callout" style="margin-bottom:12px; display:block;">Filters panel (collapsible) — auto-fill grid 220px</span>
+                <div class="wf-grid" style="grid-template-columns:repeat(4,1fr);">
+                    <div class="wf-field"><span class="wf-label">Company</span><div class="wf-input"></div></div>
+                    <div class="wf-field"><span class="wf-label">Title</span><div class="wf-input"></div></div>
+                    <div class="wf-field"><span class="wf-label">Role</span><div class="wf-input"></div></div>
+                    <div class="wf-field"><span class="wf-label">Skills</span><div class="wf-input"></div></div>
+                    <div class="wf-field"><span class="wf-label">Department</span><div class="wf-input"></div></div>
+                    <div class="wf-field"><span class="wf-label">District</span><div class="wf-input"></div></div>
+                    <div class="wf-field"><span class="wf-label">Min. salary</span><div class="wf-input"></div></div>
+                    <div class="wf-field"><span class="wf-label">Type</span><div class="wf-select">Any</div></div>
+                </div>
+                <div style="display:flex; justify-content:flex-end; gap:12px; margin-top:18px;"><span class="wf-btn ghost sm">Cancel</span><span class="wf-btn primary sm">Apply</span></div>
+            </div>
+            <!-- Job cards list -->
+            <div class="wf-col">
+                <!-- featured card -->
+                <div class="wf-card" style="display:flex; gap:16px; position:relative; border-width:2px;">
+                    <span class="wf-pill" style="position:absolute; top:-10px; left:16px;">★ Featured</span>
+                    <div class="wf-logo" style="width:56px; height:56px;"></div>
+                    <div style="flex:1;">
+                        <div style="display:flex; justify-content:space-between;"><div class="wf-line" style="width:160px; height:14px;"></div><span class="wf-pill">On-site</span></div>
+                        <div class="wf-line sm" style="width:120px; margin:10px 0;"></div>
+                        <div style="display:flex; gap:16px;"><span class="wf-pill">📍 District, Dept.</span><span class="wf-pill">⏰ Closes in 2 days</span></div>
+                    </div>
+                </div>
+                <!-- normal card -->
+                <div class="wf-card" style="display:flex; gap:16px;">
+                    <div class="wf-logo" style="width:56px; height:56px;"></div>
+                    <div style="flex:1;">
+                        <div style="display:flex; justify-content:space-between;"><div class="wf-line" style="width:140px; height:14px;"></div><span class="wf-pill">On-site</span></div>
+                        <div class="wf-line sm" style="width:110px; margin:10px 0;"></div>
+                        <div style="display:flex; gap:16px;"><span class="wf-pill">📍 District, Dept.</span><span class="wf-pill">⏰ Closes in 5 days</span></div>
+                    </div>
+                </div>
+            </div>
+            <span class="wf-callout" style="display:block; margin-top:16px;">Each card → job detail. Featured (boosted) jobs get an accent border + "Featured" ribbon.</span>
+        </div>
+    </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mockup — Home</title>
+<link rel="stylesheet" href="_app.css">
+<style>
+.welcome h2 { font-size:32px; margin:0 0 6px; color:var(--color-primary); font-weight:600; }
+.welcome p { margin:0; font-size:18px; color:var(--color-text-secondary); }
+.quick { display:grid; grid-template-columns:repeat(3,1fr); gap:24px; margin-top:32px; }
+.qcard { display:block; padding:28px; background:#fff; border:1px solid var(--color-border); border-radius:8px; box-shadow:0 2px 8px rgba(0,0,0,.06); text-decoration:none; transition:var(--transition); }
+.qcard:hover { transform:translateY(-4px); box-shadow:0 8px 16px rgba(30,61,173,.12); border-color:var(--color-lavender); }
+.qcard h3 { margin:0 0 10px; font-size:20px; color:var(--color-primary); font-weight:600; }
+.qcard p { margin:0; color:var(--color-text-secondary); font-size:15px; }
+@media(max-width:640px){ .quick{grid-template-columns:1fr;} }
+</style>
+</head>
+<body>
+<div class="mk-toolbar"><strong>MOCKUP</strong><span class="tag">public</span><span>05 · Home / Welcome</span><a href="index.html">← index</a></div>
+<header class="navbar"><div class="navbar-inner">
+    <a class="brand"><span class="brand-logo"></span><span class="brand-name">Llanqui</span></a>
+    <nav class="nav-links"><a class="nav-link active">News</a><a class="nav-link">Messages</a></nav>
+    <div class="nav-actions"><button class="icon-btn">🔔</button><a class="nav-cta">Find a job</a><span class="nav-avatar"><span class="av">JD</span> ▾</span></div>
+</div></header>
+<main class="page">
+    <div style="border-bottom:1px solid var(--color-border); padding-bottom:16px; margin-bottom:24px;"><h1 class="page-title">Welcome</h1></div>
+    <section class="welcome"><h2>Welcome</h2><p>John Doe</p></section>
+    <section class="quick">
+        <a class="qcard" href="06-news.html"><h3>📰 News</h3><p>Explore the latest news</p></a>
+        <a class="qcard" href="07-find-job.html"><h3>💼 Jobs</h3><p>Search for new opportunities</p></a>
+        <a class="qcard" href="11-settings.html"><h3>⚙️ Settings</h3><p>Edit your profile</p></a>
+    </section>
+</main>
+</body>
+</html>

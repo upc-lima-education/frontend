@@ -3,13 +3,18 @@ import { onMounted, ref } from 'vue';
 import { GetJobByIdResponse } from '../model/get-job-by-id.response';
 import { ubigeoService } from '@/app/shared/services/ubigeo.service';
 import DialogComponent from '@/app/shared/components/dialog.component.vue';
-import { MapPin, Briefcase, Calendar, DollarSign, Award, Info, Trash2, CheckSquare } from 'lucide-vue-next';
+import { recruitmentService } from '@/app/recruitment/services/recruitment.service';
+import { useAuthenticationStore } from '@/app/auth/services/authentication.store';
+import { MapPin, Briefcase, Calendar, DollarSign, Award, Info, Trash2, CheckSquare, Star } from 'lucide-vue-next';
+
+const auth = useAuthenticationStore();
 
 const props = defineProps<{
     job: GetJobByIdResponse,
     companyName: string,
     companyImage: string,
-    isCompany: Boolean
+    isCompany: Boolean,
+    featured?: boolean
 }>();
 
 const department = ref('');
@@ -46,8 +51,28 @@ function DeleteDialog() {
 
 //Apply to job behaviour
 const applyJobDialogRef = ref<InstanceType<typeof DialogComponent>>();
-function ApplyToJob() {
-    alert("¡Postulación enviada con éxito!");
+const applying = ref(false);
+
+async function ApplyToJob() {
+    if (applying.value) return;
+    applying.value = true;
+    try {
+        const u = auth.currentUser;
+        const candidateName = [u?.firstName, u?.lastName].filter(Boolean).join(' ') || u?.email || 'Candidato';
+        await recruitmentService.createApplication({
+            jobId: props.job.id,
+            candidateId: auth.currentUserId,
+            candidateName,
+            jobTitle: props.job.title,
+            companyName: props.companyName,
+        });
+        alert("¡Postulación enviada con éxito!");
+    } catch (error) {
+        console.error('Error al postular:', error);
+        alert("No se pudo enviar tu postulación. Inténtalo nuevamente.");
+    } finally {
+        applying.value = false;
+    }
 }
 </script>
 
@@ -65,6 +90,10 @@ function ApplyToJob() {
                 </div>
                 
                 <div class="header-text-block">
+                    <span v-if="featured" class="sponsored-chip">
+                        <Star :size="12" :stroke-width="2" />
+                        <span>Patrocinado</span>
+                    </span>
                     <h1 class="job-title">{{ job.title }}</h1>
                     <div class="company-row">
                         <span class="company-name">{{ companyName }}</span>
@@ -105,10 +134,10 @@ function ApplyToJob() {
                     <p class="description-text">{{ job.description }}</p>
                 </section>
 
-                <section v-if="job.skills" class="info-section">
+                <section v-if="job.skills && job.skills.length" class="info-section">
                     <h2 class="section-title">Habilidades deseadas</h2>
                     <div class="skills-tags-list">
-                        <span v-for="skill in job.skills.split(';')" :key="skill" class="skill-tag">
+                        <span v-for="skill in job.skills" :key="skill" class="skill-tag">
                             {{ skill.trim() }}
                         </span>
                     </div>
@@ -261,6 +290,23 @@ function ApplyToJob() {
     flex-direction: column;
     gap: 4px;
     margin-bottom: 4px;
+}
+
+.sponsored-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    width: fit-content;
+    padding: 3px 10px;
+    margin-bottom: 4px;
+    border-radius: 999px;
+    background: var(--color-ai-bg);
+    color: var(--color-accent);
+    border: 1px solid var(--color-ai-outline);
+    font-size: 10px;
+    font-weight: var(--fw-bold);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
 }
 
 .job-title {

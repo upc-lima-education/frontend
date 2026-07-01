@@ -54,6 +54,7 @@
     "navbar": {
         "news": "Novedades",
         "messages": "Mensajes",
+        "applications": "Postulaciones",
         "publishJob": "Publicar empleo",
         "findJob": "Buscar empleo",
         "profile": "Perfil",
@@ -81,6 +82,7 @@
         "tabPrivacy": "Privacidad",
         "tabEdit": "Editar Perfil",
         "tabPayments": "Comprar Créditos",
+        "tabBoost": "Destacar vacantes",
         "comingSoonTitle": "Próximamente",
         "comingSoonBody": "Esta sección estará disponible pronto."
     },

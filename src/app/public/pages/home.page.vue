@@ -17,7 +17,7 @@
         </div>
 
         <div class="quick-link-card">
-          <router-link :to="ROUTE_CONSTANTS.JOB" class="card-link">
+          <router-link :to="ROUTE_CONSTANTS.JOB_SEARCH" class="card-link">
             <h3>💼 {{ $t('common.jobs') || 'Empleos' }}</h3>
             <p>Busca nuevas oportunidades</p>
           </router-link>

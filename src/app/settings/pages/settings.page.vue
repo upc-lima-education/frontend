@@ -3,9 +3,10 @@ import ProfileOverviewComponent from '../components/profile-overview.component.v
 import ProfileEditComponent from '../components/profile-edit.component.vue';
 import NotificationSettingsComponent from '../components/notification-settings.component.vue';
 import PaymentsSettingsComponent from '../components/payments-settings.component.vue';
+import JobBoostSettingsComponent from '../components/job-boost-settings.component.vue';
 import { useSettingsPage } from '@/app/settings/composables/useSettingsPage';
 
-const { activeTab, profileTabLabel, setTab } = useSettingsPage();
+const { activeTab, profileTabLabel, paymentsTabLabel, isOrganization, setTab } = useSettingsPage();
 </script>
 
 <template>
@@ -41,7 +42,7 @@ const { activeTab, profileTabLabel, setTab } = useSettingsPage();
                 :class="{ active: activeTab === 'payments' }"
                 @click="setTab('payments')"
             >
-                {{ $t('settings.tabPayments') }}
+                {{ paymentsTabLabel }}
             </button>
             <button
                 type="button"
@@ -57,6 +58,7 @@ const { activeTab, profileTabLabel, setTab } = useSettingsPage();
             <ProfileOverviewComponent v-if="activeTab === 'profile'" />
             <ProfileEditComponent v-else-if="activeTab === 'edit'" />
             <NotificationSettingsComponent v-else-if="activeTab === 'settings'" />
+            <JobBoostSettingsComponent v-else-if="activeTab === 'payments' && isOrganization" />
             <PaymentsSettingsComponent v-else-if="activeTab === 'payments'" />
             <div v-else class="placeholder">
                 <h3>{{ $t('settings.comingSoonTitle') }}</h3>

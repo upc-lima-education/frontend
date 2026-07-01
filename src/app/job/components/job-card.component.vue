@@ -2,7 +2,7 @@
 import router from '@/app/shared/router';
 import { ROUTE_CONSTANTS } from '@/app/shared/router/route-constants';
 import { computed } from 'vue';
-import { MapPin, Briefcase, Clock } from 'lucide-vue-next';
+import { MapPin, Briefcase, Clock, Star } from 'lucide-vue-next';
 
 const props = defineProps({
     id: { type: String, required: true },
@@ -12,7 +12,8 @@ const props = defineProps({
     department: { type: String, required: true },
     district: { type: String, required: true },
     type: { type: String, required: true },
-    closesAt: { type: Date, required: true }
+    closesAt: { type: Date, required: true },
+    featured: { type: Boolean, default: false }
 });
 
 const jobType = computed(() => ({
@@ -42,7 +43,11 @@ function goToDetails(){
 </script>
 
 <template>
-    <article class="job-card" @click="goToDetails()">
+    <article class="job-card" :class="{ featured }" @click="goToDetails()">
+        <span v-if="featured" class="featured-ribbon">
+            <Star :size="12" :stroke-width="2" />
+            <span>Recomendado</span>
+        </span>
         <div class="company-logo-container">
             <img v-if="companyImage" :src="companyImage" alt="Logo de la empresa" class="company-logo">
             <div v-else class="company-logo-placeholder">
@@ -74,6 +79,7 @@ function goToDetails(){
 
 <style scoped>
 .job-card {
+    position: relative;
     display: flex;
     gap: var(--space-2);
     padding: var(--space-2);
@@ -88,6 +94,30 @@ function goToDetails(){
     border-color: var(--color-accent);
     transform: translateY(-2px);
     box-shadow: 0 6px 16px rgba(30, 43, 170, 0.08);
+}
+
+/* Vacante destacada (impulso pagado) */
+.job-card.featured {
+    border-color: var(--color-accent);
+    box-shadow: 0 0 0 1px var(--color-accent), var(--shadow-card);
+}
+
+.featured-ribbon {
+    position: absolute;
+    top: -9px;
+    left: var(--space-2);
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 10px;
+    border-radius: 999px;
+    background: var(--color-accent);
+    color: #fff;
+    font-size: 10px;
+    font-weight: var(--fw-bold);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    box-shadow: 0 2px 8px rgba(45, 58, 199, 0.25);
 }
 
 /* Logo container */

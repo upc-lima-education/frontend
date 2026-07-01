@@ -21,10 +21,12 @@ import {
   Building
 } from 'lucide-vue-next';
 import { useProfileView } from '@/app/settings/composables/useProfileView';
+import { useAuthenticationStore } from '@/app/auth/services/authentication.store';
 import CvGeneratorCard from '@/app/cv/components/cv-generator-card.component.vue';
 
 const router = useRouter();
 const route = useRoute();
+const auth = useAuthenticationStore();
 
 const {
   user,
@@ -36,7 +38,16 @@ const {
 } = useProfileView();
 
 const initials = computed(() => userDisplayName.value.trim().charAt(0).toUpperCase() || '?');
-const isEmployee = computed(() => user.value?.userType === 'employee');
+
+// Una organización NUNCA debe ver el generador de CV. El rol fiable vive en el
+// store (localStorage), igual que en el navbar — NO usar user.userType, cuyo
+// mapeo de /me podía quedar siempre en 'employee'. Si el store aún no tiene el
+// rol, se infiere "organización" desde los datos del perfil (companyName/sector).
+const isOrganization = computed(() => {
+  if (auth.currentUserType) return auth.currentUserType === 'organization';
+  return Boolean(user.value?.companyName || profile.value?.companyName || profile.value?.sector);
+});
+const isEmployee = computed(() => !isOrganization.value);
 
 function goToEditTab() {
   router.replace({ query: { ...route.query, tab: 'edit' } });
@@ -277,9 +288,35 @@ const completenessColor = computed(() => {
           </div>
         </div>
 
-        <!-- COLUMN 2: AI CV Generator -->
+        <!-- COLUMN 2: AI CV Generator (solo empleados) -->
         <div class="right-column" v-if="isEmployee">
           <CvGeneratorCard />
+        </div>
+
+        <!-- COLUMN 2: Centro de reclutamiento (solo organizaciones) -->
+        <div class="right-column" v-else>
+          <div class="recruitment-card">
+            <div class="recruitment-head">
+              <span class="recruitment-icon"><Users :size="20" :stroke-width="1.5" /></span>
+              <div>
+                <h3 class="recruitment-title">Centro de reclutamiento</h3>
+                <p class="recruitment-sub">Gestiona a tus postulantes y su proceso de selección.</p>
+              </div>
+            </div>
+            <ul class="recruitment-points">
+              <li><BadgeCheck :size="16" :stroke-width="1.5" /> Aprueba, selecciona o descarta candidatos</li>
+              <li><BadgeCheck :size="16" :stroke-width="1.5" /> Notifica por WhatsApp el avance del proceso</li>
+              <li><BadgeCheck :size="16" :stroke-width="1.5" /> Exporta a Excel a tus seleccionados</li>
+            </ul>
+            <button type="button" class="btn-recruitment" @click="router.push('/applications')">
+              <span>Ver postulaciones</span>
+              <ArrowRight :size="16" :stroke-width="1.5" />
+            </button>
+            <button type="button" class="btn-recruitment-ghost" @click="router.push('/job-publish')">
+              <Briefcase :size="16" :stroke-width="1.5" />
+              <span>Publicar una nueva oferta</span>
+            </button>
+          </div>
         </div>
       </div>
     </template>
@@ -823,6 +860,120 @@ const completenessColor = computed(() => {
   background: rgba(45, 58, 199, 0.05);
   border: 1px solid rgba(45, 58, 199, 0.15);
   border-radius: 20px;
+}
+
+/* Centro de reclutamiento (organización) */
+.recruitment-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-top: 4px solid var(--color-primary);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
+}
+
+.recruitment-head {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.recruitment-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  border-radius: var(--radius-card);
+  background: var(--color-ai-bg);
+  color: var(--color-accent);
+  border: 1px solid var(--color-ai-outline);
+}
+
+.recruitment-title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: var(--fw-bold);
+  color: var(--color-text-primary);
+}
+
+.recruitment-sub {
+  margin: 2px 0 0;
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  line-height: 1.4;
+}
+
+.recruitment-points {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.recruitment-points li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}
+
+.recruitment-points li svg {
+  color: var(--color-state-success);
+  flex-shrink: 0;
+}
+
+.btn-recruitment {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 12px 20px;
+  border: none;
+  border-radius: var(--radius-button);
+  background: var(--color-accent);
+  color: #fff;
+  font-family: var(--font-family);
+  font-size: 14px;
+  font-weight: var(--fw-semibold);
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.btn-recruitment:hover {
+  background: var(--color-accent-hover);
+  transform: translateY(-1px);
+}
+
+.btn-recruitment-ghost {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 10px 20px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-button);
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+  font-family: var(--font-family);
+  font-size: 14px;
+  font-weight: var(--fw-semibold);
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.btn-recruitment-ghost:hover {
+  background: var(--color-bg);
+  border-color: var(--color-text-muted);
 }
 
 .animate-fade-in {

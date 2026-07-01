@@ -1,12 +1,12 @@
 export class NewsResponse {
-    id: number;
+    id: string;
     userName: string;
     userImageUrl?: string;
     content: string;
     publishedDate: Date;
     imageUrls?: string[];
 
-    constructor(id: number, userName: string, content: string, 
+    constructor(id: string, userName: string, content: string,
         publishedDate: Date, imageUrls?: string[], userImageUrl?: string) {
         this.id = id;
         this.userName = userName;

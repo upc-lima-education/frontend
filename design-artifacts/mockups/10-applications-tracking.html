@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mockup — Application tracking</title>
+<link rel="stylesheet" href="_app.css">
+<style>
+.head { display:flex; justify-content:space-between; align-items:flex-end; gap:16px; flex-wrap:wrap; margin-bottom:24px; padding-bottom:16px; border-bottom:1px solid var(--color-border); }
+.head h1 { margin:0; font-size:28px; font-weight:700; } .head p { margin:6px 0 0; font-size:14px; color:var(--color-text-secondary); }
+.hact { display:flex; align-items:flex-end; gap:16px; flex-wrap:wrap; }
+.export { display:inline-flex; align-items:center; gap:8px; height:38px; padding:0 16px; border:1px solid var(--color-state-success); border-radius:6px; background:#fff; color:var(--color-state-success-dark); font-weight:600; font-size:14px; cursor:pointer; }
+.board { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; align-items:start; }
+.col { display:flex; flex-direction:column; gap:16px; background:var(--color-bg); border:1px solid var(--color-border); border-radius:8px; padding:16px; min-height:160px; }
+.colhead { display:flex; align-items:center; justify-content:space-between; padding-bottom:10px; border-bottom:2px solid var(--accent); }
+.coltitle { font-size:14px; font-weight:700; }
+.colcount { min-width:22px; height:22px; padding:0 6px; display:inline-flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; color:#fff; background:var(--accent); border-radius:11px; }
+.acard { display:flex; flex-direction:column; gap:8px; padding:16px; background:#fff; border:1px solid var(--color-border); border-radius:8px; cursor:pointer; text-align:left; }
+.acard:hover { border-color:var(--color-accent); box-shadow:var(--shadow-card); }
+.atop { display:flex; align-items:center; gap:10px; }
+.aav { width:40px; height:40px; border-radius:50%; background:var(--color-primary); color:#fff; display:grid; place-items:center; font-size:12px; font-weight:600; flex-shrink:0; }
+.aname { font-size:14px; font-weight:600; display:block; } .ahead { font-size:12px; color:var(--color-text-secondary); }
+.aref { margin:0; font-size:12px; font-weight:500; color:var(--color-accent); }
+.ameta { display:flex; gap:12px; } .ameta span { display:inline-flex; gap:4px; font-size:11px; color:var(--color-text-muted); }
+.empty { display:flex; flex-direction:column; align-items:center; gap:6px; padding:24px 8px; color:var(--color-text-muted); font-size:12px; }
+@media(max-width:980px){ .board{grid-template-columns:repeat(2,1fr);} }
+@media(max-width:560px){ .board{grid-template-columns:1fr;} }
+</style>
+</head>
+<body>
+<div class="mk-toolbar"><strong>MOCKUP</strong><span class="tag">recruitment</span><span>10 · Application tracking</span><a href="index.html">← index</a></div>
+<header class="navbar"><div class="navbar-inner">
+    <a class="brand"><span class="brand-logo"></span><span class="brand-name">Llanqui</span></a>
+    <nav class="nav-links"><a class="nav-link">News</a><a class="nav-link active">Applications</a><a class="nav-link">Messages</a></nav>
+    <div class="nav-actions"><button class="icon-btn">🔔</button><a class="nav-cta">Post a job</a><span class="nav-avatar"><span class="av">SR</span> ▾</span></div>
+</div></header>
+<main class="page" style="padding-top:24px;">
+    <div class="head">
+        <div><h1>Application tracking</h1><p>Review your applicants, advance their process and keep them informed.</p></div>
+        <div class="hact">
+            <div class="field" style="margin:0;"><label class="lbl">Job</label><select class="select" style="min-width:200px;"><option>All jobs</option></select></div>
+            <button class="export">⬇ Export to Excel (3)</button>
+        </div>
+    </div>
+    <div class="board">
+        <section class="col" style="--accent:var(--color-text-muted);">
+            <div class="colhead"><span class="coltitle">Applied</span><span class="colcount">3</span></div>
+            <button class="acard"><div class="atop"><span class="aav">RG</span><div><span class="aname">Rosa García</span><span class="ahead">Cleaning operator</span></div></div><p class="aref">Street Cleaner</p><div class="ameta"><span>📍 Lima</span><span>⏰ Today</span></div></button>
+            <button class="acard"><div class="atop"><span class="aav">LM</span><div><span class="aname">Luis Mendoza</span><span class="ahead">Driver</span></div></div><p class="aref">Delivery Rider</p><div class="ameta"><span>📍 Comas</span><span>⏰ Yesterday</span></div></button>
+        </section>
+        <section class="col" style="--accent:var(--color-accent);">
+            <div class="colhead"><span class="coltitle">Approved</span><span class="colcount">2</span></div>
+            <button class="acard"><div class="atop"><span class="aav">JT</span><div><span class="aname">Juan Torres</span><span class="ahead">Cashier</span></div></div><p class="aref">Store Cashier</p><div class="ameta"><span>📍 San Isidro</span><span>⏰ 2 days ago</span></div></button>
+        </section>
+        <section class="col" style="--accent:var(--color-state-success);">
+            <div class="colhead"><span class="coltitle">Selected</span><span class="colcount">1</span></div>
+            <button class="acard"><div class="atop"><span class="aav">MS</span><div><span class="aname">María Santa Rosa</span><span class="ahead">Salesperson</span></div></div><p class="aref">Bread Seller</p><div class="ameta"><span>📍 Miraflores</span><span>⏰ 3 days ago</span></div></button>
+        </section>
+        <section class="col" style="--accent:var(--color-state-error);">
+            <div class="colhead"><span class="coltitle">Rejected</span><span class="colcount">0</span></div>
+            <div class="empty">📥<span>No applicants</span></div>
+        </section>
+    </div>
+    <p class="tiny" style="margin-top:16px;">Clicking a card opens the side panel with the process timeline, the decisions (Approve / Select / Reject) and sending a WhatsApp notification.</p>
+</main>
+</body>
+</html>

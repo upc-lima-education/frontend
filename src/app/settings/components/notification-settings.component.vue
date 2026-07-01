@@ -77,7 +77,11 @@ async function saveNotificationSettings() {
         lastName: currentProfile.lastName || authStore.currentUser?.lastName || '',
       };
 
-      await profileService.updateProfileDataByUserId(authStore.currentUserId, updatedProfile);
+      if (authStore.currentUserType === 'organization') {
+        await profileService.updateCompanyProfile(authStore.currentUserId, updatedProfile);
+      } else {
+        await profileService.updateCandidateProfile(authStore.currentUserId, updatedProfile);
+      }
     }
 
     success.value = true;

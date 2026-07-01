@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mockup — Job detail</title>
+<link rel="stylesheet" href="_app.css">
+<style>
+.detail { background:#fff; border:1px solid var(--color-border); border-radius:8px; overflow:hidden; box-shadow:var(--shadow-card); }
+.banner { height:140px; background:linear-gradient(135deg,var(--color-primary-dark),var(--color-accent)); }
+.dhead { display:flex; justify-content:space-between; align-items:flex-end; padding:0 24px 24px; margin-top:-40px; gap:24px; flex-wrap:wrap; }
+.dmain { display:flex; align-items:flex-end; gap:16px; }
+.dlogo { width:96px; height:96px; border-radius:12px; background:var(--color-bg); border:4px solid #fff; display:grid; place-items:center; box-shadow:0 4px 10px rgba(0,0,0,.1); color:var(--color-text-secondary); }
+.dtitle { margin:0; font-size:24px; font-weight:700; }
+.drow { display:flex; align-items:center; gap:8px; font-size:14px; color:var(--color-text-secondary); margin:4px 0; }
+.drow b { font-weight:600; color:var(--color-text-primary); }
+.dmeta { display:flex; gap:12px; margin-top:4px; }
+.dmeta span { display:inline-flex; align-items:center; gap:4px; font-size:12px; color:var(--color-text-muted); }
+.dmeta .alert { color:var(--color-state-alert); }
+.apply { display:inline-flex; align-items:center; gap:6px; padding:12px 24px; border-radius:6px; background:var(--color-accent); color:#fff; border:none; font-weight:600; cursor:pointer; }
+.dlayout { display:grid; grid-template-columns:1fr 280px; border-top:1px solid var(--color-border); background:var(--color-bg); gap:1px; }
+.dpanel { background:#fff; padding:24px; display:flex; flex-direction:column; gap:24px; }
+.stitle { margin:0 0 12px; font-size:16px; font-weight:700; border-left:3px solid var(--color-accent); padding-left:8px; }
+.dtext { font-size:14px; line-height:1.6; color:var(--color-text-secondary); margin:0; }
+.skills { display:flex; flex-wrap:wrap; gap:8px; }
+.skill { padding:6px 12px; border-radius:999px; background:var(--color-bg); border:1px solid var(--color-border); color:var(--color-text-secondary); font-size:12px; font-weight:500; }
+.gsec { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+.gcard { display:flex; gap:8px; background:var(--color-bg); border:1px solid var(--color-border); border-radius:8px; padding:16px; }
+.gcard .gt { font-size:12px; color:var(--color-text-secondary); margin:0; }
+.gcard .gv { font-size:14px; font-weight:700; margin:2px 0 0; }
+.gcard .gs { font-size:11px; color:var(--color-text-muted); margin:0; }
+.locbox { display:flex; gap:8px; align-items:center; background:var(--color-ai-bg); border:1px solid var(--color-ai-outline); border-radius:8px; padding:16px; }
+.locbox b { font-size:14px; display:block; } .locbox small { font-size:12px; color:var(--color-text-secondary); }
+.stats { background:#fff; padding:24px; }
+.statbig { background:var(--color-bg); border:1px solid var(--color-border); border-radius:8px; padding:16px; text-align:center; }
+.statbig .n { font-size:28px; font-weight:700; color:var(--color-primary); display:block; }
+.statbig .l { font-size:12px; color:var(--color-text-secondary); }
+.statrow { display:flex; justify-content:space-between; font-size:12px; color:var(--color-text-secondary); border-bottom:1px dashed var(--color-border); padding:10px 0; }
+.sbadge { padding:2px 8px; border-radius:999px; font-size:11px; font-weight:700; background:rgba(59,156,32,.1); color:var(--color-state-success); }
+@media(max-width:768px){ .dlayout{grid-template-columns:1fr;} .gsec{grid-template-columns:1fr;} }
+</style>
+</head>
+<body>
+<div class="mk-toolbar"><strong>MOCKUP</strong><span class="tag">job</span><span>08 · Job detail (company view)</span><a href="index.html">← index</a></div>
+<header class="navbar"><div class="navbar-inner">
+    <a class="brand"><span class="brand-logo"></span><span class="brand-name">Llanqui</span></a>
+    <nav class="nav-links"><a class="nav-link">News</a><a class="nav-link">Messages</a></nav>
+    <div class="nav-actions"><button class="icon-btn">🔔</button><a class="nav-cta">Find a job</a><span class="nav-avatar"><span class="av">JD</span> ▾</span></div>
+</div></header>
+<main class="page">
+    <div class="detail">
+        <div class="banner"></div>
+        <div class="dhead">
+            <div class="dmain">
+                <div class="dlogo">▢</div>
+                <div>
+                    <h1 class="dtitle">Street Cleaner</h1>
+                    <div class="drow"><b>My Company</b> • Miraflores, Lima</div>
+                    <div class="dmeta"><span>📅 Posted on April 20, 2026</span><span class="alert">⏰ Expires on May 20, 2026</span></div>
+                </div>
+            </div>
+            <button class="apply">✓ Apply now</button>
+        </div>
+        <div class="dlayout">
+            <main class="dpanel">
+                <section><h2 class="stitle">About the job</h2><p class="dtext">Join us and be part of the team. We're looking for responsible and committed staff to keep our facilities spotless.</p></section>
+                <section><h2 class="stitle">Desired skills</h2><div class="skills"><span class="skill">Responsibility</span><span class="skill">Punctuality</span><span class="skill">Teamwork</span></div></section>
+                <section class="gsec">
+                    <div class="gcard"><span style="color:var(--color-accent);">💲</span><div><p class="gt">Compensation</p><p class="gv">S/ 1130 - S/ 1200</p><p class="gs">Monthly</p></div></div>
+                    <div class="gcard"><span style="color:var(--color-state-alert);">🏅</span><div><p class="gt">Contract type</p><p class="gv">Mixed</p><p class="gs">Hybrid mode</p></div></div>
+                </section>
+                <section><h2 class="stitle">Location</h2><div class="locbox"><span style="color:var(--color-accent);">📍</span><div><b>Add 1234</b><small>Miraflores, Lima, Peru</small></div></div></section>
+            </main>
+            <aside class="stats">
+                <h3 style="margin:0 0 16px; font-size:14px; font-weight:700;">Ad performance</h3>
+                <div class="statbig"><span class="n">10</span><span class="l">Views</span></div>
+                <div style="margin-top:12px;">
+                    <div class="statrow"><span>Status</span><span class="sbadge">Active</span></div>
+                    <div class="statrow"><span>Opens</span><span>April 20, 2026</span></div>
+                    <div class="statrow"><span>Closes</span><span>May 20, 2026</span></div>
+                </div>
+            </aside>
+        </div>
+    </div>
+</main>
+</body>
+</html>

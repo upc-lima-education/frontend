@@ -1,5 +1,8 @@
 <script setup lang="ts">
 import { onMounted, ref } from "vue";
+import { useAuthenticationStore } from "@/app/auth/services/authentication.store";
+import { JobService } from "@/app/job/services/job.service";
+import { messageService } from "../services/message.service";
 
 import { ConversationResponse } from "../model/conversation.response";
 import { MessageResponse } from "../model/message.response";
@@ -9,64 +12,63 @@ import MessageListComponent from "../components/message-list.component.vue";
 import MessageInputComponent from "../components/message-input.component.vue";
 import { MessageCircle } from "lucide-vue-next";
 
+const authStore = useAuthenticationStore();
+const jobService = new JobService();
+
 const conversations = ref<ConversationResponse[]>([]);
 const currentConversation = ref<ConversationResponse | null>(null);
 
 const messages = ref<MessageResponse[]>([]);
+const loading = ref(false);
+const error = ref('');
 const userId = ref("");
 
-async function getConversations() {
-    return [
-        new ConversationResponse(
-            "1234",
-            0,
-            "Vendedor de pan",
-            "La Tiendita de Don Pepe",
-            "https://www.dafont.com/forum/attach/orig/9/2/928497.png"
-        ),
-        new ConversationResponse(
-            "5678",
-            2,
-            "Barrendero",
-            "Minimarket Santa Rosa",
-            "https://www.shutterstock.com/image-vector/colorful-supermarket-minimarket-logo-260nw-2398463929.jpg"
-        )
-    ];
-}
-
-async function getMessages(conversationId: string) {
-    //TEMP
-    return [
-        new MessageResponse("1", "1234", "9012", "Hola", new Date()),
-        new MessageResponse("2", "5678", "1467", "¿Sigue disponible?", new Date())
-    ];
+/**
+ * El backend no expone un inbox agregado; solo GET /conversation/job/{jobId}.
+ * Para la empresa sí es posible construir un listado honesto: se enumeran
+ * sus propios jobs y se juntan las conversaciones de cada uno.
+ */
+async function getConversations(): Promise<ConversationResponse[]> {
+    const jobs = await jobService.getJobsByCompany(authStore.currentUserId);
+    const conversationsByJob = await Promise.all(
+        jobs.map(job => messageService.getConversationsByJob(job.id).catch(() => []))
+    );
+    return conversationsByJob.flat();
 }
 
 async function selectConversation(conversation: ConversationResponse) {
     currentConversation.value = conversation;
-    messages.value = await getMessages(conversation.id);
+    try {
+        const detail = await messageService.getConversationById(conversation.id);
+        messages.value = detail.messages;
+    } catch (err) {
+        console.error('Error loading conversation:', err);
+        messages.value = [];
+    }
 }
 
-//Todo: connect with the backend
 async function sendMessage(content: string) {
-    const newMessage = new MessageResponse(
-        crypto.randomUUID(),
-        userId.value,
-        crypto.randomUUID(),
-        content,
-        new Date()
-    );
-
-    messages.value.push(newMessage);
-}
-
-async function getUserId() {
-    return "1234";
+    if (!currentConversation.value) return;
+    try {
+        const sent = await messageService.sendMessage(currentConversation.value.id, userId.value, content);
+        messages.value.push(sent);
+    } catch (err) {
+        console.error('Error sending message:', err);
+    }
 }
 
 onMounted(async () => {
-    userId.value = await getUserId();
-    conversations.value = await getConversations();
+    userId.value = authStore.currentUserId;
+    loading.value = true;
+    error.value = '';
+    try {
+        conversations.value = await getConversations();
+    } catch (err) {
+        console.error('Error loading conversations:', err);
+        error.value = 'No se pudieron cargar las conversaciones.';
+    } finally {
+        loading.value = false;
+    }
 });
 </script>
 
@@ -74,15 +76,15 @@ onMounted(async () => {
     <div class="message-page">
         <aside class="conversation-panel">
             <ConversationListComponent :conversations="conversations" :selectedId="currentConversation?.id"
-                @select="selectConversation" />
+                    @select="selectConversation" />
         </aside>
-        
+
         <aside class="chat-panel">
             <template v-if="currentConversation">
                 <header class="chat-header">
-                    <img 
-                        :src="currentConversation.userImage || '/src/app/shared/assets/icons/UsuarioPredeterminado.svg'" 
-                        alt="Avatar de contacto" 
+                    <img
+                        :src="currentConversation.userImage || '/src/app/shared/assets/icons/UsuarioPredeterminado.svg'"
+                        alt="Avatar de contacto"
                         class="chat-contact-avatar"
                     />
                     <div class="chat-contact-info">
@@ -104,7 +106,8 @@ onMounted(async () => {
                         <MessageCircle :size="36" />
                     </div>
                     <h3>Tus Conversaciones</h3>
-                    <p>Selecciona una conversación del panel izquierdo para comenzar a chatear.</p>
+                    <p v-if="error">{{ error }}</p>
+                    <p v-else>Selecciona una conversación del panel izquierdo para comenzar a chatear.</p>
                 </div>
             </div>
         </aside>

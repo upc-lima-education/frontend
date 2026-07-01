@@ -4,7 +4,7 @@ export class UpdateJobRequest {
     description: string;
     jobType: string;
     //Requirements
-    skills: string;
+    skills: string[];
     experience: string;
     //Location
     ubigeo: string;
@@ -27,7 +27,7 @@ export class UpdateJobRequest {
         title: string,
         description: string,
         jobType: string,
-        skills: string,
+        skills: string[],
         experience: string,
         //Location
         ubigeo: string,

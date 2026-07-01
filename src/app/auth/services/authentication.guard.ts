@@ -1,11 +1,14 @@
 
 import type { NavigationGuardNext, RouteLocationNormalized } from "vue-router";
-import {useAuthenticationStore} from "./authentication.store";
+import { useAuthenticationStore } from "./authentication.store";
+import { ROUTE_CONSTANTS } from "@/app/shared/router/route-constants";
 
 /**
- * Guard to check if the user is authenticated
- * Protege rutas que requieren autenticación
- * Redirige a sign-in si no hay token válido
+ * Guard de autenticación y autorización por rol.
+ * - Protege rutas privadas: redirige a sign-in si no hay token válido.
+ * - Aplica `meta.roles`: si el rol del usuario no está permitido, lo manda a
+ *   su inicio (Novedades). Así una organización no entra a vistas de empleado
+ *   (ej. búsqueda de empleo / generación de CV) y viceversa.
  */
 export const authenticationGuard = (
     to: RouteLocationNormalized,
@@ -13,56 +16,52 @@ export const authenticationGuard = (
     next: NavigationGuardNext
 ): void => {
     const authenticationStore = useAuthenticationStore();
-    
-    // Rutas públicas sin autenticación
-    // Usar prefijos para incluir subrutas (ej: /sign-up/user-selection)
+
+    // Rutas públicas sin autenticación (incluye subrutas, ej: /sign-up/...)
     const publicRoutePrefixes = ['/sign-in', '/sign-up', '/forgot-password', '/auth/callback'];
-    const isPublicRoute = publicRoutePrefixes.some(prefix => 
+    const isPublicRoute = publicRoutePrefixes.some(prefix =>
         to.path === prefix || to.path.startsWith(prefix + '/')
     );
-    
-    // Verificar si hay token
+
     const hasToken = localStorage.getItem('accessToken') || localStorage.getItem('idToken');
     const isSignedIn = authenticationStore.isSignedIn;
-    
-    console.log('🔐 Guard:', {
-        ruta: to.path,
-        esPublica: isPublicRoute,
-        tieneToken: !!hasToken,
-        isSignedIn
-    });
-    
-    // Si es ruta pública, permitir siempre
+
+    // Comprueba el rol contra meta.roles y resuelve el next() adecuado.
+    const proceedWithRole = () => {
+        const allowedRoles = to.meta?.roles as string[] | undefined;
+        if (!allowedRoles || allowedRoles.length === 0) return next();
+
+        const userType =
+            authenticationStore.currentUserType
+            || (localStorage.getItem('userType') as 'employee' | 'organization' | null);
+
+        if (userType && allowedRoles.includes(userType)) return next();
+
+        // Rol no autorizado para esta ruta: lo enviamos a su inicio.
+        return next(ROUTE_CONSTANTS.NEWS_PAGE);
+    };
+
     if (isPublicRoute) {
-        console.log('✅ Ruta pública permitida');
         return next();
     }
-    
-    // Si es ruta protegida y NO hay token, rechazar
+
     if (!hasToken) {
-        console.log('❌ Acceso denegado: Sin token');
         return next('/sign-in');
     }
-    
-    // Si hay token pero no hay sesión en store, cargar usuario
+
+    // Hay token pero la sesión no está cargada en el store: cargar usuario.
     if (hasToken && !isSignedIn) {
-        console.log('🔄 Cargando usuario desde token...');
         authenticationStore.loadCurrentUser().then(success => {
             if (success) {
-                console.log('✅ Usuario cargado exitosamente');
-                next();
+                proceedWithRole();
             } else {
-                console.log('❌ Error al cargar usuario');
                 next('/sign-in');
             }
         }).catch(() => {
-            console.log('❌ Error al cargar usuario (catch)');
             next('/sign-in');
         });
         return;
     }
-    
-    // Si todo está bien, permitir
-    console.log('✅ Acceso permitido');
-    next();
+
+    proceedWithRole();
 };

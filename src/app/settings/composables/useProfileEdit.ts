@@ -2,6 +2,8 @@ import { computed, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useAuthenticationStore } from '@/app/auth/services/authentication.store';
 import { profileService } from '@/app/profile/services/profile.service';
+import { isValidDNI, isValidRUC } from '@/app/profile/utils/identification-validation';
+import { districtNameToUbigeo } from '@/app/profile/utils/district-ubigeo.util';
 import {
     PROFILE_BIO_MAX_LENGTH,
     DISTRICT_OPTIONS,
@@ -138,82 +140,49 @@ export function useProfileEdit() {
         }
     }
 
-    async function verifyDni() {
+    /**
+     * Validación local de formato/checksum (el backend no expone
+     * /profile/validate-dni). No confirma el registro en RENIEC ni obtiene
+     * el nombre del titular; la verificación autoritativa ocurre en
+     * POST /profile/{userId}/verify al guardar.
+     */
+    function verifyDni() {
         if (!dni.value || dni.value.length < 8) {
             dniError.value = 'El DNI debe tener al menos 8 dígitos.';
             return;
         }
-        try {
-            isValidatingDni.value = true;
-            dniError.value = '';
+        dniError.value = '';
+        dniOwnerName.value = '';
+
+        if (isValidDNI(dni.value)) {
+            dniVerified.value = true;
+            dniOwnerName.value = 'Formato de DNI válido';
+        } else {
             dniVerified.value = false;
-            dniOwnerName.value = '';
-            
-            const res = await profileService.validateDNI(dni.value);
-            const data = res.data;
-            
-            // Check success & isValid
-            if (data.isValid || data.success) {
-                dniVerified.value = true;
-                if (data.fullName) {
-                    dniOwnerName.value = data.fullName;
-                    const parts = data.fullName.split(' ');
-                    if (parts.length >= 2) {
-                        firstName.value = parts[0];
-                        lastName.value = parts.slice(1).join(' ');
-                    }
-                } else if (data.data?.fullName) {
-                    dniOwnerName.value = data.data.fullName;
-                    const parts = data.data.fullName.split(' ');
-                    if (parts.length >= 2) {
-                        firstName.value = parts[0];
-                        lastName.value = parts.slice(1).join(' ');
-                    }
-                } else {
-                    dniOwnerName.value = 'DNI Válido (RENIEC)';
-                }
-            } else {
-                dniError.value = 'El DNI ingresado no es válido.';
-            }
-        } catch (e: any) {
-            console.error(e);
-            dniError.value = 'Error al validar el DNI ante el servicio.';
-        } finally {
-            isValidatingDni.value = false;
+            dniError.value = 'El DNI ingresado no es válido.';
         }
     }
 
-    async function verifyRuc() {
+    /**
+     * Validación local de formato/checksum (el backend no expone
+     * /profile/validate-ruc). No confirma el registro en SUNAT ni obtiene
+     * la razón social; la verificación autoritativa ocurre en
+     * POST /profile/{userId}/verify al guardar.
+     */
+    function verifyRuc() {
         if (!ruc.value || ruc.value.length < 11) {
             rucError.value = 'El RUC debe tener 11 dígitos.';
             return;
         }
-        try {
-            isValidatingRuc.value = true;
-            rucError.value = '';
+        rucError.value = '';
+        rucCompanyName.value = '';
+
+        if (isValidRUC(ruc.value)) {
+            rucVerified.value = true;
+            rucCompanyName.value = 'Formato de RUC válido';
+        } else {
             rucVerified.value = false;
-            rucCompanyName.value = '';
-            
-            const res = await profileService.validateRUC(ruc.value);
-            const data = res.data;
-            
-            if (data.isValid || data.success || data.data?.isValid) {
-                rucVerified.value = true;
-                const companyNameVal = data.companyName || data.data?.companyName;
-                if (companyNameVal) {
-                    rucCompanyName.value = companyNameVal;
-                    companyName.value = companyNameVal; // Autopopulate
-                } else {
-                    rucCompanyName.value = 'RUC Válido (SUNAT)';
-                }
-            } else {
-                rucError.value = 'El RUC ingresado no es válido.';
-            }
-        } catch (e: any) {
-            console.error(e);
-            rucError.value = 'Error al validar el RUC ante SUNAT.';
-        } finally {
-            isValidatingRuc.value = false;
+            rucError.value = 'El RUC ingresado no es válido.';
         }
     }
 
@@ -265,40 +234,36 @@ export function useProfileEdit() {
 
             let profileData: Record<string, any>;
 
+            // Los payloads siguen exactamente Create/UpdateCandidateProfileRequest
+            // y Create/UpdateCompanyProfileRequest del backend real (no aceptan
+            // additionalProperties). Campos de la UI sin equivalente en el
+            // backend (profession, personType 'juridica' + ruc/companyName en
+            // candidato, website, companySize) son gaps de backend documentados
+            // aquí: no se envían porque el backend los ignoraría de todas formas.
             if (isEmployee.value) {
                 profileData = {
                     userId: authStore.currentUserId,
                     firstName: firstName.value,
                     lastName: lastName.value,
-                    personType: personType.value,
-                    identificationType: identificationType.value,
-                    identification: dni.value,
+                    dni: dni.value,
                     description: bio.value,
-                    keywords: keywords.value,
-                    district: district.value,
+                    skills: keywords.value,
+                    ubigeo: districtNameToUbigeo(district.value),
                     profilePicture: picturePath,
                 };
-
-                // Add jurical fields if personType is juridica
-                if (personType.value === 'juridica') {
-                    profileData.ruc = ruc.value;
-                    profileData.isRucVerified = rucVerified.value;
-                    profileData.companyName = companyName.value;
-                }
             } else {
                 profileData = {
                     userId: authStore.currentUserId,
                     companyName: companyName.value,
-                    ruc: ruc.value,
-                    website: website.value,
                     sector: industry.value,
-                    industry: industry.value,
-                    companySize: companySize.value,
-                    mainLocation: mainLocation.value,
-                    district: mainLocation.value,
+                    ubigeo: districtNameToUbigeo(mainLocation.value),
                     description: companyDescription.value,
                     profilePicture: picturePath,
                 };
+                // ruc solo lo acepta CreateCompanyProfileRequest, no el update.
+                if (isNewProfile.value) {
+                    profileData.ruc = ruc.value;
+                }
             }
 
             if (isNewProfile.value) {
@@ -311,7 +276,11 @@ export function useProfileEdit() {
                 isNewProfile.value = false;
             } else {
                 console.log('🔄 Updating existing profile on backend...');
-                await profileService.updateProfileDataByUserId(authStore.currentUserId, profileData);
+                if (isEmployee.value) {
+                    await profileService.updateCandidateProfile(authStore.currentUserId, profileData);
+                } else {
+                    await profileService.updateCompanyProfile(authStore.currentUserId, profileData);
+                }
             }
 
             // Sync user data back to AuthStore so the display names update immediately!

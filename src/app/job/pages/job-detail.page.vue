@@ -1,50 +1,35 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue';
+import { useRoute } from 'vue-router';
 import { GetJobByIdResponse } from '../model/get-job-by-id.response';
+import { JobService } from '../services/job.service';
 import JobDetailComponent from '../components/job-detail.component.vue';
 
+const route = useRoute();
+const jobService = new JobService();
+
 const job = ref<GetJobByIdResponse>();
+const loading = ref(false);
+const error = ref('');
 
-const companyName = 'My company (TEMP)';
-const companyImage = 'https://static.vecteezy.com/system/resources/thumbnails/047/656/219/small/abstract-logo-design-for-any-corporate-brand-business-company-vector.jpg';
-
-async function getJobById() {
-    //Temp
-    return new GetJobByIdResponse(
-        //Id    
-        "123456789",
-        "10000",
-        //Details
-        "Barrendero",
-        "Únete para ser parte del equipo",
-        "Hybrid",
-        "Ser bueno",
-        "NoExperienceNeeded",
-        //Location
-        "140131",
-        "Add 1234",
-        -17.000,
-        -18.100,
-        //Payment
-        1130,
-        1200,
-        "PEN",
-        "Monthly",
-        "Mixed",
-        //Traceability
-        new Date(),
-        new Date(),
-        "Open",
-        10,
-        new Date(),
-        "https://google.com"
-    );
-}
+// El backend no incluye nombre/logo de la empresa en la entidad Job;
+// se muestran valores por defecto hasta que exista un endpoint enriquecido.
+const companyName = 'Empresa';
+const companyImage = '';
 
 onMounted(async () => {
-    job.value = await getJobById();
+    loading.value = true;
+    error.value = '';
+    try {
+        const id = route.params.id as string;
+        job.value = await jobService.getJobById({ id });
+    } catch (err) {
+        console.error('Error loading job:', err);
+        error.value = 'No se pudo cargar la vacante.';
+    } finally {
+        loading.value = false;
+    }
 });
-
 </script>
 
 <template>
@@ -56,9 +41,8 @@ onMounted(async () => {
             :company-image="companyImage"
             :is-company="false"/>
         </div>
-        <div v-else>
-            <!--Temp-->
-            <h1>Error while retrieving job</h1>
+        <div v-else-if="!loading">
+            <h1>{{ error || 'No se encontró la vacante' }}</h1>
         </div>
     </div>
 </template>

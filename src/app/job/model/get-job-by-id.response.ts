@@ -7,7 +7,7 @@ export class GetJobByIdResponse {
     description: string;
     jobType: string;
     //Requirements
-    skills: string;
+    skills: string[];
     experience: string;
     //Location
     ubigeo: string;
@@ -36,7 +36,7 @@ export class GetJobByIdResponse {
         title: string,
         description: string,
         jobType: string,
-        skills: string,
+        skills: string[],
         experience: string,
         //Location
         ubigeo: string,

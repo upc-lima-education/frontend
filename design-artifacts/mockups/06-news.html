@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mockup — News feed</title>
+<link rel="stylesheet" href="_app.css">
+<style>
+.feed-grid { display:grid; grid-template-columns:225px 1fr 290px; gap:24px; align-items:start; }
+.pcard { background:#fff; border:1px solid var(--color-border); border-radius:8px; overflow:hidden; box-shadow:var(--shadow-card); }
+.pcover { height:56px; background:linear-gradient(135deg,var(--color-primary),var(--color-accent)); }
+.pinfo { text-align:center; padding:0 16px 16px; }
+.pavatar { width:72px; height:72px; border-radius:50%; background:var(--color-primary); color:#fff; display:grid; place-items:center; font-size:20px; font-weight:600; margin:-36px auto 0; border:2px solid #fff; }
+.pname { margin:12px 0 4px; font-size:16px; font-weight:600; }
+.ptitle { margin:0; font-size:12px; color:var(--color-text-secondary); }
+.pemail { margin:4px 0 0; font-size:11px; color:var(--color-text-muted); }
+.stat-row { display:flex; justify-content:space-between; font-size:12px; padding:4px 16px; }
+.stat-row b { color:var(--color-accent); }
+.pfoot { padding:12px 16px; text-align:center; background:var(--color-bg); }
+.pfoot a { color:var(--color-accent); font-weight:600; font-size:12px; text-decoration:none; }
+.create { background:#fff; border:1px solid var(--color-border); border-radius:8px; padding:16px; box-shadow:var(--shadow-card); margin-bottom:16px; }
+.crow { display:flex; align-items:center; gap:8px; margin-bottom:8px; }
+.crow .av { width:42px; height:42px; border-radius:50%; background:var(--color-primary); color:#fff; display:grid; place-items:center; font-weight:600; }
+.trigger { flex:1; height:42px; border:1px solid var(--color-border); border-radius:999px; background:var(--color-bg); color:var(--color-text-secondary); text-align:left; padding-left:16px; font-size:14px; }
+.cact { display:grid; grid-template-columns:repeat(4,1fr); gap:4px; }
+.cbtn { display:flex; align-items:center; justify-content:center; gap:6px; padding:10px 4px; border:none; background:transparent; font-size:12px; font-weight:600; border-radius:6px; cursor:pointer; }
+.post { background:#fff; border:1px solid var(--color-border); border-radius:8px; padding:16px; box-shadow:var(--shadow-card); margin-bottom:16px; }
+.phead { display:flex; justify-content:space-between; margin-bottom:12px; }
+.pu { display:flex; gap:8px; align-items:center; }
+.pu .av { width:48px; height:48px; border-radius:50%; background:var(--color-lavender); }
+.pu b { font-size:14px; } .pu small { font-size:12px; color:var(--color-text-muted); display:block; }
+.pmsg { font-size:14px; line-height:1.5; margin:0 0 12px; }
+.pimg { height:280px; border-radius:8px; background:linear-gradient(135deg,#dfe3f3,#eef0f8); border:1px solid var(--color-border); display:grid; place-items:center; color:var(--color-text-muted); }
+.pactions { display:flex; justify-content:space-between; padding-top:8px; border-top:1px solid var(--color-border); margin-top:12px; }
+.pactions button { flex:1; background:none; border:none; color:var(--color-text-secondary); padding:10px 0; font-size:12px; font-weight:600; cursor:pointer; }
+.scard { background:#fff; border:1px solid var(--color-border); border-radius:8px; padding:16px; box-shadow:var(--shadow-card); margin-bottom:16px; }
+.scard h3 { margin:0 0 16px; font-size:16px; font-weight:600; }
+.trend { margin-bottom:12px; } .trend b { font-size:12px; display:block; } .trend small { font-size:11px; color:var(--color-text-muted); }
+.rec { display:flex; gap:8px; margin-bottom:12px; } .rec .ic { font-size:20px; } .rec b { font-size:12px; display:block; } .rec small { font-size:11px; color:var(--color-text-secondary); }
+.rec a { font-size:11px; color:var(--color-accent); font-weight:600; text-decoration:none; }
+@media(max-width:992px){ .feed-grid{grid-template-columns:200px 1fr;} .sidebar-right{display:none;} }
+@media(max-width:768px){ .feed-grid{grid-template-columns:1fr;} .sidebar-left{display:none;} }
+</style>
+</head>
+<body>
+<div class="mk-toolbar"><strong>MOCKUP</strong><span class="tag">news</span><span>06 · News feed</span><a href="index.html">← index</a></div>
+<header class="navbar"><div class="navbar-inner">
+    <a class="brand"><span class="brand-logo"></span><span class="brand-name">Llanqui</span></a>
+    <nav class="nav-links"><a class="nav-link active">News</a><a class="nav-link">Messages</a></nav>
+    <div class="nav-actions"><button class="icon-btn">🔔</button><a class="nav-cta">Find a job</a><span class="nav-avatar"><span class="av">JD</span> ▾</span></div>
+</div></header>
+<main class="page" style="padding-top:32px;">
+    <div class="feed-grid">
+        <aside class="sidebar-left">
+            <div class="pcard">
+                <div class="pcover"></div>
+                <div class="pinfo"><div class="pavatar">JD</div><h3 class="pname">John Doe</h3><p class="ptitle">Professional / Employee</p><p class="pemail">john@email.com</p></div>
+                <hr class="divider">
+                <div style="padding:8px 0;"><div class="stat-row"><span>Profile views</span><b>47</b></div><div class="stat-row"><span>Post impressions</span><b>124</b></div></div>
+                <hr class="divider"><div class="pfoot"><a href="11-settings.html">Manage account</a></div>
+            </div>
+        </aside>
+        <section>
+            <div class="create">
+                <div class="crow"><span class="av">JD</span><button class="trigger">What do you want to talk about today, John?</button></div>
+                <div class="cact"><button class="cbtn" style="color:#378fe9;">▣ Photo</button><button class="cbtn" style="color:#5f9b41;">▶ Video</button><button class="cbtn" style="color:#c37d16;">📅 Event</button><button class="cbtn" style="color:#e15656;">✎ Write article</button></div>
+            </div>
+            <article class="post">
+                <div class="phead"><div class="pu"><span class="av"></span><div><b>Minimarket Santa Rosa</b><small>Professional on Llanqui • Jun 12, 2026</small></div></div><span style="color:var(--color-text-muted);">⋯</span></div>
+                <p class="pmsg">We're hiring! We're looking for committed people to join our team. Apply today. 🚀</p>
+                <div class="pimg">Post image</div>
+                <div class="pactions"><button>♡ React</button><button>💬 Comment</button><button>↪ Share</button><button>➤ Send</button></div>
+            </article>
+        </section>
+        <aside class="sidebar-right">
+            <div class="scard"><h3>Trending on Llanqui</h3>
+                <div class="trend"><b>#JobSearch2026</b><small>Hot topics • 1,240 readers</small></div>
+                <div class="trend"><b>#ArtificialIntelligence</b><small>Technology • 840 readers</small></div>
+                <div class="trend"><b>#PerfectResume</b><small>Practical tips • 2,102 readers</small></div>
+            </div>
+            <div class="scard"><h3>Job suggestions</h3>
+                <div class="rec"><span class="ic">💼</span><div><b>Delivery Rider</b><small>Minimarket Santa Rosa</small><br><a href="07-find-job.html">View offer →</a></div></div>
+                <hr class="divider" style="margin:8px 0;">
+                <div class="rec"><span class="ic">🏢</span><div><b>Store Cashier</b><small>Don Pepe Bakery</small><br><a href="07-find-job.html">View offer →</a></div></div>
+            </div>
+        </aside>
+    </div>
+</main>
+</body>
+</html>

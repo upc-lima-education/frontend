@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wireframe — Job detail</title>
+<link rel="stylesheet" href="_wireframe.css">
+</head>
+<body>
+<div class="wf-toolbar"><strong>WIREFRAME</strong><span class="tag">job</span><span>08 · Job detail (job-detail.page.vue → JobDetail)</span><a href="index.html">← index</a></div>
+<div class="wf-canvas">
+    <div class="wf-screen">
+        <div class="wf-nav">
+            <div class="logo"><div class="mark"></div><div class="wf-line" style="width:70px;"></div></div>
+            <div class="nav-links"><span>News</span><span>Messages</span></div>
+            <div class="actions"><div class="icon">🔔</div><div class="cta">Find a job</div><div class="avatar"></div></div>
+        </div>
+        <div class="wf-body" style="background:var(--wf-fill-2);">
+            <div class="wf-card" style="padding:0; overflow:hidden;">
+                <!-- cover banner -->
+                <div class="wf-img" style="height:140px; border:none;"><span>Cover banner</span></div>
+                <!-- header -->
+                <div style="display:flex; justify-content:space-between; align-items:flex-end; gap:24px; padding:0 24px 24px; margin-top:-40px; flex-wrap:wrap;">
+                    <div style="display:flex; gap:16px; align-items:flex-end;">
+                        <div class="wf-logo" style="width:96px; height:96px; border-width:4px; border-color:#fff; box-shadow:0 0 0 2px var(--wf-line);"></div>
+                        <div class="wf-lines">
+                            <div class="wf-line" style="width:200px; height:22px;"></div>
+                            <div class="wf-line sm" style="width:240px;"></div>
+                            <div style="display:flex; gap:10px; margin-top:6px;"><span class="wf-pill">📅 Posted</span><span class="wf-pill">⏰ Expires</span></div>
+                        </div>
+                    </div>
+                    <div class="wf-btn primary">✓ Apply now</div>
+                </div>
+                <hr class="wf-divider">
+                <!-- two column -->
+                <div style="display:grid; grid-template-columns:1fr 280px; gap:2px; background:var(--wf-line-soft);">
+                    <div style="background:#fff; padding:24px; display:flex; flex-direction:column; gap:24px;">
+                        <div><div class="wf-h" style="border-left:3px solid var(--wf-accent); padding-left:8px;">About the job</div><div class="wf-lines"><div class="wf-line w-100"></div><div class="wf-line w-90"></div><div class="wf-line w-80"></div></div></div>
+                        <div><div class="wf-h" style="border-left:3px solid var(--wf-accent); padding-left:8px;">Desired skills</div><div style="display:flex; gap:8px; flex-wrap:wrap;"><span class="wf-pill">Skill</span><span class="wf-pill">Skill</span><span class="wf-pill">Skill</span></div></div>
+                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+                            <div class="wf-card fill" style="display:flex; gap:8px;"><div>💲</div><div class="wf-lines"><div class="wf-line sm w-60"></div><div class="wf-line" style="width:80px; height:14px;"></div></div></div>
+                            <div class="wf-card fill" style="display:flex; gap:8px;"><div>🏅</div><div class="wf-lines"><div class="wf-line sm w-60"></div><div class="wf-line" style="width:80px; height:14px;"></div></div></div>
+                        </div>
+                        <div><div class="wf-h" style="border-left:3px solid var(--wf-accent); padding-left:8px;">Location</div><div class="wf-card" style="display:flex; gap:8px; background:var(--wf-fill-2);">📍<div class="wf-lines"><div class="wf-line sm w-50"></div><div class="wf-line sm w-40"></div></div></div></div>
+                    </div>
+                    <!-- right panel (company only) -->
+                    <div style="background:#fff; padding:24px;">
+                        <span class="wf-callout" style="display:block; margin-bottom:12px;">"Ad performance" panel — only visible when isCompany</span>
+                        <div class="wf-card fill" style="text-align:center;"><div class="wf-line" style="width:40px; height:24px; margin:0 auto 6px;"></div><div class="wf-line sm" style="width:90px; margin:0 auto;"></div></div>
+                        <div style="margin-top:12px; display:flex; flex-direction:column; gap:10px;">
+                            <div style="display:flex; justify-content:space-between;"><div class="wf-line sm" style="width:60px;"></div><span class="wf-pill">Active</span></div>
+                            <div style="display:flex; justify-content:space-between;"><div class="wf-line sm" style="width:70px;"></div><div class="wf-line sm" style="width:60px;"></div></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

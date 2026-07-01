@@ -4,12 +4,17 @@ import { computed, ref } from 'vue';
 import { Heart, MessageSquare, Share2, Send as SendIcon, ChevronLeft, ChevronRight, MoreHorizontal } from 'lucide-vue-next';
 
 const props = defineProps({
+    id: { type: String, required: true },
     userImage: { type: String, default: '' },
     userName: { type: String, required: true },
     content: { type: String, required: true },
     publishedAt: { type: Date, required: true },
     images: { type: Array as () => string[], default: () => [] }
 });
+
+const emit = defineEmits<{
+    (e: 'toggle-heart', id: string, isHearted: boolean): void
+}>();
 
 const formattedDate = computed(() => {
     // Relative date representation or short locale date
@@ -42,7 +47,12 @@ const handleLikeClick = () => {
 
 const heartedItem = () => {
     isLiked.value = !isLiked.value;
+    emit('toggle-heart', props.id, isLiked.value);
 };
+
+function notifyComingSoon(message: string) {
+    alert(message);
+}
 </script>
 
 <template>
@@ -113,15 +123,15 @@ const heartedItem = () => {
                 <Heart :size="18" :class="{ 'filled-heart': isLiked }" />
                 <span>{{ isLiked ? 'Me gusta' : 'Reaccionar' }}</span>
             </button>
-            <button class="action-btn" @click="alert('Comentarios próximamente')">
+            <button class="action-btn" @click="notifyComingSoon('Comentarios próximamente')">
                 <MessageSquare :size="18" />
                 <span>Comentar</span>
             </button>
-            <button class="action-btn" @click="alert('Compartido en tu perfil')">
+            <button class="action-btn" @click="notifyComingSoon('Compartido en tu perfil')">
                 <Share2 :size="18" />
                 <span>Compartir</span>
             </button>
-            <button class="action-btn" @click="alert('Enviado por mensaje privado')">
+            <button class="action-btn" @click="notifyComingSoon('Enviado por mensaje privado')">
                 <SendIcon :size="18" />
                 <span>Enviar</span>
             </button>

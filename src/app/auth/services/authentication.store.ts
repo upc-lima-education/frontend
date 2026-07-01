@@ -44,12 +44,29 @@ export const useAuthenticationStore = defineStore('authentication', () => {
             user.value = signInResponse.user;
             accessToken.value = signInResponse.accessToken;
             refreshToken.value = signInResponse.refreshToken;
-            
+
+            // Persist the role so currentUserType is reliable across the app
+            // (navbar, profile, route guard) even on a fresh sign-in.
+            if (signInResponse.user?.userType) {
+                setUserType(signInResponse.user.userType);
+            }
+
             // Persist tokens
             localStorage.setItem('accessToken', signInResponse.accessToken);
             localStorage.setItem('refreshToken', signInResponse.refreshToken);
             localStorage.setItem('expiresIn', signInResponse.expiresIn.toString());
-            
+
+            // Refrescar el rol AUTORITATIVO desde /me: la respuesta de sign-in no
+            // siempre incluye un userType fiable, y /me sí distingue
+            // organización vs candidato. Best-effort: no rompe el login si falla.
+            try {
+                const me = await authenticationService.getCurrentUser(signInResponse.accessToken);
+                user.value = me;
+                if (me?.userType) setUserType(me.userType);
+            } catch (meError) {
+                console.warn('No se pudo refrescar el usuario desde /me tras el sign-in:', meError);
+            }
+
             // Redirect to news page
             await router.push(ROUTE_CONSTANTS.NEWS_PAGE);
             return true;
@@ -96,7 +113,18 @@ export const useAuthenticationStore = defineStore('authentication', () => {
 
     async function signOut(): Promise<void> {
         console.log('🚪 Iniciando logout...');
-        
+
+        // Invalidar la sesión en el backend (best-effort: no debe bloquear
+        // el logout local si el backend falla o el token ya expiró).
+        const token = accessToken.value || localStorage.getItem('accessToken');
+        if (token) {
+            try {
+                await authenticationService.signOut(token);
+            } catch (error) {
+                console.warn('No se pudo invalidar la sesión en el backend:', error);
+            }
+        }
+
         // Limpiar estado del store primero
         signedIn.value = false;
         user.value = null;
@@ -151,6 +179,11 @@ export const useAuthenticationStore = defineStore('authentication', () => {
             console.log('🔄 Obteniendo usuario con token');
             user.value = await authenticationService.getCurrentUser(token);
             signedIn.value = true;
+
+            // Mantener el rol sincronizado con el backend (/me).
+            if (user.value?.userType) {
+                setUserType(user.value.userType);
+            }
             
             console.log('✅ Usuario cargado:', user.value?.email);
             return true;

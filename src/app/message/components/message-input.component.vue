@@ -15,11 +15,15 @@ function send() {
 const isButtonDisabled = computed(() => {
     return message.value == null || message.value.trim() === '';
 });
+
+function notifyComingSoon(text: string) {
+    alert(text);
+}
 </script>
 
 <template>
     <form class="message-input-form" @submit.prevent="send">
-        <button type="button" class="btn-attach" title="Adjuntar archivo" @click="alert('Adjuntar archivos próximamente')">
+        <button type="button" class="btn-attach" title="Adjuntar archivo" @click="notifyComingSoon('Adjuntar archivos próximamente')">
             <Paperclip :size="18" />
         </button>
         <div class="input-field-wrap">

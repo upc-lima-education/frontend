@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wireframe — Sign in</title>
+<link rel="stylesheet" href="_wireframe.css">
+</head>
+<body>
+<div class="wf-toolbar">
+    <strong>WIREFRAME</strong><span class="tag">auth</span>
+    <span>01 · Sign in (sign-in.page.vue)</span>
+    <a href="index.html">← index</a>
+</div>
+
+<div class="wf-canvas">
+    <div class="wf-screen" style="background:var(--wf-fill-2); padding:40px; display:grid; place-items:center;">
+        <!-- auth-card: two columns 1.05fr / 1fr -->
+        <div style="width:880px; max-width:100%; display:grid; grid-template-columns:1.05fr 1fr; border:2px solid var(--wf-line); border-radius:18px; overflow:hidden; background:#fff;">
+
+            <!-- Brand panel (AuthBrandPanel) -->
+            <div style="background:var(--wf-fill); padding:44px 40px; display:flex; flex-direction:column; gap:24px; border-right:2px solid var(--wf-line);">
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <div class="wf-logo" style="width:30px; height:30px;"></div>
+                    <div class="wf-line w-40" style="width:90px;"></div>
+                </div>
+                <div class="wf-lines">
+                    <span class="wf-eyebrow">Brand eyebrow</span>
+                    <div class="wf-line w-90" style="height:18px;"></div>
+                    <div class="wf-line w-70" style="height:18px;"></div>
+                    <div class="wf-line sm w-80"></div>
+                    <div class="wf-line sm w-50"></div>
+                </div>
+                <!-- "spine" with pro/org chips -->
+                <div style="margin-top:auto; display:flex; flex-direction:column; gap:12px;">
+                    <div><span class="wf-pill">Worker</span></div>
+                    <div style="text-align:right;"><span class="wf-pill">Warehouse</span></div>
+                    <div><span class="wf-pill">Waiter</span></div>
+                    <div style="text-align:right;"><span class="wf-pill">Restaurant</span></div>
+                </div>
+            </div>
+
+            <!-- Form panel -->
+            <div style="padding:40px 36px; display:flex; flex-direction:column; gap:18px;">
+                <div class="wf-lines">
+                    <span class="wf-eyebrow">Welcome back</span>
+                    <div class="wf-line w-70" style="height:22px;"></div>
+                </div>
+                <div class="wf-btn block ghost">▢ Continue with Google</div>
+                <div style="display:flex; align-items:center; gap:10px; color:var(--wf-muted); font-size:12px;">
+                    <div class="wf-divider" style="flex:1;"></div> or with your email <div class="wf-divider" style="flex:1;"></div>
+                </div>
+                <div class="wf-field"><span class="wf-label">Email</span><div class="wf-input">name@example.com</div></div>
+                <div class="wf-field"><span class="wf-label">Password</span><div class="wf-input">••••••••</div></div>
+                <div style="text-align:right;"><span class="wf-line sm" style="width:120px; display:inline-block;"></span></div>
+                <div class="wf-btn primary block">Log in →</div>
+                <div style="text-align:center; color:var(--wf-muted); font-size:13px;">No account yet? <u>Create account</u></div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

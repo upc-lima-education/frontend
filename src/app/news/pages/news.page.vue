@@ -5,8 +5,12 @@ import { useNewsPage } from '@/app/news/composables/useNewsPage';
 import { useAuthenticationStore } from '@/app/auth/services/authentication.store';
 import { Image, Video, Calendar, FileText, ArrowRight } from 'lucide-vue-next';
 
-const { newsData } = useNewsPage();
+const { newsData, toggleHeart } = useNewsPage();
 const auth = useAuthenticationStore();
+
+function handleToggleHeart(postId: string, isHearted: boolean) {
+    toggleHeart(postId, auth.currentUserId, isHearted);
+}
 
 const displayName = computed(() => {
     const u = auth.currentUser;
@@ -19,7 +23,7 @@ const initials = computed(() => {
     const name = displayName.value.trim();
     if (!name) return 'U';
     const parts = name.split(/\s+/);
-    const chars = parts.length > 1 ? parts[0][0] + parts[1][0] : name.slice(0, 2);
+    const chars = parts.length > 1 ? (parts[0]?.[0] ?? '') + (parts[1]?.[0] ?? '') : name.slice(0, 2);
     return chars.toUpperCase();
 });
 
@@ -104,11 +108,13 @@ function openCreatePostAlert() {
                     <NewsCardComponent
                         v-for="news in newsData"
                         :key="news.id"
+                        :id="news.id"
                         :user-name="news.userName"
                         :user-image="news.userImageUrl"
                         :content="news.content"
                         :published-at="news.publishedDate"
                         :images="news.imageUrls"
+                        @toggle-heart="handleToggleHeart"
                     />
                     <div v-if="newsData.length === 0" class="no-posts">
                         <p>No hay novedades disponibles en este momento.</p>

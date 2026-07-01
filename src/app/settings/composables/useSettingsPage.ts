@@ -21,6 +21,11 @@ export function useSettingsPage() {
         isOrganization.value ? t('settings.tabCompanyProfile') : t('settings.tabMyProfile')
     );
 
+    // Empresas: "Destacar vacantes" (visibilidad). Empleados: "Comprar Créditos" (CV).
+    const paymentsTabLabel = computed(() =>
+        isOrganization.value ? t('settings.tabBoost') : t('settings.tabPayments')
+    );
+
     function setTab(tab: string) {
         router.replace({ query: { ...route.query, tab } });
     }
@@ -29,6 +34,7 @@ export function useSettingsPage() {
         isOrganization,
         activeTab,
         profileTabLabel,
+        paymentsTabLabel,
         setTab,
     };
 }

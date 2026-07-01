@@ -6,7 +6,7 @@ export class CreateJobRequest {
     description: string;
     jobType: string;
     //Requirements
-    skills: string;
+    skills: string[];
     experience: string;
     //Location
     ubigeo: string;
@@ -31,7 +31,7 @@ export class CreateJobRequest {
         title: string,
         description: string,
         jobType: string,
-        skills: string,
+        skills: string[],
         experience: string,
         //Location
         ubigeo: string,

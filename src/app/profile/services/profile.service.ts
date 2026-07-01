@@ -23,13 +23,13 @@ export class ProfileService {
     }
 
     /**
-     * Actualizar datos del perfil por ID de usuario
-     * PUT /api/v1/profile/{userId}
+     * Datos de onboarding/completitud del perfil
+     * GET /api/v1/profile/{userId}/bootstrap
      */
-    async updateProfileDataByUserId(userId: string, profileData: any) {
-        console.log('🔄 ProfileService: Updating profile for user:', userId, profileData);
-        const response = await http.put(`${this.endpoint}/${userId}`, profileData);
-        console.log('📦 ProfileService: Update response:', response.data);
+    async getProfileBootstrap(userId: string) {
+        console.log('🔄 ProfileService: Getting bootstrap for user:', userId);
+        const response = await http.get(`${this.endpoint}/${userId}/bootstrap`);
+        console.log('📦 ProfileService: Bootstrap response:', response.data);
         return response;
     }
 
@@ -56,41 +56,24 @@ export class ProfileService {
     }
 
     /**
-     * Validar RUC peruano
-     * POST /api/v1/profile/validate-ruc
-     * Retorna { isValid: boolean, companyName?: string }
+     * Actualizar perfil de candidato (empleado/persona natural)
+     * PUT /api/v1/profile/{userId}/candidate
      */
-    async validateRUC(ruc: string) {
-        console.log('🔄 ProfileService: Validating RUC:', ruc);
-        const response = await http.post(`${this.endpoint}/validate-ruc`, { ruc });
-        console.log('📦 ProfileService: RUC validation response:', response.data);
+    async updateCandidateProfile(userId: string, profileData: any) {
+        console.log('🔄 ProfileService: Updating candidate profile for user:', userId, profileData);
+        const response = await http.put(`${this.endpoint}/${userId}/candidate`, profileData);
+        console.log('📦 ProfileService: Candidate update response:', response.data);
         return response;
     }
 
     /**
-     * Validar DNI peruano
-     * POST /api/v1/profile/validate-dni
-     * Retorna { isValid: boolean, fullName?: string }
+     * Actualizar perfil de empresa/organización
+     * PUT /api/v1/profile/{userId}/company
      */
-    async validateDNI(dni: string) {
-        console.log('🔄 ProfileService: Validating DNI:', dni);
-        const response = await http.post(`${this.endpoint}/validate-dni`, { dni });
-        console.log('📦 ProfileService: DNI validation response:', response.data);
-        return response;
-    }
-
-    /**
-     * Validar identificación (DNI, Pasaporte, etc.)
-     * POST /api/v1/profile/validate-identification
-     * Retorna { isValid: boolean }
-     */
-    async validateIdentification(identificationType: string, identification: string) {
-        console.log('🔄 ProfileService: Validating identification:', identificationType, identification);
-        const response = await http.post(`${this.endpoint}/validate-identification`, {
-            type: identificationType,
-            value: identification
-        });
-        console.log('📦 ProfileService: Identification validation response:', response.data);
+    async updateCompanyProfile(userId: string, profileData: any) {
+        console.log('🔄 ProfileService: Updating company profile for user:', userId, profileData);
+        const response = await http.put(`${this.endpoint}/${userId}/company`, profileData);
+        console.log('📦 ProfileService: Company update response:', response.data);
         return response;
     }
 
@@ -112,35 +95,13 @@ export class ProfileService {
     }
 
     /**
-     * Obtener perfil de empleado por ID
-     * GET /api/v1/profile/employee/{profileId}
+     * Verificar identidad del perfil (DNI/RUC autoritativo en backend)
+     * POST /api/v1/profile/{userId}/verify
      */
-    async getEmployeeProfile(profileId: string) {
-        console.log('🔄 ProfileService: Getting employee profile:', profileId);
-        const response = await http.get(`${this.endpoint}/employee/${profileId}`);
-        console.log('📦 ProfileService: Employee profile response:', response.data);
-        return response;
-    }
-
-    /**
-     * Obtener perfil de organización por ID
-     * GET /api/v1/profile/organization/{profileId}
-     */
-    async getOrganizationProfile(profileId: string) {
-        console.log('🔄 ProfileService: Getting organization profile:', profileId);
-        const response = await http.get(`${this.endpoint}/organization/${profileId}`);
-        console.log('📦 ProfileService: Organization profile response:', response.data);
-        return response;
-    }
-
-    /**
-     * Verificar si el perfil del usuario está completo
-     * GET /api/v1/profile/{userId}/is-complete
-     */
-    async isProfileComplete(userId: string) {
-        console.log('🔄 ProfileService: Checking if profile is complete for user:', userId);
-        const response = await http.get(`${this.endpoint}/${userId}/is-complete`);
-        console.log('📦 ProfileService: Profile completeness response:', response.data);
+    async verifyProfile(userId: string, payload: Record<string, any> = {}) {
+        console.log('🔄 ProfileService: Verifying profile for user:', userId);
+        const response = await http.post(`${this.endpoint}/${userId}/verify`, payload);
+        console.log('📦 ProfileService: Verify response:', response.data);
         return response;
     }
 }

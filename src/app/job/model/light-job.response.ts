@@ -7,6 +7,8 @@ export class LightJobResponse {
     district: string;
     type: string;
     closesAt: string;
+    /** Vacante destacada por un impulso pagado (aparece con sello "Recomendado"). */
+    featured: boolean;
 
     constructor(
         id: string,
@@ -16,7 +18,8 @@ export class LightJobResponse {
         department: string,
         district: string,
         type: string,
-        closesAt: string
+        closesAt: string,
+        featured: boolean = false
     ){
         this.id = id;
         this.companyName = companyName;
@@ -26,5 +29,6 @@ export class LightJobResponse {
         this.district = district;
         this.type = type;
         this.closesAt = closesAt;
+        this.featured = featured;
     }
 }

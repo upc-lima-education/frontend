@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wireframe — Publish a job</title>
+<link rel="stylesheet" href="_wireframe.css">
+</head>
+<body>
+<div class="wf-toolbar"><strong>WIREFRAME</strong><span class="tag">job</span><span>09 · Publish a job (publish-job.page.vue → 5-step wizard)</span><a href="index.html">← index</a></div>
+<div class="wf-canvas">
+    <div class="wf-screen">
+        <div class="wf-nav">
+            <div class="logo"><div class="mark"></div><div class="wf-line" style="width:70px;"></div></div>
+            <div class="nav-links"><span>News</span><span>Applications</span><span>Messages</span></div>
+            <div class="actions"><div class="icon">🔔</div><div class="cta">Post a job</div><div class="avatar"></div></div>
+        </div>
+        <div class="wf-body" style="max-width:760px; margin:0 auto;">
+            <div style="border-bottom:2px solid var(--wf-line-soft); padding-bottom:14px; margin-bottom:24px;"><div class="wf-line" style="width:220px; height:20px;"></div><div class="wf-line sm" style="width:300px; margin-top:8px;"></div></div>
+            <div class="wf-card">
+                <!-- horizontal stepper -->
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px; position:relative;">
+                    <div style="position:absolute; top:18px; left:0; right:0; height:3px; background:var(--wf-line-soft);"></div>
+                    <div style="display:flex; flex-direction:column; align-items:center; gap:6px; z-index:1; flex:1;"><div class="wf-avatar" style="width:36px; height:36px; background:var(--wf-accent); color:#fff;">1</div><div class="wf-line sm" style="width:50px;"></div></div>
+                    <div style="display:flex; flex-direction:column; align-items:center; gap:6px; z-index:1; flex:1;"><div class="wf-avatar" style="width:36px; height:36px;">2</div><div class="wf-line sm" style="width:60px;"></div></div>
+                    <div style="display:flex; flex-direction:column; align-items:center; gap:6px; z-index:1; flex:1;"><div class="wf-avatar" style="width:36px; height:36px;">3</div><div class="wf-line sm" style="width:40px;"></div></div>
+                    <div style="display:flex; flex-direction:column; align-items:center; gap:6px; z-index:1; flex:1;"><div class="wf-avatar" style="width:36px; height:36px;">4</div><div class="wf-line sm" style="width:50px;"></div></div>
+                    <div style="display:flex; flex-direction:column; align-items:center; gap:6px; z-index:1; flex:1;"><div class="wf-avatar" style="width:36px; height:36px;">5</div><div class="wf-line sm" style="width:60px;"></div></div>
+                </div>
+                <!-- section header -->
+                <div class="wf-lines" style="margin-bottom:8px;"><div class="wf-line" style="width:200px; height:18px;"></div><div class="wf-line sm w-70"></div></div>
+                <hr class="wf-divider" style="margin:12px 0;">
+                <!-- step 1 content -->
+                <div class="wf-col" style="min-height:260px;">
+                    <div class="wf-field"><span class="wf-label">Job title &nbsp;ⓘ</span><div class="wf-input">e.g. Full Stack Web Developer</div></div>
+                    <div class="wf-field"><span class="wf-label">Job type &nbsp;ⓘ</span><div class="wf-select">On-site</div></div>
+                    <div class="wf-field"><span class="wf-label">Description &nbsp;ⓘ</span><div class="wf-textarea">Describe the roles and responsibilities…</div></div>
+                </div>
+                <hr class="wf-divider" style="margin:12px 0;">
+                <!-- footer nav -->
+                <div style="display:flex; justify-content:space-between;"><span class="wf-btn ghost" style="opacity:.5;">← Back</span><span class="wf-btn primary">Next →</span></div>
+                <span class="wf-callout" style="display:block; margin-top:14px;">Steps: 1 Basic info · 2 Requirements (skills as bubbles) · 3 Pay/salary · 4 Location (dept/prov/district) · 5 Publication (dates) → "Publish job"</span>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

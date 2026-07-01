@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mockup — Publish a job</title>
+<link rel="stylesheet" href="_app.css">
+<style>
+.ph { padding-bottom:16px; margin-bottom:24px; border-bottom:1px solid var(--color-border); }
+.ph h1 { margin:0; font-size:28px; font-weight:700; } .ph p { margin:8px 0 0; color:var(--color-text-secondary); }
+.wizard { background:#fff; border:1px solid var(--color-border); border-radius:8px; padding:24px; box-shadow:var(--shadow-card); max-width:760px; margin:0 auto; }
+.stepper { display:flex; justify-content:space-between; align-items:center; position:relative; margin-bottom:24px; }
+.stepper::before { content:""; position:absolute; top:18px; left:0; right:0; height:3px; background:var(--color-border); }
+.step { display:flex; flex-direction:column; align-items:center; gap:8px; position:relative; z-index:2; flex:1; }
+.badge { width:36px; height:36px; border-radius:50%; background:#fff; border:3px solid var(--color-border); color:var(--color-text-muted); font-weight:700; display:grid; place-items:center; font-size:14px; }
+.step.active .badge { border-color:var(--color-accent); background:var(--color-accent); color:#fff; box-shadow:0 0 0 4px rgba(45,58,199,.15); }
+.step.done .badge { border-color:var(--color-state-success); background:var(--color-state-success); color:#fff; }
+.slabel { font-size:11px; font-weight:600; color:var(--color-text-muted); text-align:center; max-width:90px; }
+.step.active .slabel { color:var(--color-accent); font-weight:700; }
+.step.done .slabel { color:var(--color-state-success-dark); }
+.shead h2 { margin:0 0 4px; font-size:20px; font-weight:700; } .shead p { margin:0; font-size:14px; color:var(--color-text-secondary); }
+.divider { margin:16px 0; }
+.content { min-height:260px; }
+.lblrow { display:flex; align-items:center; gap:8px; }
+.clue { width:16px; height:16px; border-radius:50%; border:1px solid var(--color-border); display:inline-grid; place-items:center; font-size:10px; color:var(--color-text-muted); }
+.wfooter { display:flex; justify-content:space-between; margin-top:16px; }
+</style>
+</head>
+<body>
+<div class="mk-toolbar"><strong>MOCKUP</strong><span class="tag">job</span><span>09 · Publish a job (step 1 of 5)</span><a href="index.html">← index</a></div>
+<header class="navbar"><div class="navbar-inner">
+    <a class="brand"><span class="brand-logo"></span><span class="brand-name">Llanqui</span></a>
+    <nav class="nav-links"><a class="nav-link">News</a><a class="nav-link">Applications</a><a class="nav-link">Messages</a></nav>
+    <div class="nav-actions"><button class="icon-btn">🔔</button><a class="nav-cta">Post a job</a><span class="nav-avatar"><span class="av">SR</span> ▾</span></div>
+</div></header>
+<main class="page narrow">
+    <div class="ph"><h1>Publish a new job</h1><p>Complete the steps so your opening reaches the best candidates.</p></div>
+    <div class="wizard">
+        <div class="stepper">
+            <div class="step active"><span class="badge">1</span><span class="slabel">Basic info</span></div>
+            <div class="step"><span class="badge">2</span><span class="slabel">Requirements</span></div>
+            <div class="step"><span class="badge">3</span><span class="slabel">Pay</span></div>
+            <div class="step"><span class="badge">4</span><span class="slabel">Location</span></div>
+            <div class="step"><span class="badge">5</span><span class="slabel">Publication</span></div>
+        </div>
+        <div class="shead"><h2>Basic information</h2><p>Let's start with the essentials of the opening.</p></div>
+        <hr class="divider">
+        <div class="content">
+            <div class="field"><div class="lblrow"><label class="lbl">Job title</label><span class="clue">ⓘ</span></div><input class="input" placeholder="e.g. Full Stack Web Developer"></div>
+            <div class="field"><div class="lblrow"><label class="lbl">Job type</label><span class="clue">ⓘ</span></div><select class="select"><option>On-site</option><option>Remote</option><option>Hybrid</option></select></div>
+            <div class="field"><div class="lblrow"><label class="lbl">Description</label><span class="clue">ⓘ</span></div><textarea class="textarea" placeholder="Describe the roles, responsibilities and the team..."></textarea></div>
+        </div>
+        <hr class="divider">
+        <div class="wfooter"><button class="btn" disabled style="opacity:.5;">← Back</button><button class="btn primary">Next →</button></div>
+    </div>
+</main>
+</body>
+</html>

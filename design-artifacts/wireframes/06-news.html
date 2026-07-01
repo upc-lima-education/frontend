@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wireframe — News feed</title>
+<link rel="stylesheet" href="_wireframe.css">
+</head>
+<body>
+<div class="wf-toolbar"><strong>WIREFRAME</strong><span class="tag">news</span><span>06 · News feed (news.page.vue)</span><a href="index.html">← index</a></div>
+<div class="wf-canvas">
+    <div class="wf-screen">
+        <div class="wf-nav">
+            <div class="logo"><div class="mark"></div><div class="wf-line" style="width:70px;"></div></div>
+            <div class="nav-links"><span class="active">News</span><span>Messages</span></div>
+            <div class="actions"><div class="icon">🔔</div><div class="cta">Find a job</div><div class="avatar"></div></div>
+        </div>
+        <div class="wf-body" style="background:var(--wf-fill-2);">
+            <!-- 3 columns: 225 / 1fr / 290 -->
+            <div style="display:grid; grid-template-columns:225px 1fr 290px; gap:24px; align-items:start;">
+                <!-- Left sidebar: profile -->
+                <div class="wf-card" style="padding:0; overflow:hidden;">
+                    <div style="height:56px; background:var(--wf-fill);"></div>
+                    <div style="text-align:center; padding:0 16px 16px;">
+                        <div class="wf-avatar" style="width:72px; height:72px; margin:-36px auto 10px;"></div>
+                        <div class="wf-line" style="width:100px; height:14px; margin:0 auto 6px;"></div>
+                        <div class="wf-line sm" style="width:130px; margin:0 auto;"></div>
+                    </div>
+                    <hr class="wf-divider">
+                    <div style="padding:16px; display:flex; flex-direction:column; gap:8px;">
+                        <div style="display:flex; justify-content:space-between;"><div class="wf-line sm" style="width:80px;"></div><div class="wf-line sm" style="width:24px;"></div></div>
+                        <div style="display:flex; justify-content:space-between;"><div class="wf-line sm" style="width:90px;"></div><div class="wf-line sm" style="width:24px;"></div></div>
+                    </div>
+                    <hr class="wf-divider">
+                    <div style="padding:12px; text-align:center; background:var(--wf-fill);"><div class="wf-line sm" style="width:110px; margin:0 auto;"></div></div>
+                </div>
+
+                <!-- Center: create post + feed -->
+                <div class="wf-col">
+                    <div class="wf-card">
+                        <div style="display:flex; align-items:center; gap:10px; margin-bottom:12px;">
+                            <div class="wf-avatar" style="width:42px; height:42px;"></div>
+                            <div class="wf-input" style="flex:1; border-radius:999px;">What do you want to talk about today?</div>
+                        </div>
+                        <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:4px;">
+                            <div class="wf-pill" style="justify-content:center;">Photo</div><div class="wf-pill" style="justify-content:center;">Video</div><div class="wf-pill" style="justify-content:center;">Event</div><div class="wf-pill" style="justify-content:center;">Article</div>
+                        </div>
+                    </div>
+                    <!-- post card -->
+                    <div class="wf-card">
+                        <div style="display:flex; justify-content:space-between; margin-bottom:12px;">
+                            <div style="display:flex; gap:10px; align-items:center;"><div class="wf-avatar" style="width:48px; height:48px;"></div><div class="wf-lines"><div class="wf-line" style="width:120px; height:12px;"></div><div class="wf-line sm" style="width:90px;"></div></div></div>
+                            <div>⋯</div>
+                        </div>
+                        <div class="wf-lines" style="margin-bottom:12px;"><div class="wf-line w-100"></div><div class="wf-line w-90"></div></div>
+                        <div class="wf-img" style="height:280px;"><span>Post image / carousel</span></div>
+                        <hr class="wf-divider" style="margin:14px 0;">
+                        <div style="display:flex; justify-content:space-between;"><span class="wf-pill">♡ React</span><span class="wf-pill">💬 Comment</span><span class="wf-pill">↪ Share</span><span class="wf-pill">➤ Send</span></div>
+                    </div>
+                </div>
+
+                <!-- Right sidebar: trending + suggestions -->
+                <div class="wf-col">
+                    <div class="wf-card"><div class="wf-h">Trending on Llanqui</div><div class="wf-lines"><div class="wf-line w-80"></div><div class="wf-line sm w-50"></div><div class="wf-line w-70"></div><div class="wf-line sm w-40"></div></div></div>
+                    <div class="wf-card"><div class="wf-h">Job suggestions</div>
+                        <div style="display:flex; gap:10px; margin-bottom:10px;"><div class="wf-logo" style="width:36px; height:36px;"></div><div class="wf-lines" style="flex:1;"><div class="wf-line" style="width:90px; height:12px;"></div><div class="wf-line sm w-60"></div></div></div>
+                        <div style="display:flex; gap:10px;"><div class="wf-logo" style="width:36px; height:36px;"></div><div class="wf-lines" style="flex:1;"><div class="wf-line" style="width:80px; height:12px;"></div><div class="wf-line sm w-50"></div></div></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

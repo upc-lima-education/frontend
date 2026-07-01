@@ -1,5 +1,10 @@
 import ubigeoData from '../data/ubigeo.json';
 
+/**
+ * Catálogo de ubigeo (departamento/provincia/distrito) del Perú, embebido
+ * como JSON estático. Intencional, no deuda técnica: el backend no expone
+ * (ni necesita exponer) un endpoint para esta data de referencia.
+ */
 type UbigeoItem = {
   sIdUbigeo: string;
   sDepartamento: string;

@@ -54,6 +54,7 @@
     "navbar": {
         "news": "News",
         "messages": "Messages",
+        "applications": "Applications",
         "publishJob": "Publish Job",
         "findJob": "Find Job",
         "profile": "Profile",
@@ -81,6 +82,7 @@
         "tabPrivacy": "Privacy",
         "tabEdit": "Edit Profile",
         "tabPayments": "Buy Credits",
+        "tabBoost": "Boost Jobs",
         "comingSoonTitle": "Coming soon",
         "comingSoonBody": "This section will be available soon."
     },

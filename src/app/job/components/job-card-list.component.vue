@@ -25,6 +25,7 @@ defineProps({
       :district="job.district"
       :type="job.type"
       :closes-at="new Date(job.closesAt)"
+      :featured="job.featured"
     />
     
 

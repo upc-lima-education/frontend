@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wireframe — Settings / Profile</title>
+<link rel="stylesheet" href="_wireframe.css">
+</head>
+<body>
+<div class="wf-toolbar"><strong>WIREFRAME</strong><span class="tag">settings</span><span>11 · Settings / Profile (settings.page.vue)</span><a href="index.html">← index</a></div>
+<div class="wf-canvas">
+    <div class="wf-screen">
+        <div class="wf-nav">
+            <div class="logo"><div class="mark"></div><div class="wf-line" style="width:70px;"></div></div>
+            <div class="nav-links"><span>News</span><span>Messages</span></div>
+            <div class="actions"><div class="icon">🔔</div><div class="cta">Find a job</div><div class="avatar"></div></div>
+        </div>
+        <div class="wf-body" style="max-width:960px; margin:0 auto;">
+            <!-- tabs -->
+            <div class="wf-tabs" style="margin-bottom:24px;"><div class="tab active">Profile</div><div class="tab">Edit</div><div class="tab">Notifications</div><div class="tab">Payments</div><div class="tab">Privacy</div></div>
+            <!-- panel = profile overview -->
+            <div class="wf-card" style="padding:0; overflow:hidden; margin-bottom:24px;">
+                <div class="wf-img" style="height:140px; border:none;"><span>Cover with verified badge</span></div>
+                <div style="display:flex; gap:24px; align-items:flex-end; padding:0 24px 24px; margin-top:-56px;">
+                    <div class="wf-avatar" style="width:112px; height:112px; border:4px solid #fff;"></div>
+                    <div class="wf-lines" style="flex:1; padding-bottom:6px;"><div style="display:flex; gap:10px; align-items:center;"><div class="wf-line" style="width:160px; height:20px;"></div><span class="wf-pill">✓ Verified</span></div><div class="wf-line sm w-40"></div><div class="wf-line sm w-70"></div></div>
+                </div>
+            </div>
+            <!-- dashboard grid 1.1fr / 1fr -->
+            <div style="display:grid; grid-template-columns:1.1fr 1fr; gap:24px; align-items:start;">
+                <div class="wf-col">
+                    <div class="wf-card"><div class="wf-h">Impact summary</div><div style="display:grid; grid-template-columns:repeat(3,1fr); gap:12px;"><div class="wf-card fill" style="text-align:center;"><div class="wf-line" style="width:30px; height:18px; margin:0 auto 4px;"></div><div class="wf-line sm" style="width:50px; margin:0 auto;"></div></div><div class="wf-card fill" style="text-align:center;"><div class="wf-line" style="width:30px; height:18px; margin:0 auto 4px;"></div><div class="wf-line sm" style="width:50px; margin:0 auto;"></div></div><div class="wf-card fill" style="text-align:center;"><div class="wf-line" style="width:30px; height:18px; margin:0 auto 4px;"></div><div class="wf-line sm" style="width:50px; margin:0 auto;"></div></div></div></div>
+                    <div class="wf-card soft" style="display:flex; gap:16px; align-items:center;"><div class="wf-avatar" style="width:64px; height:64px;">%</div><div class="wf-lines" style="flex:1;"><div class="wf-line" style="width:120px; height:13px;"></div><div class="wf-line sm w-90"></div><span class="wf-btn ghost sm">Complete now →</span></div></div>
+                    <div class="wf-card"><div class="wf-h">Professional information</div><div class="wf-col" style="gap:10px;"><div style="display:flex; justify-content:space-between; border-bottom:1px dashed var(--wf-line-soft); padding-bottom:8px;"><div class="wf-line sm" style="width:60px;"></div><div class="wf-line sm" style="width:100px;"></div></div><div style="display:flex; justify-content:space-between; border-bottom:1px dashed var(--wf-line-soft); padding-bottom:8px;"><div class="wf-line sm" style="width:50px;"></div><div class="wf-line sm" style="width:120px;"></div></div></div></div>
+                </div>
+                <div class="wf-col">
+                    <div class="wf-card" style="border-left:3px solid var(--wf-accent);"><span class="wf-eyebrow">AI · Resume generator</span><div class="wf-lines" style="margin-top:10px;"><div class="wf-line w-80"></div><div class="wf-line w-60"></div></div><div class="wf-btn primary block" style="margin-top:14px;">Generate my resume with AI</div></div>
+                </div>
+            </div>
+            <span class="wf-callout" style="display:block; margin-top:16px;">Tabs swap the panel. If the role is organization: the "Payments" tab shows <b>Boost jobs</b> and the right panel becomes "Recruitment center" (instead of the AI resume).</span>
+        </div>
+    </div>
+</div>
+</body>
+</html>

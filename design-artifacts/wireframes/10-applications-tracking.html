@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wireframe — Application tracking</title>
+<link rel="stylesheet" href="_wireframe.css">
+</head>
+<body>
+<div class="wf-toolbar"><strong>WIREFRAME</strong><span class="tag">recruitment</span><span>10 · Application tracking (applications-tracking.page.vue)</span><a href="index.html">← index</a></div>
+<div class="wf-canvas">
+    <div class="wf-screen">
+        <div class="wf-nav">
+            <div class="logo"><div class="mark"></div><div class="wf-line" style="width:70px;"></div></div>
+            <div class="nav-links"><span>News</span><span class="active">Applications</span><span>Messages</span></div>
+            <div class="actions"><div class="icon">🔔</div><div class="cta">Post a job</div><div class="avatar"></div></div>
+        </div>
+        <div class="wf-body">
+            <!-- head -->
+            <div style="display:flex; justify-content:space-between; align-items:flex-end; gap:16px; border-bottom:2px solid var(--wf-line-soft); padding-bottom:16px; margin-bottom:24px; flex-wrap:wrap;">
+                <div class="wf-lines"><div class="wf-line" style="width:280px; height:22px;"></div><div class="wf-line sm" style="width:360px;"></div></div>
+                <div style="display:flex; gap:12px; align-items:flex-end;">
+                    <div class="wf-field"><span class="wf-label">Job</span><div class="wf-select" style="width:200px;">All jobs</div></div>
+                    <div class="wf-btn ghost">⬇ Export to Excel (3)</div>
+                </div>
+            </div>
+            <!-- board 4 columns -->
+            <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:16px; align-items:start;">
+                <!-- column template -->
+                <div class="wf-card fill" style="padding:16px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid var(--wf-line); padding-bottom:8px; margin-bottom:12px;"><div class="wf-line" style="width:80px; height:12px;"></div><span class="wf-pill">3</span></div>
+                    <div class="wf-col">
+                        <div class="wf-card" style="padding:14px;"><div style="display:flex; gap:10px; align-items:center; margin-bottom:8px;"><div class="wf-avatar" style="width:40px; height:40px;"></div><div class="wf-lines" style="flex:1;"><div class="wf-line" style="width:100px; height:11px;"></div><div class="wf-line sm w-60"></div></div></div><div class="wf-line sm" style="width:90px;"></div><div style="display:flex; gap:10px; margin-top:8px;"><span class="wf-pill">📍 Lima</span><span class="wf-pill">⏰ Today</span></div></div>
+                        <div class="wf-card" style="padding:14px;"><div style="display:flex; gap:10px; align-items:center;"><div class="wf-avatar" style="width:40px; height:40px;"></div><div class="wf-lines" style="flex:1;"><div class="wf-line" style="width:90px; height:11px;"></div><div class="wf-line sm w-50"></div></div></div></div>
+                    </div>
+                </div>
+                <div class="wf-card fill" style="padding:16px;"><div style="display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid var(--wf-line); padding-bottom:8px; margin-bottom:12px;"><div class="wf-line" style="width:70px; height:12px;"></div><span class="wf-pill">2</span></div><div class="wf-card" style="padding:14px;"><div style="display:flex; gap:10px;"><div class="wf-avatar" style="width:40px; height:40px;"></div><div class="wf-lines" style="flex:1;"><div class="wf-line" style="width:90px; height:11px;"></div><div class="wf-line sm w-50"></div></div></div></div></div>
+                <div class="wf-card fill" style="padding:16px;"><div style="display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid var(--wf-line); padding-bottom:8px; margin-bottom:12px;"><div class="wf-line" style="width:80px; height:12px;"></div><span class="wf-pill">1</span></div><div class="wf-card" style="padding:14px;"><div style="display:flex; gap:10px;"><div class="wf-avatar" style="width:40px; height:40px;"></div><div class="wf-lines" style="flex:1;"><div class="wf-line" style="width:90px; height:11px;"></div><div class="wf-line sm w-50"></div></div></div></div></div>
+                <div class="wf-card fill" style="padding:16px;"><div style="display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid var(--wf-line); padding-bottom:8px; margin-bottom:12px;"><div class="wf-line" style="width:70px; height:12px;"></div><span class="wf-pill">0</span></div><div style="text-align:center; padding:24px 8px; color:var(--wf-muted); font-size:12px;">📥<br>No applicants</div></div>
+            </div>
+            <span class="wf-callout" style="display:block; margin-top:16px;">4 columns = statuses (Applied · Approved · Selected · Rejected). Clicking a card opens a <b>side drawer</b> with timeline, decisions and WhatsApp notification.</span>
+        </div>
+    </div>
+</div>
+</body>
+</html>

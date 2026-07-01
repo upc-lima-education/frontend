@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mockup — Find a job</title>
+<link rel="stylesheet" href="_app.css">
+<style>
+.ph { display:flex; justify-content:space-between; align-items:flex-end; gap:16px; border-bottom:1px solid var(--color-border); padding-bottom:16px; margin-bottom:24px; }
+.ph h1 { margin:0; font-size:28px; font-weight:700; } .ph p { margin:8px 0 0; color:var(--color-text-secondary); }
+.searchbar { display:flex; gap:8px; }
+.searchbar input { width:260px; padding:10px 14px; border:1px solid var(--color-border); border-radius:8px; background:#fff; }
+.toggle { display:inline-flex; align-items:center; gap:8px; background:#fff; border:1px solid var(--color-border); color:var(--color-text-secondary); padding:10px 16px; border-radius:6px; font-weight:600; font-size:14px; cursor:pointer; margin-bottom:16px; }
+.filters { padding:24px; border:1px solid var(--color-border); border-radius:8px; background:#fff; box-shadow:var(--shadow-card); margin-bottom:24px; }
+.fgrid { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; }
+.fact { display:flex; justify-content:flex-end; gap:12px; margin-top:24px; }
+.jobs { display:flex; flex-direction:column; gap:16px; }
+.jcard { position:relative; display:flex; gap:16px; padding:16px; border:1px solid var(--color-border); border-radius:8px; background:#fff; cursor:pointer; transition:var(--transition); }
+.jcard:hover { border-color:var(--color-accent); transform:translateY(-2px); box-shadow:0 6px 16px rgba(30,43,170,.08); }
+.jcard.featured { border-color:var(--color-accent); box-shadow:0 0 0 1px var(--color-accent), var(--shadow-card); }
+.ribbon { position:absolute; top:-9px; left:16px; display:inline-flex; align-items:center; gap:4px; padding:3px 10px; border-radius:999px; background:var(--color-accent); color:#fff; font-size:10px; font-weight:700; text-transform:uppercase; }
+.jlogo { width:56px; height:56px; border-radius:8px; background:var(--color-bg); border:1px solid var(--color-border); display:grid; place-items:center; color:var(--color-text-secondary); flex-shrink:0; }
+.jc { flex:1; }
+.jh { display:flex; justify-content:space-between; align-items:flex-start; gap:8px; }
+.jt { margin:0; font-size:14px; font-weight:600; }
+.jcomp { margin:6px 0; font-size:12px; color:var(--color-text-secondary); }
+.jmeta { display:flex; gap:16px; margin-top:4px; }
+.jmeta span { display:inline-flex; align-items:center; gap:4px; font-size:12px; color:var(--color-text-muted); }
+.soon { color:var(--color-state-error); font-weight:600; }
+@media(max-width:760px){ .fgrid{grid-template-columns:1fr 1fr;} .searchbar input{width:160px;} }
+</style>
+</head>
+<body>
+<div class="mk-toolbar"><strong>MOCKUP</strong><span class="tag">job</span><span>07 · Find a job</span><a href="index.html">← index</a></div>
+<header class="navbar"><div class="navbar-inner">
+    <a class="brand"><span class="brand-logo"></span><span class="brand-name">Llanqui</span></a>
+    <nav class="nav-links"><a class="nav-link">News</a><a class="nav-link">Messages</a></nav>
+    <div class="nav-actions"><button class="icon-btn">🔔</button><a class="nav-cta active">Find a job</a><span class="nav-avatar"><span class="av">JD</span> ▾</span></div>
+</div></header>
+<main class="page">
+    <div class="ph">
+        <div><h1>Find your next job</h1><p>Explore the opportunities available near you.</p></div>
+        <div class="searchbar"><input placeholder="Search by company…"><button class="btn primary">🔍</button></div>
+    </div>
+    <button class="toggle">⚙ Advanced search</button>
+    <div class="filters">
+        <div class="fgrid">
+            <div class="field"><label class="lbl">Company</label><input class="input" placeholder="e.g. Llanqui Corp"></div>
+            <div class="field"><label class="lbl">Title</label><input class="input" placeholder="e.g. Developer"></div>
+            <div class="field"><label class="lbl">Role</label><input class="input" placeholder="e.g. Frontend"></div>
+            <div class="field"><label class="lbl">Skills</label><input class="input" placeholder="e.g. Vue"></div>
+            <div class="field"><label class="lbl">Department</label><input class="input" placeholder="e.g. Lima"></div>
+            <div class="field"><label class="lbl">District</label><input class="input" placeholder="e.g. San Isidro"></div>
+            <div class="field"><label class="lbl">Min. salary</label><input class="input" type="number" placeholder="Minimum"></div>
+            <div class="field"><label class="lbl">Type</label><select class="select"><option>Any</option></select></div>
+        </div>
+        <div class="fact"><button class="btn">Cancel</button><button class="btn primary">Apply</button></div>
+    </div>
+    <div class="jobs">
+        <article class="jcard featured">
+            <span class="ribbon">★ Featured</span>
+            <div class="jlogo">▢</div>
+            <div class="jc"><div class="jh"><h3 class="jt">Delivery Rider</h3><span class="pill">On-site</span></div><p class="jcomp">Minimarket Santa Rosa</p><div class="jmeta"><span>📍 Miraflores, Lima</span><span class="soon">⏰ Closes in 2 days</span></div></div>
+        </article>
+        <article class="jcard">
+            <div class="jlogo">▢</div>
+            <div class="jc"><div class="jh"><h3 class="jt">Store Cashier</h3><span class="pill">On-site</span></div><p class="jcomp">Don Pepe Bakery</p><div class="jmeta"><span>📍 San Isidro, Lima</span><span>⏰ Closes in 5 days</span></div></div>
+        </article>
+    </div>
+</main>
+</body>
+</html>

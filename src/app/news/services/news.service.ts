@@ -5,48 +5,48 @@ import { NewsResponse } from '../model/news.response';
 export class NewsService {
     endpoint = '/news';
 
-    /*Should only be used for testing purposes*/
+    private mapPost(data: any): NewsResponse {
+        return new NewsResponse(
+            data.id,
+            data.companyName || data.userName || 'Empresa',
+            data.content,
+            new Date(data.createdAt || data.publishedDate),
+            data.images || data.imageUrls || [],
+            data.companyImage || data.userImageUrl
+        );
+    }
+
+    /**
+     * News feed
+     * GET /api/v1/news/feed
+     */
     async getAllNews(): Promise<NewsResponse[]> {
-        return await http.get(this.endpoint);
+        const response = await http.get(`${this.endpoint}/feed`);
+        const items = Array.isArray(response.data) ? response.data : (response.data?.items ?? []);
+        return items.map((item: any) => this.mapPost(item));
     }
 
     async getNewsById(id: string): Promise<NewsResponse> {
-        return await http.get(`${this.endpoint}/${id}`);
+        const response = await http.get(`${this.endpoint}/${id}`);
+        return this.mapPost(response.data);
     }
 
-    async postNews(news: NewsRequest){
-        return await http.post(this.endpoint, news);
+    async postNews(news: NewsRequest): Promise<NewsResponse> {
+        const response = await http.post(this.endpoint, news);
+        return this.mapPost(response.data);
     }
 
-    async updateNews(id: string, news: NewsRequest){
-        return await http.put(`${this.endpoint}/${id}`, news);
+    async deleteNews(id: string): Promise<void> {
+        await http.delete(`${this.endpoint}/${id}`);
     }
 
-    async deleteNews(id: string){
-        return await http.delete(`${this.endpoint}/${id}`);
-    }
-
-    //Testing
-    //Methods for testing purposes
-
-    async getAllNewsTest() : Promise<NewsResponse[]> {
-        const newsData : NewsResponse[] = [
-            new NewsResponse(1, "Pepe", "Content of news 1", new Date('2024-01-01'), 
-            [
-                "https://global.tiffin.edu/img/article/consejos-para-encontrar-trabajo-despues-de-egresar.webp",
-                "https://static.mercadonegro.pe/wp-content/uploads/2024/02/13123541/trabajo-peruanos-pasion.jpg",
-                "https://pqs.pe/wp-content/uploads/2021/10/PQS-transicion-laboral-800x533.jpeg"
-            ],
-        "https://i.pinimg.com/736x/8b/16/7a/8b167af653c2399dd93b952a48740620.jpg"),
-            new NewsResponse(2, "Juan", "Content of news 2", new Date('2024-02-01'), ["https://www.robertwalters.mx/tendencias-de-talento/consejos-de-carrera/blog/como-realizar-entrevista-de-trabajo-exitosa/_jcr_content/root/responsivegrid/article-detail/image.coreimg.85.1024.jpeg/1695935940570/cadres-932x530--2-.jpeg"]),
-            new NewsResponse(3, "Maria", "Content of news 3", new Date('2024-03-01'), [], "https://freesvg.org/img/female-user-icon.png")
-        ];
-
-        return newsData;
-    }
-
-    async getNewsByIdTest(): Promise<NewsResponse>{
-        const newsData = new NewsResponse(3, "Maria", "Content of news 3", new Date('2024-03-01'), [], "https://freesvg.org/img/female-user-icon.png");
-        return newsData;
+    /**
+     * Like/unlike a post
+     * PUT /api/v1/news/heart
+     */
+    async heartNews(postId: string, userId: string, isHearted: boolean): Promise<void> {
+        await http.put(`${this.endpoint}/heart`, { postId, userId, isHearted });
     }
 }
+
+export const newsService = new NewsService();

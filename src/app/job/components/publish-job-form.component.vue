@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref, watch } from 'vue';
+import { useAuthenticationStore } from '@/app/auth/services/authentication.store';
 import { JobService } from '../services/job.service';
 import { CreateJobRequest } from '../model/create-job.request';
 import { Currency } from '../enums/currency.enum';
@@ -14,14 +15,12 @@ import ButtonClueComponent from '@/app/shared/components/button-clue.component.v
 import { ArrowLeft, ArrowRight, Save, Plus, X } from 'lucide-vue-next';
 
 const jobService = new JobService();
+const authStore = useAuthenticationStore();
 //Auto computed company data
 const companyId = ref('');
 
 async function getCompanyId() {
-    const response = sessionStorage.getItem('companyId');
-    (response != null) ? companyId.value = response : companyId.value = '';
-    //temp
-    companyId.value = '1234';
+    companyId.value = authStore.currentUserId || '';
 }
 
 const form = reactive({
@@ -106,13 +105,8 @@ function addSkillBubble(skill: string) {
 function removeSkillBubble(skill: string) {
     skillBubbles.value.delete(skill);
 }
-function getSkillsFromSkillBubbles() {
-    let skills = "";
-    skillBubbles.value.forEach(skill => {
-        skills.concat(`${skill};`);
-    });
-    skills.slice(0, skills.lastIndexOf(';'));
-    return skills;
+function getSkillsFromSkillBubbles(): string[] {
+    return Array.from(skillBubbles.value);
 }
 //Steps for dinamic effect
 const currentStep = ref(1);

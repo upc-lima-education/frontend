@@ -5,10 +5,32 @@ import { SignInRequest } from "../model/sign-in/sign-in.request";
 import { SignInResponse } from "../model/sign-in/sign-in.response";
 import { UserResponse } from "../model/user.response";
 import { PasswordResetRequest, PasswordResetResponse } from "../model/password/password-reset.response";
-import { GoogleTokenResponse } from "../model/google-token.response";
 
 export class AuthenticationService {
     private endpoint = "/auth";
+
+    /**
+     * Mapea el objeto crudo de usuario del backend a UserResponse.
+     * Centraliza el orden de argumentos (antes estaba corrido y dejaba
+     * userType siempre en 'employee') y normaliza el rol: el backend usa
+     * 'candidate'/'organization' (a veces capitalizado) -> 'employee'/'organization'.
+     */
+    private mapUser(u: any): UserResponse {
+        const userType: 'employee' | 'organization' =
+            String(u?.userType).toLowerCase() === 'organization' ? 'organization' : 'employee';
+        return new UserResponse(
+            u.id,
+            u.email,
+            u.emailVerified || false,
+            u.firstName || u.name || u.givenName,
+            u.lastName || u.familyName,
+            u.companyName,
+            userType,
+            u.picture || undefined,
+            u.locale || 'es',
+            u.createdAt
+        );
+    }
 
     /**
      * Register a new user
@@ -24,16 +46,7 @@ export class AuthenticationService {
             response.data.accessToken,
             response.data.refreshToken,
             response.data.expiresIn,
-            new UserResponse(
-                response.data.user.id,
-                response.data.user.email,
-                response.data.user.emailVerified || false,
-                response.data.user.firstName || response.data.user.name,
-                response.data.user.firstName || response.data.user.givenName,
-                response.data.user.lastName || response.data.user.familyName,
-                response.data.user.picture || null,
-                response.data.user.locale || 'es'
-            )
+            this.mapUser(response.data.user)
         );
     }
 
@@ -51,16 +64,7 @@ export class AuthenticationService {
             response.data.accessToken,
             response.data.refreshToken,
             response.data.expiresIn,
-            new UserResponse(
-                response.data.user.id,
-                response.data.user.email,
-                response.data.user.emailVerified || false,
-                response.data.user.firstName || response.data.user.name,
-                response.data.user.firstName || response.data.user.givenName,
-                response.data.user.lastName || response.data.user.familyName,
-                response.data.user.picture || null,
-                response.data.user.locale || 'es'
-            )
+            this.mapUser(response.data.user)
         );
     }
 
@@ -101,35 +105,6 @@ export class AuthenticationService {
     }
 
     /**
-     * Exchange Google authorization code for tokens
-     * This is handled by the backend callback, so this method is not needed
-     * The frontend just redirects to Google and the backend handles the callback
-     */
-    async exchangeGoogleCode(code: string): Promise<SignInResponse> {
-        // This method is not used in the current flow
-        // Google OAuth is handled entirely by the backend callback
-        throw new Error('Google OAuth is handled by backend callback');
-    }
-
-    /**
-     * Verify Google ID token
-     * POST /api/v1/auth/google/verify
-     */
-    async verifyGoogleToken(idToken: string): Promise<UserResponse> {
-        const response = await http.post(`${this.endpoint}/google/verify`, { idToken });
-        return new UserResponse(
-            response.data.id,
-            response.data.email,
-            response.data.emailVerified,
-            response.data.name,
-            response.data.givenName,
-            response.data.familyName,
-            response.data.picture,
-            response.data.locale
-        );
-    }
-
-    /**
      * Get current authenticated user
      * GET /api/v1/auth/me
      * Requires: Authorization header with Bearer token
@@ -143,16 +118,37 @@ export class AuthenticationService {
             }
         });
         console.log('📦 AuthService: Current user response:', response.data);
-        
-        return new UserResponse(
-            response.data.user.id,
-            response.data.user.email,
-            response.data.user.emailVerified || false,
-            response.data.user.firstName || response.data.user.name,
-            response.data.user.firstName || response.data.user.givenName,
-            response.data.user.lastName || response.data.user.familyName,
-            response.data.user.picture || null,
-            response.data.user.locale || 'es'
-        );
+
+        return this.mapUser(response.data.user);
+    }
+
+    /**
+     * Sign out on the backend, invalidating the session
+     * POST /api/v1/auth/sign-out
+     */
+    async signOut(token: string): Promise<void> {
+        await http.post(`${this.endpoint}/sign-out`, {}, {
+            headers: {
+                Authorization: `Bearer ${token}`
+            }
+        });
+    }
+
+    /**
+     * Get a user by id
+     * GET /api/v1/auth/users/{id}
+     */
+    async getUserById(id: string): Promise<UserResponse> {
+        const response = await http.get(`${this.endpoint}/users/${id}`);
+        return this.mapUser(response.data);
+    }
+
+    /**
+     * Get a user's role
+     * GET /api/v1/auth/users/{id}/role
+     */
+    async getUserRole(id: string): Promise<string> {
+        const response = await http.get(`${this.endpoint}/users/${id}/role`);
+        return response.data?.role ?? response.data;
     }
 }
