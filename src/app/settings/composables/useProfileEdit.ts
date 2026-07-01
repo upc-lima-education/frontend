@@ -1,4 +1,4 @@
-import { computed, ref } from 'vue';
+import { computed, reactive, ref, type Ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useAuthenticationStore } from '@/app/auth/services/authentication.store';
 import { profileService } from '@/app/profile/services/profile.service';
@@ -11,6 +11,7 @@ import {
     INDUSTRY_OPTIONS,
     COMPANY_SIZE_OPTIONS,
 } from '@/app/profile/model/profile-edit.options';
+import type { WorkExperience, Education, Certification, LanguageEntry } from '@/app/profile/model/profile-history.model';
 
 export function useProfileEdit() {
     const authStore = useAuthenticationStore();
@@ -27,6 +28,104 @@ export function useProfileEdit() {
 
     const profilePictureFile = ref<File | null>(null);
     const profilePicturePreview = ref('');
+
+    // Experiencia laboral / educación / certificaciones / idiomas se guardan
+    // entrada por entrada contra su propio endpoint CRUD (no forman parte del
+    // payload de handleSaveProfile). Las 4 secciones comparten exactamente el
+    // mismo patrón add/edit/delete, así que lo factorizamos una sola vez.
+    function useHistorySection<T extends { id?: string }>(
+        emptyDraft: () => T,
+        api: {
+            create: (userId: string, payload: Omit<T, 'id'>) => Promise<T>;
+            update: (userId: string, id: string, payload: Omit<T, 'id'>) => Promise<T>;
+            remove: (userId: string, id: string) => Promise<void>;
+        },
+        errorMessage: string
+    ) {
+        const items = ref<T[]>([]) as Ref<T[]>;
+        const draft = reactive(emptyDraft()) as T;
+        const editingId = ref<string | null>(null);
+
+        function resetDraft() {
+            Object.assign(draft as object, emptyDraft());
+            editingId.value = null;
+        }
+
+        function startEdit(entry: T) {
+            Object.assign(draft as object, entry);
+            editingId.value = entry.id ?? null;
+        }
+
+        async function save() {
+            const { id, ...payload } = draft as any;
+            try {
+                if (editingId.value) {
+                    const updated = await api.update(authStore.currentUserId, editingId.value, payload);
+                    const idx = items.value.findIndex((i) => i.id === editingId.value);
+                    if (idx !== -1) items.value[idx] = updated;
+                } else {
+                    const created = await api.create(authStore.currentUserId, payload);
+                    items.value.push(created);
+                }
+                resetDraft();
+            } catch (err) {
+                console.error(errorMessage, err);
+                error.value = errorMessage;
+            }
+        }
+
+        async function remove(id: string) {
+            try {
+                await api.remove(authStore.currentUserId, id);
+                items.value = items.value.filter((i) => i.id !== id);
+            } catch (err) {
+                console.error(errorMessage, err);
+                error.value = errorMessage;
+            }
+        }
+
+        return { items, draft, editingId, resetDraft, startEdit, save, remove };
+    }
+
+    const workExperienceSection = useHistorySection<WorkExperience>(
+        () => ({ role: '', organization: '', startDate: '', endDate: null, description: '', location: '' }),
+        {
+            create: profileService.addWorkExperience.bind(profileService),
+            update: profileService.updateWorkExperience.bind(profileService),
+            remove: profileService.deleteWorkExperience.bind(profileService),
+        },
+        'No se pudo guardar la experiencia laboral.'
+    );
+
+    const educationSection = useHistorySection<Education>(
+        () => ({ institution: '', degree: '', startDate: null, endDate: null }),
+        {
+            create: profileService.addEducation.bind(profileService),
+            update: profileService.updateEducation.bind(profileService),
+            remove: profileService.deleteEducation.bind(profileService),
+        },
+        'No se pudo guardar la educación.'
+    );
+
+    const certificationSection = useHistorySection<Certification>(
+        () => ({ name: '', issuingOrganization: '', issueDate: null }),
+        {
+            create: profileService.addCertification.bind(profileService),
+            update: profileService.updateCertification.bind(profileService),
+            remove: profileService.deleteCertification.bind(profileService),
+        },
+        'No se pudo guardar la certificación.'
+    );
+
+    const languageSection = useHistorySection<LanguageEntry>(
+        () => ({ name: '', level: 'Básico' }),
+        {
+            create: profileService.addLanguage.bind(profileService),
+            update: profileService.updateLanguage.bind(profileService),
+            remove: profileService.deleteLanguage.bind(profileService),
+        },
+        'No se pudo guardar el idioma.'
+    );
 
     // Employee refs
     const firstName = ref('');
@@ -85,7 +184,12 @@ export function useProfileEdit() {
                 profession.value = d.profession || d.jobTitle || '';
                 bio.value = (d.description || d.bio || '').slice(0, BIO_MAX);
                 keywords.value = d.keywords || [];
-                
+
+                workExperienceSection.items.value = d.workExperiences || [];
+                educationSection.items.value = d.educations || [];
+                certificationSection.items.value = d.certifications || [];
+                languageSection.items.value = d.languages || [];
+
                 // If personType is juridica, load company/ruc details on employee profile
                 if (personType.value === 'juridica') {
                     ruc.value = d.ruc || '';
@@ -383,7 +487,40 @@ export function useProfileEdit() {
         rucVerified,
         rucError,
         rucCompanyName,
-        
+
+        // Experiencia laboral / educación / certificaciones / idiomas
+        workExperiences: workExperienceSection.items,
+        workExperienceDraft: workExperienceSection.draft,
+        editingWorkExperienceId: workExperienceSection.editingId,
+        saveWorkExperience: workExperienceSection.save,
+        editWorkExperience: workExperienceSection.startEdit,
+        cancelWorkExperienceEdit: workExperienceSection.resetDraft,
+        deleteWorkExperience: workExperienceSection.remove,
+
+        educations: educationSection.items,
+        educationDraft: educationSection.draft,
+        editingEducationId: educationSection.editingId,
+        saveEducation: educationSection.save,
+        editEducation: educationSection.startEdit,
+        cancelEducationEdit: educationSection.resetDraft,
+        deleteEducation: educationSection.remove,
+
+        certifications: certificationSection.items,
+        certificationDraft: certificationSection.draft,
+        editingCertificationId: certificationSection.editingId,
+        saveCertification: certificationSection.save,
+        editCertification: certificationSection.startEdit,
+        cancelCertificationEdit: certificationSection.resetDraft,
+        deleteCertification: certificationSection.remove,
+
+        languages: languageSection.items,
+        languageDraft: languageSection.draft,
+        editingLanguageId: languageSection.editingId,
+        saveLanguage: languageSection.save,
+        editLanguage: languageSection.startEdit,
+        cancelLanguageEdit: languageSection.resetDraft,
+        deleteLanguage: languageSection.remove,
+
         // Methods
         verifyDni,
         verifyRuc,

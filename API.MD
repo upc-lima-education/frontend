@@ -276,6 +276,26 @@ GET /api/v1/profile/{userId}
     "sector": null,
     "ruc": null,
     "isVerified": null,
+    "workExperiences": [
+      {
+        "id": "uuid",
+        "role": "Backend Developer",
+        "organization": "Acme Corp",
+        "startDate": "2022-03-01",
+        "endDate": null,
+        "description": "Desarrollo de APIs REST con .NET",
+        "location": "Lima"
+      }
+    ],
+    "educations": [
+      { "id": "uuid", "institution": "UPC", "degree": "Ingeniería de Software", "startDate": "2019-03-01", "endDate": "2024-12-01" }
+    ],
+    "certifications": [
+      { "id": "uuid", "name": "AWS Certified Developer", "issuingOrganization": "Amazon", "issueDate": "2023-05-01" }
+    ],
+    "languages": [
+      { "id": "uuid", "name": "Inglés", "level": "Avanzado" }
+    ],
     "isComplete": true,
     "createdAt": "2026-07-01T00:00:00Z",
     "updatedAt": "2026-07-01T00:00:00Z"
@@ -283,7 +303,8 @@ GET /api/v1/profile/{userId}
 }
 ```
 > `keywords` contiene las skills del perfil.  
-> `data.id` = Profile ID — úsalo como `companyId` en News.
+> `data.id` = Profile ID — úsalo como `companyId` en News.  
+> `workExperiences`, `educations`, `certifications` y `languages` se administran con los endpoints CRUD dedicados de abajo — no se editan desde `PUT .../candidate`.
 
 ---
 
@@ -347,6 +368,105 @@ GET /api/v1/profile/{userId}/bootstrap?userType=Candidate&givenName=Ana&familyNa
 ```
 Crea un perfil inicial con los datos de Google si aún no existe.  
 **Respuesta 200:** `{ "success": true, "data": ProfileResponse }`
+
+---
+
+### Experiencia laboral, educación, certificaciones e idiomas 🔒
+
+> Estos 4 recursos alimentan directamente al **generador de CV** (sección 6): en cuanto el
+> candidato guarda al menos una entrada, el próximo CV que genere la incluye automáticamente.
+> No hace falta ningún cambio en el flujo de generación de CV — solo llenar estos formularios.
+
+Los 4 siguen el mismo patrón CRUD: `POST` crea, `PUT .../{id}` edita, `DELETE .../{id}` borra.
+Todas las respuestas tienen la forma `{ "success": true, "data": {...} }`. El `id` que devuelve
+el `POST` es el que se usa después en `PUT`/`DELETE`.
+
+#### Experiencia laboral
+```
+POST   /api/v1/profile/{userId}/work-experience
+PUT    /api/v1/profile/{userId}/work-experience/{id}
+DELETE /api/v1/profile/{userId}/work-experience/{id}
+```
+**Body (POST y PUT):**
+```json
+{
+  "role": "Backend Developer",
+  "organization": "Acme Corp",
+  "startDate": "2022-03-01",
+  "endDate": null,
+  "description": "Desarrollo de APIs REST con .NET, integración con PostgreSQL y despliegue en Azure.",
+  "location": "Lima"
+}
+```
+| Campo | Requerido | Notas |
+|---|---|---|
+| `role`, `organization` | Sí | Máx. 150 caracteres |
+| `startDate` | Sí | Formato `yyyy-MM-dd` |
+| `endDate` | No | `null` = trabajo actual. Si se manda, debe ser `>= startDate` |
+| `description`, `location` | No | — |
+
+---
+
+#### Educación
+```
+POST   /api/v1/profile/{userId}/education
+PUT    /api/v1/profile/{userId}/education/{id}
+DELETE /api/v1/profile/{userId}/education/{id}
+```
+**Body (POST y PUT):**
+```json
+{
+  "institution": "UPC",
+  "degree": "Ingeniería de Software",
+  "startDate": "2019-03-01",
+  "endDate": "2024-12-01"
+}
+```
+| Campo | Requerido | Notas |
+|---|---|---|
+| `institution`, `degree` | Sí | Máx. 150 caracteres |
+| `startDate`, `endDate` | No | `endDate` null = en curso |
+
+---
+
+#### Certificaciones
+```
+POST   /api/v1/profile/{userId}/certification
+PUT    /api/v1/profile/{userId}/certification/{id}
+DELETE /api/v1/profile/{userId}/certification/{id}
+```
+**Body (POST y PUT):**
+```json
+{
+  "name": "AWS Certified Developer",
+  "issuingOrganization": "Amazon",
+  "issueDate": "2023-05-01"
+}
+```
+| Campo | Requerido | Notas |
+|---|---|---|
+| `name` | Sí | Máx. 200 caracteres |
+| `issuingOrganization`, `issueDate` | No | — |
+
+---
+
+#### Idiomas
+```
+POST   /api/v1/profile/{userId}/language
+PUT    /api/v1/profile/{userId}/language/{id}
+DELETE /api/v1/profile/{userId}/language/{id}
+```
+**Body (POST y PUT):**
+```json
+{
+  "name": "Inglés",
+  "level": "Avanzado"
+}
+```
+| Campo | Requerido | Notas |
+|---|---|---|
+| `name` | Sí | Máx. 50 caracteres |
+| `level` | Sí | Debe ser exactamente uno de: `"Básico"`, `"Intermedio"`, `"Avanzado"`, `"Nativo"` |
 
 ---
 

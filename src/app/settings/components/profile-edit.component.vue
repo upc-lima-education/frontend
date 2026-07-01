@@ -20,7 +20,12 @@ import {
   Plus,
   X,
   CreditCard,
-  Building
+  Building,
+  GraduationCap,
+  Award,
+  Languages,
+  Pencil,
+  Trash2
 } from 'lucide-vue-next';
 
 const {
@@ -71,7 +76,53 @@ const {
   handleSaveProfile,
   onBioInput,
   onCompanyDescInput,
+  workExperiences,
+  workExperienceDraft,
+  editingWorkExperienceId,
+  saveWorkExperience,
+  editWorkExperience,
+  cancelWorkExperienceEdit,
+  deleteWorkExperience,
+  educations,
+  educationDraft,
+  editingEducationId,
+  saveEducation,
+  editEducation,
+  cancelEducationEdit,
+  deleteEducation,
+  certifications,
+  certificationDraft,
+  editingCertificationId,
+  saveCertification,
+  editCertification,
+  cancelCertificationEdit,
+  deleteCertification,
+  languages,
+  languageDraft,
+  editingLanguageId,
+  saveLanguage,
+  editLanguage,
+  cancelLanguageEdit,
+  deleteLanguage,
 } = useProfileEdit();
+
+const LANGUAGE_LEVEL_OPTIONS = ['Básico', 'Intermedio', 'Avanzado', 'Nativo'];
+
+function isWorkExperienceValid() {
+  return workExperienceDraft.role.trim() && workExperienceDraft.organization.trim() && workExperienceDraft.startDate;
+}
+
+function isEducationValid() {
+  return educationDraft.institution.trim() && educationDraft.degree.trim();
+}
+
+function isCertificationValid() {
+  return certificationDraft.name.trim();
+}
+
+function isLanguageValid() {
+  return languageDraft.name.trim() && languageDraft.level;
+}
 
 const fileInputRef = ref<HTMLInputElement | null>(null);
 
@@ -593,6 +644,253 @@ const isRucInputValid = computed(() => ruc.value && ruc.value.length === 11 && /
               </button>
             </div>
           </div>
+
+          <!-- CV DATA: Experiencia laboral, educación, certificaciones e idiomas -->
+          <template v-if="isEmployee">
+            <!-- WORK EXPERIENCE -->
+            <div class="glass-card">
+              <h3 class="card-section-title">
+                <Briefcase :size="18" class="title-icon" />
+                <span>Experiencia Laboral</span>
+              </h3>
+
+              <div class="history-list" v-if="workExperiences.length">
+                <div class="history-item" v-for="exp in workExperiences" :key="exp.id">
+                  <div class="history-item-main">
+                    <strong>{{ exp.role }}</strong>
+                    <span class="history-item-sub">{{ exp.organization }}<template v-if="exp.location"> · {{ exp.location }}</template></span>
+                    <span class="history-item-dates">{{ exp.startDate }} — {{ exp.endDate || 'Actualidad' }}</span>
+                    <p v-if="exp.description" class="history-item-desc">{{ exp.description }}</p>
+                  </div>
+                  <div class="history-item-actions">
+                    <button type="button" class="icon-btn" @click="editWorkExperience(exp)"><Pencil :size="14" /></button>
+                    <button type="button" class="icon-btn danger" @click="deleteWorkExperience(exp.id!)"><Trash2 :size="14" /></button>
+                  </div>
+                </div>
+              </div>
+              <p v-else class="keywords-empty-hint">Aún no agregaste experiencia laboral.</p>
+
+              <div class="history-form">
+                <div class="grid-2">
+                  <div class="field">
+                    <label for="we-role">Cargo</label>
+                    <input id="we-role" v-model="workExperienceDraft.role" placeholder="Ej. Backend Developer" maxlength="150" />
+                  </div>
+                  <div class="field">
+                    <label for="we-org">Empresa</label>
+                    <input id="we-org" v-model="workExperienceDraft.organization" placeholder="Ej. Acme Corp" maxlength="150" />
+                  </div>
+                </div>
+                <div class="grid-2">
+                  <div class="field">
+                    <label for="we-start">Fecha de inicio</label>
+                    <input id="we-start" v-model="workExperienceDraft.startDate" type="date" />
+                  </div>
+                  <div class="field">
+                    <label for="we-end">Fecha de fin</label>
+                    <input
+                      id="we-end"
+                      v-model="workExperienceDraft.endDate"
+                      type="date"
+                      :disabled="workExperienceDraft.endDate === null"
+                    />
+                    <label class="checkbox-inline">
+                      <input
+                        type="checkbox"
+                        :checked="workExperienceDraft.endDate === null"
+                        @change="workExperienceDraft.endDate = ($event.target as HTMLInputElement).checked ? null : ''"
+                      />
+                      <span>Trabajo actual</span>
+                    </label>
+                  </div>
+                </div>
+                <div class="field">
+                  <label for="we-location">Ubicación</label>
+                  <input id="we-location" v-model="workExperienceDraft.location" placeholder="Ej. Lima" />
+                </div>
+                <div class="field">
+                  <label for="we-desc">Descripción</label>
+                  <textarea id="we-desc" v-model="workExperienceDraft.description" rows="3" />
+                </div>
+                <div class="history-form-actions">
+                  <button type="button" class="btn-history-save" :disabled="!isWorkExperienceValid()" @click="saveWorkExperience">
+                    <Plus :size="14" />
+                    <span>{{ editingWorkExperienceId ? 'Actualizar' : 'Agregar' }}</span>
+                  </button>
+                  <button v-if="editingWorkExperienceId" type="button" class="btn-history-cancel" @click="cancelWorkExperienceEdit">
+                    Cancelar
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- EDUCATION -->
+            <div class="glass-card">
+              <h3 class="card-section-title">
+                <GraduationCap :size="18" class="title-icon" />
+                <span>Educación</span>
+              </h3>
+
+              <div class="history-list" v-if="educations.length">
+                <div class="history-item" v-for="edu in educations" :key="edu.id">
+                  <div class="history-item-main">
+                    <strong>{{ edu.degree }}</strong>
+                    <span class="history-item-sub">{{ edu.institution }}</span>
+                    <span class="history-item-dates" v-if="edu.startDate || edu.endDate">
+                      {{ edu.startDate || '—' }} — {{ edu.endDate || 'En curso' }}
+                    </span>
+                  </div>
+                  <div class="history-item-actions">
+                    <button type="button" class="icon-btn" @click="editEducation(edu)"><Pencil :size="14" /></button>
+                    <button type="button" class="icon-btn danger" @click="deleteEducation(edu.id!)"><Trash2 :size="14" /></button>
+                  </div>
+                </div>
+              </div>
+              <p v-else class="keywords-empty-hint">Aún no agregaste estudios.</p>
+
+              <div class="history-form">
+                <div class="grid-2">
+                  <div class="field">
+                    <label for="ed-institution">Institución</label>
+                    <input id="ed-institution" v-model="educationDraft.institution" placeholder="Ej. UPC" maxlength="150" />
+                  </div>
+                  <div class="field">
+                    <label for="ed-degree">Grado / Carrera</label>
+                    <input id="ed-degree" v-model="educationDraft.degree" placeholder="Ej. Ingeniería de Software" maxlength="150" />
+                  </div>
+                </div>
+                <div class="grid-2">
+                  <div class="field">
+                    <label for="ed-start">Fecha de inicio</label>
+                    <input id="ed-start" v-model="educationDraft.startDate" type="date" />
+                  </div>
+                  <div class="field">
+                    <label for="ed-end">Fecha de fin</label>
+                    <input
+                      id="ed-end"
+                      v-model="educationDraft.endDate"
+                      type="date"
+                      :disabled="educationDraft.endDate === null"
+                    />
+                    <label class="checkbox-inline">
+                      <input
+                        type="checkbox"
+                        :checked="educationDraft.endDate === null"
+                        @change="educationDraft.endDate = ($event.target as HTMLInputElement).checked ? null : ''"
+                      />
+                      <span>En curso</span>
+                    </label>
+                  </div>
+                </div>
+                <div class="history-form-actions">
+                  <button type="button" class="btn-history-save" :disabled="!isEducationValid()" @click="saveEducation">
+                    <Plus :size="14" />
+                    <span>{{ editingEducationId ? 'Actualizar' : 'Agregar' }}</span>
+                  </button>
+                  <button v-if="editingEducationId" type="button" class="btn-history-cancel" @click="cancelEducationEdit">
+                    Cancelar
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- CERTIFICATIONS -->
+            <div class="glass-card">
+              <h3 class="card-section-title">
+                <Award :size="18" class="title-icon" />
+                <span>Certificaciones</span>
+              </h3>
+
+              <div class="history-list" v-if="certifications.length">
+                <div class="history-item" v-for="cert in certifications" :key="cert.id">
+                  <div class="history-item-main">
+                    <strong>{{ cert.name }}</strong>
+                    <span class="history-item-sub" v-if="cert.issuingOrganization">{{ cert.issuingOrganization }}</span>
+                    <span class="history-item-dates" v-if="cert.issueDate">{{ cert.issueDate }}</span>
+                  </div>
+                  <div class="history-item-actions">
+                    <button type="button" class="icon-btn" @click="editCertification(cert)"><Pencil :size="14" /></button>
+                    <button type="button" class="icon-btn danger" @click="deleteCertification(cert.id!)"><Trash2 :size="14" /></button>
+                  </div>
+                </div>
+              </div>
+              <p v-else class="keywords-empty-hint">Aún no agregaste certificaciones.</p>
+
+              <div class="history-form">
+                <div class="grid-2">
+                  <div class="field">
+                    <label for="cert-name">Nombre</label>
+                    <input id="cert-name" v-model="certificationDraft.name" placeholder="Ej. AWS Certified Developer" maxlength="200" />
+                  </div>
+                  <div class="field">
+                    <label for="cert-org">Emitido por</label>
+                    <input id="cert-org" v-model="certificationDraft.issuingOrganization" placeholder="Ej. Amazon" />
+                  </div>
+                </div>
+                <div class="field">
+                  <label for="cert-date">Fecha de emisión</label>
+                  <input id="cert-date" v-model="certificationDraft.issueDate" type="date" />
+                </div>
+                <div class="history-form-actions">
+                  <button type="button" class="btn-history-save" :disabled="!isCertificationValid()" @click="saveCertification">
+                    <Plus :size="14" />
+                    <span>{{ editingCertificationId ? 'Actualizar' : 'Agregar' }}</span>
+                  </button>
+                  <button v-if="editingCertificationId" type="button" class="btn-history-cancel" @click="cancelCertificationEdit">
+                    Cancelar
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- LANGUAGES -->
+            <div class="glass-card">
+              <h3 class="card-section-title">
+                <Languages :size="18" class="title-icon" />
+                <span>Idiomas</span>
+              </h3>
+
+              <div class="history-list" v-if="languages.length">
+                <div class="history-item" v-for="lang in languages" :key="lang.id">
+                  <div class="history-item-main">
+                    <strong>{{ lang.name }}</strong>
+                    <span class="history-item-sub">{{ lang.level }}</span>
+                  </div>
+                  <div class="history-item-actions">
+                    <button type="button" class="icon-btn" @click="editLanguage(lang)"><Pencil :size="14" /></button>
+                    <button type="button" class="icon-btn danger" @click="deleteLanguage(lang.id!)"><Trash2 :size="14" /></button>
+                  </div>
+                </div>
+              </div>
+              <p v-else class="keywords-empty-hint">Aún no agregaste idiomas.</p>
+
+              <div class="history-form">
+                <div class="grid-2">
+                  <div class="field">
+                    <label for="lang-name">Idioma</label>
+                    <input id="lang-name" v-model="languageDraft.name" placeholder="Ej. Inglés" maxlength="50" />
+                  </div>
+                  <div class="field">
+                    <label for="lang-level">Nivel</label>
+                    <div class="select-wrapper">
+                      <select id="lang-level" v-model="languageDraft.level">
+                        <option v-for="lvl in LANGUAGE_LEVEL_OPTIONS" :key="lvl" :value="lvl">{{ lvl }}</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+                <div class="history-form-actions">
+                  <button type="button" class="btn-history-save" :disabled="!isLanguageValid()" @click="saveLanguage">
+                    <Plus :size="14" />
+                    <span>{{ editingLanguageId ? 'Actualizar' : 'Agregar' }}</span>
+                  </button>
+                  <button v-if="editingLanguageId" type="button" class="btn-history-cancel" @click="cancelLanguageEdit">
+                    Cancelar
+                  </button>
+                </div>
+              </div>
+            </div>
+          </template>
         </div>
 
       </div>
@@ -1130,6 +1428,150 @@ const isRucInputValid = computed(() => ruc.value && ruc.value.length === 11 && /
   font-size: 11px;
   color: var(--color-text-muted);
   margin: 6px 0 0 0;
+}
+
+/* CV data sections: work experience / education / certifications / languages */
+.history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.history-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-input);
+  background: var(--color-bg);
+}
+
+.history-item-main {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.history-item-main strong {
+  font-size: 13px;
+  color: var(--color-text-primary);
+}
+
+.history-item-sub {
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+
+.history-item-dates {
+  font-size: 11px;
+  color: var(--color-text-muted);
+}
+
+.history-item-desc {
+  margin: 4px 0 0;
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  line-height: 1.4;
+}
+
+.history-item-actions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-button);
+  background: var(--color-surface);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.icon-btn:hover {
+  background: var(--color-bg);
+  color: var(--color-text-primary);
+}
+
+.icon-btn.danger:hover {
+  color: var(--color-state-error);
+  border-color: var(--color-state-error);
+}
+
+.history-form {
+  border-top: 1px solid var(--color-border);
+  padding-top: 14px;
+}
+
+.checkbox-inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+  font-size: 12px;
+  font-weight: var(--fw-medium);
+  color: var(--color-text-secondary);
+}
+
+.checkbox-inline input {
+  width: auto;
+}
+
+.history-form-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.btn-history-save {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--color-primary);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-button);
+  padding: 9px 16px;
+  font-size: 13px;
+  font-weight: var(--fw-semibold);
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.btn-history-save:hover:not(:disabled) {
+  background: var(--color-primary-dark);
+}
+
+.btn-history-save:disabled {
+  background: var(--color-border);
+  color: var(--color-text-muted);
+  cursor: not-allowed;
+}
+
+.btn-history-cancel {
+  background: transparent;
+  border: 1px solid var(--color-border);
+  color: var(--color-text-secondary);
+  border-radius: var(--radius-button);
+  padding: 9px 16px;
+  font-size: 13px;
+  font-weight: var(--fw-semibold);
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.btn-history-cancel:hover {
+  background: var(--color-bg);
 }
 
 /* Action button row */

@@ -3,6 +3,7 @@ import { SignUpUserEmployeeResponse } from "../model/employee-profile.response";
 import { SignUpUserOrganizationResponse } from "../model/organization-profile.response";
 import { SignUpUserEmployeeRequest } from "../model/employee-profile.request";
 import { SignUpUserOrganizationRequest } from "../model/organization-profile.request";
+import type { WorkExperience, Education, Certification, LanguageEntry } from "../model/profile-history.model";
 
 /**
  * Servicio para manejar operaciones relacionadas con perfiles de usuario
@@ -103,6 +104,65 @@ export class ProfileService {
         const response = await http.post(`${this.endpoint}/${userId}/verify`, payload);
         console.log('📦 ProfileService: Verify response:', response.data);
         return response;
+    }
+
+    // Experiencia laboral, educación, certificaciones e idiomas alimentan al
+    // generador de CV (GET /profile/{userId} ya los devuelve embebidos).
+
+    async addWorkExperience(userId: string, data: Omit<WorkExperience, 'id'>): Promise<WorkExperience> {
+        const response = await http.post(`${this.endpoint}/${userId}/work-experience`, data);
+        return response.data.data;
+    }
+
+    async updateWorkExperience(userId: string, id: string, data: Omit<WorkExperience, 'id'>): Promise<WorkExperience> {
+        const response = await http.put(`${this.endpoint}/${userId}/work-experience/${id}`, data);
+        return response.data.data;
+    }
+
+    async deleteWorkExperience(userId: string, id: string): Promise<void> {
+        await http.delete(`${this.endpoint}/${userId}/work-experience/${id}`);
+    }
+
+    async addEducation(userId: string, data: Omit<Education, 'id'>): Promise<Education> {
+        const response = await http.post(`${this.endpoint}/${userId}/education`, data);
+        return response.data.data;
+    }
+
+    async updateEducation(userId: string, id: string, data: Omit<Education, 'id'>): Promise<Education> {
+        const response = await http.put(`${this.endpoint}/${userId}/education/${id}`, data);
+        return response.data.data;
+    }
+
+    async deleteEducation(userId: string, id: string): Promise<void> {
+        await http.delete(`${this.endpoint}/${userId}/education/${id}`);
+    }
+
+    async addCertification(userId: string, data: Omit<Certification, 'id'>): Promise<Certification> {
+        const response = await http.post(`${this.endpoint}/${userId}/certification`, data);
+        return response.data.data;
+    }
+
+    async updateCertification(userId: string, id: string, data: Omit<Certification, 'id'>): Promise<Certification> {
+        const response = await http.put(`${this.endpoint}/${userId}/certification/${id}`, data);
+        return response.data.data;
+    }
+
+    async deleteCertification(userId: string, id: string): Promise<void> {
+        await http.delete(`${this.endpoint}/${userId}/certification/${id}`);
+    }
+
+    async addLanguage(userId: string, data: Omit<LanguageEntry, 'id'>): Promise<LanguageEntry> {
+        const response = await http.post(`${this.endpoint}/${userId}/language`, data);
+        return response.data.data;
+    }
+
+    async updateLanguage(userId: string, id: string, data: Omit<LanguageEntry, 'id'>): Promise<LanguageEntry> {
+        const response = await http.put(`${this.endpoint}/${userId}/language/${id}`, data);
+        return response.data.data;
+    }
+
+    async deleteLanguage(userId: string, id: string): Promise<void> {
+        await http.delete(`${this.endpoint}/${userId}/language/${id}`);
     }
 }
 
