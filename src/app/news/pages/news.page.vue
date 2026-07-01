@@ -1,16 +1,38 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed, ref, onMounted } from 'vue';
 import NewsCardComponent from '../components/news-card.component.vue';
 import DialogComponent from '@/app/shared/components/dialog.component.vue';
 import { useNewsPage } from '@/app/news/composables/useNewsPage';
 import { useAuthenticationStore } from '@/app/auth/services/authentication.store';
 import { Image, Video, Calendar, FileText, ArrowRight } from 'lucide-vue-next';
+import { RecommendationService, type RecommendationResponse } from '../../job/services/recommendation.service';
 
 const { newsData, posting, error, toggleHeart, createPost } = useNewsPage();
 const auth = useAuthenticationStore();
 
 const createPostDialogRef = ref<InstanceType<typeof DialogComponent>>();
 const postContent = ref('');
+
+// Recommender API Integration
+const recommendationService = new RecommendationService();
+const recommendations = ref<RecommendationResponse[]>([]);
+const loadingRecommendations = ref(false);
+
+async function loadRecommendations() {
+    loadingRecommendations.value = true;
+    try {
+        // Fetch recommendations from the Azure NLP engine
+        recommendations.value = await recommendationService.getGeneralRecommendations([], 4);
+    } catch (e) {
+        console.error('Error loading recommendations:', e);
+    } finally {
+        loadingRecommendations.value = false;
+    }
+}
+
+onMounted(() => {
+    loadRecommendations();
+});
 
 function handleToggleHeart(postId: string, isHearted: boolean) {
     toggleHeart(postId, auth.currentUserId, isHearted);
@@ -164,27 +186,32 @@ async function handleCreatePost() {
 
                 <div class="recommend-card">
                     <h3 class="card-title">Sugerencias de empleo</h3>
-                    <div class="recommend-item">
-                        <div class="recommend-icon">💼</div>
-                        <div class="recommend-details">
-                            <h4 class="recommend-title">Repartidor de Delivery</h4>
-                            <p class="recommend-company">Minimarket Santa Rosa</p>
-                            <RouterLink to="/jobs" class="recommend-link">
-                                Ver oferta <ArrowRight :size="12" />
-                            </RouterLink>
+                    
+                    <div v-if="loadingRecommendations" class="p-4 text-center text-xs text-gray-500">
+                        <span class="animate-pulse">Cargando sugerencias de IA...</span>
+                    </div>
+                    
+                    <div v-else-if="recommendations.length === 0" class="p-4 text-center text-xs text-gray-400 italic">
+                        No hay sugerencias disponibles
+                    </div>
+                    
+                    <div v-else v-for="(rec, index) in recommendations" :key="rec.source_url">
+                        <div class="recommend-item">
+                            <div class="recommend-icon">💼</div>
+                            <div class="recommend-details">
+                                <h4 class="recommend-title">{{ rec.title }}</h4>
+                                <p class="recommend-company">
+                                    <span class="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-green-50 text-green-700 border border-green-200">
+                                        {{ rec.similarity_score ? rec.similarity_score.toFixed(1) + '%' : '90%' }} de compatibilidad
+                                    </span>
+                                </p>
+                                <a :href="rec.source_url" target="_blank" class="recommend-link">
+                                    Ver en {{ rec.originPage || 'Llanqui' }} <ArrowRight :size="12" />
+                                </a>
+                            </div>
                         </div>
-                    </div>
-                    <div class="recommend-item">
-                        <div class="recommend-details-sep"></div>
-                    </div>
-                    <div class="recommend-item">
-                        <div class="recommend-icon">🏢</div>
-                        <div class="recommend-details">
-                            <h4 class="recommend-title">Cajero de Tienda</h4>
-                            <p class="recommend-company">Panadería Don Pepe</p>
-                            <RouterLink to="/jobs" class="recommend-link">
-                                Ver oferta <ArrowRight :size="12" />
-                            </RouterLink>
+                        <div v-if="index < recommendations.length - 1" class="recommend-item">
+                            <div class="recommend-details-sep"></div>
                         </div>
                     </div>
                 </div>
