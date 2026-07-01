@@ -232,54 +232,63 @@ export function useProfileEdit() {
                 picturePath = uploadResponse.data.url;
             }
 
-            let profileData: Record<string, any>;
-
-            // Los payloads siguen exactamente Create/UpdateCandidateProfileRequest
-            // y Create/UpdateCompanyProfileRequest del backend real (no aceptan
-            // additionalProperties). Campos de la UI sin equivalente en el
-            // backend (profession, personType 'juridica' + ruc/companyName en
-            // candidato, website, companySize) son gaps de backend documentados
-            // aquí: no se envían porque el backend los ignoraría de todas formas.
-            if (isEmployee.value) {
-                profileData = {
-                    userId: authStore.currentUserId,
-                    firstName: firstName.value,
-                    lastName: lastName.value,
-                    dni: dni.value,
-                    description: bio.value,
-                    skills: keywords.value,
-                    ubigeo: districtNameToUbigeo(district.value),
-                    profilePicture: picturePath,
-                };
-            } else {
-                profileData = {
-                    userId: authStore.currentUserId,
-                    companyName: companyName.value,
-                    sector: industry.value,
-                    ubigeo: districtNameToUbigeo(mainLocation.value),
-                    description: companyDescription.value,
-                    profilePicture: picturePath,
-                };
-                // ruc solo lo acepta CreateCompanyProfileRequest, no el update.
-                if (isNewProfile.value) {
-                    profileData.ruc = ruc.value;
-                }
-            }
-
+            // Create y Update son requests distintos en el backend real (no
+            // aceptan additionalProperties), así que cada uno arma su propio
+            // payload en vez de reutilizar un objeto común. Campos de la UI sin
+            // equivalente en el backend (profession, personType 'juridica' +
+            // ruc/companyName en candidato, website, companySize) son gaps de
+            // backend documentados aquí: no se envían porque el backend los
+            // ignoraría de todas formas.
             if (isNewProfile.value) {
                 console.log('🔄 Creating new profile on backend...');
                 if (isEmployee.value) {
-                    await profileService.createEmployeeProfile(profileData as any);
+                    // POST /profile/employee
+                    await profileService.createEmployeeProfile({
+                        userId: authStore.currentUserId,
+                        firstName: firstName.value,
+                        lastName: lastName.value,
+                        dni: dni.value,
+                        description: bio.value,
+                        ubigeo: districtNameToUbigeo(district.value),
+                        profilePicture: picturePath,
+                        skills: keywords.value,
+                    } as any);
                 } else {
-                    await profileService.createOrganizationProfile(profileData as any);
+                    // POST /profile/organization
+                    await profileService.createOrganizationProfile({
+                        userId: authStore.currentUserId,
+                        companyName: companyName.value,
+                        sector: industry.value,
+                        ruc: ruc.value,
+                        description: companyDescription.value,
+                        ubigeo: districtNameToUbigeo(mainLocation.value),
+                        profilePicture: picturePath,
+                        skills: [],
+                    } as any);
                 }
                 isNewProfile.value = false;
             } else {
                 console.log('🔄 Updating existing profile on backend...');
                 if (isEmployee.value) {
-                    await profileService.updateCandidateProfile(authStore.currentUserId, profileData);
+                    // PUT /profile/{userId}/candidate — no lleva userId ni
+                    // profilePicture (esa tiene su propio endpoint de upload).
+                    await profileService.updateCandidateProfile(authStore.currentUserId, {
+                        firstName: firstName.value,
+                        lastName: lastName.value,
+                        dni: dni.value,
+                        description: bio.value,
+                        ubigeo: districtNameToUbigeo(district.value),
+                        skills: keywords.value,
+                    });
                 } else {
-                    await profileService.updateCompanyProfile(authStore.currentUserId, profileData);
+                    // PUT /profile/{userId}/company — solo companyName, sector,
+                    // ruc, description; no acepta ubigeo/profilePicture/userId.
+                    await profileService.updateCompanyProfile(authStore.currentUserId, {
+                        companyName: companyName.value,
+                        sector: industry.value,
+                        ruc: ruc.value,
+                        description: companyDescription.value,
+                    });
                 }
             }
 
@@ -302,9 +311,11 @@ export function useProfileEdit() {
             setTimeout(() => {
                 success.value = false;
             }, 3000);
-        } catch (err) {
+        } catch (err: any) {
             console.error('Error saving profile:', err);
-            error.value = 'Error al guardar los cambios del perfil';
+            const backendMessage = err?.response?.data?.message;
+            error.value = (Array.isArray(backendMessage) ? backendMessage.join(', ') : backendMessage)
+                || 'Error al guardar los cambios del perfil';
         } finally {
             loading.value = false;
         }

@@ -34,7 +34,9 @@ export class JobService {
             data.jobStatus,
             data.views,
             new Date(data.creationDate),
-            data.externalURL ?? data.externalUrl
+            data.applyUrl,
+            data.originPage || 'Llanqui',
+            data.sourceUrl || ''
         );
     }
 

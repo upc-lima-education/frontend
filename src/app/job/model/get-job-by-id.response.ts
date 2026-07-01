@@ -27,6 +27,10 @@ export class GetJobByIdResponse {
     views: number;
     creationDate: Date;
     externalURL: string;
+    /** "Llanqui" para publicaciones nativas; otro valor indica que viene de una fuente externa agregada. */
+    originPage: string;
+    /** URL de la publicación original cuando el empleo viene de una fuente externa. */
+    sourceUrl: string;
 
     constructor(
         //Id
@@ -55,7 +59,9 @@ export class GetJobByIdResponse {
         jobStatus: string,
         views: number,
         creationDate: Date,
-        externalURL: string
+        externalURL: string,
+        originPage: string = 'Llanqui',
+        sourceUrl: string = ''
     ) {
         //Id
         this.id = id;
@@ -83,6 +89,8 @@ export class GetJobByIdResponse {
         this.jobStatus = jobStatus;
         this.views = views;
         this.creationDate = creationDate;
-        this.externalURL = externalURL
+        this.externalURL = externalURL;
+        this.originPage = originPage;
+        this.sourceUrl = sourceUrl;
     }
 }
