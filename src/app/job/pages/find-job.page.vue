@@ -4,10 +4,12 @@ import { useI18n } from 'vue-i18n';
 import PageHeaderComponent from '@/app/shared/components/page-header.component.vue';
 import { GetJobByIdResponse } from '../model/get-job-by-id.response';
 import { JobService } from '../services/job.service';
+import { RecommendationService } from '../services/recommendation.service';
 import { Search, Link2, MapPin, Building2 } from 'lucide-vue-next';
 
 const { t } = useI18n();
 const jobService = new JobService();
+const recommendationService = new RecommendationService();
 const jobs = ref<GetJobByIdResponse[]>([]);
 const loading = ref(false);
 const error = ref('');
@@ -22,6 +24,9 @@ const appliedSearchText = ref('');
 const appliedUbigeo = ref('');
 const appliedMinSalary = ref<number | null>(null);
 
+const isRecommendationActive = ref(false);
+const recommendedJobs = ref<GetJobByIdResponse[]>([]);
+
 async function loadJobs() {
   loading.value = true;
   error.value = '';
@@ -35,20 +40,53 @@ async function loadJobs() {
   }
 }
 
-function searchJobs() {
+async function searchJobs() {
   appliedSearchText.value = searchText.value.trim().toLowerCase();
   appliedUbigeo.value = ubigeo.value.trim();
   appliedMinSalary.value = minSalary.value || null;
+
+  if (appliedSearchText.value) {
+    loading.value = true;
+    isRecommendationActive.value = true;
+    try {
+      const recs = await recommendationService.getSpecificRecommendations({
+        title_search: appliedSearchText.value,
+        ubigeo: appliedUbigeo.value || undefined,
+        min_salary: appliedMinSalary.value || undefined,
+        limit: 100
+      });
+      
+      const matched: GetJobByIdResponse[] = [];
+      recs.forEach(rec => {
+        const job = jobs.value.find(j => 
+          (j.sourceUrl && j.sourceUrl === rec.source_url) || 
+          j.id === rec.source_url
+        );
+        if (job) {
+          (job as any).similarityScore = rec.similarity_score;
+          matched.push(job);
+        }
+      });
+      recommendedJobs.value = matched;
+    } catch (err) {
+      console.error('Error fetching recommendations:', err);
+      isRecommendationActive.value = false;
+    } finally {
+      loading.value = false;
+    }
+  } else {
+    isRecommendationActive.value = false;
+  }
 }
 
-// El backend no expone un endpoint de búsqueda/ranking (GET /job solo devuelve
-// el array completo), así que el filtrado ocurre en el cliente sobre esa lista.
+// Si se ingresa una búsqueda, el recomendador procesa la similitud y ordena los resultados;
+// de lo contrario, se caen los filtros del cliente sobre el array completo cargado.
 const filteredJobs = computed(() => {
+  if (isRecommendationActive.value) {
+    return recommendedJobs.value;
+  }
+  
   return jobs.value.filter((job) => {
-    if (appliedSearchText.value) {
-      const haystack = [job.title, ...(job.skills || [])].join(' ').toLowerCase();
-      if (!haystack.includes(appliedSearchText.value)) return false;
-    }
     if (appliedUbigeo.value && job.ubigeo !== appliedUbigeo.value) return false;
     if (appliedMinSalary.value) {
       const jobCeiling = job.maxSalary || job.minSalary || 0;
@@ -143,8 +181,11 @@ onMounted(loadJobs);
           class="job-row-card"
           :class="{ native: isNativeSource(job) }"
         >
-          <div class="job-row-logo">
+          <div class="job-row-logo" style="position: relative;">
             <Building2 :size="22" :stroke-width="1.5" />
+            <span v-if="(job as any).similarityScore" class="similarity-score-badge">
+              {{ (job as any).similarityScore.toFixed(0) }}%
+            </span>
           </div>
 
           <div class="job-row-main">
@@ -413,5 +454,20 @@ onMounted(loadJobs);
     flex-direction: row;
     flex-wrap: wrap;
   }
+}
+
+.similarity-score-badge {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  background-color: #3b9c20;
+  color: #ffffff;
+  font-size: 8px;
+  font-weight: bold;
+  padding: 2px 4px;
+  border-radius: 4px;
+  border: 1px solid #307d1b;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+  line-height: 1;
 }
 </style>
