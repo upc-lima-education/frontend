@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
+import { useI18n } from 'vue-i18n';
 import PageHeaderComponent from '@/app/shared/components/page-header.component.vue';
 import { GetJobByIdResponse } from '../model/get-job-by-id.response';
 import { JobService } from '../services/job.service';
-import { Search } from 'lucide-vue-next';
+import { Search, Link2, MapPin, Building2 } from 'lucide-vue-next';
 
+const { t } = useI18n();
 const jobService = new JobService();
 const jobs = ref<GetJobByIdResponse[]>([]);
 const loading = ref(false);
@@ -83,6 +85,20 @@ function sourceLabel(job: GetJobByIdResponse): string {
   return job.originPage || 'Externo';
 }
 
+// El Job del backend no incluye nombre/logo de la empresa (solo companyId);
+// se muestra un valor por defecto hasta que exista un endpoint enriquecido.
+function companyNameFor(_job: GetJobByIdResponse): string {
+  return 'Empresa';
+}
+
+// Si el backend devuelve un jobType que no calza con el enum (Remote/Hybrid/
+// InPerson), evita mostrar la clave cruda de i18n y cae al valor original.
+function jobTypeLabel(job: GetJobByIdResponse): string {
+  const key = `job.data.type.${job.jobType}`;
+  const label = t(key);
+  return label === key ? job.jobType : label;
+}
+
 onMounted(loadJobs);
 </script>
 
@@ -119,35 +135,42 @@ onMounted(loadJobs);
         {{ filteredJobs.length }} {{ filteredJobs.length === 1 ? 'empleo encontrado' : 'empleos encontrados' }}
       </div>
 
-      <div v-if="!loading && filteredJobs.length" class="results-table-wrapper">
-        <table class="results-table">
-          <thead>
-            <tr>
-              <th>Título</th>
-              <th>Skills</th>
-              <th>Ubicación</th>
-              <th>Rango salarial</th>
-              <th>Fuente</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="job in filteredJobs" :key="job.id">
-              <td>
-                <RouterLink :to="`/job/${job.id}`" class="job-title-link">{{ job.title }}</RouterLink>
-              </td>
-              <td>
-                <div class="skills-cell">
-                  <span v-for="skill in job.skills" :key="skill" class="skill-chip">{{ skill }}</span>
-                </div>
-              </td>
-              <td>{{ job.address || job.ubigeo || 'No especificada' }}</td>
-              <td>{{ salaryRangeLabel(job) }}</td>
-              <td>
-                <span class="source-badge" :class="{ native: isNativeSource(job) }">{{ sourceLabel(job) }}</span>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+      <div v-if="!loading && filteredJobs.length" class="job-card-list">
+        <RouterLink
+          v-for="job in filteredJobs"
+          :key="job.id"
+          :to="`/job/${job.id}`"
+          class="job-row-card"
+          :class="{ native: isNativeSource(job) }"
+        >
+          <div class="job-row-logo">
+            <Building2 :size="22" :stroke-width="1.5" />
+          </div>
+
+          <div class="job-row-main">
+            <h3 class="job-row-title">{{ job.title }}</h3>
+            <p class="job-row-company">{{ companyNameFor(job) }}</p>
+            <div class="job-row-source">
+              <Link2 :size="14" :stroke-width="1.5" />
+              <span>{{ sourceLabel(job) }}</span>
+            </div>
+            <div class="job-row-tags">
+              <span v-for="skill in job.skills" :key="skill" class="skill-chip">{{ skill }}</span>
+              <span class="salary-chip">{{ salaryRangeLabel(job) }}</span>
+            </div>
+          </div>
+
+          <div class="job-row-meta">
+            <div class="job-row-meta-item">
+              <MapPin :size="14" :stroke-width="1.5" />
+              <span>{{ job.address || job.ubigeo || 'No especificada' }}</span>
+            </div>
+            <div class="job-row-meta-item">
+              <Building2 :size="14" :stroke-width="1.5" />
+              <span>{{ jobTypeLabel(job) }}</span>
+            </div>
+          </div>
+        </RouterLink>
       </div>
 
       <div v-else-if="!loading" class="no-results">
@@ -252,61 +275,87 @@ onMounted(loadJobs);
   color: var(--color-text-secondary);
 }
 
-.results-table-wrapper {
+.job-card-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.job-row-card {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
   background: var(--color-surface);
   border: 1px solid var(--color-border);
+  border-left: 3px solid var(--color-border);
   border-radius: var(--radius-card);
+  padding: var(--space-2);
   box-shadow: var(--shadow-card);
-  overflow-x: auto;
-}
-
-.results-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: var(--fs-body-sm);
-}
-
-.results-table th {
-  text-align: left;
-  padding: 12px var(--space-2);
-  font-size: var(--fs-caption);
-  font-weight: var(--fw-semibold);
-  color: var(--color-text-secondary);
-  text-transform: uppercase;
-  letter-spacing: 0.02em;
-  border-bottom: 1px solid var(--color-border);
-  white-space: nowrap;
-}
-
-.results-table td {
-  padding: 12px var(--space-2);
-  border-bottom: 1px solid var(--color-border);
-  color: var(--color-text-primary);
-  vertical-align: top;
-}
-
-.results-table tr:last-child td {
-  border-bottom: none;
-}
-
-.job-title-link {
-  color: var(--color-accent);
-  font-weight: var(--fw-semibold);
   text-decoration: none;
+  color: inherit;
+  transition: var(--transition);
 }
 
-.job-title-link:hover {
-  text-decoration: underline;
+.job-row-card:hover {
+  box-shadow: 0 4px 14px rgba(30, 43, 170, 0.08);
 }
 
-.skills-cell {
+/* Borde azul = publicado nativamente en Llanqui; gris = fuente externa agregada. */
+.job-row-card.native {
+  border-left-color: var(--color-primary);
+}
+
+.job-row-logo {
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-input);
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-muted);
+}
+
+.job-row-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.job-row-title {
+  margin: 0;
+  font-size: var(--fs-body);
+  font-weight: var(--fw-semibold);
+  color: var(--color-text-primary);
+}
+
+.job-row-company {
+  margin: 0;
+  font-size: var(--fs-body-sm);
+  color: var(--color-text-secondary);
+}
+
+.job-row-source {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--fs-caption);
+  color: var(--color-text-muted);
+}
+
+.job-row-tags {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
-  max-width: 320px;
+  margin-top: 4px;
 }
 
-.skill-chip {
+.skill-chip,
+.salary-chip {
   background: var(--color-bg);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-button);
@@ -316,23 +365,27 @@ onMounted(loadJobs);
   white-space: nowrap;
 }
 
-.source-badge {
-  display: inline-flex;
-  align-items: center;
-  border-radius: var(--radius-button);
-  padding: 4px 10px;
-  font-size: var(--fs-caption);
+.salary-chip {
   font-weight: var(--fw-semibold);
-  background: var(--color-bg);
-  color: var(--color-text-secondary);
-  border: 1px solid var(--color-border);
-  white-space: nowrap;
+  color: var(--color-text-primary);
 }
 
-.source-badge.native {
-  background: var(--color-primary);
-  color: #fff;
-  border-color: var(--color-primary);
+.job-row-meta {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+  text-align: right;
+}
+
+.job-row-meta-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--fs-caption);
+  color: var(--color-text-secondary);
+  white-space: nowrap;
 }
 
 .no-results {
@@ -347,6 +400,18 @@ onMounted(loadJobs);
 @media (max-width: 768px) {
   .search-composer {
     grid-template-columns: 1fr;
+  }
+
+  .job-row-card {
+    flex-wrap: wrap;
+  }
+
+  .job-row-meta {
+    align-items: flex-start;
+    text-align: left;
+    width: 100%;
+    flex-direction: row;
+    flex-wrap: wrap;
   }
 }
 </style>
