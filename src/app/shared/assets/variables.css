@@ -75,8 +75,12 @@
     --page-max-narrow: 820px;   /* formularios y lectura (65-75ch) */
     --page-gutter:     clamp(16px, 4vw, 32px); /* padding lateral fluido */
 
-    /* Transicion unica permitida: solo estados */
-    --transition: all 0.15s ease;
+    /* Curvas de easing personalizadas */
+    --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+    --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
+
+    /* Transicion unica permitida: solo estados (nunca usar 'all') */
+    --transition: background-color 150ms ease, color 150ms ease, border-color 150ms ease, box-shadow 150ms ease;
 
     /* ============================================================
        CAPA DE COMPATIBILIDAD — los nombres legacy apuntan a la

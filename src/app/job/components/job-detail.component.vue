@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { GetJobByIdResponse } from '../model/get-job-by-id.response';
 import { ubigeoService } from '@/app/shared/services/ubigeo.service';
 import DialogComponent from '@/app/shared/components/dialog.component.vue';
 import { recruitmentService } from '@/app/recruitment/services/recruitment.service';
 import { useAuthenticationStore } from '@/app/auth/services/authentication.store';
-import { MapPin, Briefcase, Calendar, DollarSign, Award, Info, Trash2, CheckSquare, Star } from 'lucide-vue-next';
+import { MapPin, Briefcase, Calendar, Clock, DollarSign, Award, Trash2, CheckSquare, Star } from 'lucide-vue-next';
 
 const auth = useAuthenticationStore();
 
@@ -22,16 +22,35 @@ const district = ref('');
 
 onMounted(() => {
     const response = ubigeoService.getLocation(props.job.ubigeo);
-    if (response === null) {
-        department.value = 'Error';
-        district.value = 'Error';
-    } else {
+    if (response !== null) {
         department.value = response.department;
         district.value = response.district;
     }
 });
 
+const hasLocationLabel = computed(() => Boolean(department.value && district.value));
+
+// Los anuncios agregados de fuentes externas (Bumeran, etc.) traen el título
+// concatenado como "Puesto | Empresa | Distrito"; los nativos de Llanqui no.
+const isExternalListing = computed(() => props.job.originPage !== 'Llanqui');
+
+const titleSegments = computed(() => {
+    if (!isExternalListing.value || !props.job.title.includes('|')) return [];
+    return props.job.title.split('|').map(part => part.trim()).filter(Boolean);
+});
+
+const displayTitle = computed(() => titleSegments.value[0] || props.job.title);
+
+const displayCompanyName = computed(() => {
+    if (props.companyName && props.companyName !== 'Empresa') return props.companyName;
+    return titleSegments.value[1] || props.companyName;
+});
+
+const hasSalaryInfo = computed(() => props.job.minSalary > 0 || props.job.maxSalary > 0);
+
 function formatSalary(min: number, max: number, currency: string) {
+    if (!min && !max) return 'A convenir';
+
     const symbol = currency === 'PEN' ? 'S/' : '$';
 
     if (min === max) return `${symbol} ${min}`;
@@ -42,6 +61,30 @@ function formatSalary(min: number, max: number, currency: string) {
 function formatDate(date: Date) {
     return new Date(date).toLocaleDateString(undefined, { day: 'numeric', month: 'long', year: 'numeric' });
 }
+
+// El scraping externo separa casi cada cláusula con un salto de línea suelto,
+// lo que rompe la descripción en fragmentos de una palabra. Se reconstruyen
+// oraciones completas uniendo líneas hasta encontrar puntuación de cierre.
+function formatDescription(text: string): string {
+    if (!text) return '';
+
+    const lines = text.split('\n').map(line => line.trim()).filter(Boolean);
+    const sentences: string[] = [];
+    let buffer = '';
+
+    for (const line of lines) {
+        buffer = buffer ? `${buffer} ${line}` : line;
+        if (/[.:!?]$/.test(line)) {
+            sentences.push(buffer.replace(/\s+([.,!?:;])/g, '$1'));
+            buffer = '';
+        }
+    }
+    if (buffer) sentences.push(buffer.replace(/\s+([.,!?:;])/g, '$1'));
+
+    return sentences.join('\n\n');
+}
+
+const formattedDescription = computed(() => formatDescription(props.job.description));
 
 //Delete job behaviour
 const deleteDialogRef = ref<InstanceType<typeof DialogComponent>>();
@@ -83,45 +126,45 @@ async function ApplyToJob() {
 
         <!-- Job Header Details -->
         <header class="job-detail-header">
-            <div class="header-main-info">
+            <div class="header-avatar-row">
                 <img v-if="companyImage" :src="companyImage" alt="company logo" class="company-logo" draggable="false">
                 <div v-else class="company-logo-placeholder">
                     <Briefcase :size="32" />
                 </div>
-                
-                <div class="header-text-block">
-                    <span v-if="featured" class="sponsored-chip">
-                        <Star :size="12" :stroke-width="2" />
-                        <span>Patrocinado</span>
-                    </span>
-                    <h1 class="job-title">{{ job.title }}</h1>
-                    <div class="company-row">
-                        <span class="company-name">{{ companyName }}</span>
-                        <span class="dot-separator">•</span>
-                        <span class="location-text">{{ district }}, {{ department }}</span>
-                    </div>
-                    <div class="header-quick-meta">
-                        <span class="meta-badge">
-                            <Calendar :size="14" />
-                            <span>Publicado el {{ formatDate(job.creationDate) }}</span>
-                        </span>
-                        <span class="meta-badge alert-badge" v-if="job.closesAt">
-                            <Clock :size="14" />
-                            <span>Vence el {{ formatDate(job.closesAt) }}</span>
-                        </span>
-                    </div>
+
+                <div class="header-actions">
+                    <button v-if="!isCompany" class="btn-primary apply-btn" @click="applyJobDialogRef?.open()">
+                        <CheckSquare :size="16" />
+                        <span>Postular ahora</span>
+                    </button>
+                    <button v-if="isCompany" class="btn-danger delete-btn" @click="deleteDialogRef?.open()">
+                        <Trash2 :size="16" />
+                        <span>Eliminar anuncio</span>
+                    </button>
                 </div>
             </div>
 
-            <div class="header-actions">
-                <button v-if="!isCompany" class="btn-primary apply-btn" @click="applyJobDialogRef?.open()">
-                    <CheckSquare :size="16" />
-                    <span>Postular ahora</span>
-                </button>
-                <button v-if="isCompany" class="btn-danger delete-btn" @click="deleteDialogRef?.open()">
-                    <Trash2 :size="16" />
-                    <span>Eliminar anuncio</span>
-                </button>
+            <div class="header-text-block">
+                <span v-if="featured" class="sponsored-chip">
+                    <Star :size="12" :stroke-width="2" />
+                    <span>Patrocinado</span>
+                </span>
+                <h1 class="job-title">{{ displayTitle }}</h1>
+                <div class="company-row" v-if="displayCompanyName || hasLocationLabel">
+                    <span class="company-name" v-if="displayCompanyName">{{ displayCompanyName }}</span>
+                    <span class="dot-separator" v-if="displayCompanyName && hasLocationLabel">•</span>
+                    <span class="location-text" v-if="hasLocationLabel">{{ district }}, {{ department }}</span>
+                </div>
+                <div class="header-quick-meta">
+                    <span class="meta-badge">
+                        <Calendar :size="14" />
+                        <span>Publicado el {{ formatDate(job.creationDate) }}</span>
+                    </span>
+                    <span class="meta-badge alert-badge" v-if="job.closesAt">
+                        <Clock :size="14" />
+                        <span>Vence el {{ formatDate(job.closesAt) }}</span>
+                    </span>
+                </div>
             </div>
         </header>
 
@@ -131,7 +174,7 @@ async function ApplyToJob() {
             <main class="job-description-panel">
                 <section class="info-section">
                     <h2 class="section-title">Sobre el empleo</h2>
-                    <p class="description-text">{{ job.description }}</p>
+                    <p class="description-text">{{ formattedDescription }}</p>
                 </section>
 
                 <section v-if="job.skills && job.skills.length" class="info-section">
@@ -151,10 +194,10 @@ async function ApplyToJob() {
                         <div class="grid-card-info">
                             <h3 class="grid-card-title">Remuneración</h3>
                             <p class="grid-card-val">{{ formatSalary(job.minSalary, job.maxSalary, job.currency) }}</p>
-                            <p class="grid-card-sub">{{ $t(`job.data.salaryPeriod.${job.salaryPeriod}`) }}</p>
+                            <p class="grid-card-sub" v-if="hasSalaryInfo">{{ $t(`job.data.salaryPeriod.${job.salaryPeriod}`) }}</p>
                         </div>
                     </div>
-                    
+
                     <div class="grid-card">
                         <div class="grid-card-icon text-warning">
                             <Award :size="24" />
@@ -162,18 +205,18 @@ async function ApplyToJob() {
                         <div class="grid-card-info">
                             <h3 class="grid-card-title">Tipo de Contrato</h3>
                             <p class="grid-card-val">{{ $t(`job.data.compensationType.${job.compensationType}`) }}</p>
-                            <p class="grid-card-sub">Modalidad {{ job.jobType || 'Presencial' }}</p>
+                            <p class="grid-card-sub">Modalidad {{ $t(`job.data.type.${job.jobType || 'InPerson'}`) }}</p>
                         </div>
                     </div>
                 </section>
 
-                <section class="info-section">
+                <section class="info-section" v-if="job.address || hasLocationLabel">
                     <h2 class="section-title">Ubicación</h2>
                     <div class="location-details-box">
                         <MapPin :size="20" class="loc-icon" />
                         <div class="loc-text-block">
-                            <p class="loc-address">{{ job.address }}</p>
-                            <p class="loc-city">{{ district }}, {{ department }}, Perú</p>
+                            <p class="loc-address">{{ job.address || 'Dirección no especificada' }}</p>
+                            <p class="loc-city" v-if="hasLocationLabel">{{ district }}, {{ department }}, Perú</p>
                         </div>
                     </div>
                 </section>
@@ -230,36 +273,34 @@ async function ApplyToJob() {
 .job-detail-container {
     width: 100%;
     background: var(--color-surface);
-    border: 1px solid var(--color-border);
+    border: 1px solid rgba(45, 58, 199, 0.16);
     border-radius: var(--radius-card);
     overflow: hidden;
-    box-shadow: var(--shadow-card);
+    box-shadow: 0 8px 20px rgba(30, 43, 170, 0.14);
     display: flex;
     flex-direction: column;
 }
 
 .job-cover-banner {
-    height: 140px;
+    height: 160px;
     background: linear-gradient(135deg, var(--color-primary-dark), var(--color-accent));
 }
 
 /* Header section */
 .job-detail-header {
     display: flex;
-    justify-content: space-between;
-    align-items: flex-end;
+    flex-direction: column;
     padding: 0 var(--space-3) var(--space-3);
-    margin-top: -40px;
-    gap: var(--space-3);
-    flex-wrap: wrap;
+    gap: var(--space-2);
 }
 
-.header-main-info {
+.header-avatar-row {
     display: flex;
     align-items: flex-end;
-    gap: var(--space-2);
-    flex: 1;
-    min-width: 280px;
+    justify-content: space-between;
+    gap: var(--space-3);
+    margin-top: -40px;
+    flex-wrap: wrap;
 }
 
 .company-logo {
@@ -289,7 +330,6 @@ async function ApplyToJob() {
     display: flex;
     flex-direction: column;
     gap: 4px;
-    margin-bottom: 4px;
 }
 
 .sponsored-chip {
@@ -311,8 +351,9 @@ async function ApplyToJob() {
 
 .job-title {
     margin: 0;
-    font-size: 24px;
+    font-size: var(--fs-title);
     font-weight: var(--fw-bold);
+    line-height: 1.25;
     color: var(--color-text-primary);
 }
 
@@ -326,6 +367,11 @@ async function ApplyToJob() {
 
 .company-name {
     font-weight: var(--fw-semibold);
+    color: var(--color-text-primary);
+}
+
+.location-text {
+    color: var(--color-text-secondary);
 }
 
 .dot-separator {
@@ -336,7 +382,6 @@ async function ApplyToJob() {
     display: flex;
     gap: 12px;
     flex-wrap: wrap;
-    margin-top: 4px;
 }
 
 .meta-badge {
@@ -347,6 +392,10 @@ async function ApplyToJob() {
     color: var(--color-text-muted);
 }
 
+.meta-badge span {
+    color: inherit;
+}
+
 .alert-badge {
     color: var(--color-state-alert);
 }
@@ -354,7 +403,6 @@ async function ApplyToJob() {
 .header-actions {
     display: flex;
     gap: 12px;
-    margin-bottom: 4px;
 }
 
 .apply-btn, .delete-btn {
@@ -366,7 +414,18 @@ async function ApplyToJob() {
     font-weight: var(--fw-semibold);
     cursor: pointer;
     border: none;
-    transition: var(--transition);
+    transition: background-color 150ms ease, transform 100ms ease-out;
+}
+
+/* base.css * { color } fix para el span/svg dentro de los botones */
+.apply-btn span, .apply-btn svg,
+.delete-btn span, .delete-btn svg {
+    color: inherit;
+}
+
+.apply-btn:active:not(:disabled),
+.delete-btn:active:not(:disabled) {
+    transform: scale(0.97);
 }
 
 /* Two column layout */
@@ -399,11 +458,11 @@ async function ApplyToJob() {
 
 .section-title {
     margin: 0;
-    font-size: var(--fs-body);
-    font-weight: var(--fw-bold);
+    font-size: var(--fs-subtitle);
+    font-weight: var(--fw-semibold);
     color: var(--color-text-primary);
     border-left: 3px solid var(--color-accent);
-    padding-left: 8px;
+    padding-left: 10px;
 }
 
 .description-text {
@@ -411,6 +470,7 @@ async function ApplyToJob() {
     line-height: 1.6;
     color: var(--color-text-secondary);
     white-space: pre-line;
+    max-width: 75ch;
 }
 
 /* Skills tags */
@@ -608,6 +668,28 @@ async function ApplyToJob() {
 
 .btn-link-action:hover {
     background: var(--color-accent-hover);
+}
+
+@media (max-width: 640px) {
+    .job-cover-banner {
+        height: 96px;
+    }
+    .header-avatar-row {
+        margin-top: -32px;
+        align-items: flex-start;
+    }
+    .company-logo,
+    .company-logo-placeholder {
+        width: 72px;
+        height: 72px;
+    }
+    .header-actions {
+        margin-top: 40px;
+    }
+    .apply-btn, .delete-btn {
+        flex: 1;
+        justify-content: center;
+    }
 }
 
 @media (max-width: 768px) {

@@ -6,7 +6,12 @@ button {
     padding: 10px 20px;
     cursor: pointer;
     background-color: var(--gray-02);
-    transition: background-color 0.2s ease;
+    transition: background-color 150ms ease, color 150ms ease, border-color 150ms ease,
+                transform 100ms ease-out, box-shadow 150ms ease;
+}
+
+button:active:not(:disabled) {
+    transform: scale(0.97);
 }
 
 button:disabled {
@@ -14,8 +19,34 @@ button:disabled {
     cursor: not-allowed;
 }
 
-button:hover{
-    background-color: var(--gray-03);
+@media (hover: hover) and (pointer: fine) {
+    button:hover {
+        background-color: var(--gray-03);
+    }
+
+    .btn-primary:hover {
+        background-color: var(--main-color-04);
+    }
+
+    .btn-secondary:hover {
+        background-color: var(--secondary-color-dark);
+    }
+
+    .btn-success:hover {
+        background-color: var(--green-color-dark);
+    }
+
+    .btn-warning:hover {
+        background-color: var(--yellow-color-dark);
+    }
+
+    .btn-danger:hover {
+        background-color: var(--red-color-dark);
+    }
+
+    .btn-info:hover {
+        background-color: var(--gray-06);
+    }
 }
 
 .btn-primary {
@@ -23,17 +54,9 @@ button:hover{
     color: white;
 }
 
-.btn-primary:hover {
-    background-color: var(--main-color-04);
-}
-
 .btn-secondary {
     background-color: var(--secondary-color);
     color: white;
-}
-
-.btn-secondary:hover {
-    background-color: var(--secondary-color-dark);
 }
 
 .btn-success {
@@ -41,17 +64,9 @@ button:hover{
     color: white;
 }
 
-.btn-success:hover {
-    background-color: var(--green-color-dark);
-}
-
 .btn-warning{
     background-color: var(--yellow-color);
     color: white;
-}
-
-.btn-warning:hover{
-    background-color: var(--yellow-color-dark);
 }
 
 .btn-danger {
@@ -59,17 +74,9 @@ button:hover{
     color: white;
 }
 
-.btn-danger:hover {
-    background-color: var(--red-color-dark);
-}
-
 .btn-info {
     background-color: var(--gray-05);
     color: white;
-}
-
-.btn-info:hover {
-    background-color: var(--gray-06);
 }
 
 .btn-full{

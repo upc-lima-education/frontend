@@ -82,7 +82,9 @@ function notifyComingSoon(message: string) {
                     <ChevronLeft :size="20" />
                 </button>
 
-                <img class="carousel-image" :src="currentImage" alt="Post image" />
+                <Transition name="carousel-fade" mode="out-in">
+                    <img :key="currentImageIndex" class="carousel-image" :src="currentImage" alt="Post image" />
+                </Transition>
 
                 <button class="nav-arrow next" @click="nextImage" :disabled="currentImageIndex === images.length - 1" aria-label="Siguiente">
                     <ChevronRight :size="20" />
@@ -154,11 +156,13 @@ function notifyComingSoon(message: string) {
     box-shadow: var(--shadow-card);
     display: flex;
     flex-direction: column;
-    transition: var(--transition);
+    transition: box-shadow 200ms ease;
 }
 
-.post-card:hover {
-    box-shadow: 0 4px 14px rgba(30, 43, 170, 0.08);
+@media (hover: hover) and (pointer: fine) {
+    .post-card:hover {
+        box-shadow: 0 4px 14px rgba(30, 43, 170, 0.08);
+    }
 }
 
 /* Header */
@@ -200,24 +204,6 @@ function notifyComingSoon(message: string) {
     margin: 0;
     font-size: var(--fs-caption);
     color: var(--color-text-muted);
-}
-
-.options-btn {
-    background: transparent;
-    border: none;
-    color: var(--color-text-secondary);
-    cursor: pointer;
-    padding: 6px;
-    border-radius: 50%;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    transition: var(--transition);
-}
-
-.options-btn:hover {
-    background: var(--color-bg);
-    color: var(--color-text-primary);
 }
 
 /* Content */
@@ -325,12 +311,36 @@ function notifyComingSoon(message: string) {
     height: 6px;
     border-radius: 50%;
     background: rgba(0, 0, 0, 0.3);
-    transition: var(--transition);
+    transition: background-color 150ms ease, transform 150ms ease-out;
 }
 
 .dot.active {
     background: var(--color-accent);
-    transform: scale(1.2);
+    transform: scale(1.4);
+}
+
+.options-btn {
+    background: transparent;
+    border: none;
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    padding: 6px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 150ms ease, transform 100ms ease-out;
+}
+
+@media (hover: hover) and (pointer: fine) {
+    .options-btn:hover {
+        background: var(--color-bg);
+        color: var(--color-text-primary);
+    }
+}
+
+.options-btn:active {
+    transform: scale(0.9);
 }
 
 /* Social Activity Stats */
@@ -383,12 +393,18 @@ function notifyComingSoon(message: string) {
     font-weight: var(--fw-semibold);
     border-radius: var(--radius-button);
     cursor: pointer;
-    transition: var(--transition);
+    transition: background-color 150ms ease, color 150ms ease, transform 100ms ease-out;
 }
 
-.action-btn:hover {
-    background-color: var(--color-bg);
-    color: var(--color-text-primary);
+@media (hover: hover) and (pointer: fine) {
+    .action-btn:hover {
+        background-color: var(--color-bg);
+        color: var(--color-text-primary);
+    }
+}
+
+.action-btn:active {
+    transform: scale(0.93);
 }
 
 .action-btn.active {
@@ -398,5 +414,23 @@ function notifyComingSoon(message: string) {
 .filled-heart {
     fill: var(--color-accent);
     color: var(--color-accent);
+    animation: heart-pop 350ms cubic-bezier(0.68, -0.6, 0.32, 1.6) both;
+}
+
+@keyframes heart-pop {
+    0%   { scale: 1; }
+    40%  { scale: 1.35; }
+    100% { scale: 1; }
+}
+
+/* Carousel fade transition */
+.carousel-fade-enter-active,
+.carousel-fade-leave-active {
+    transition: opacity 180ms ease;
+}
+
+.carousel-fade-enter-from,
+.carousel-fade-leave-to {
+    opacity: 0;
 }
 </style>

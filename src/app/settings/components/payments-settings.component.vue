@@ -1,17 +1,16 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { 
-  Sparkle, 
-  Sparkles, 
-  Award, 
-  CheckCircle2, 
-  AlertCircle, 
-  CreditCard, 
-  Loader2, 
-  RefreshCw, 
-  DollarSign, 
-  Check 
+import {
+  Sparkle,
+  Sparkles,
+  Award,
+  CheckCircle2,
+  AlertCircle,
+  CreditCard,
+  Loader2,
+  RefreshCw,
+  Check
 } from 'lucide-vue-next';
 import { paymentService } from '@/app/shared/services/payment.service';
 
@@ -198,7 +197,7 @@ onMounted(() => {
 
     <!-- Plans Section Title -->
     <h3 class="plans-title-header">Planes de Créditos de IA</h3>
-    <p class="plans-subtitle-header">Elige el paquete que mejor se adapte a tus necesidades de postulación laboral. Los pagos se procesan de forma 100% segura mediante **PayPal**.</p>
+    <p class="plans-subtitle-header">Elige el paquete que mejor se adapte a tus necesidades de postulación laboral. Los pagos se procesan de forma 100% segura mediante PayPal.</p>
 
     <!-- Grid of Plans -->
     <div class="plans-grid">
@@ -282,8 +281,8 @@ onMounted(() => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  border-left: 4px solid var(--color-accent);
-  background: linear-gradient(90deg, rgba(45, 58, 199, 0.03), transparent);
+  border-color: rgba(45, 58, 199, 0.2);
+  background: rgba(45, 58, 199, 0.03);
 }
 
 @media (max-width: 576px) {
@@ -547,8 +546,7 @@ onMounted(() => {
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(15, 15, 26, 0.6);
-  backdrop-filter: blur(4px);
+  background: rgba(15, 15, 26, 0.7);
   z-index: 10000;
   display: flex;
   align-items: center;
@@ -598,7 +596,6 @@ onMounted(() => {
   font-size: 14px;
   font-weight: var(--fw-bold);
   box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
-  backdrop-filter: blur(8px);
   cursor: pointer;
 }
 

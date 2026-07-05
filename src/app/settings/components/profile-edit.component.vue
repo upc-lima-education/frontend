@@ -193,7 +193,7 @@ const isRucInputValid = computed(() => ruc.value && ruc.value.length === 11 && /
     </Transition>
 
     <div v-if="isNewProfile" class="new-profile-alert">
-      <Sparkles :size="18" class="text-primary pulsing-glow" />
+      <Sparkles :size="18" class="text-primary" />
       <div>
         <strong>¡Te damos la bienvenida a Llanqui!</strong>
         <p>Por favor, completa la información de tu perfil para comenzar a postular o publicar ofertas.</p>
@@ -257,7 +257,7 @@ const isRucInputValid = computed(() => ruc.value && ruc.value.length === 11 && /
               
               <!-- Action suggestions to complete profile -->
               <div class="completeness-tips" v-if="completenessPercent < 100">
-                <span class="tips-title">💡 Sugerencia para mejorar:</span>
+                <span class="tips-title">Sugerencia para mejorar:</span>
                 <ul class="tips-list">
                   <li v-if="!profilePicturePreview">Sube una foto de perfil profesional (+20%)</li>
                   <li v-if="isEmployee && personType === 'natural' && !dniVerified">Valida tu identidad con DNI RENIEC (+20%)</li>
@@ -909,8 +909,7 @@ const isRucInputValid = computed(() => ruc.value && ruc.value.length === 11 && /
   gap: 16px;
   align-items: center;
   background: rgba(30, 43, 170, 0.05);
-  border: 1px solid var(--color-border);
-  border-left: 4px solid var(--color-primary);
+  border: 1px solid rgba(30, 43, 170, 0.2);
   padding: 14px 20px;
   border-radius: var(--radius-card);
   margin-bottom: var(--space-2);
@@ -951,7 +950,6 @@ const isRucInputValid = computed(() => ruc.value && ruc.value.length === 11 && /
   font-size: 14px;
   font-weight: var(--fw-bold);
   box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
-  backdrop-filter: blur(8px);
 }
 
 .success-toast {

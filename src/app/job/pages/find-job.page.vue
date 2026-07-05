@@ -5,7 +5,8 @@ import PageHeaderComponent from '@/app/shared/components/page-header.component.v
 import { GetJobByIdResponse } from '../model/get-job-by-id.response';
 import { JobService } from '../services/job.service';
 import { RecommendationService } from '../services/recommendation.service';
-import { Search, Link2, MapPin, Building2 } from 'lucide-vue-next';
+import { ubigeoService } from '@/app/shared/services/ubigeo.service';
+import { Search, MapPin, Building2, Wifi, Users, MonitorCheck } from 'lucide-vue-next';
 
 const { t } = useI18n();
 const jobService = new JobService();
@@ -15,14 +16,14 @@ const loading = ref(false);
 const error = ref('');
 
 const searchText = ref('');
-const ubigeo = ref('');
+const locationInput = ref('');
 const minSalary = ref<number | null>(null);
+const jobTypeFilter = ref('');
 
-// Applied filters only update on submit, mirroring the explicit "Buscar" action
-// instead of filtering on every keystroke.
 const appliedSearchText = ref('');
 const appliedUbigeo = ref('');
 const appliedMinSalary = ref<number | null>(null);
+const appliedJobType = ref('');
 
 const isRecommendationActive = ref(false);
 const recommendedJobs = ref<GetJobByIdResponse[]>([]);
@@ -40,10 +41,36 @@ async function loadJobs() {
   }
 }
 
+function resolveUbigeoFromInput(input: string): string {
+  const trimmed = input.trim();
+  if (!trimmed) return '';
+  // If it looks like a numeric ubigeo code, use it directly
+  if (/^\d{6}$/.test(trimmed)) return trimmed;
+  // Otherwise search by district name in the ubigeo data
+  const normalized = trimmed.normalize('NFD').replace(/[̀-ͯ]/g, '').toUpperCase();
+  // Try to find a matching ubigeo by district name
+  const allData: any[] = (ubigeoService as any).map ? Object.values((ubigeoService as any).map) : [];
+  const match = allData.find((item: any) =>
+    item.sDistrito?.normalize('NFD').replace(/[̀-ͯ]/g, '').toUpperCase() === normalized ||
+    item.sDepartamento?.normalize('NFD').replace(/[̀-ͯ]/g, '').toUpperCase() === normalized
+  );
+  return match?.sIdUbigeo ?? trimmed;
+}
+
+function locationFor(job: GetJobByIdResponse): string {
+  if (job.address) return job.address;
+  if (job.ubigeo) {
+    const loc = ubigeoService.getLocation(job.ubigeo);
+    if (loc) return `${loc.district}, ${loc.department}`;
+  }
+  return 'Sin ubicación';
+}
+
 async function searchJobs() {
   appliedSearchText.value = searchText.value.trim().toLowerCase();
-  appliedUbigeo.value = ubigeo.value.trim();
+  appliedUbigeo.value = resolveUbigeoFromInput(locationInput.value);
   appliedMinSalary.value = minSalary.value || null;
+  appliedJobType.value = jobTypeFilter.value;
 
   if (appliedSearchText.value) {
     loading.value = true;
@@ -92,6 +119,7 @@ const filteredJobs = computed(() => {
       const jobCeiling = job.maxSalary || job.minSalary || 0;
       if (jobCeiling < appliedMinSalary.value) return false;
     }
+    if (appliedJobType.value && job.jobType !== appliedJobType.value) return false;
     return true;
   });
 });
@@ -148,21 +176,30 @@ onMounted(loadJobs);
     />
 
     <form class="search-composer" @submit.prevent="searchJobs">
-      <div class="search-field">
+      <div class="search-field search-field--wide">
         <label for="search-text">Título o habilidad</label>
-        <input id="search-text" v-model="searchText" placeholder="Ej. Desarrollador, React" />
+        <input id="search-text" v-model="searchText" placeholder="Ej. Desarrollador, React, Operario" />
       </div>
       <div class="search-field">
-        <label for="search-ubigeo">Ubigeo (opcional)</label>
-        <input id="search-ubigeo" v-model="ubigeo" placeholder="Ej. 150101" />
+        <label for="search-location">Ubicación</label>
+        <input id="search-location" v-model="locationInput" placeholder="Ej. Lima, Miraflores" />
       </div>
       <div class="search-field">
-        <label for="search-salary">Salario mínimo (opcional)</label>
+        <label for="search-jobtype">Modalidad</label>
+        <select id="search-jobtype" v-model="jobTypeFilter">
+          <option value="">Todas</option>
+          <option value="Remote">Remoto</option>
+          <option value="Hybrid">Híbrido</option>
+          <option value="InPerson">Presencial</option>
+        </select>
+      </div>
+      <div class="search-field">
+        <label for="search-salary">Salario mínimo</label>
         <input id="search-salary" v-model.number="minSalary" type="number" min="0" placeholder="Ej. 1500" />
       </div>
       <button type="submit" class="search-btn">
         <Search :size="18" :stroke-width="1.5" />
-        Buscar
+        <span>Buscar</span>
       </button>
     </form>
 
@@ -173,7 +210,12 @@ onMounted(loadJobs);
         {{ filteredJobs.length }} {{ filteredJobs.length === 1 ? 'empleo encontrado' : 'empleos encontrados' }}
       </div>
 
-      <div v-if="!loading && filteredJobs.length" class="job-card-list">
+      <div v-if="loading" class="state-loading">
+        <div class="loading-spinner"></div>
+        <p>Buscando empleos…</p>
+      </div>
+
+      <div v-else-if="filteredJobs.length" class="job-card-list">
         <RouterLink
           v-for="job in filteredJobs"
           :key="job.id"
@@ -204,17 +246,16 @@ onMounted(loadJobs);
           <div class="job-row-meta">
             <div class="job-row-meta-item">
               <MapPin :size="14" :stroke-width="1.5" />
-              <span>{{ job.address || job.ubigeo || 'No especificada' }}</span>
+              <span>{{ locationFor(job) }}</span>
             </div>
-            <div class="job-row-meta-item">
-              <Building2 :size="14" :stroke-width="1.5" />
-              <span>{{ jobTypeLabel(job) }}</span>
-            </div>
+            <span class="job-type-badge" :class="`type--${job.jobType?.toLowerCase()}`">
+              {{ jobTypeLabel(job) }}
+            </span>
           </div>
         </RouterLink>
       </div>
 
-      <div v-else-if="!loading" class="no-results">
+      <div v-else class="no-results">
         <p>No se encontraron vacantes con esos criterios.</p>
       </div>
     </main>
@@ -233,7 +274,7 @@ onMounted(loadJobs);
 /* Search composer */
 .search-composer {
   display: grid;
-  grid-template-columns: 2fr 1fr 1fr auto;
+  grid-template-columns: 2fr 1fr 1fr 1fr auto;
   gap: var(--space-2);
   align-items: end;
   background: var(--color-surface);
@@ -254,26 +295,30 @@ onMounted(loadJobs);
   font-size: var(--fs-caption);
   font-weight: var(--fw-semibold);
   color: var(--color-text-secondary);
-  text-transform: uppercase;
-  letter-spacing: 0.02em;
 }
 
-.search-field input {
+.search-field--wide {
+  grid-column: span 1;
+}
+
+.search-field input,
+.search-field select {
   padding: 10px 12px;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-input);
   font-size: var(--fs-body-sm);
   background: var(--color-bg);
   color: var(--color-text-primary);
-  transition: var(--transition);
+  transition: border-color 150ms ease, box-shadow 150ms ease, background-color 150ms ease;
   width: 100%;
   box-sizing: border-box;
 }
 
-.search-field input:focus {
+.search-field input:focus,
+.search-field select:focus {
   outline: none;
   border-color: var(--color-accent);
-  background: #fff;
+  background: var(--color-surface);
   box-shadow: 0 0 0 3px rgba(45, 58, 199, 0.12);
 }
 
@@ -291,12 +336,24 @@ onMounted(loadJobs);
   font-size: var(--fs-body-sm);
   font-weight: var(--fw-semibold);
   cursor: pointer;
-  transition: var(--transition);
+  transition: background-color 150ms ease, transform 100ms ease-out;
   white-space: nowrap;
 }
 
-.search-btn:hover {
-  background: var(--color-accent-hover);
+/* base.css * { color } override for child svg/span */
+.search-btn span,
+.search-btn svg {
+  color: inherit;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .search-btn:hover {
+    background: var(--color-accent-hover);
+  }
+}
+
+.search-btn:active {
+  transform: scale(0.97);
 }
 
 /* Results */
@@ -309,6 +366,29 @@ onMounted(loadJobs);
 .job-list-error {
   color: var(--color-state-error, #d22626);
   font-size: 14px;
+}
+
+.state-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-6);
+  color: var(--color-text-secondary);
+  font-size: var(--fs-body-sm);
+}
+
+.loading-spinner {
+  width: 28px;
+  height: 28px;
+  border: 2px solid var(--color-border);
+  border-top-color: var(--color-accent);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }
 
 .results-meta {
@@ -328,22 +408,24 @@ onMounted(loadJobs);
   gap: var(--space-2);
   background: var(--color-surface);
   border: 1px solid var(--color-border);
-  border-left: 3px solid var(--color-border);
   border-radius: var(--radius-card);
   padding: var(--space-2);
   box-shadow: var(--shadow-card);
   text-decoration: none;
   color: inherit;
-  transition: var(--transition);
+  transition: box-shadow 200ms ease, border-color 150ms ease;
 }
 
-.job-row-card:hover {
-  box-shadow: 0 4px 14px rgba(30, 43, 170, 0.08);
+@media (hover: hover) and (pointer: fine) {
+  .job-row-card:hover {
+    box-shadow: 0 4px 14px rgba(30, 43, 170, 0.1);
+    border-color: var(--color-lavender);
+  }
 }
 
-/* Borde azul = publicado nativamente en Llanqui; gris = fuente externa agregada. */
+/* Jobs nativos de Llanqui: fondo ligeramente tintado en lugar de border-left */
 .job-row-card.native {
-  border-left-color: var(--color-primary);
+  background: var(--color-ai-bg);
 }
 
 .job-row-logo {
@@ -429,6 +511,37 @@ onMounted(loadJobs);
   white-space: nowrap;
 }
 
+.job-type-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: var(--radius-button);
+  font-size: var(--fs-caption);
+  font-weight: var(--fw-semibold);
+  white-space: nowrap;
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  color: var(--color-text-secondary);
+}
+
+.job-type-badge.type--remote {
+  background: rgba(45, 58, 199, 0.08);
+  border-color: var(--color-lavender);
+  color: var(--color-primary);
+}
+
+.job-type-badge.type--hybrid {
+  background: rgba(220, 174, 8, 0.08);
+  border-color: rgba(220, 174, 8, 0.3);
+  color: var(--color-state-warning-dark);
+}
+
+.job-type-badge.type--inperson {
+  background: rgba(59, 156, 32, 0.08);
+  border-color: rgba(59, 156, 32, 0.3);
+  color: var(--color-state-success-dark);
+}
+
 .no-results {
   background: var(--color-surface);
   border: 1px solid var(--color-border);
@@ -436,6 +549,15 @@ onMounted(loadJobs);
   padding: var(--space-4);
   text-align: center;
   color: var(--color-text-secondary);
+}
+
+@media (max-width: 900px) {
+  .search-composer {
+    grid-template-columns: 1fr 1fr;
+  }
+  .search-btn {
+    grid-column: 1 / -1;
+  }
 }
 
 @media (max-width: 768px) {

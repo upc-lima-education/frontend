@@ -1,14 +1,13 @@
 <script setup lang="ts">
 import { ref, watch, onMounted, onBeforeUnmount } from 'vue';
 import { useRouter } from 'vue-router';
-import { 
-  Download, 
-  RotateCcw, 
-  AlertCircle, 
-  Sparkles, 
-  FileText, 
-  CheckCircle2, 
-  ChevronRight, 
+import {
+  Download,
+  RotateCcw,
+  AlertCircle,
+  Sparkles,
+  FileText,
+  CheckCircle2,
   Sparkle,
   Copy,
   Check,
@@ -44,10 +43,10 @@ const isCopied = ref(false);
 const activePreset = ref(-1);
 
 const promptPresets = [
-  { label: '💻 Frontend', text: 'Optimizar para desarrollador frontend con Vue.js y CSS moderno.' },
-  { label: '📊 Liderazgo', text: 'Enfocar en habilidades de liderazgo, gestión de proyectos y Scrum.' },
-  { label: '🌱 Egresado Junior', text: 'Optimizar para perfil de egresado junior buscando primera práctica.' },
-  { label: '⚙️ Backend & DB', text: 'Resaltar experiencia en arquitectura de microservicios y bases de datos SQL.' }
+  { label: 'Frontend', text: 'Optimizar para desarrollador frontend con Vue.js y CSS moderno.' },
+  { label: 'Liderazgo', text: 'Enfocar en habilidades de liderazgo, gestión de proyectos y Scrum.' },
+  { label: 'Egresado Junior', text: 'Optimizar para perfil de egresado junior buscando primera práctica.' },
+  { label: 'Backend & DB', text: 'Resaltar experiencia en arquitectura de microservicios y bases de datos SQL.' }
 ];
 
 function selectPreset(index: number, text: string) {
@@ -113,7 +112,7 @@ async function copyPreviewLink() {
     <header class="cv-head">
       <div class="ai-header-row">
         <span class="ai-label">
-          <Sparkles class="sparkle-icon pulsing-glow" :size="14" />
+          <Sparkles class="sparkle-icon" :size="14" />
           <span>{{ $t('cv.aiLabel') }}</span>
         </span>
         <span class="credits-badge">
@@ -164,65 +163,33 @@ async function copyPreviewLink() {
       </div>
 
       <button type="button" class="btn-primary generate-btn" @click="generate(prompt)">
-        <Sparkles :size="16" class="btn-sparkle" />
+        <Sparkles :size="16" />
         <span>{{ $t('cv.generate') }}</span>
       </button>
     </div>
 
     <!-- State: GENERATING -->
     <div v-else-if="state === 'generating'" class="cv-body cv-status animate-fade-in">
-      <div class="generating-layout-grid">
-        <!-- Interactive Stepper -->
-        <div class="stepper-timeline">
-          <div 
-            v-for="(step, idx) in loadingSteps" 
-            :key="step.title" 
-            class="step-item"
-            :class="{ 
-              'active': idx === currentStep, 
-              'completed': idx < currentStep,
-              'pending': idx > currentStep 
-            }"
-          >
-            <div class="step-indicator">
-              <span v-if="idx < currentStep" class="step-check">✓</span>
-              <span v-else-if="idx === currentStep" class="step-spinner"></span>
-              <span v-else>{{ idx + 1 }}</span>
-            </div>
-            <div class="step-details">
-              <span class="step-title-text">{{ step.title }}</span>
-              <span class="step-desc-text">{{ step.description }}</span>
-            </div>
+      <div class="stepper-timeline">
+        <div
+          v-for="(step, idx) in loadingSteps"
+          :key="step.title"
+          class="step-item"
+          :class="{
+            'active': idx === currentStep,
+            'completed': idx < currentStep,
+            'pending': idx > currentStep
+          }"
+        >
+          <div class="step-indicator">
+            <Check v-if="idx < currentStep" :size="13" />
+            <span v-else-if="idx === currentStep" class="step-spinner"></span>
+            <span v-else>{{ idx + 1 }}</span>
           </div>
-        </div>
-
-        <!-- AI Resume Scanner Visualization -->
-        <div class="resume-scanner-visual">
-          <div class="mock-resume-sheet">
-            <div class="mock-hdr">
-              <div class="mock-circle pulse-bg"></div>
-              <div class="mock-lines">
-                <div class="mock-line line-lg pulse-bg"></div>
-                <div class="mock-line line-sm pulse-bg"></div>
-              </div>
-            </div>
-            <div class="mock-sect">
-              <div class="mock-line line-md pulse-bg"></div>
-              <div class="mock-line line-full pulse-bg" :class="{ writing: currentStep >= 1 }"></div>
-              <div class="mock-line line-full pulse-bg" :class="{ writing: currentStep >= 2 }"></div>
-            </div>
-            <div class="mock-sect">
-              <div class="mock-line line-md pulse-bg"></div>
-              <div class="mock-grid">
-                <div class="mock-chip pulse-bg" :class="{ active: currentStep >= 2 }"></div>
-                <div class="mock-chip pulse-bg" :class="{ active: currentStep >= 2 }"></div>
-                <div class="mock-chip pulse-bg" :class="{ active: currentStep >= 3 }"></div>
-              </div>
-            </div>
-            <!-- Laser scanning effect -->
-            <div class="laser-scanner" :style="{ top: (20 + currentStep * 20) + '%' }"></div>
+          <div class="step-details">
+            <span class="step-title-text">{{ step.title }}</span>
+            <span class="step-desc-text">{{ step.description }}</span>
           </div>
-          <span class="scanning-label">Redactando y Optimizado por IA...</span>
         </div>
       </div>
 
@@ -320,17 +287,12 @@ async function copyPreviewLink() {
   gap: var(--space-2);
   padding: var(--space-3);
   background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-top: 4px solid var(--color-primary);
+  border: 1px solid rgba(45, 58, 199, 0.16);
   border-radius: var(--radius-card);
-  box-shadow: var(--shadow-card);
+  box-shadow: 0 8px 20px rgba(30, 43, 170, 0.1);
   transition: var(--transition);
   position: relative;
   overflow: hidden;
-}
-
-.cv-card:hover {
-  box-shadow: 0 8px 24px rgba(30, 43, 170, 0.06);
 }
 
 .cv-head {
@@ -354,15 +316,6 @@ async function copyPreviewLink() {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-}
-
-.pulsing-glow {
-  animation: glowPulse 2s infinite alternate;
-}
-
-@keyframes glowPulse {
-  0% { transform: scale(1); filter: drop-shadow(0 0 2px rgba(30, 43, 170, 0.4)); }
-  100% { transform: scale(1.15); filter: drop-shadow(0 0 8px rgba(45, 58, 199, 0.8)); }
 }
 
 .credits-badge {
@@ -553,36 +506,12 @@ async function copyPreviewLink() {
   transform: translateY(-1px);
 }
 
-.btn-sparkle {
-  animation: rotateSparkle 3s infinite linear;
-}
-
-@keyframes rotateSparkle {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
-
-/* Generating State Layout */
-.generating-layout-grid {
-  display: grid;
-  grid-template-columns: 1.3fr 1fr;
-  gap: 20px;
-  align-items: center;
-  margin: var(--space-1) 0;
-}
-
-@media (max-width: 576px) {
-  .generating-layout-grid {
-    grid-template-columns: 1fr;
-    gap: 16px;
-  }
-}
-
 /* Timeline Stepper */
 .stepper-timeline {
   display: flex;
   flex-direction: column;
   gap: 14px;
+  margin: var(--space-1) 0;
 }
 
 .step-item {
@@ -630,11 +559,6 @@ async function copyPreviewLink() {
   color: #fff;
 }
 
-.step-check {
-  font-size: 13px;
-  font-weight: bold;
-}
-
 .step-spinner {
   width: 10px;
   height: 10px;
@@ -665,135 +589,6 @@ async function copyPreviewLink() {
   color: var(--color-text-secondary);
 }
 
-/* AI Resume Scanner Visual */
-.resume-scanner-visual {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-}
-
-.mock-resume-sheet {
-  width: 100%;
-  max-width: 150px;
-  aspect-ratio: 1 / 1.4;
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: 6px;
-  padding: 10px;
-  box-shadow: 0 4px 16px rgba(0,0,0,0.05);
-  position: relative;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.mock-hdr {
-  display: flex;
-  gap: 6px;
-  align-items: center;
-}
-
-.mock-circle {
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-}
-
-.mock-lines {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-  flex: 1;
-}
-
-.mock-line {
-  height: 4px;
-  border-radius: 2px;
-}
-
-.line-lg { width: 80%; }
-.line-md { width: 50%; height: 5px; margin-bottom: 2px; }
-.line-sm { width: 40%; }
-.line-full { width: 100%; }
-
-.mock-sect {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.mock-grid {
-  display: flex;
-  gap: 4px;
-}
-
-.mock-chip {
-  height: 8px;
-  width: 25%;
-  border-radius: 4px;
-  opacity: 0.2;
-  transition: all 0.4s ease;
-}
-
-.mock-chip.active {
-  opacity: 0.8;
-  background: var(--color-lavender) !important;
-}
-
-.mock-line.writing {
-  background: var(--color-lavender) !important;
-  animation: textWrite 1.5s ease-in-out;
-}
-
-@keyframes textWrite {
-  from { width: 0; }
-}
-
-.pulse-bg {
-  background: var(--color-bg);
-  animation: pulseBgAnimation 1.5s infinite ease-in-out;
-}
-
-@keyframes pulseBgAnimation {
-  0% { opacity: 0.6; }
-  50% { opacity: 1; }
-  100% { opacity: 0.6; }
-}
-
-/* Laser scan animation */
-.laser-scanner {
-  position: absolute;
-  left: 0;
-  width: 100%;
-  height: 2px;
-  background: linear-gradient(90deg, transparent, var(--color-primary), transparent);
-  box-shadow: 0 0 8px var(--color-primary);
-  opacity: 0.8;
-  transition: top 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-  animation: laserSweep 2s infinite alternate ease-in-out;
-}
-
-@keyframes laserSweep {
-  from { opacity: 0.6; }
-  to { opacity: 1; filter: brightness(1.2); }
-}
-
-.scanning-label {
-  font-size: 10px;
-  font-weight: var(--fw-semibold);
-  color: var(--color-primary);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  animation: pulseLabel 1.5s infinite;
-}
-
-@keyframes pulseLabel {
-  0%, 100% { opacity: 0.7; }
-  50% { opacity: 1; }
-}
-
 .status-overall {
   display: flex;
   flex-direction: column;
@@ -821,7 +616,7 @@ async function copyPreviewLink() {
 
 .progress-bar-fill {
   height: 100%;
-  background: linear-gradient(90deg, var(--color-primary), var(--color-accent));
+  background: var(--color-accent);
   border-radius: 99px;
   transition: width 0.4s ease;
 }
@@ -927,7 +722,6 @@ async function copyPreviewLink() {
   font-weight: var(--fw-semibold);
   text-decoration: none;
   box-shadow: 0 4px 10px rgba(0,0,0,0.25);
-  backdrop-filter: blur(4px);
   transition: var(--transition);
 }
 

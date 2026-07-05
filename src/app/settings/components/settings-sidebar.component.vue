@@ -1,142 +1,127 @@
 <script setup lang="ts">
 import { computed } from 'vue';
-import { useRoute } from 'vue-router';
+import { User, Building2, Pencil, Bell, CreditCard, TrendingUp, ShieldCheck } from 'lucide-vue-next';
+import { useSettingsPage } from '@/app/settings/composables/useSettingsPage';
 
-const route = useRoute();
+const { activeTab, profileTabLabel, paymentsTabLabel, isOrganization, setTab } = useSettingsPage();
 
-const menuItems = [
-    { id: 'profile', label: 'Mi Perfil', icon: '👤' },
-    { id: 'settings', label: 'Configuraciones', icon: '⚙️' },
-    { id: 'security', label: 'Seguridad', icon: '🔒' }
-];
-
-const isActive = computed(() => (item: any) => {
-    return route.query.section === item.id || (item.id === 'profile' && !route.query.section);
-});
+const navItems = computed(() => [
+    { id: 'profile', label: profileTabLabel.value, icon: isOrganization.value ? Building2 : User },
+    { id: 'edit', label: 'Editar Perfil', icon: Pencil },
+    { id: 'settings', label: 'Notificaciones', icon: Bell },
+    { id: 'payments', label: paymentsTabLabel.value, icon: isOrganization.value ? TrendingUp : CreditCard },
+    { id: 'privacy', label: 'Privacidad', icon: ShieldCheck },
+]);
 </script>
 
 <template>
-    <aside class="settings-sidebar">
-        <nav class="menu">
-            <h3 class="menu-title">Configuración</h3>
-            <ul class="menu-items">
-                <li v-for="item in menuItems" :key="item.id">
-                    <RouterLink
-                        :to="{ query: { section: item.id } }"
-                        :class="{ 'menu-item': true, 'active': isActive(item) }"
-                    >
-                        <span class="icon">{{ item.icon }}</span>
-                        <span class="label">{{ item.label }}</span>
-                    </RouterLink>
-                </li>
-            </ul>
+    <aside class="settings-nav" aria-label="Menú de configuración de la cuenta">
+        <h2 class="settings-nav-title">Mi cuenta</h2>
+        <nav class="settings-nav-list">
+            <button
+                v-for="item in navItems"
+                :key="item.id"
+                type="button"
+                class="settings-nav-item"
+                :class="{ active: activeTab === item.id }"
+                @click="setTab(item.id)"
+            >
+                <component :is="item.icon" :size="18" />
+                <span>{{ item.label }}</span>
+            </button>
         </nav>
     </aside>
 </template>
 
 <style scoped>
-.settings-sidebar {
-    width: 250px;
-    background: white;
-    border-right: 1px solid #eee;
-    padding: 2rem 0;
-    height: fit-content;
-    border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+.settings-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    position: sticky;
+    top: 80px;
 }
 
-.menu {
-    padding: 0;
-}
-
-.menu-title {
-    padding: 0 1.5rem;
-    margin: 0 0 1.5rem 0;
-    font-size: 0.9rem;
-    font-weight: 700;
+.settings-nav-title {
+    margin: 0 0 var(--space-1) 4px;
+    font-size: var(--fs-caption);
+    font-weight: var(--fw-bold);
     text-transform: uppercase;
-    color: #999;
-    letter-spacing: 0.5px;
+    letter-spacing: 0.04em;
+    color: var(--color-text-muted);
 }
 
-.menu-items {
-    list-style: none;
-    margin: 0;
-    padding: 0;
+.settings-nav-list {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
 }
 
-.menu-item {
+.settings-nav-item {
     display: flex;
     align-items: center;
-    gap: 1rem;
-    padding: 1rem 1.5rem;
-    color: #666;
-    text-decoration: none;
-    transition: all 0.2s;
-    border-left: 3px solid transparent;
+    gap: 10px;
+    width: 100%;
+    padding: 10px 12px;
+    border: none;
+    border-radius: var(--radius-button);
+    background: transparent;
+    color: var(--color-text-secondary);
+    font-family: var(--font-family);
+    font-size: var(--fs-body-sm);
+    font-weight: var(--fw-medium);
+    text-align: left;
+    cursor: pointer;
+    transition: var(--transition);
 }
 
-.menu-item:hover {
-    background: #f8f9fa;
-    color: #333;
+.settings-nav-item svg {
+    flex-shrink: 0;
+    color: var(--color-text-muted);
+    transition: var(--transition);
 }
 
-.menu-item.active {
-    background: #f0f4ff;
-    color: #667eea;
-    border-left-color: #667eea;
-    font-weight: 600;
+.settings-nav-item:hover {
+    background: var(--color-bg);
+    color: var(--color-text-primary);
 }
 
-.icon {
-    font-size: 1.25rem;
-    width: 1.5rem;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
+.settings-nav-item.active {
+    background: rgba(45, 58, 199, 0.08);
+    color: var(--color-accent);
+    font-weight: var(--fw-semibold);
 }
 
-.label {
-    flex: 1;
+.settings-nav-item.active svg {
+    color: var(--color-accent);
 }
 
-@media (max-width: 768px) {
-    .settings-sidebar {
-        width: 100%;
-        border-right: none;
-        border-bottom: 1px solid #eee;
-        margin-bottom: 2rem;
-        padding: 1rem 0;
+@media (max-width: 820px) {
+    .settings-nav {
+        position: static;
+        flex-direction: row;
+        overflow-x: auto;
+        padding-bottom: 4px;
+        gap: 6px;
     }
 
-    .menu {
-        display: flex;
-        flex-wrap: wrap;
+    .settings-nav-title {
+        display: none;
     }
 
-    .menu-title {
-        width: 100%;
-        padding: 0 1.5rem;
+    .settings-nav-list {
+        flex-direction: row;
+        gap: 6px;
     }
 
-    .menu-items {
-        display: flex;
-        gap: 0.5rem;
-        padding: 0 1.5rem;
-        flex-wrap: wrap;
+    .settings-nav-item {
+        width: auto;
+        white-space: nowrap;
+        border: 1px solid var(--color-border);
     }
 
-    .menu-item {
-        padding: 0.75rem 1rem;
-        border: 1px solid #eee;
-        border-radius: 4px;
-        border-left: none;
-    }
-
-    .menu-item.active {
-        background: #667eea;
-        color: white;
-        border-color: #667eea;
+    .settings-nav-item.active {
+        border-color: var(--color-accent);
     }
 }
 </style>

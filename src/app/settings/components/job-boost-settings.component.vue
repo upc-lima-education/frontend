@@ -294,7 +294,8 @@ onMounted(async () => {
   display: flex;
   gap: var(--space-2);
   align-items: flex-start;
-  border-left: 4px solid var(--color-accent);
+  border-color: rgba(45, 58, 199, 0.2);
+  background: rgba(45, 58, 199, 0.03);
 }
 
 .intro-icon {
@@ -326,7 +327,8 @@ onMounted(async () => {
 
 /* Featured panel */
 .featured-panel {
-  border-left: 4px solid var(--color-state-warning);
+  border-color: rgba(220, 174, 8, 0.35);
+  background: rgba(220, 174, 8, 0.04);
 }
 
 .panel-title {
@@ -569,7 +571,8 @@ onMounted(async () => {
   align-items: center;
   gap: var(--space-2);
   flex-wrap: wrap;
-  border-left: 4px solid var(--color-accent);
+  border-color: rgba(45, 58, 199, 0.2);
+  background: rgba(45, 58, 199, 0.03);
 }
 
 .summary-label {

@@ -1,24 +1,20 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
-import { 
-  BadgeCheck, 
-  MapPin, 
-  Mail, 
-  Phone, 
+import {
+  BadgeCheck,
+  MapPin,
+  Mail,
   ShieldCheck,
-  Eye,
-  Download,
-  Award,
-  Sparkles,
-  TrendingUp,
   ShieldAlert,
   ArrowRight,
-  Sparkle,
-  Globe,
   Users,
   Briefcase,
-  Building
+  Building,
+  Pencil,
+  MessageSquare,
+  Sparkles,
+  TrendingUp
 } from 'lucide-vue-next';
 import { useProfileView } from '@/app/settings/composables/useProfileView';
 import { useAuthenticationStore } from '@/app/auth/services/authentication.store';
@@ -50,7 +46,11 @@ const isOrganization = computed(() => {
 const isEmployee = computed(() => !isOrganization.value);
 
 function goToEditTab() {
-  router.replace({ query: { ...route.query, tab: 'edit' } });
+  goToTab('edit');
+}
+
+function goToTab(tab: string) {
+  router.replace({ query: { ...route.query, tab } });
 }
 
 // Local dynamic completeness calculation
@@ -91,13 +91,8 @@ const completenessColor = computed(() => {
     <template v-else-if="user">
       <!-- Profile Hero Widget -->
       <div class="profile-header-card animate-fade-in">
-        <div class="profile-cover">
-          <!-- Floating background sparks -->
-          <div class="cover-sparkle cs-1"><Sparkle :size="8" /></div>
-          <div class="cover-sparkle cs-2"><Sparkle :size="12" /></div>
-          <div class="cover-sparkle cs-3"><Sparkle :size="10" /></div>
-        </div>
-        <div class="header-main-content">
+        <div class="profile-cover"></div>
+        <div class="header-avatar-row">
           <div class="avatar-container">
             <img
               v-if="profilePictureUrl"
@@ -110,40 +105,40 @@ const completenessColor = computed(() => {
               <BadgeCheck :size="20" />
             </span>
           </div>
+        </div>
 
-          <div class="header-body">
-            <div class="name-row">
-              <h1 class="name">{{ userDisplayName }}</h1>
-              <span v-if="isVerified" class="verified-badge-pill">
-                <ShieldCheck :size="12" />
-                <span>{{ isEmployee ? 'RENIEC Verificado' : 'SUNAT Validado' }}</span>
-              </span>
-            </div>
-            
-            <p class="headline-text">
-              <template v-if="isEmployee">
-                <Briefcase :size="14" />
-                <span>{{ profile?.sector || 'Profesional en búsqueda activa' }}</span>
-              </template>
-              <template v-else>
-                <Building :size="14" />
-                <span>{{ profile?.sector || 'Empresa registrada' }}</span>
-              </template>
-            </p>
-            
-            <p v-if="profile?.description" class="description">{{ profile.description }}</p>
-            <p v-else class="description description-placeholder">Haz clic en "Editar Perfil" para agregar un resumen sobre ti, tus habilidades y objetivos profesionales.</p>
+        <div class="header-body">
+          <div class="name-row">
+            <h1 class="name">{{ userDisplayName }}</h1>
+            <span v-if="isVerified" class="verified-badge-pill">
+              <ShieldCheck :size="12" />
+              <span>{{ isEmployee ? 'RENIEC Verificado' : 'SUNAT Validado' }}</span>
+            </span>
+          </div>
 
-            <div class="header-footer-meta">
-              <span v-if="profile?.district" class="meta-item">
-                <MapPin :size="13" />
-                <span>{{ profile.district }}</span>
-              </span>
-              <span class="meta-item">
-                <Mail :size="13" />
-                <span>{{ user.email }}</span>
-              </span>
-            </div>
+          <p class="headline-text">
+            <template v-if="isEmployee">
+              <Briefcase :size="14" />
+              <span>{{ profile?.sector || 'Profesional en búsqueda activa' }}</span>
+            </template>
+            <template v-else>
+              <Building :size="14" />
+              <span>{{ profile?.sector || 'Empresa registrada' }}</span>
+            </template>
+          </p>
+
+          <p v-if="profile?.description" class="description">{{ profile.description }}</p>
+          <p v-else class="description description-placeholder">Haz clic en "Editar Perfil" para agregar un resumen sobre ti, tus habilidades y objetivos profesionales.</p>
+
+          <div class="header-footer-meta">
+            <span v-if="profile?.district" class="meta-item">
+              <MapPin :size="13" />
+              <span>{{ profile.district }}</span>
+            </span>
+            <span class="meta-item">
+              <Mail :size="13" />
+              <span>{{ user.email }}</span>
+            </span>
           </div>
         </div>
       </div>
@@ -153,39 +148,37 @@ const completenessColor = computed(() => {
         
         <!-- COLUMN 1: Stats, Completeness & Keywords -->
         <div class="left-column">
-          <!-- WIDGET: INTERACTIVE STATS -->
-          <div class="glass-card stats-widget">
-            <h3 class="widget-title">Resumen de Impacto</h3>
-            <div class="stats-grid">
-              <div class="stat-box">
-                <span class="stat-icon-wrap viewers">
-                  <Eye :size="16" />
+          <!-- WIDGET: QUICK LINKS TO WHAT LLANQUI OFFERS -->
+          <div class="glass-card quick-links-widget">
+            <h3 class="widget-title">Explora lo que Llanqui te ofrece</h3>
+            <div class="quick-links-list">
+              <button type="button" class="quick-link" @click="goToTab('edit')">
+                <span class="quick-link-icon"><Pencil :size="18" :stroke-width="1.5" /></span>
+                <span class="quick-link-text">
+                  <strong>Completa tu perfil</strong>
+                  <span>{{ isEmployee ? 'Experiencia, estudios, certificaciones e idiomas.' : 'Datos de la empresa y descripción corporativa.' }}</span>
                 </span>
-                <div class="stat-vals">
-                  <span class="stat-number">142</span>
-                  <span class="stat-label">Visitas perfil</span>
-                </div>
-                <span class="stat-trend positive">+12%</span>
-              </div>
-              <div class="stat-box" v-if="isEmployee">
-                <span class="stat-icon-wrap downloads">
-                  <Download :size="16" />
+                <ArrowRight :size="16" class="quick-link-arrow" />
+              </button>
+              <button type="button" class="quick-link" @click="goToTab('settings')">
+                <span class="quick-link-icon"><MessageSquare :size="18" :stroke-width="1.5" /></span>
+                <span class="quick-link-text">
+                  <strong>Notificaciones por WhatsApp</strong>
+                  <span>{{ isEmployee ? 'Entérate al instante cuando revisen tu postulación.' : 'Avisa a tus candidatos apenas avance su proceso.' }}</span>
                 </span>
-                <div class="stat-vals">
-                  <span class="stat-number">28</span>
-                  <span class="stat-label">Descargas CV</span>
-                </div>
-                <span class="stat-trend positive">+8%</span>
-              </div>
-              <div class="stat-box">
-                <span class="stat-icon-wrap matches">
-                  <Award :size="16" />
+                <ArrowRight :size="16" class="quick-link-arrow" />
+              </button>
+              <button type="button" class="quick-link" @click="goToTab('payments')">
+                <span class="quick-link-icon">
+                  <Sparkles v-if="isEmployee" :size="18" :stroke-width="1.5" />
+                  <TrendingUp v-else :size="18" :stroke-width="1.5" />
                 </span>
-                <div class="stat-vals">
-                  <span class="stat-number">94%</span>
-                  <span class="stat-label">Coincidencia</span>
-                </div>
-              </div>
+                <span class="quick-link-text">
+                  <strong>{{ isEmployee ? 'Generador de CV con IA' : 'Destaca tus vacantes' }}</strong>
+                  <span>{{ isEmployee ? 'Optimiza tu currículum para cada vacante en segundos.' : 'Más visibilidad en los resultados, más postulantes.' }}</span>
+                </span>
+                <ArrowRight :size="16" class="quick-link-arrow" />
+              </button>
             </div>
           </div>
 
@@ -382,36 +375,17 @@ const completenessColor = computed(() => {
   overflow: hidden;
 }
 
-.cover-sparkle {
-  position: absolute;
-  color: rgba(255, 255, 255, 0.35);
-  animation: coverFloat 6s infinite ease-in-out alternate;
-}
-
-.cs-1 { top: 20%; left: 15%; animation-delay: 0s; }
-.cs-2 { top: 40%; right: 20%; animation-delay: 2s; }
-.cs-3 { bottom: 25%; left: 45%; animation-delay: 4s; }
-
-@keyframes coverFloat {
-  0% { transform: translateY(0) rotate(0deg); opacity: 0.3; }
-  100% { transform: translateY(-8px) rotate(15deg); opacity: 0.7; }
-}
-
-.header-main-content {
-  padding: 0 var(--space-3) var(--space-3);
+.header-avatar-row {
+  padding: 0 var(--space-3);
   margin-top: -56px;
-  display: flex;
-  gap: var(--space-3);
-  align-items: flex-end;
   position: relative;
   z-index: 10;
 }
 
 @media (max-width: 768px) {
-  .header-main-content {
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
+  .header-avatar-row {
+    display: flex;
+    justify-content: center;
     margin-top: -64px;
   }
 }
@@ -464,14 +438,15 @@ const completenessColor = computed(() => {
   display: flex;
   flex-direction: column;
   gap: 6px;
-  flex: 1;
   min-width: 0;
+  padding: 10px var(--space-3) var(--space-3);
 }
 
 @media (max-width: 768px) {
   .header-body {
     width: 100%;
     align-items: center;
+    text-align: center;
   }
 }
 
@@ -588,75 +563,79 @@ const completenessColor = computed(() => {
   padding-bottom: 8px;
 }
 
-/* Stats Box */
-.stats-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
+/* Quick Links Widget */
+.quick-links-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.quick-link {
+  display: flex;
+  align-items: center;
   gap: 12px;
-}
-
-@media (max-width: 480px) {
-  .stats-grid {
-    grid-template-columns: 1fr;
-    gap: 8px;
-  }
-}
-
-.stat-box {
+  width: 100%;
+  padding: 12px;
   background: var(--color-bg);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-card);
-  padding: 12px;
-  display: flex;
-  flex-direction: column;
-  position: relative;
+  font-family: var(--font-family);
+  text-align: left;
+  cursor: pointer;
+  transition: var(--transition);
 }
 
-.stat-icon-wrap {
-  width: 28px;
-  height: 28px;
-  border-radius: 6px;
+.quick-link:hover {
+  border-color: var(--color-accent);
+  background: rgba(45, 58, 199, 0.04);
+}
+
+.quick-link-icon {
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 8px;
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  border-radius: var(--radius-card);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  color: var(--color-accent);
 }
 
-.viewers { background: rgba(45, 58, 199, 0.08); color: var(--color-accent); }
-.downloads { background: rgba(59, 156, 32, 0.08); color: var(--color-state-success); }
-.matches { background: rgba(236, 78, 16, 0.08); color: var(--color-state-alert); }
-
-.stat-vals {
+.quick-link-text {
   display: flex;
   flex-direction: column;
+  gap: 2px;
+  min-width: 0;
 }
 
-.stat-number {
-  font-size: 18px;
-  font-weight: var(--fw-bold);
+.quick-link-text strong {
+  font-size: 13px;
+  font-weight: var(--fw-semibold);
   color: var(--color-text-primary);
 }
 
-.stat-label {
-  font-size: 11px;
+.quick-link-text span {
+  font-size: 12px;
   color: var(--color-text-secondary);
+  line-height: 1.3;
 }
 
-.stat-trend {
-  position: absolute;
-  top: 12px;
-  right: 12px;
-  font-size: 10px;
-  font-weight: var(--fw-bold);
+.quick-link-arrow {
+  flex-shrink: 0;
+  color: var(--color-text-muted);
+  transition: var(--transition);
 }
 
-.stat-trend.positive {
-  color: var(--color-state-success-dark);
+.quick-link:hover .quick-link-arrow {
+  color: var(--color-accent);
+  transform: translateX(2px);
 }
 
 /* Completeness Widget Gauge */
 .completeness-widget {
-  background: linear-gradient(135deg, rgba(45, 58, 199, 0.04), rgba(30, 43, 170, 0.02));
+  background: rgba(45, 58, 199, 0.03);
   border: 1px dashed var(--color-accent);
 }
 
@@ -743,12 +722,12 @@ const completenessColor = computed(() => {
 /* Verification Widget */
 .verification-widget {
   background: rgba(210, 38, 38, 0.03);
-  border-left: 4px solid var(--color-state-error);
+  border-color: rgba(210, 38, 38, 0.25);
 }
 
 .verification-widget.verified-state {
   background: rgba(59, 156, 32, 0.03);
-  border-left-color: var(--color-state-success);
+  border-color: rgba(59, 156, 32, 0.25);
 }
 
 .verification-badge-status {
@@ -869,10 +848,9 @@ const completenessColor = computed(() => {
   gap: var(--space-2);
   padding: var(--space-3);
   background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-top: 4px solid var(--color-primary);
+  border: 1px solid rgba(45, 58, 199, 0.16);
   border-radius: var(--radius-card);
-  box-shadow: var(--shadow-card);
+  box-shadow: 0 8px 20px rgba(30, 43, 170, 0.1);
 }
 
 .recruitment-head {

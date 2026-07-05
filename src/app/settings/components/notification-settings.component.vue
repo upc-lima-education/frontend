@@ -1,13 +1,13 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
-import { 
-  MessageSquare, 
-  Bell, 
-  Save, 
-  CheckCircle2, 
-  Send, 
-  ExternalLink,
-  ShieldCheck
+import {
+  MessageSquare,
+  Bell,
+  Save,
+  CheckCircle2,
+  AlertCircle,
+  Send,
+  ExternalLink
 } from 'lucide-vue-next';
 import { useAuthenticationStore } from '@/app/auth/services/authentication.store';
 import { profileService } from '@/app/profile/services/profile.service';
@@ -104,7 +104,7 @@ function sendTestNotification() {
   }
 
   // Generate a WhatsApp Click to Chat link to make it actually work!
-  const message = `¡Hola! Llanqui te da la bienvenida a las notificaciones inteligentes de empleo 💼📱. Recibirás avisos sobre tus postulaciones aquí.`;
+  const message = `¡Hola! Llanqui te da la bienvenida a las notificaciones de empleo. Recibirás avisos sobre tus postulaciones aquí.`;
   const url = `https://wa.me/51${cleanNumber}?text=${encodeURIComponent(message)}`;
   
   // Open WhatsApp in a new window
@@ -198,10 +198,10 @@ function sendTestNotification() {
           <div class="whatsapp-message-bubble">
             <span class="chat-sender">Llanqui Empleos</span>
             <p class="chat-text">
-              <strong>¡Buenas noticias, Carlos! 🎉</strong><br />
+              <strong>¡Buenas noticias, Carlos!</strong><br />
               La empresa <strong>Tech Solutions</strong> ha preseleccionado tu postulación para el puesto de <strong>Desarrollador Vue.js Junior</strong>.<br /><br />
-              📅 Te contactarán pronto para agendar una entrevista.<br />
-              🔗 Revisa más detalles ingresando a tu cuenta de Llanqui.
+              Te contactarán pronto para agendar una entrevista.<br />
+              Revisa más detalles ingresando a tu cuenta de Llanqui.
             </p>
             <span class="chat-time">10:42 AM</span>
           </div>
@@ -570,7 +570,6 @@ input:checked + .slider:before {
   font-size: 14px;
   font-weight: var(--fw-bold);
   box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
-  backdrop-filter: blur(8px);
 }
 
 .success-toast {

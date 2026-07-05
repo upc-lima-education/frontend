@@ -5,33 +5,46 @@
 @import './components/link.css';
 @import './components/pages.css';
 
-/*Main colors light*/
+/*
+  La plataforma no soporta modo oscuro: la paleta oficial (variables.css) solo
+  define valores claros. Un @media (prefers-color-scheme: dark) aqui volvia
+  --text-color blanco para cualquier usuario con el SO en modo oscuro, y como
+  base.css aplica `color: var(--text-color)` a *, cualquier texto sin color
+  propio (nombre de empresa, ubicacion, fechas de publicacion) quedaba blanco
+  sobre fondo claro: invisible. Se fija a los tokens de la paleta oficial.
+*/
 :root {
-  --background-color-default: white;
+  --background-color-default: var(--color-surface);
   --background-color-light: var(--gray-01);
   --background-color-medium: var(--gray-02);
   --background-color-dark: var(--gray-03);
-  
-  --text-color: black;
-  --text-color-inverted: white;
-}
 
-/*Main colors dark*/
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background-color-default: black;
-    --background-color-light: var(--gray-06);
-    --background-color-medium: var(--gray-05);
-    --background-color-dark: var(--gray-04);
-
-    --text-color: white;
-    --text-color-inverted: black;
-  }
+  --text-color: var(--color-text-primary);
+  --text-color-inverted: var(--color-surface);
 }
 
 /*Font*/
 :root{
   font-size: 16px;
+}
+
+/*
+  html es el UNICO contenedor de scroll de toda la app (no body, no #app).
+  Un elemento con overflow-x distinto de "visible" y overflow-y sin declarar
+  hace que el navegador convierta ese overflow-y en "auto" por su cuenta
+  (regla del spec de CSS Overflow), sin importar si "visible" era el valor
+  por defecto o explicito. body y #app declaraban overflow-x:hidden solos,
+  asi que ambos se volvian contenedores de scroll independientes sin
+  querer, cada uno reservando o no su propia scrollbar segun si SU contenido
+  desbordaba, y eso hacia que el ancho disponible cambiara entre pestañas
+  cortas y largas (glitch visible en sidebar/navbar al cambiar de tab).
+  Por eso overflow-x tambien vive solo en html, junto a overflow-y: asi
+  ningun otro elemento declara un solo eje y dispara la conversion.
+*/
+html {
+  overflow-x: hidden;
+  overflow-y: scroll;
+  scrollbar-gutter: stable;
 }
 
 /*Other values*/
@@ -45,12 +58,9 @@
 
 body{
   height: 100vh;
-  overflow-x: hidden;
-  overflow-y: auto;
 }
 
 #app{
   height: 100%;
   width: 100%;
-  overflow-x: hidden;
 }

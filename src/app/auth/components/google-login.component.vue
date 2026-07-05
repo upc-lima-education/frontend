@@ -42,8 +42,10 @@ const { loading, error, buttonLabel, handleGoogleLogin } = useGoogleLogin(props 
     width: 100%;
 }
 
+/* base.css * { color } overrides inherited colors — force dark text on white button */
 .google-login :where(p, span, button) {
     font-family: var(--font-body);
+    color: var(--gray-07);
 }
 
 .error {
@@ -60,20 +62,26 @@ const { loading, error, buttonLabel, handleGoogleLogin } = useGoogleLogin(props 
     justify-content: center;
     gap: 0.6rem;
     padding: 0.8rem 1rem;
-    border: 1px solid var(--gray-02);
+    border: 1px solid var(--color-border);
     border-radius: 12px;
-    background: #fff;
-    color: var(--gray-07);
+    background: var(--color-surface);
+    color: var(--color-text-primary);
     cursor: pointer;
     font-size: 0.95rem;
     font-weight: 600;
-    transition: background 0.18s, border-color 0.18s, box-shadow 0.18s;
+    transition: background-color 150ms ease, border-color 150ms ease, box-shadow 150ms ease, transform 100ms ease-out;
 }
 
-.google-button:hover:not(:disabled) {
-    background: var(--gray-01);
-    border-color: var(--gray-03);
-    box-shadow: 0 6px 16px -8px rgba(18, 41, 116, 0.25);
+@media (hover: hover) and (pointer: fine) {
+    .google-button:hover:not(:disabled) {
+        background: var(--color-bg);
+        border-color: var(--color-text-muted);
+        box-shadow: 0 4px 12px -4px rgba(18, 41, 116, 0.15);
+    }
+}
+
+.google-button:active:not(:disabled) {
+    transform: scale(0.98);
 }
 
 .google-button:disabled {
