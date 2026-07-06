@@ -1,16 +1,18 @@
 <script setup lang="ts">
 import { computed } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { User, Building2, Pencil, Bell, CreditCard, TrendingUp, ShieldCheck } from 'lucide-vue-next';
 import { useSettingsPage } from '@/app/settings/composables/useSettingsPage';
 
+const { t } = useI18n();
 const { activeTab, profileTabLabel, paymentsTabLabel, isOrganization, setTab } = useSettingsPage();
 
 const navItems = computed(() => [
     { id: 'profile', label: profileTabLabel.value, icon: isOrganization.value ? Building2 : User },
-    { id: 'edit', label: 'Editar Perfil', icon: Pencil },
-    { id: 'settings', label: 'Notificaciones', icon: Bell },
+    { id: 'edit', label: t('settings.tabEdit'), icon: Pencil },
+    { id: 'settings', label: t('settings.tabSettings'), icon: Bell },
     { id: 'payments', label: paymentsTabLabel.value, icon: isOrganization.value ? TrendingUp : CreditCard },
-    { id: 'privacy', label: 'Privacidad', icon: ShieldCheck },
+    { id: 'privacy', label: t('settings.tabPrivacy'), icon: ShieldCheck },
 ]);
 </script>
 

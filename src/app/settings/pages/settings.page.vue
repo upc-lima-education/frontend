@@ -4,6 +4,7 @@ import ProfileEditComponent from '../components/profile-edit.component.vue';
 import NotificationSettingsComponent from '../components/notification-settings.component.vue';
 import PaymentsSettingsComponent from '../components/payments-settings.component.vue';
 import JobBoostSettingsComponent from '../components/job-boost-settings.component.vue';
+import PrivacySettingsComponent from '../components/privacy-settings.component.vue';
 import SettingsSidebarComponent from '../components/settings-sidebar.component.vue';
 import { useSettingsPage } from '@/app/settings/composables/useSettingsPage';
 
@@ -20,6 +21,7 @@ const { activeTab, isOrganization } = useSettingsPage();
             <NotificationSettingsComponent v-else-if="activeTab === 'settings'" />
             <JobBoostSettingsComponent v-else-if="activeTab === 'payments' && isOrganization" />
             <PaymentsSettingsComponent v-else-if="activeTab === 'payments'" />
+            <PrivacySettingsComponent v-else-if="activeTab === 'privacy'" />
             <div v-else class="placeholder">
                 <h3>{{ $t('settings.comingSoonTitle') }}</h3>
                 <p>{{ $t('settings.comingSoonBody') }}</p>
