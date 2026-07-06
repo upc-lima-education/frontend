@@ -108,20 +108,164 @@ const {
 
 const LANGUAGE_LEVEL_OPTIONS = ['Básico', 'Intermedio', 'Avanzado', 'Nativo'];
 
-function isWorkExperienceValid() {
-  return workExperienceDraft.role.trim() && workExperienceDraft.organization.trim() && workExperienceDraft.startDate;
+interface FieldError {
+  field: string;
+  message: string;
 }
+
+function fieldHasError(errors: FieldError[], field: string) {
+  return errors.some((e) => e.field === field);
+}
+
+const todayStr = new Date().toISOString().slice(0, 10);
+
+// WORK EXPERIENCE
+const workExperienceAttempted = ref(false);
+
+function getWorkExperienceErrors(): FieldError[] {
+  const errs: FieldError[] = [];
+  if (!workExperienceDraft.role.trim()) errs.push({ field: 'role', message: 'Ingresa el cargo.' });
+  if (!workExperienceDraft.organization.trim()) errs.push({ field: 'organization', message: 'Ingresa la empresa.' });
+  if (!workExperienceDraft.startDate) errs.push({ field: 'startDate', message: 'Ingresa la fecha de inicio.' });
+  if (workExperienceDraft.endDate !== null) {
+    if (!workExperienceDraft.endDate) {
+      errs.push({ field: 'endDate', message: 'Ingresa la fecha de fin o marca "Trabajo actual".' });
+    } else if (workExperienceDraft.startDate && workExperienceDraft.endDate < workExperienceDraft.startDate) {
+      errs.push({ field: 'endDate', message: 'La fecha de fin no puede ser anterior a la fecha de inicio.' });
+    }
+  }
+  return errs;
+}
+
+const workExperienceErrors = computed(() => (workExperienceAttempted.value ? getWorkExperienceErrors() : []));
+
+function isWorkExperienceValid() {
+  return getWorkExperienceErrors().length === 0;
+}
+
+function attemptSaveWorkExperience() {
+  workExperienceAttempted.value = true;
+  if (isWorkExperienceValid()) {
+    saveWorkExperience();
+    workExperienceAttempted.value = false;
+  }
+}
+
+function startWorkExperienceEdit(exp: typeof workExperienceDraft) {
+  workExperienceAttempted.value = false;
+  editWorkExperience(exp);
+}
+
+function cancelWorkExperienceEditReset() {
+  workExperienceAttempted.value = false;
+  cancelWorkExperienceEdit();
+}
+
+// EDUCATION
+const educationAttempted = ref(false);
+
+function getEducationErrors(): FieldError[] {
+  const errs: FieldError[] = [];
+  if (!educationDraft.institution.trim()) errs.push({ field: 'institution', message: 'Ingresa la institución.' });
+  if (!educationDraft.degree.trim()) errs.push({ field: 'degree', message: 'Ingresa el grado o carrera.' });
+  if (educationDraft.startDate && educationDraft.endDate && educationDraft.endDate < educationDraft.startDate) {
+    errs.push({ field: 'endDate', message: 'La fecha de fin no puede ser anterior a la fecha de inicio.' });
+  }
+  return errs;
+}
+
+const educationErrors = computed(() => (educationAttempted.value ? getEducationErrors() : []));
 
 function isEducationValid() {
-  return educationDraft.institution.trim() && educationDraft.degree.trim();
+  return getEducationErrors().length === 0;
 }
+
+function attemptSaveEducation() {
+  educationAttempted.value = true;
+  if (isEducationValid()) {
+    saveEducation();
+    educationAttempted.value = false;
+  }
+}
+
+function startEducationEdit(edu: typeof educationDraft) {
+  educationAttempted.value = false;
+  editEducation(edu);
+}
+
+function cancelEducationEditReset() {
+  educationAttempted.value = false;
+  cancelEducationEdit();
+}
+
+// CERTIFICATIONS
+const certificationAttempted = ref(false);
+
+function getCertificationErrors(): FieldError[] {
+  const errs: FieldError[] = [];
+  if (!certificationDraft.name.trim()) errs.push({ field: 'name', message: 'Ingresa el nombre de la certificación.' });
+  if (certificationDraft.issueDate && certificationDraft.issueDate > todayStr) {
+    errs.push({ field: 'issueDate', message: 'La fecha de emisión no puede ser futura.' });
+  }
+  return errs;
+}
+
+const certificationErrors = computed(() => (certificationAttempted.value ? getCertificationErrors() : []));
 
 function isCertificationValid() {
-  return certificationDraft.name.trim();
+  return getCertificationErrors().length === 0;
 }
 
+function attemptSaveCertification() {
+  certificationAttempted.value = true;
+  if (isCertificationValid()) {
+    saveCertification();
+    certificationAttempted.value = false;
+  }
+}
+
+function startCertificationEdit(cert: typeof certificationDraft) {
+  certificationAttempted.value = false;
+  editCertification(cert);
+}
+
+function cancelCertificationEditReset() {
+  certificationAttempted.value = false;
+  cancelCertificationEdit();
+}
+
+// LANGUAGES
+const languageAttempted = ref(false);
+
+function getLanguageErrors(): FieldError[] {
+  const errs: FieldError[] = [];
+  if (!languageDraft.name.trim()) errs.push({ field: 'name', message: 'Ingresa el idioma.' });
+  if (!languageDraft.level) errs.push({ field: 'level', message: 'Selecciona el nivel.' });
+  return errs;
+}
+
+const languageErrors = computed(() => (languageAttempted.value ? getLanguageErrors() : []));
+
 function isLanguageValid() {
-  return languageDraft.name.trim() && languageDraft.level;
+  return getLanguageErrors().length === 0;
+}
+
+function attemptSaveLanguage() {
+  languageAttempted.value = true;
+  if (isLanguageValid()) {
+    saveLanguage();
+    languageAttempted.value = false;
+  }
+}
+
+function startLanguageEdit(lang: typeof languageDraft) {
+  languageAttempted.value = false;
+  editLanguage(lang);
+}
+
+function cancelLanguageEditReset() {
+  languageAttempted.value = false;
+  cancelLanguageEdit();
 }
 
 const fileInputRef = ref<HTMLInputElement | null>(null);
@@ -663,7 +807,7 @@ const isRucInputValid = computed(() => ruc.value && ruc.value.length === 11 && /
                     <p v-if="exp.description" class="history-item-desc">{{ exp.description }}</p>
                   </div>
                   <div class="history-item-actions">
-                    <button type="button" class="icon-btn" @click="editWorkExperience(exp)"><Pencil :size="14" /></button>
+                    <button type="button" class="icon-btn" @click="startWorkExperienceEdit(exp)"><Pencil :size="14" /></button>
                     <button type="button" class="icon-btn danger" @click="deleteWorkExperience(exp.id!)"><Trash2 :size="14" /></button>
                   </div>
                 </div>
@@ -672,21 +816,21 @@ const isRucInputValid = computed(() => ruc.value && ruc.value.length === 11 && /
 
               <div class="history-form">
                 <div class="grid-2">
-                  <div class="field">
+                  <div class="field" :class="{ 'field-invalid': fieldHasError(workExperienceErrors, 'role') }">
                     <label for="we-role">Cargo</label>
                     <input id="we-role" v-model="workExperienceDraft.role" placeholder="Ej. Backend Developer" maxlength="150" />
                   </div>
-                  <div class="field">
+                  <div class="field" :class="{ 'field-invalid': fieldHasError(workExperienceErrors, 'organization') }">
                     <label for="we-org">Empresa</label>
                     <input id="we-org" v-model="workExperienceDraft.organization" placeholder="Ej. Acme Corp" maxlength="150" />
                   </div>
                 </div>
                 <div class="grid-2">
-                  <div class="field">
+                  <div class="field" :class="{ 'field-invalid': fieldHasError(workExperienceErrors, 'startDate') }">
                     <label for="we-start">Fecha de inicio</label>
                     <input id="we-start" v-model="workExperienceDraft.startDate" type="date" />
                   </div>
-                  <div class="field">
+                  <div class="field" :class="{ 'field-invalid': fieldHasError(workExperienceErrors, 'endDate') }">
                     <label for="we-end">Fecha de fin</label>
                     <input
                       id="we-end"
@@ -712,12 +856,17 @@ const isRucInputValid = computed(() => ruc.value && ruc.value.length === 11 && /
                   <label for="we-desc">Descripción</label>
                   <textarea id="we-desc" v-model="workExperienceDraft.description" rows="3" />
                 </div>
+
+                <ul v-if="workExperienceErrors.length" class="form-errors-list">
+                  <li v-for="err in workExperienceErrors" :key="err.field">{{ err.message }}</li>
+                </ul>
+
                 <div class="history-form-actions">
-                  <button type="button" class="btn-history-save" :disabled="!isWorkExperienceValid()" @click="saveWorkExperience">
+                  <button type="button" class="btn-history-save" @click="attemptSaveWorkExperience">
                     <Plus :size="14" />
                     <span>{{ editingWorkExperienceId ? 'Actualizar' : 'Agregar' }}</span>
                   </button>
-                  <button v-if="editingWorkExperienceId" type="button" class="btn-history-cancel" @click="cancelWorkExperienceEdit">
+                  <button v-if="editingWorkExperienceId" type="button" class="btn-history-cancel" @click="cancelWorkExperienceEditReset">
                     Cancelar
                   </button>
                 </div>
@@ -741,7 +890,7 @@ const isRucInputValid = computed(() => ruc.value && ruc.value.length === 11 && /
                     </span>
                   </div>
                   <div class="history-item-actions">
-                    <button type="button" class="icon-btn" @click="editEducation(edu)"><Pencil :size="14" /></button>
+                    <button type="button" class="icon-btn" @click="startEducationEdit(edu)"><Pencil :size="14" /></button>
                     <button type="button" class="icon-btn danger" @click="deleteEducation(edu.id!)"><Trash2 :size="14" /></button>
                   </div>
                 </div>
@@ -750,11 +899,11 @@ const isRucInputValid = computed(() => ruc.value && ruc.value.length === 11 && /
 
               <div class="history-form">
                 <div class="grid-2">
-                  <div class="field">
+                  <div class="field" :class="{ 'field-invalid': fieldHasError(educationErrors, 'institution') }">
                     <label for="ed-institution">Institución</label>
                     <input id="ed-institution" v-model="educationDraft.institution" placeholder="Ej. UPC" maxlength="150" />
                   </div>
-                  <div class="field">
+                  <div class="field" :class="{ 'field-invalid': fieldHasError(educationErrors, 'degree') }">
                     <label for="ed-degree">Grado / Carrera</label>
                     <input id="ed-degree" v-model="educationDraft.degree" placeholder="Ej. Ingeniería de Software" maxlength="150" />
                   </div>
@@ -764,7 +913,7 @@ const isRucInputValid = computed(() => ruc.value && ruc.value.length === 11 && /
                     <label for="ed-start">Fecha de inicio</label>
                     <input id="ed-start" v-model="educationDraft.startDate" type="date" />
                   </div>
-                  <div class="field">
+                  <div class="field" :class="{ 'field-invalid': fieldHasError(educationErrors, 'endDate') }">
                     <label for="ed-end">Fecha de fin</label>
                     <input
                       id="ed-end"
@@ -782,12 +931,17 @@ const isRucInputValid = computed(() => ruc.value && ruc.value.length === 11 && /
                     </label>
                   </div>
                 </div>
+
+                <ul v-if="educationErrors.length" class="form-errors-list">
+                  <li v-for="err in educationErrors" :key="err.field">{{ err.message }}</li>
+                </ul>
+
                 <div class="history-form-actions">
-                  <button type="button" class="btn-history-save" :disabled="!isEducationValid()" @click="saveEducation">
+                  <button type="button" class="btn-history-save" @click="attemptSaveEducation">
                     <Plus :size="14" />
                     <span>{{ editingEducationId ? 'Actualizar' : 'Agregar' }}</span>
                   </button>
-                  <button v-if="editingEducationId" type="button" class="btn-history-cancel" @click="cancelEducationEdit">
+                  <button v-if="editingEducationId" type="button" class="btn-history-cancel" @click="cancelEducationEditReset">
                     Cancelar
                   </button>
                 </div>
@@ -809,7 +963,7 @@ const isRucInputValid = computed(() => ruc.value && ruc.value.length === 11 && /
                     <span class="history-item-dates" v-if="cert.issueDate">{{ cert.issueDate }}</span>
                   </div>
                   <div class="history-item-actions">
-                    <button type="button" class="icon-btn" @click="editCertification(cert)"><Pencil :size="14" /></button>
+                    <button type="button" class="icon-btn" @click="startCertificationEdit(cert)"><Pencil :size="14" /></button>
                     <button type="button" class="icon-btn danger" @click="deleteCertification(cert.id!)"><Trash2 :size="14" /></button>
                   </div>
                 </div>
@@ -818,7 +972,7 @@ const isRucInputValid = computed(() => ruc.value && ruc.value.length === 11 && /
 
               <div class="history-form">
                 <div class="grid-2">
-                  <div class="field">
+                  <div class="field" :class="{ 'field-invalid': fieldHasError(certificationErrors, 'name') }">
                     <label for="cert-name">Nombre</label>
                     <input id="cert-name" v-model="certificationDraft.name" placeholder="Ej. AWS Certified Developer" maxlength="200" />
                   </div>
@@ -827,16 +981,21 @@ const isRucInputValid = computed(() => ruc.value && ruc.value.length === 11 && /
                     <input id="cert-org" v-model="certificationDraft.issuingOrganization" placeholder="Ej. Amazon" />
                   </div>
                 </div>
-                <div class="field">
+                <div class="field" :class="{ 'field-invalid': fieldHasError(certificationErrors, 'issueDate') }">
                   <label for="cert-date">Fecha de emisión</label>
                   <input id="cert-date" v-model="certificationDraft.issueDate" type="date" />
                 </div>
+
+                <ul v-if="certificationErrors.length" class="form-errors-list">
+                  <li v-for="err in certificationErrors" :key="err.field">{{ err.message }}</li>
+                </ul>
+
                 <div class="history-form-actions">
-                  <button type="button" class="btn-history-save" :disabled="!isCertificationValid()" @click="saveCertification">
+                  <button type="button" class="btn-history-save" @click="attemptSaveCertification">
                     <Plus :size="14" />
                     <span>{{ editingCertificationId ? 'Actualizar' : 'Agregar' }}</span>
                   </button>
-                  <button v-if="editingCertificationId" type="button" class="btn-history-cancel" @click="cancelCertificationEdit">
+                  <button v-if="editingCertificationId" type="button" class="btn-history-cancel" @click="cancelCertificationEditReset">
                     Cancelar
                   </button>
                 </div>
@@ -857,7 +1016,7 @@ const isRucInputValid = computed(() => ruc.value && ruc.value.length === 11 && /
                     <span class="history-item-sub">{{ lang.level }}</span>
                   </div>
                   <div class="history-item-actions">
-                    <button type="button" class="icon-btn" @click="editLanguage(lang)"><Pencil :size="14" /></button>
+                    <button type="button" class="icon-btn" @click="startLanguageEdit(lang)"><Pencil :size="14" /></button>
                     <button type="button" class="icon-btn danger" @click="deleteLanguage(lang.id!)"><Trash2 :size="14" /></button>
                   </div>
                 </div>
@@ -866,11 +1025,11 @@ const isRucInputValid = computed(() => ruc.value && ruc.value.length === 11 && /
 
               <div class="history-form">
                 <div class="grid-2">
-                  <div class="field">
+                  <div class="field" :class="{ 'field-invalid': fieldHasError(languageErrors, 'name') }">
                     <label for="lang-name">Idioma</label>
                     <input id="lang-name" v-model="languageDraft.name" placeholder="Ej. Inglés" maxlength="50" />
                   </div>
-                  <div class="field">
+                  <div class="field" :class="{ 'field-invalid': fieldHasError(languageErrors, 'level') }">
                     <label for="lang-level">Nivel</label>
                     <div class="select-wrapper">
                       <select id="lang-level" v-model="languageDraft.level">
@@ -879,12 +1038,17 @@ const isRucInputValid = computed(() => ruc.value && ruc.value.length === 11 && /
                     </div>
                   </div>
                 </div>
+
+                <ul v-if="languageErrors.length" class="form-errors-list">
+                  <li v-for="err in languageErrors" :key="err.field">{{ err.message }}</li>
+                </ul>
+
                 <div class="history-form-actions">
-                  <button type="button" class="btn-history-save" :disabled="!isLanguageValid()" @click="saveLanguage">
+                  <button type="button" class="btn-history-save" @click="attemptSaveLanguage">
                     <Plus :size="14" />
                     <span>{{ editingLanguageId ? 'Actualizar' : 'Agregar' }}</span>
                   </button>
-                  <button v-if="editingLanguageId" type="button" class="btn-history-cancel" @click="cancelLanguageEdit">
+                  <button v-if="editingLanguageId" type="button" class="btn-history-cancel" @click="cancelLanguageEditReset">
                     Cancelar
                   </button>
                 </div>
@@ -1509,6 +1673,33 @@ const isRucInputValid = computed(() => ruc.value && ruc.value.length === 11 && /
 .history-form {
   border-top: 1px solid var(--color-border);
   padding-top: 14px;
+}
+
+.field-invalid input,
+.field-invalid select,
+.field-invalid textarea {
+  border-color: var(--color-state-error);
+}
+
+.field-invalid input:focus,
+.field-invalid select:focus,
+.field-invalid textarea:focus {
+  box-shadow: 0 0 0 3px rgba(210, 38, 38, 0.12);
+}
+
+.form-errors-list {
+  list-style: none;
+  margin: 4px 0 0;
+  padding: 10px 12px;
+  background: rgba(210, 38, 38, 0.08);
+  border: 1px solid rgba(210, 38, 38, 0.15);
+  border-radius: var(--radius-input);
+  color: var(--color-state-error-dark);
+  font-size: 12px;
+  font-weight: var(--fw-semibold);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 
 .checkbox-inline {

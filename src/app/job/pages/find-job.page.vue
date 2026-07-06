@@ -6,7 +6,7 @@ import { GetJobByIdResponse } from '../model/get-job-by-id.response';
 import { JobService } from '../services/job.service';
 import { RecommendationService } from '../services/recommendation.service';
 import { ubigeoService } from '@/app/shared/services/ubigeo.service';
-import { Search, MapPin, Building2, Wifi, Users, MonitorCheck } from 'lucide-vue-next';
+import { Search, MapPin, Building2, Wifi, Users, MonitorCheck, ChevronLeft, ChevronRight } from 'lucide-vue-next';
 
 const { t } = useI18n();
 const jobService = new JobService();
@@ -67,6 +67,7 @@ function locationFor(job: GetJobByIdResponse): string {
 }
 
 async function searchJobs() {
+  currentPage.value = 1;
   appliedSearchText.value = searchText.value.trim().toLowerCase();
   appliedUbigeo.value = resolveUbigeoFromInput(locationInput.value);
   appliedMinSalary.value = minSalary.value || null;
@@ -124,6 +125,39 @@ const filteredJobs = computed(() => {
   });
 });
 
+const currentPage = ref(1);
+const pageSize = 20;
+
+const totalPages = computed(() => Math.max(1, Math.ceil(filteredJobs.value.length / pageSize)));
+
+const paginatedJobs = computed(() => {
+  const start = (currentPage.value - 1) * pageSize;
+  return filteredJobs.value.slice(start, start + pageSize);
+});
+
+// Rango de páginas visibles con "…" para no listar las 30+ páginas completas.
+const paginationRange = computed<(number | string)[]>(() => {
+  const total = totalPages.value;
+  const current = currentPage.value;
+  const delta = 1;
+  const left = Math.max(2, current - delta);
+  const right = Math.min(total - 1, current + delta);
+
+  const range: (number | string)[] = [1];
+  if (left > 2) range.push('...');
+  for (let i = left; i <= right; i++) range.push(i);
+  if (right < total - 1) range.push('...');
+  if (total > 1) range.push(total);
+
+  return range;
+});
+
+function goToPage(page: number) {
+  if (page < 1 || page > totalPages.value || page === currentPage.value) return;
+  currentPage.value = page;
+  document.querySelector('.job-results-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
 function salaryRangeLabel(job: GetJobByIdResponse): string {
   if (!job.minSalary && !job.maxSalary) return 'No especificado';
   const currency = job.currency === 'PEN' ? 'S/' : (job.currency || '');
@@ -170,44 +204,49 @@ onMounted(loadJobs);
 
 <template>
   <div class="find-job-container">
-    <PageHeaderComponent
-      :pageHeader="$t('job.findPage.title')"
-      :pageSubheader="$t('job.findPage.subtitle')"
-    />
+    <section class="search-panel">
+      <div class="find-job-hero">
+        <PageHeaderComponent
+          :pageHeader="$t('job.findPage.title')"
+          :pageSubheader="$t('job.findPage.subtitle')"
+        />
+      </div>
 
-    <form class="search-composer" @submit.prevent="searchJobs">
-      <div class="search-field search-field--wide">
-        <label for="search-text">Título o habilidad</label>
-        <input id="search-text" v-model="searchText" placeholder="Ej. Desarrollador, React, Operario" />
-      </div>
-      <div class="search-field">
-        <label for="search-location">Ubicación</label>
-        <input id="search-location" v-model="locationInput" placeholder="Ej. Lima, Miraflores" />
-      </div>
-      <div class="search-field">
-        <label for="search-jobtype">Modalidad</label>
-        <select id="search-jobtype" v-model="jobTypeFilter">
-          <option value="">Todas</option>
-          <option value="Remote">Remoto</option>
-          <option value="Hybrid">Híbrido</option>
-          <option value="InPerson">Presencial</option>
-        </select>
-      </div>
-      <div class="search-field">
-        <label for="search-salary">Salario mínimo</label>
-        <input id="search-salary" v-model.number="minSalary" type="number" min="0" placeholder="Ej. 1500" />
-      </div>
-      <button type="submit" class="search-btn">
-        <Search :size="18" :stroke-width="1.5" />
-        <span>Buscar</span>
-      </button>
-    </form>
+      <form class="search-composer" @submit.prevent="searchJobs">
+        <div class="search-field search-field--wide">
+          <label for="search-text">Título o habilidad</label>
+          <input id="search-text" v-model="searchText" placeholder="Ej. Desarrollador, React, Operario" />
+        </div>
+        <div class="search-field">
+          <label for="search-location">Ubicación</label>
+          <input id="search-location" v-model="locationInput" placeholder="Ej. Lima, Miraflores" />
+        </div>
+        <div class="search-field">
+          <label for="search-jobtype">Modalidad</label>
+          <select id="search-jobtype" v-model="jobTypeFilter">
+            <option value="">Todas</option>
+            <option value="Remote">Remoto</option>
+            <option value="Hybrid">Híbrido</option>
+            <option value="InPerson">Presencial</option>
+          </select>
+        </div>
+        <div class="search-field">
+          <label for="search-salary">Salario mínimo</label>
+          <input id="search-salary" v-model.number="minSalary" type="number" min="0" placeholder="Ej. 1500" />
+        </div>
+        <button type="submit" class="search-btn">
+          <Search :size="18" :stroke-width="1.5" />
+          <span>Buscar</span>
+        </button>
+      </form>
+    </section>
 
     <main class="job-results-section">
       <p v-if="error" class="job-list-error">{{ error }}</p>
 
       <div v-if="!loading && !error" class="results-meta">
         {{ filteredJobs.length }} {{ filteredJobs.length === 1 ? 'empleo encontrado' : 'empleos encontrados' }}
+        <span v-if="totalPages > 1"> · Página {{ currentPage }} de {{ totalPages }}</span>
       </div>
 
       <div v-if="loading" class="state-loading">
@@ -217,7 +256,7 @@ onMounted(loadJobs);
 
       <div v-else-if="filteredJobs.length" class="job-card-list">
         <RouterLink
-          v-for="job in filteredJobs"
+          v-for="job in paginatedJobs"
           :key="job.id"
           :to="`/job/${job.id}`"
           class="job-row-card"
@@ -258,6 +297,43 @@ onMounted(loadJobs);
       <div v-else class="no-results">
         <p>No se encontraron vacantes con esos criterios.</p>
       </div>
+
+      <nav v-if="!loading && totalPages > 1" class="pagination" aria-label="Paginación de resultados">
+        <button
+          type="button"
+          class="pagination-btn"
+          :disabled="currentPage === 1"
+          @click="goToPage(currentPage - 1)"
+        >
+          <ChevronLeft :size="18" :stroke-width="1.5" />
+          <span>Anterior</span>
+        </button>
+
+        <div class="pagination-pages">
+          <template v-for="(page, idx) in paginationRange" :key="idx">
+            <span v-if="page === '...'" class="pagination-ellipsis">…</span>
+            <button
+              v-else
+              type="button"
+              class="pagination-page"
+              :class="{ active: page === currentPage }"
+              @click="goToPage(page as number)"
+            >
+              {{ page }}
+            </button>
+          </template>
+        </div>
+
+        <button
+          type="button"
+          class="pagination-btn"
+          :disabled="currentPage === totalPages"
+          @click="goToPage(currentPage + 1)"
+        >
+          <span>Siguiente</span>
+          <ChevronRight :size="18" :stroke-width="1.5" />
+        </button>
+      </nav>
     </main>
   </div>
 </template>
@@ -271,18 +347,34 @@ onMounted(loadJobs);
   box-sizing: border-box;
 }
 
+/* Panel unificado: título + buscador comparten una sola tarjeta */
+.search-panel {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
+  padding: var(--space-4);
+  margin-bottom: var(--space-3);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.find-job-hero {
+  padding-bottom: var(--space-3);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.find-job-hero :deep(.page-header) {
+  margin-bottom: 0;
+}
+
 /* Search composer */
 .search-composer {
   display: grid;
   grid-template-columns: 2fr 1fr 1fr 1fr auto;
   gap: var(--space-2);
   align-items: end;
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-card);
-  padding: var(--space-3);
-  margin-bottom: var(--space-3);
-  box-shadow: var(--shadow-card);
 }
 
 .search-field {
@@ -549,6 +641,96 @@ onMounted(loadJobs);
   padding: var(--space-4);
   text-align: center;
   color: var(--color-text-secondary);
+}
+
+/* Pagination */
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--color-border);
+}
+
+.pagination-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-button);
+  color: var(--color-text-secondary);
+  font-size: var(--fs-body-sm);
+  font-weight: var(--fw-semibold);
+  cursor: pointer;
+  transition: border-color 150ms ease, color 150ms ease, background-color 150ms ease;
+}
+
+.pagination-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .pagination-btn:not(:disabled):hover {
+    border-color: var(--color-accent);
+    color: var(--color-accent);
+  }
+}
+
+.pagination-pages {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.pagination-page {
+  min-width: 34px;
+  height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radius-button);
+  color: var(--color-text-secondary);
+  font-size: var(--fs-body-sm);
+  font-weight: var(--fw-semibold);
+  cursor: pointer;
+  transition: border-color 150ms ease, color 150ms ease, background-color 150ms ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .pagination-page:not(.active):hover {
+    border-color: var(--color-border);
+    background: var(--color-bg);
+  }
+}
+
+.pagination-page.active {
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+  color: #fff;
+}
+
+.pagination-ellipsis {
+  padding: 0 4px;
+  color: var(--color-text-muted);
+  font-size: var(--fs-body-sm);
+}
+
+@media (max-width: 480px) {
+  .pagination {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .pagination-btn span {
+    display: none;
+  }
 }
 
 @media (max-width: 900px) {
