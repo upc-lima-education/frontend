@@ -10,12 +10,9 @@ import { NotificationType } from '../model/notification.model';
 
 /**
  * Estado y acciones del tablero de seguimiento de postulaciones (organización).
- * El backend no expone un GET para listar postulaciones (solo crear/aprobar/
- * rechazar/seleccionar una por id), así que el tablero no puede poblarse con
- * datos reales todavía; en vez de mostrar postulantes de ejemplo, se marca
- * `unavailable` y la página muestra un estado "no disponible" honesto. Las
- * acciones (aprobar/rechazar/seleccionar/notificar) sí pegan a las APIs
- * reales de /recruitment y /notifications para cuando el listado exista.
+ * El backend no expone un GET para listar postulaciones todavía, así que el
+ * tablero se puebla con datos mock (ver `recruitment.service.ts`). `unavailable`
+ * se conserva para el caso en que la carga falle.
  */
 
 export function useApplicationTracking() {
@@ -31,10 +28,16 @@ export function useApplicationTracking() {
     async function load(): Promise<void> {
         loading.value = true;
         errorMessage.value = '';
-        // El backend no tiene GET /recruitment/applications todavía.
-        unavailable.value = true;
-        applications.value = [];
-        loading.value = false;
+        try {
+            applications.value = await recruitmentService.getApplications();
+            unavailable.value = false;
+        } catch (err) {
+            console.error('Error cargando postulaciones:', err);
+            unavailable.value = true;
+            applications.value = [];
+        } finally {
+            loading.value = false;
+        }
     }
 
     /** Ofertas únicas para el filtro superior. */

@@ -12,18 +12,23 @@ const { signOut } = useLogout();
 
 type NavLink = { to: string; label: string };
 
-// Center links filtered by role — never more than 4. The role-specific
-// primary action lives in the CTA button, so it is not duplicated here.
 const links = computed<NavLink[]>(() => {
     const news: NavLink = { to: ROUTE_CONSTANTS.NEWS_PAGE, label: 'navbar.news' };
+    const profile: NavLink = { to: ROUTE_CONSTANTS.SETTINGS_PAGE, label: 'navbar.profile' };
     if (auth.currentUserType === 'organization') {
         return [
             news,
             { to: ROUTE_CONSTANTS.RECRUITMENT_APPLICATIONS, label: 'navbar.applications' },
             { to: ROUTE_CONSTANTS.MESSAGE_COMPANY, label: 'navbar.messages' },
+            profile,
         ];
     }
-    return [news, { to: ROUTE_CONSTANTS.MESSAGE_EMPLOYEE, label: 'navbar.messages' }];
+    return [
+        news,
+        { to: ROUTE_CONSTANTS.JOB_SEARCH, label: 'navbar.findJob' },
+        { to: ROUTE_CONSTANTS.MESSAGE_EMPLOYEE, label: 'navbar.messages' },
+        profile,
+    ];
 });
 
 const cta = computed<NavLink>(() =>
@@ -114,9 +119,10 @@ async function handleLogout() {
                     >
                         <img v-if="auth.currentUser?.picture" :src="auth.currentUser.picture" class="avatar-img" alt="" />
                         <span v-else class="avatar-initials">{{ initials }}</span>
-                        <ChevronDown class="avatar-caret" :size="16" :stroke-width="1.5" />
+                        <ChevronDown class="avatar-caret" :class="{ 'is-open': menuOpen }" :size="16" :stroke-width="1.5" />
                     </button>
 
+                    <Transition name="menu">
                     <div v-if="menuOpen" class="menu" role="menu">
                         <div class="menu-head">
                             <span class="menu-name">{{ displayName }}</span>
@@ -135,6 +141,7 @@ async function handleLogout() {
                             <span>{{ $t('navbar.logout') }}</span>
                         </button>
                     </div>
+                    </Transition>
                 </div>
 
                 <!-- Mobile toggle: turns into an X when open -->
@@ -152,6 +159,7 @@ async function handleLogout() {
         </div>
 
         <!-- Mobile vertical panel -->
+        <Transition name="slide-down">
         <nav v-if="mobileOpen" class="mobile-panel" aria-label="Principal">
             <RouterLink
                 v-for="link in links"
@@ -169,6 +177,7 @@ async function handleLogout() {
                 {{ $t('navbar.logout') }}
             </button>
         </nav>
+        </Transition>
     </header>
 </template>
 
@@ -230,7 +239,7 @@ async function handleLogout() {
     font-weight: var(--fw-medium);
     color: var(--color-text-secondary);
     text-decoration: none;
-    transition: var(--transition);
+    transition: background-color 150ms ease, color 150ms ease, border-color 150ms ease, transform 100ms ease-out;
 }
 
 .nav-link:hover {
@@ -262,7 +271,7 @@ async function handleLogout() {
     background: transparent;
     color: var(--color-text-secondary);
     cursor: pointer;
-    transition: var(--transition);
+    transition: background-color 150ms ease, color 150ms ease, border-color 150ms ease, transform 100ms ease-out;
 }
 
 .icon-btn:hover {
@@ -281,7 +290,7 @@ async function handleLogout() {
     font-size: var(--fs-body-sm);
     font-weight: var(--fw-semibold);
     text-decoration: none;
-    transition: var(--transition);
+    transition: background-color 150ms ease, color 150ms ease, border-color 150ms ease, transform 100ms ease-out;
 }
 
 .cta:hover {
@@ -303,7 +312,7 @@ async function handleLogout() {
     background: var(--color-surface);
     color: var(--color-text-muted);
     cursor: pointer;
-    transition: var(--transition);
+    transition: background-color 150ms ease, color 150ms ease, border-color 150ms ease, transform 100ms ease-out;
 }
 
 .avatar-btn:hover {
@@ -328,6 +337,29 @@ async function handleLogout() {
     font-weight: var(--fw-semibold);
 }
 
+/* Chevron rotation when menu open */
+.avatar-caret {
+    transition: transform 200ms ease;
+    flex-shrink: 0;
+}
+
+.avatar-caret.is-open {
+    transform: rotate(180deg);
+}
+
+/* Dropdown menu transition */
+.menu-enter-active,
+.menu-leave-active {
+    transition: opacity 150ms ease, transform 150ms ease-out;
+    transform-origin: top right;
+}
+
+.menu-enter-from,
+.menu-leave-to {
+    opacity: 0;
+    transform: scale(0.95) translateY(-6px);
+}
+
 .menu {
     position: absolute;
     top: calc(100% + var(--space-1));
@@ -336,6 +368,7 @@ async function handleLogout() {
     background: var(--color-surface);
     border: 1px solid var(--color-border);
     border-radius: var(--radius-card);
+    box-shadow: 0 4px 20px rgba(15, 15, 26, 0.12);
     padding: var(--space-1);
     display: flex;
     flex-direction: column;
@@ -379,8 +412,17 @@ async function handleLogout() {
     font-weight: var(--fw-medium);
     text-decoration: none;
     cursor: pointer;
-    transition: var(--transition);
+    transition: background-color 150ms ease, color 150ms ease, transform 100ms ease-out;
     text-align: left;
+}
+
+/* base.css * { color } overrides inherited color on child spans */
+.menu-item span {
+    color: inherit;
+}
+
+.menu-item:active {
+    transform: scale(0.98);
 }
 
 .menu-item:hover {
@@ -395,6 +437,20 @@ async function handleLogout() {
 .menu-item--danger:hover {
     background: var(--color-bg);
     color: var(--color-state-error-dark);
+}
+
+/* Mobile panel transition */
+.slide-down-enter-active,
+.slide-down-leave-active {
+    transition: opacity 200ms ease, transform 200ms ease-out;
+    transform-origin: top;
+    overflow: hidden;
+}
+
+.slide-down-enter-from,
+.slide-down-leave-to {
+    opacity: 0;
+    transform: translateY(-8px);
 }
 
 /* Mobile */
@@ -422,7 +478,7 @@ async function handleLogout() {
     text-decoration: none;
     text-align: left;
     cursor: pointer;
-    transition: var(--transition);
+    transition: background-color 150ms ease, color 150ms ease, border-color 150ms ease, transform 100ms ease-out;
 }
 
 .mobile-link:hover,

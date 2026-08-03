@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="Llanqui">
+  <rect x="0" y="0" width="128" height="128" rx="28" fill="#1E2BAA"/>
+  <!-- L -->
+  <rect x="20" y="28" width="22" height="68" rx="6" fill="#FFFFFF"/>
+  <rect x="20" y="78" width="52" height="18" rx="6" fill="#FFFFFF"/>
+  <!-- l -->
+  <rect x="84" y="28" width="22" height="68" rx="6" fill="#FFFFFF"/>
+  <rect x="84" y="28" width="22" height="22" rx="6" fill="#B8C0E8"/>
+</svg>

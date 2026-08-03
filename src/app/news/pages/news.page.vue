@@ -4,7 +4,7 @@ import NewsCardComponent from '../components/news-card.component.vue';
 import DialogComponent from '@/app/shared/components/dialog.component.vue';
 import { useNewsPage } from '@/app/news/composables/useNewsPage';
 import { useAuthenticationStore } from '@/app/auth/services/authentication.store';
-import { Image, Video, Calendar, FileText, ArrowRight } from 'lucide-vue-next';
+import { Image, Video, Calendar, FileText, ArrowRight, Settings, Loader } from 'lucide-vue-next';
 import { RecommendationService, type RecommendationResponse } from '../../job/services/recommendation.service';
 
 const { newsData, posting, error, toggleHeart, createPost } = useNewsPage();
@@ -102,7 +102,8 @@ async function handleCreatePost() {
 
                     <div class="profile-footer">
                         <RouterLink to="/settings" class="manage-account-link">
-                            Gestionar cuenta
+                            <Settings :size="13" :stroke-width="1.5" />
+                            <span>Gestionar cuenta</span>
                         </RouterLink>
                     </div>
                 </div>
@@ -187,33 +188,34 @@ async function handleCreatePost() {
                 <div class="recommend-card">
                     <h3 class="card-title">Sugerencias de empleo</h3>
                     
-                    <div v-if="loadingRecommendations" class="p-4 text-center text-xs text-gray-500">
-                        <span class="animate-pulse">Cargando sugerencias de IA...</span>
+                    <div v-if="loadingRecommendations" class="rec-loading">
+                        <Loader :size="16" :stroke-width="1.5" class="rec-spinner" />
+                        <span>Cargando sugerencias…</span>
                     </div>
-                    
-                    <div v-else-if="recommendations.length === 0" class="p-4 text-center text-xs text-gray-400 italic">
+
+                    <p v-else-if="recommendations.length === 0" class="rec-empty">
                         No hay sugerencias disponibles
-                    </div>
-                    
-                    <div v-else v-for="(rec, index) in recommendations" :key="rec.source_url">
-                        <div class="recommend-item">
-                            <div class="recommend-icon">💼</div>
-                            <div class="recommend-details">
-                                <h4 class="recommend-title">{{ rec.title }}</h4>
-                                <p class="recommend-company">
-                                    <span class="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-green-50 text-green-700 border border-green-200">
-                                        {{ rec.similarity_score ? rec.similarity_score.toFixed(1) + '%' : '90%' }} de compatibilidad
-                                    </span>
-                                </p>
-                                <a :href="rec.source_url" target="_blank" class="recommend-link">
-                                    Ver en {{ rec.originPage || 'Llanqui' }} <ArrowRight :size="12" />
-                                </a>
+                    </p>
+
+                    <template v-else>
+                        <div v-for="(rec, index) in recommendations" :key="rec.source_url">
+                            <div class="recommend-item">
+                                <div class="recommend-icon">💼</div>
+                                <div class="recommend-details">
+                                    <h4 class="recommend-title">{{ rec.title }}</h4>
+                                    <p class="recommend-company">
+                                        <span class="compat-badge">
+                                            {{ rec.similarity_score ? rec.similarity_score.toFixed(1) + '%' : '90%' }} compatibilidad
+                                        </span>
+                                    </p>
+                                    <a :href="rec.source_url" target="_blank" class="recommend-link">
+                                        Ver en {{ rec.originPage || 'Llanqui' }} <ArrowRight :size="12" />
+                                    </a>
+                                </div>
                             </div>
+                            <div v-if="index < recommendations.length - 1" class="recommend-sep"></div>
                         </div>
-                        <div v-if="index < recommendations.length - 1" class="recommend-item">
-                            <div class="recommend-details-sep"></div>
-                        </div>
-                    </div>
+                    </template>
                 </div>
             </aside>
         </div>
@@ -241,7 +243,7 @@ async function handleCreatePost() {
     width: 100%;
     max-width: var(--page-max);
     margin: 0 auto;
-    padding: var(--space-4) var(--page-gutter);
+    padding: var(--space-3) var(--page-gutter);
     box-sizing: border-box;
 }
 
@@ -265,7 +267,7 @@ async function handleCreatePost() {
     border-radius: var(--radius-card);
     overflow: hidden;
     box-shadow: var(--shadow-card);
-    transition: var(--transition);
+    transition: box-shadow 200ms ease, background-color 150ms ease;
 }
 
 .profile-card:hover {
@@ -369,12 +371,61 @@ async function handleCreatePost() {
     font-weight: var(--fw-semibold);
     color: var(--color-accent);
     text-decoration: none;
-    transition: var(--transition);
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    transition: color 150ms ease;
 }
 
-.manage-account-link:hover {
-    color: var(--color-primary);
-    text-decoration: underline;
+.manage-account-link span { color: inherit; }
+
+@media (hover: hover) and (pointer: fine) {
+    .manage-account-link:hover {
+        color: var(--color-primary);
+    }
+}
+
+/* Recommendation section styles */
+.rec-loading {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: var(--space-2);
+    font-size: var(--fs-caption);
+    color: var(--color-text-muted);
+}
+
+.rec-spinner {
+    animation: spin 1s linear infinite;
+    color: var(--color-accent);
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.rec-empty {
+    padding: var(--space-2);
+    font-size: var(--fs-caption);
+    color: var(--color-text-muted);
+    font-style: italic;
+    text-align: center;
+}
+
+.compat-badge {
+    display: inline-flex;
+    padding: 2px 8px;
+    border-radius: var(--radius-button);
+    font-size: 10px;
+    font-weight: var(--fw-semibold);
+    background: rgba(59, 156, 32, 0.1);
+    color: var(--color-state-success-dark);
+    border: 1px solid rgba(59, 156, 32, 0.25);
+    color: var(--color-state-success-dark);
+}
+
+.recommend-sep {
+    height: 1px;
+    background: var(--color-border);
+    margin: 8px 0;
 }
 
 /* Center Column */
@@ -433,7 +484,7 @@ async function handleCreatePost() {
     text-align: left;
     padding-left: var(--space-2);
     cursor: pointer;
-    transition: var(--transition);
+    transition: box-shadow 200ms ease, background-color 150ms ease;
 }
 
 .post-trigger-btn:hover {
@@ -460,7 +511,7 @@ async function handleCreatePost() {
     font-size: var(--fs-caption);
     font-weight: var(--fw-semibold);
     cursor: pointer;
-    transition: var(--transition);
+    transition: box-shadow 200ms ease, background-color 150ms ease;
 }
 
 .action-btn-item:hover {

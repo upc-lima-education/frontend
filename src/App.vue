@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { RouterView } from 'vue-router';
 import NavbarComponent from './app/shared/components/navbar.component.vue';
-import { useAppLayout } from './app/shared/composables/useAppLayout';
+import { useAppLayout } from './app/shared/composables/useAppLayout.ts';
 
 const { showSidebar: showNavbar } = useAppLayout();
 </script>

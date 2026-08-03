@@ -34,7 +34,7 @@ input:not([type="file"]), textarea, select {
   width: 100%;
   box-sizing: border-box;
   background-color: var(--background-color-default);
-  transition: all 0.2s ease;
+  transition: border-color 150ms ease, box-shadow 150ms ease, background-color 150ms ease;
 }
 
 input:focus:not([type="file"]), textarea:focus, select:focus {

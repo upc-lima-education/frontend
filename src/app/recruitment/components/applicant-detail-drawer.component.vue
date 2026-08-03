@@ -308,6 +308,11 @@ function emitNotify(): void {
     position: absolute;
     inset: 0;
     background: rgba(15, 15, 26, 0.4);
+    transition: opacity 250ms ease;
+
+    @starting-style {
+        opacity: 0;
+    }
 }
 
 .drawer {
@@ -321,12 +326,11 @@ function emitNotify(): void {
     border-left: 1px solid var(--color-border);
     display: flex;
     flex-direction: column;
-    animation: slideIn 0.15s ease;
-}
+    transition: transform 280ms var(--ease-drawer);
 
-@keyframes slideIn {
-    from { transform: translateX(16px); opacity: 0.6; }
-    to { transform: translateX(0); opacity: 1; }
+    @starting-style {
+        transform: translateX(100%);
+    }
 }
 
 .drawer-head {
@@ -356,12 +360,18 @@ function emitNotify(): void {
     background: transparent;
     color: var(--color-text-secondary);
     cursor: pointer;
-    transition: var(--transition);
+    transition: background-color 150ms ease, color 150ms ease, transform 100ms ease-out;
 }
 
-.icon-btn:hover {
-    background: var(--color-bg);
-    color: var(--color-text-primary);
+@media (hover: hover) and (pointer: fine) {
+    .icon-btn:hover {
+        background: var(--color-bg);
+        color: var(--color-text-primary);
+    }
+}
+
+.icon-btn:active {
+    transform: scale(0.93);
 }
 
 .drawer-body {
@@ -499,12 +509,18 @@ function emitNotify(): void {
     border: 1px solid var(--color-border);
     border-radius: var(--radius-button);
     text-decoration: none;
-    transition: var(--transition);
+    transition: border-color 150ms ease, background-color 150ms ease, transform 100ms ease-out;
 }
 
-.cv-link:hover {
-    border-color: var(--color-accent);
-    background: var(--color-ai-bg);
+@media (hover: hover) and (pointer: fine) {
+    .cv-link:hover {
+        border-color: var(--color-accent);
+        background: var(--color-ai-bg);
+    }
+}
+
+.cv-link:active {
+    transform: scale(0.97);
 }
 
 /* Bloques */
@@ -618,11 +634,17 @@ function emitNotify(): void {
     font-size: var(--fs-caption);
     font-weight: var(--fw-semibold);
     cursor: pointer;
-    transition: var(--transition);
+    transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease, transform 100ms ease-out;
 }
 
-.btn-decision:hover:not(:disabled) {
-    background: var(--color-bg);
+@media (hover: hover) and (pointer: fine) {
+    .btn-decision:hover:not(:disabled) {
+        background: var(--color-bg);
+    }
+}
+
+.btn-decision:active:not(:disabled) {
+    transform: scale(0.95);
 }
 
 .btn-decision:disabled {
@@ -668,11 +690,17 @@ function emitNotify(): void {
     font-size: var(--fs-body-sm);
     font-weight: var(--fw-semibold);
     cursor: pointer;
-    transition: var(--transition);
+    transition: background-color 150ms ease, transform 100ms ease-out;
 }
 
-.btn-message:hover {
-    background: var(--color-ai-bg);
+@media (hover: hover) and (pointer: fine) {
+    .btn-message:hover {
+        background: var(--color-ai-bg);
+    }
+}
+
+.btn-message:active {
+    transform: scale(0.98);
 }
 
 /* Notificación */
@@ -711,7 +739,7 @@ function emitNotify(): void {
     border: 1px solid var(--color-border);
     border-radius: var(--radius-input);
     box-sizing: border-box;
-    transition: var(--transition);
+    transition: border-color 150ms ease, box-shadow 150ms ease, background-color 150ms ease;
 }
 
 .field-input:focus {
@@ -746,7 +774,11 @@ textarea.field-input {
     font-size: var(--fs-caption);
     font-weight: var(--fw-semibold);
     cursor: pointer;
-    transition: var(--transition);
+    transition: background-color 150ms ease, color 150ms ease, box-shadow 150ms ease, transform 100ms ease-out;
+}
+
+.mode-btn:active {
+    transform: scale(0.97);
 }
 
 .mode-btn:hover:not(.on) {
@@ -805,11 +837,17 @@ textarea.field-input {
     font-size: var(--fs-body-sm);
     font-weight: var(--fw-semibold);
     cursor: pointer;
-    transition: var(--transition);
+    transition: background-color 150ms ease, transform 100ms ease-out;
 }
 
-.btn-send:hover:not(:disabled) {
-    background: var(--color-state-success-dark);
+@media (hover: hover) and (pointer: fine) {
+    .btn-send:hover:not(:disabled) {
+        background: var(--color-state-success-dark);
+    }
+}
+
+.btn-send:active:not(:disabled) {
+    transform: scale(0.98);
 }
 
 .btn-send:disabled {

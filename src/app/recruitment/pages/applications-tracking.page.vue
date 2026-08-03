@@ -309,20 +309,21 @@ function exportShortlist(): void {
 .column {
     display: flex;
     flex-direction: column;
-    gap: var(--space-2);
+    gap: var(--space-1);
     background: var(--color-bg);
     border: 1px solid var(--color-border);
     border-radius: var(--radius-card);
-    padding: var(--space-2);
-    min-height: 160px;
+    overflow: hidden;
+    min-height: 200px;
 }
 
 .col-head {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding-bottom: 10px;
-    border-bottom: 2px solid var(--accent);
+    padding: 12px var(--space-2);
+    background: var(--color-surface);
+    border-bottom: 3px solid var(--accent);
 }
 
 .col-title {
@@ -346,6 +347,10 @@ function exportShortlist(): void {
 }
 
 .col-body {
+    padding: var(--space-1);
+}
+
+.col-body {
     display: flex;
     flex-direction: column;
     gap: var(--space-1);
@@ -356,9 +361,14 @@ function exportShortlist(): void {
     flex-direction: column;
     align-items: center;
     gap: 6px;
-    padding: var(--space-3) var(--space-1);
+    padding: var(--space-4) var(--space-2);
     color: var(--color-text-muted);
     font-size: var(--fs-caption);
+    text-align: center;
+    border: 1px dashed var(--color-border);
+    border-radius: var(--radius-button);
+    margin: var(--space-1);
+    background: rgba(255,255,255,0.5);
 }
 
 @media (max-width: 980px) {

@@ -165,6 +165,12 @@ const {
   color: #fff;
 }
 
+/* base.css aplica * { color: var(--text-color) } que sobreescribe la herencia.
+   Forzamos blanco en todos los elementos textuales del panel oscuro. */
+.brand-panel :where(span, p, h1, h2, h3, small) {
+  color: #fff;
+}
+
 .brand-head {
   display: flex;
   align-items: center;
@@ -182,6 +188,7 @@ const {
   font-size: 1.25rem;
   font-weight: 700;
   letter-spacing: -0.01em;
+  color: #fff;
 }
 
 .brand-art {
@@ -323,12 +330,17 @@ const {
   cursor: pointer;
   font-size: 0.85rem;
   color: var(--gray-07);
-  transition: all 0.2s ease;
+  transition: border-color 150ms ease, background-color 150ms ease, color 150ms ease, transform 100ms ease-out;
   text-align: center;
+}
+
+.role-btn:active {
+  transform: scale(0.97);
 }
 
 .role-btn strong {
   font-weight: 600;
+  color: inherit;
 }
 
 .role-btn:hover {
@@ -353,19 +365,21 @@ const {
   font-size: 1rem;
   font-weight: 600;
   cursor: pointer;
-  transition: background 0.2s, transform 0.1s;
+  transition: background-color 150ms ease, transform 100ms ease-out;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
 }
 
-.btn-primary:hover:not(:disabled) {
-  background: var(--main-color-04);
+@media (hover: hover) and (pointer: fine) {
+  .btn-primary:hover:not(:disabled) {
+    background: var(--main-color-04);
+  }
 }
 
 .btn-primary:active:not(:disabled) {
-  transform: translateY(1px);
+  transform: scale(0.98);
 }
 
 .btn-primary:disabled {
