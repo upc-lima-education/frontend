@@ -7,6 +7,7 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
+
 node_modules
 .DS_Store
 dist
@@ -39,3 +40,6 @@ coverage
 
 # Vitest
 __screenshots__/
+
+#AI (shouldn't  be an issue in the first place)
+.claude
