@@ -3,5 +3,6 @@ export enum Experience {
     ThreeMonths,
     SixMonths,
     OneYear,
-    TwoOrMoreYears
+    TwoYears,
+    ThreeOrMoreYears
 }
