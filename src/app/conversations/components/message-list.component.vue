@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, watch, nextTick } from "vue";
-import { MessageResponse } from "../model/message.response";
+import { MessageResponse } from "../model/message.response.ts";
 import MessageBubbleComponent from "./message-bubble.component.vue";
 
 const props = defineProps<{

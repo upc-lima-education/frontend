@@ -1,11 +1,10 @@
 <script setup lang="ts">
 import { onMounted, ref } from "vue";
 import { useAuthenticationStore } from "@/app/auth/services/authentication.store";
-import { JobService } from "@/app/job/services/job.service";
-import { messageService } from "../services/message.service";
+import { messageService } from "../services/message.service.ts";
 
-import { ConversationResponse } from "../model/conversation.response";
-import { MessageResponse } from "../model/message.response";
+import { ConversationResponse } from "../model/conversation.response.ts";
+import { MessageResponse } from "../model/message.response.ts";
 
 import ConversationListComponent from "../components/conversation-list.component.vue";
 import MessageListComponent from "../components/message-list.component.vue";
@@ -13,7 +12,6 @@ import MessageInputComponent from "../components/message-input.component.vue";
 import { MessageCircle } from "lucide-vue-next";
 
 const authStore = useAuthenticationStore();
-const jobService = new JobService();
 
 const conversations = ref<ConversationResponse[]>([]);
 const currentConversation = ref<ConversationResponse | null>(null);
@@ -22,19 +20,6 @@ const messages = ref<MessageResponse[]>([]);
 const loading = ref(false);
 const error = ref('');
 const userId = ref("");
-
-/**
- * El backend no expone un inbox agregado; solo GET /conversation/job/{jobId}.
- * Para la empresa sí es posible construir un listado honesto: se enumeran
- * sus propios jobs y se juntan las conversaciones de cada uno.
- */
-async function getConversations(): Promise<ConversationResponse[]> {
-    const jobs = await jobService.getJobsByCompany(authStore.currentUserId);
-    const conversationsByJob = await Promise.all(
-        jobs.map(job => messageService.getConversationsByJob(job.id).catch(() => []))
-    );
-    return conversationsByJob.flat();
-}
 
 async function selectConversation(conversation: ConversationResponse) {
     currentConversation.value = conversation;
@@ -62,7 +47,7 @@ onMounted(async () => {
     loading.value = true;
     error.value = '';
     try {
-        conversations.value = await getConversations();
+        conversations.value = await messageService.getConversationsForEmployee(authStore.currentUserId);
     } catch (err) {
         console.error('Error loading conversations:', err);
         error.value = 'No se pudieron cargar las conversaciones.';
@@ -232,7 +217,7 @@ onMounted(async () => {
         grid-template-columns: 1fr;
     }
     .conversation-panel {
-        display: none; /* In production, we'd add toggles, but this follows grid constraints nicely */
+        display: none;
     }
 }
 </style>

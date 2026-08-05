@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ConversationResponse } from '../model/conversation.response';
+import { ConversationResponse } from '../model/conversation.response.ts';
 import ConversationItemComponent from './conversation-item.component.vue';
 import { Search } from 'lucide-vue-next';
 
