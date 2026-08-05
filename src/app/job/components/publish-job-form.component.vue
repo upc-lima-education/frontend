@@ -2,7 +2,7 @@
 import { computed, onMounted, reactive, ref, watch } from 'vue';
 import { useAuthenticationStore } from '@/app/auth/services/authentication.store';
 import { JobService } from '../services/job.service';
-import { CreateJobRequest } from '../model/create-job.request';
+import { CreateJobRequestOld } from '../model/old/create-job.request';
 import { Currency } from '../enums/currency.enum';
 import { Experience } from '../enums/experience.enum';
 import { JobStatus } from '../enums/job-status.enum';
@@ -157,7 +157,7 @@ async function submit() {
             : JobStatus.Active.toString();
         const skills = getSkillsFromSkillBubbles();
         if (skills.length <= 0) return;
-        const request = new CreateJobRequest(
+        const request = new CreateJobRequestOld(
             //Id
             companyId.value,
             //Details
@@ -182,7 +182,7 @@ async function submit() {
             closesAt,
             jobStatus
         );
-        await jobService.createJob(request);
+        await jobService.createJobOld(request);
         alert("Oferta de empleo publicada con éxito");
     } catch (e: any) {
         console.log("An error ocurred: ", e);

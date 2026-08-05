@@ -1,4 +1,7 @@
-export class UpdateJobRequest {
+export class JobResponse {
+    //Id
+    id: string;
+    companyId: string;
     //Details
     title: string;
     description: string;
@@ -21,17 +24,22 @@ export class UpdateJobRequest {
     opensAt: Date;
     closesAt: Date;
     jobStatus: string;
+    originPage: string;
     //External
+    sourceUrl: string;
     applyUrl: string;
 
     constructor(
+        //Id
+        id: string,
+        companyId: string,
         //Details
         title: string,
         description: string,
         jobType: string,
         workHours: string,
-        skills: Array<string>,
         //Requirements
+        skills: Array<string>,
         experience: string,
         educationLevel: string,
         //Location
@@ -47,9 +55,13 @@ export class UpdateJobRequest {
         opensAt: Date,
         closesAt: Date,
         jobStatus: string,
+        originPage: string,
         //External
-        applyUrl: string
+        sourceUrl: string,
+        applyUrl: string,
     ){
+        this.id = id;
+        this.companyId = companyId;
         this.title = title;
         this.description = description;
         this.jobType = jobType;
@@ -67,6 +79,8 @@ export class UpdateJobRequest {
         this.opensAt = opensAt;
         this.closesAt = closesAt;
         this.jobStatus = jobStatus;
+        this.originPage = originPage;
+        this.sourceUrl = sourceUrl;
         this.applyUrl = applyUrl;
     }
 }

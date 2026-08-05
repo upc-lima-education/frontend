@@ -1,6 +1,4 @@
-export class CreateJobRequest {
-    //Id
-    companyId: string;
+export class UpdateJobRequest {
     //Details
     title: string;
     description: string;
@@ -25,8 +23,6 @@ export class CreateJobRequest {
     jobStatus: string;
 
     constructor(
-        //Id
-        companyId: string,
         //Details
         title: string,
         description: string,
@@ -49,8 +45,6 @@ export class CreateJobRequest {
         closesAt: Date,
         jobStatus: string
     ) {
-        //Id
-        this.companyId = companyId;
         //Details
         this.title = title;
         this.description = description;

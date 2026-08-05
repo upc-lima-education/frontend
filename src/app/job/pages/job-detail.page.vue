@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue';
 import { useRoute } from 'vue-router';
-import { GetJobByIdResponse } from '../model/get-job-by-id.response';
+import { GetJobByIdResponse } from '../model/old/get-job-by-id.response.ts';
 import { JobService } from '../services/job.service';
 import JobDetailComponent from '../components/job-detail.component.vue';
 
@@ -22,7 +22,7 @@ onMounted(async () => {
     error.value = '';
     try {
         const id = route.params.id as string;
-        job.value = await jobService.getJobById({ id });
+        job.value = await jobService.getJobByIdOld({ id });
     } catch (err) {
         console.error('Error loading job:', err);
         error.value = 'No se pudo cargar la vacante.';

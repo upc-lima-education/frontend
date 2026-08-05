@@ -2,7 +2,7 @@
 import { computed, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import PageHeaderComponent from '@/app/shared/components/page-header.component.vue';
-import { GetJobByIdResponse } from '../model/get-job-by-id.response';
+import { GetJobByIdResponse } from '../model/old/get-job-by-id.response';
 import { JobService } from '../services/job.service';
 import { RecommendationService } from '../services/recommendation.service';
 import { ubigeoService } from '@/app/shared/services/ubigeo.service';

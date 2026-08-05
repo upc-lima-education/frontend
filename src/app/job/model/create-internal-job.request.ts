@@ -1,4 +1,6 @@
-export class UpdateJobRequest {
+export class CreateInternalJobRequest {
+    //Id
+    companyId: string;
     //Details
     title: string;
     description: string;
@@ -25,6 +27,8 @@ export class UpdateJobRequest {
     applyUrl: string;
 
     constructor(
+        //Id
+        companyId: string,
         //Details
         title: string,
         description: string,
@@ -50,6 +54,7 @@ export class UpdateJobRequest {
         //External
         applyUrl: string
     ){
+        this.companyId = companyId;
         this.title = title;
         this.description = description;
         this.jobType = jobType;
@@ -69,4 +74,4 @@ export class UpdateJobRequest {
         this.jobStatus = jobStatus;
         this.applyUrl = applyUrl;
     }
-}
+} 
