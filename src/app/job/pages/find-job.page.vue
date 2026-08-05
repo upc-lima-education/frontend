@@ -5,7 +5,7 @@ import PageHeaderComponent from '@/app/shared/components/page-header.component.v
 import { GetJobByIdResponse } from '../model/old/get-job-by-id.response';
 import { JobService } from '../services/job.service';
 import { RecommendationService } from '../services/recommendation.service';
-import { ubigeoService } from '@/app/shared/services/ubigeo.service';
+import { ubigeoService } from '@/app/common/services/ubigeo.service';
 import { Search, MapPin, Building2, Wifi, Users, MonitorCheck, ChevronLeft, ChevronRight } from 'lucide-vue-next';
 
 const { t } = useI18n();

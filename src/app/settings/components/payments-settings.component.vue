@@ -12,7 +12,7 @@ import {
   RefreshCw,
   Check
 } from 'lucide-vue-next';
-import { paymentService } from '@/app/shared/services/payment.service';
+import { paymentService } from '@/app/common/services/payment.service';
 
 const route = useRoute();
 const router = useRouter();

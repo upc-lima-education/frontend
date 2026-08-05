@@ -2,7 +2,7 @@ import { ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthenticationStore } from '@/app/auth/services/authentication.store';
 import { SignUpRequest } from '@/app/auth/model/sign-up/sign-up.request';
-import { ROUTE_CONSTANTS } from '@/app/shared/router/route-constants';
+import { ROUTE_CONSTANTS } from '@/app/common/router/route-constants';
 import { OAUTH_SIGNUP_ROLE_KEY } from '@/app/auth/constants/oauth-signup-role';
 
 export type SignUpUserRole = 'employee' | 'organization' | null;

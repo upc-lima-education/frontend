@@ -2,7 +2,7 @@
 import { onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { Inbox, Download } from 'lucide-vue-next';
-import { ROUTE_CONSTANTS } from '@/app/shared/router/route-constants';
+import { ROUTE_CONSTANTS } from '@/app/common/router/route-constants.ts';
 import { useAuthenticationStore } from '@/app/auth/services/authentication.store';
 import { ApplicationStatus, APPLICATION_STATUS_LABEL } from '../enums/application-status.enum';
 import type { ApplicationResponse } from '../model/application.response';

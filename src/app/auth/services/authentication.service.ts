@@ -1,4 +1,4 @@
-import http from "@/app/shared/services/base.service";
+import http from "@/app/common/services/base.service";
 import { SignUpResponse } from "../model/sign-up/sign-up.response";
 import { SignUpRequest } from "../model/sign-up/sign-up.request";
 import { SignInRequest } from "../model/sign-in/sign-in.request";

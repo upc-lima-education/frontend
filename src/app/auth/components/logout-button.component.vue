@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useLogout } from '@/app/shared/composables/useLogout';
+import { useLogout } from '@/app/common/composables/useLogout';
 
 const { signOut } = useLogout();
 </script>

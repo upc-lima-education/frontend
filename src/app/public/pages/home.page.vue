@@ -35,7 +35,7 @@
 </template>
 
 <script setup lang="ts">
-import { ROUTE_CONSTANTS } from '@/app/shared/router/route-constants';
+import { ROUTE_CONSTANTS } from '@/app/common/router/route-constants';
 import PageHeader from '@/app/shared/components/page-header.component.vue';
 import { useHomePage } from '@/app/public/composables/useHomePage';
 

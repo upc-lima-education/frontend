@@ -1,4 +1,4 @@
-import httpRecommender from "@/app/shared/services/recommender.service";
+import httpRecommender from "@/app/common/services/recommender.service";
 
 export interface RecommendationRequest {
     title_search: string;

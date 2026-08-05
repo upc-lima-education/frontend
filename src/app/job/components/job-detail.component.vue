@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
 import { GetJobByIdResponse } from '../model/old/get-job-by-id.response';
-import { ubigeoService } from '@/app/shared/services/ubigeo.service';
+import { ubigeoService } from '@/app/common/services/ubigeo.service';
 import DialogComponent from '@/app/shared/components/dialog.component.vue';
 import { recruitmentService } from '@/app/recruitment/services/recruitment.service';
 import { useAuthenticationStore } from '@/app/auth/services/authentication.store';

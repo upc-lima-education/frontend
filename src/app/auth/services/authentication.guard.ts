@@ -1,7 +1,7 @@
 
 import type { NavigationGuardNext, RouteLocationNormalized } from "vue-router";
 import { useAuthenticationStore } from "./authentication.store";
-import { ROUTE_CONSTANTS } from "@/app/shared/router/route-constants";
+import { ROUTE_CONSTANTS } from "@/app/common/router/route-constants";
 
 /**
  * Guard de autenticación y autorización por rol.

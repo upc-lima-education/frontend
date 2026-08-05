@@ -1,4 +1,4 @@
-import http from '@/app/shared/services/base.service';
+import http from '@/app/common/services/base.service';
 import type { CreateApplicationRequest } from '../model/application.request';
 import type { ApplicationResponse } from '../model/application.response';
 import { ApplicationStatus } from '../enums/application-status.enum';

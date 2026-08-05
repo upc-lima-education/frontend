@@ -1,4 +1,4 @@
-import ubigeoData from '@/app/shared/data/ubigeo.json';
+import ubigeoData from '@/app/common/data/ubigeo.json';
 
 /** Nombres coloquiales que no coinciden literalmente con `sDistrito` en el catálogo. */
 const DISTRICT_ALIASES: Record<string, string> = {

@@ -3,8 +3,8 @@ import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import { Bell, Menu, X, ChevronDown, User, Settings, LogOut } from 'lucide-vue-next';
 import { useAuthenticationStore } from '@/app/auth/services/authentication.store';
-import { useLogout } from '@/app/shared/composables/useLogout';
-import { ROUTE_CONSTANTS } from '@/app/shared/router/route-constants';
+import { useLogout } from '@/app/common/composables/useLogout';
+import { ROUTE_CONSTANTS } from '@/app/common/router/route-constants';
 
 const route = useRoute();
 const auth = useAuthenticationStore();

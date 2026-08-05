@@ -15,7 +15,7 @@ import {
   CreditCard
 } from 'lucide-vue-next';
 import { useCvGenerator } from '@/app/cv/composables/useCvGenerator';
-import { paymentService } from '@/app/shared/services/payment.service';
+import { paymentService } from '@/app/common/services/payment.service';
 
 const router = useRouter();
 const { state, errorMessage, isCreditError, previewUrl, generate, download, reset } = useCvGenerator();

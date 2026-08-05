@@ -1,6 +1,6 @@
 import { useRoute, useRouter } from 'vue-router';
 import { onMounted, ref } from 'vue';
-import { ROUTE_CONSTANTS } from '@/app/shared/router/route-constants';
+import { ROUTE_CONSTANTS } from '@/app/common/router/route-constants';
 import { useAuthenticationStore } from '@/app/auth/services/authentication.store';
 import { OAUTH_SIGNUP_ROLE_KEY } from '@/app/auth/constants/oauth-signup-role';
 

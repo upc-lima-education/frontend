@@ -1,4 +1,4 @@
-import http from "@/app/shared/services/base.service";
+import http from "@/app/common/services/base.service";
 import { SignUpUserEmployeeResponse } from "../model/employee-profile.response";
 import { SignUpUserOrganizationResponse } from "../model/organization-profile.response";
 import { SignUpUserEmployeeRequest } from "../model/employee-profile.request";

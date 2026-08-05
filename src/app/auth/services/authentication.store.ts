@@ -5,8 +5,8 @@ import type { SignInResponse } from "../model/sign-in/sign-in.response";
 import type { SignUpRequest } from "../model/sign-up/sign-up.request";
 import { UserResponse } from "../model/user.response";
 import { computed, ref } from "vue";
-import router from "@/app/shared/router";
-import { ROUTE_CONSTANTS } from "@/app/shared/router/route-constants";
+import router from "@/app/common/router";
+import { ROUTE_CONSTANTS } from "@/app/common/router/route-constants";
 
 /**
  * Authentication store definition

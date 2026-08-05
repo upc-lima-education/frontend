@@ -1,6 +1,6 @@
 import { computed } from 'vue';
 import { useRoute } from 'vue-router';
-import { ROUTE_CONSTANTS } from '@/app/shared/router/route-constants';
+import { ROUTE_CONSTANTS } from '@/app/common/router/route-constants';
 
 const PATHS_WITHOUT_SIDEBAR: readonly string[] = [
     ROUTE_CONSTANTS.SIGN_IN_PAGE,

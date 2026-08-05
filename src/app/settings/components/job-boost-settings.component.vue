@@ -5,7 +5,7 @@ import {
   TrendingUp, Star, Check, Loader2, AlertCircle, CheckCircle2,
   Briefcase, CalendarClock, Megaphone,
 } from 'lucide-vue-next';
-import { paymentService } from '@/app/shared/services/payment.service';
+import { paymentService } from '@/app/common/services/payment.service';
 import { useAuthenticationStore } from '@/app/auth/services/authentication.store';
 import { JobService } from '@/app/job/services/job.service';
 

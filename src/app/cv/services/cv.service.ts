@@ -1,4 +1,4 @@
-import http from "@/app/shared/services/base.service";
+import http from "@/app/common/services/base.service";
 import type { GenerateCvRequest, GenerateCvResponse, CvStatusResponse } from "../model/cv.model";
 
 /**

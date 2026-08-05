@@ -1,5 +1,5 @@
-import router from '@/app/shared/router';
-import { ROUTE_CONSTANTS } from '@/app/shared/router/route-constants';
+import router from '@/app/common/router';
+import { ROUTE_CONSTANTS } from '@/app/common/router/route-constants';
 import { ref } from 'vue';
 import { useAuthenticationStore } from '@/app/auth/services/authentication.store';
 import { SignInRequest } from '@/app/auth/model/sign-in/sign-in.request';

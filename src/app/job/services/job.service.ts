@@ -1,4 +1,4 @@
-import http from "@/app/shared/services/base.service";
+import http from "@/app/common/services/base.service";
 import { GetJobByIdResponse } from "../model/old/get-job-by-id.response";
 import { CreateJobResponse } from "../model/old/create-job.response";
 import { UpdateJobResponse } from "../model/old/update-job.response";
