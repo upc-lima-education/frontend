@@ -7,11 +7,10 @@ import { Currency } from '../enums/currency.enum';
 import { Experience } from '../enums/experience.enum';
 import { JobStatus } from '../enums/job-status.enum';
 import { SalaryPeriod } from '../enums/salary-period';
-import { enumToOptions } from '../utils/enum-to-options.util';
+import { enumToOptions } from '../../common/utils/enum-to-options.util';
 import { JobType } from '../enums/job-type.enum';
 import { CompensationType } from '../enums/compensation-type.enum';
 import ubigeoData from '@/app/common/data/ubigeo.json';
-import ButtonClueComponent from '@/app/shared/components/button-clue.component.vue';
 import { ArrowLeft, ArrowRight, Save, Plus, X } from 'lucide-vue-next';
 
 const jobService = new JobService();
