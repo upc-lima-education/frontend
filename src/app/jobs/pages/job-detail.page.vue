@@ -2,7 +2,7 @@
 import { onMounted, ref } from 'vue';
 import { useRoute } from 'vue-router';
 import { GetJobByIdResponse } from '../model/old/get-job-by-id.response.ts';
-import { JobService } from '../services/job.service';
+import { JobService } from '../services/job.service.ts';
 import JobDetailComponent from '../components/job-detail.component.vue';
 
 const route = useRoute();

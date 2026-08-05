@@ -1,6 +1,6 @@
 import { computed, onMounted, ref } from 'vue';
 import { useAuthenticationStore } from '@/app/auth/services/authentication.store';
-import { profileService } from '@/app/profile/services/profile.service';
+import { profileService } from '@/app/profiles/services/profile.service';
 
 /** API profile payload shape (subset used by the view). */
 export type ProfileViewData = {

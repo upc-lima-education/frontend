@@ -7,7 +7,7 @@ import {
 } from 'lucide-vue-next';
 import { paymentService } from '@/app/common/services/payment.service';
 import { useAuthenticationStore } from '@/app/auth/services/authentication.store';
-import { JobService } from '@/app/job/services/job.service';
+import { JobService } from '@/app/jobs/services/job.service';
 
 const route = useRoute();
 const router = useRouter();

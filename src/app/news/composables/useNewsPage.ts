@@ -2,7 +2,7 @@ import { onMounted, ref } from 'vue';
 import { NewsService } from '@/app/news/services/news.service';
 import { NewsRequest } from '@/app/news/model/news.request';
 import type { NewsResponse } from '@/app/news/model/news.response';
-import { profileService } from '@/app/profile/services/profile.service';
+import { profileService } from '@/app/profiles/services/profile.service';
 import { useAuthenticationStore } from '@/app/auth/services/authentication.store';
 
 export function useNewsPage() {

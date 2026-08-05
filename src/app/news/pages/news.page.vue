@@ -5,7 +5,7 @@ import DialogComponent from '@/app/shared/components/dialog.component.vue';
 import { useNewsPage } from '@/app/news/composables/useNewsPage';
 import { useAuthenticationStore } from '@/app/auth/services/authentication.store';
 import { Image, Video, Calendar, FileText, ArrowRight, Settings, Loader } from 'lucide-vue-next';
-import { RecommendationService, type RecommendationResponse } from '../../job/services/recommendation.service';
+import { RecommendationService, type RecommendationResponse } from '../../jobs/services/recommendation.service.ts';
 
 const { newsData, posting, error, toggleHeart, createPost } = useNewsPage();
 const auth = useAuthenticationStore();

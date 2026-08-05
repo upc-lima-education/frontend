@@ -9,11 +9,11 @@ import NotFoundPage from '@/app/public/not_found/pages/not-found.page.vue';
 import HomePage from '@/app/public/pages/home.page.vue';
 import NewsPage from '@/app/news/pages/news.page.vue';
 import SettingsPage from '@/app/settings/pages/settings.page.vue';
-import FindJobPage from '@/app/job/pages/find-job.page.vue';
-import PublishJobPage from '@/app/job/pages/publish-job.page.vue';
+import FindJobPage from '@/app/jobs/pages/find-job.page.vue';
+import PublishJobPage from '@/app/jobs/pages/publish-job.page.vue';
 import MessagingCompanyPage from '@/app/conversations/pages/messaging-company.page.vue';
 import MessagingEmployeePage from '@/app/conversations/pages/messaging-employee.page.vue';
-import JobDetailPage from '@/app/job/pages/job-detail.page.vue';
+import JobDetailPage from '@/app/jobs/pages/job-detail.page.vue';
 import ApplicationsTrackingPage from '@/app/recruitment/pages/applications-tracking.page.vue';
 
 const router = createRouter({

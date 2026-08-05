@@ -1,17 +1,17 @@
 import { computed, reactive, ref, type Ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useAuthenticationStore } from '@/app/auth/services/authentication.store';
-import { profileService } from '@/app/profile/services/profile.service';
-import { isValidDNI, isValidRUC } from '@/app/profile/utils/identification-validation';
-import { districtNameToUbigeo } from '@/app/profile/utils/district-ubigeo.util';
+import { profileService } from '@/app/profiles/services/profile.service';
+import { isValidDNI, isValidRUC } from '@/app/profiles/utils/identification-validation';
+import { districtNameToUbigeo } from '@/app/profiles/utils/district-ubigeo.util';
 import {
     PROFILE_BIO_MAX_LENGTH,
     DISTRICT_OPTIONS,
     PROFESSION_OPTIONS,
     INDUSTRY_OPTIONS,
     COMPANY_SIZE_OPTIONS,
-} from '@/app/profile/model/profile-edit.options';
-import type { WorkExperience, Education, Certification, LanguageEntry } from '@/app/profile/model/profile-history.model';
+} from '@/app/profiles/model/profile-edit.options';
+import type { WorkExperience, Education, Certification, LanguageEntry } from '@/app/profiles/model/profile-history.model';
 
 export function useProfileEdit() {
     const authStore = useAuthenticationStore();

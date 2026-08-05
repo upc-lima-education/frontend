@@ -10,7 +10,7 @@ import {
   ExternalLink
 } from 'lucide-vue-next';
 import { useAuthenticationStore } from '@/app/auth/services/authentication.store';
-import { profileService } from '@/app/profile/services/profile.service';
+import { profileService } from '@/app/profiles/services/profile.service';
 
 const authStore = useAuthenticationStore();
 

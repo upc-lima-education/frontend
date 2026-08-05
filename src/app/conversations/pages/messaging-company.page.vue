@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { onMounted, ref } from "vue";
 import { useAuthenticationStore } from "@/app/auth/services/authentication.store";
-import { JobService } from "@/app/job/services/job.service";
+import { JobService } from "@/app/jobs/services/job.service.ts";
 import { messageService } from "../services/message.service.ts";
 
 import { ConversationResponse } from "../model/conversation.response.ts";
