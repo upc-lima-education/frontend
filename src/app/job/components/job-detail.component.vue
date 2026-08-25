@@ -5,7 +5,7 @@ import { ubigeoService } from '@/app/shared/services/ubigeo.service';
 import DialogComponent from '@/app/shared/components/dialog.component.vue';
 import { recruitmentService } from '@/app/recruitment/services/recruitment.service';
 import { useAuthenticationStore } from '@/app/auth/services/authentication.store';
-import { MapPin, Briefcase, Calendar, Clock, DollarSign, Award, Trash2, CheckSquare, Star } from 'lucide-vue-next';
+import { MapPin, Briefcase, Calendar, Clock, DollarSign, Award, Trash2, CheckSquare, Star, ArrowLeft, Bookmark, ExternalLink, Sparkles } from 'lucide-vue-next';
 
 const auth = useAuthenticationStore();
 
@@ -95,6 +95,11 @@ function DeleteDialog() {
 //Apply to job behaviour
 const applyJobDialogRef = ref<InstanceType<typeof DialogComponent>>();
 const applying = ref(false);
+const saved = ref(false);
+
+function toggleSaved() {
+    saved.value = !saved.value;
+}
 
 async function ApplyToJob() {
     if (applying.value) return;
@@ -121,130 +126,33 @@ async function ApplyToJob() {
 
 <template>
     <div class="job-detail-container">
-        <!-- Hero Cover Banner -->
-        <div class="job-cover-banner"></div>
+        <div class="job-detail-topbar"><RouterLink to="/job-search" class="back-link"><ArrowLeft :size="16" /> Volver a oportunidades</RouterLink><span v-if="isExternalListing" class="source-label"><ExternalLink :size="13" /> Oferta externa</span></div>
 
-        <!-- Job Header Details -->
         <header class="job-detail-header">
-            <div class="header-avatar-row">
-                <img v-if="companyImage" :src="companyImage" alt="company logo" class="company-logo" draggable="false">
-                <div v-else class="company-logo-placeholder">
-                    <Briefcase :size="32" />
-                </div>
-
-                <div class="header-actions">
-                    <button v-if="!isCompany" class="btn-primary apply-btn" @click="applyJobDialogRef?.open()">
-                        <CheckSquare :size="16" />
-                        <span>Postular ahora</span>
-                    </button>
-                    <button v-if="isCompany" class="btn-danger delete-btn" @click="deleteDialogRef?.open()">
-                        <Trash2 :size="16" />
-                        <span>Eliminar anuncio</span>
-                    </button>
+            <div class="header-main-row">
+                <img v-if="companyImage" :src="companyImage" alt="Logo de la empresa" class="company-logo" draggable="false">
+                <div v-else class="company-logo-placeholder"><Briefcase :size="28" /></div>
+                <div class="header-text-block">
+                    <span v-if="featured" class="sponsored-chip"><Star :size="12" :stroke-width="2" /> Patrocinado</span>
+                    <h1 class="job-title">{{ displayTitle }}</h1>
+                    <div class="company-row" v-if="displayCompanyName || hasLocationLabel"><span class="company-name" v-if="displayCompanyName">{{ displayCompanyName }}</span><span class="dot-separator" v-if="displayCompanyName && hasLocationLabel">•</span><span class="location-text" v-if="hasLocationLabel">{{ district }}, {{ department }}</span></div>
+                    <div class="header-quick-meta"><span class="meta-badge"><Calendar :size="14" /> Publicado el {{ formatDate(job.creationDate) }}</span><span class="meta-badge alert-badge" v-if="job.closesAt"><Clock :size="14" /> Vence el {{ formatDate(job.closesAt) }}</span></div>
                 </div>
             </div>
-
-            <div class="header-text-block">
-                <span v-if="featured" class="sponsored-chip">
-                    <Star :size="12" :stroke-width="2" />
-                    <span>Patrocinado</span>
-                </span>
-                <h1 class="job-title">{{ displayTitle }}</h1>
-                <div class="company-row" v-if="displayCompanyName || hasLocationLabel">
-                    <span class="company-name" v-if="displayCompanyName">{{ displayCompanyName }}</span>
-                    <span class="dot-separator" v-if="displayCompanyName && hasLocationLabel">•</span>
-                    <span class="location-text" v-if="hasLocationLabel">{{ district }}, {{ department }}</span>
-                </div>
-                <div class="header-quick-meta">
-                    <span class="meta-badge">
-                        <Calendar :size="14" />
-                        <span>Publicado el {{ formatDate(job.creationDate) }}</span>
-                    </span>
-                    <span class="meta-badge alert-badge" v-if="job.closesAt">
-                        <Clock :size="14" />
-                        <span>Vence el {{ formatDate(job.closesAt) }}</span>
-                    </span>
-                </div>
-            </div>
+            <div class="header-actions"><button v-if="!isCompany" class="save-btn" :class="{ saved }" type="button" :aria-pressed="saved" aria-label="Guardar oferta" @click="toggleSaved"><Bookmark :size="17" /><span>{{ saved ? 'Guardada' : 'Guardar' }}</span></button><button v-if="!isCompany" class="btn-primary apply-btn" @click="applyJobDialogRef?.open()"><CheckSquare :size="17" /><span>Postularme</span></button><button v-if="isCompany" class="btn-danger delete-btn" @click="deleteDialogRef?.open()"><Trash2 :size="16" /><span>Eliminar anuncio</span></button></div>
         </header>
 
-        <!-- Two Column Main Layout -->
         <div class="job-detail-layout">
-            <!-- Left Panel: Job Description and info -->
             <main class="job-description-panel">
-                <section class="info-section">
-                    <h2 class="section-title">Sobre el empleo</h2>
-                    <p class="description-text">{{ formattedDescription }}</p>
-                </section>
-
-                <section v-if="job.skills && job.skills.length" class="info-section">
-                    <h2 class="section-title">Habilidades deseadas</h2>
-                    <div class="skills-tags-list">
-                        <span v-for="skill in job.skills" :key="skill" class="skill-tag">
-                            {{ skill.trim() }}
-                        </span>
-                    </div>
-                </section>
-
-                <section class="info-section grid-section">
-                    <div class="grid-card">
-                        <div class="grid-card-icon text-accent">
-                            <DollarSign :size="24" />
-                        </div>
-                        <div class="grid-card-info">
-                            <h3 class="grid-card-title">Remuneración</h3>
-                            <p class="grid-card-val">{{ formatSalary(job.minSalary, job.maxSalary, job.currency) }}</p>
-                            <p class="grid-card-sub" v-if="hasSalaryInfo">{{ $t(`job.data.salaryPeriod.${job.salaryPeriod}`) }}</p>
-                        </div>
-                    </div>
-
-                    <div class="grid-card">
-                        <div class="grid-card-icon text-warning">
-                            <Award :size="24" />
-                        </div>
-                        <div class="grid-card-info">
-                            <h3 class="grid-card-title">Tipo de Contrato</h3>
-                            <p class="grid-card-val">{{ $t(`job.data.compensationType.${job.compensationType}`) }}</p>
-                            <p class="grid-card-sub">Modalidad {{ $t(`job.data.type.${job.jobType || 'InPerson'}`) }}</p>
-                        </div>
-                    </div>
-                </section>
-
-                <section class="info-section" v-if="job.address || hasLocationLabel">
-                    <h2 class="section-title">Ubicación</h2>
-                    <div class="location-details-box">
-                        <MapPin :size="20" class="loc-icon" />
-                        <div class="loc-text-block">
-                            <p class="loc-address">{{ job.address || 'Dirección no especificada' }}</p>
-                            <p class="loc-city" v-if="hasLocationLabel">{{ district }}, {{ department }}, Perú</p>
-                        </div>
-                    </div>
-                </section>
+                <section class="fit-callout"><div class="fit-icon"><Sparkles :size="18" /></div><div><strong>Revisa si esta oportunidad es para ti</strong><p>Compara las habilidades y condiciones antes de enviar tu postulación.</p></div></section>
+                <section class="info-section"><h2 class="section-title">Sobre el empleo</h2><p class="description-text">{{ formattedDescription }}</p></section>
+                <section v-if="job.skills && job.skills.length" class="info-section"><h2 class="section-title">Habilidades deseadas</h2><div class="skills-tags-list"><span v-for="skill in job.skills" :key="skill" class="skill-tag">{{ skill.trim() }}</span></div></section>
+                <section class="info-section grid-section"><div class="grid-card"><div class="grid-card-icon text-accent"><DollarSign :size="22" /></div><div class="grid-card-info"><h3 class="grid-card-title">Remuneración</h3><p class="grid-card-val">{{ formatSalary(job.minSalary, job.maxSalary, job.currency) }}</p><p class="grid-card-sub" v-if="hasSalaryInfo">{{ $t(`job.data.salaryPeriod.${job.salaryPeriod}`) }}</p></div></div><div class="grid-card"><div class="grid-card-icon text-warning"><Award :size="22" /></div><div class="grid-card-info"><h3 class="grid-card-title">Contrato y modalidad</h3><p class="grid-card-val">{{ $t(`job.data.compensationType.${job.compensationType}`) }}</p><p class="grid-card-sub">{{ $t(`job.data.type.${job.jobType || 'InPerson'}`) }}</p></div></div></section>
+                <section class="info-section" v-if="job.address || hasLocationLabel"><h2 class="section-title">Ubicación</h2><div class="location-details-box"><MapPin :size="20" class="loc-icon" /><div class="loc-text-block"><p class="loc-address">{{ job.address || 'Dirección no especificada' }}</p><p class="loc-city" v-if="hasLocationLabel">{{ district }}, {{ department }}, Perú</p></div></div></section>
             </main>
-
-            <!-- Right Panel: Ad performance and quick stats -->
-            <aside class="job-stats-panel" v-if="isCompany">
-                <div class="stats-card">
-                    <h3 class="stats-card-title">Rendimiento del anuncio</h3>
-                    <div class="stats-list">
-                        <div class="stat-item">
-                            <span class="stat-num">{{ job.views || 0 }}</span>
-                            <span class="stat-lbl">Visualizaciones</span>
-                        </div>
-                        <div class="stat-item-row">
-                            <span class="stat-item-label">Estado</span>
-                            <span class="stat-status-badge active">Activo</span>
-                        </div>
-                        <div class="stat-item-row">
-                            <span class="stat-item-label">Apertura</span>
-                            <span>{{ formatDate(job.opensAt) }}</span>
-                        </div>
-                        <div class="stat-item-row">
-                            <span class="stat-item-label">Cierre</span>
-                            <span>{{ formatDate(job.closesAt) }}</span>
-                        </div>
-                    </div>
-                </div>
+            <aside class="job-stats-panel">
+                <div v-if="!isCompany" class="apply-sidebar"><span class="sidebar-kicker">¿Te interesa?</span><h2>Da el siguiente paso.</h2><p>Postúlate y deja que la empresa conozca tu perfil.</p><button class="sidebar-apply" type="button" @click="applyJobDialogRef?.open()"><CheckSquare :size="17" /> {{ applying ? 'Enviando…' : 'Postularme' }}</button><span class="sidebar-note">Te tomará menos de un minuto</span></div>
+                <div v-if="isCompany" class="stats-card"><h3 class="stats-card-title">Rendimiento del anuncio</h3><div class="stats-list"><div class="stat-item"><span class="stat-num">{{ job.views || 0 }}</span><span class="stat-lbl">Visualizaciones</span></div><div class="stat-item-row"><span class="stat-item-label">Estado</span><span class="stat-status-badge active">Activo</span></div><div class="stat-item-row"><span class="stat-item-label">Apertura</span><span>{{ formatDate(job.opensAt) }}</span></div><div class="stat-item-row"><span class="stat-item-label">Cierre</span><span>{{ formatDate(job.closesAt) }}</span></div></div></div>
             </aside>
         </div>
 
@@ -700,4 +608,12 @@ async function ApplyToJob() {
         grid-template-columns: 1fr;
     }
 }
+
+/* Detail page direction: a clear decision surface, not a profile card. */
+.job-detail-container { max-width: var(--page-max); margin: 0 auto; border: 1px solid var(--color-border); border-radius: 18px; box-shadow: 0 10px 28px rgba(30,43,170,.08); }
+.job-detail-topbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 15px 24px; background: var(--color-bg); border-bottom: 1px solid var(--color-border); }.back-link, .source-label { display: inline-flex; align-items: center; gap: 6px; color: var(--color-text-secondary); font-size: 12px; font-weight: var(--fw-semibold); text-decoration: none; }.back-link:hover { color: var(--color-accent); }.source-label { color: var(--color-text-muted); font-size: 11px; font-weight: var(--fw-medium); }
+.job-detail-header { display: flex; align-items: flex-end; justify-content: space-between; gap: 28px; padding: 34px 32px 30px; background: var(--color-surface); }.header-main-row { display: flex; align-items: flex-start; gap: 18px; min-width: 0; }.company-logo, .company-logo-placeholder { width: 68px; height: 68px; flex: 0 0 68px; border: 0; border-radius: 16px; box-shadow: none; }.company-logo-placeholder { display: grid; place-items: center; color: var(--color-accent); background: var(--color-ai-bg); }.header-text-block { gap: 7px; }.job-title { font-size: clamp(26px, 4vw, 38px); letter-spacing: -.045em; line-height: 1.05; }.company-row { font-size: 14px; }.header-quick-meta { margin-top: 5px; gap: 14px; }.header-actions { flex-shrink: 0; align-items: center; }.save-btn { display: inline-flex; align-items: center; gap: 7px; height: 42px; padding: 0 13px; border: 1px solid var(--color-border); border-radius: 8px; color: var(--color-text-secondary); background: var(--color-surface); font-size: 12px; font-weight: var(--fw-semibold); cursor: pointer; }.save-btn:hover { border-color: var(--color-lavender); color: var(--color-accent); }.apply-btn { height: 42px; padding: 0 18px; border-radius: 8px; }.job-detail-layout { grid-template-columns: minmax(0, 1fr) 290px; gap: 0; }.job-description-panel { padding: 30px 32px 40px; gap: 32px; }.job-stats-panel { padding: 30px 22px; background: var(--color-bg); }.fit-callout { display: flex; align-items: flex-start; gap: 12px; padding: 16px; border: 1px solid var(--color-ai-outline); border-radius: 12px; background: var(--color-ai-bg); }.fit-icon { width: 32px; height: 32px; flex: 0 0 32px; display: grid; place-items: center; color: var(--color-accent); background: var(--color-surface); border-radius: 9px; }.fit-callout strong { display: block; margin-bottom: 4px; color: var(--color-text-primary); font-size: 13px; }.fit-callout p { margin: 0; color: var(--color-text-secondary); font-size: 12px; line-height: 1.45; }.section-title { border-left: 0; padding-left: 0; font-size: 20px; letter-spacing: -.025em; }.description-text { color: var(--color-text-secondary); font-size: 14px; line-height: 1.75; }.skills-tags-list { gap: 7px; }.skill-tag { padding: 7px 11px; border-radius: 7px; background: var(--color-bg); font-size: 11px; }.grid-section { gap: 12px; }.grid-card { padding: 17px; border-radius: 12px; background: var(--color-surface); }.grid-card-icon { width: 31px; height: 31px; display: grid; place-items: center; border-radius: 8px; background: var(--color-bg); }.grid-card-val { font-size: 14px; }.location-details-box { border-radius: 12px; }.apply-sidebar { position: sticky; top: 92px; padding: 22px; border-radius: 14px; color: #fff; background: #111a5c; }.sidebar-kicker { color: #c7f36b; font-size: 10px; font-weight: var(--fw-bold); letter-spacing: .12em; text-transform: uppercase; }.apply-sidebar h2 { margin: 12px 0 8px; color: #fff; font-size: 22px; letter-spacing: -.035em; }.apply-sidebar p { margin: 0 0 20px; color: rgba(255,255,255,.7); font-size: 13px; line-height: 1.5; }.sidebar-apply { width: 100%; display: inline-flex; align-items: center; justify-content: center; gap: 7px; height: 42px; border: 0; border-radius: 8px; color: #111a5c; background: #c7f36b; font-size: 12px; font-weight: var(--fw-bold); cursor: pointer; }.sidebar-apply:hover { background: #d7fa8d; }.sidebar-note { display: block; margin-top: 12px; color: rgba(255,255,255,.5); font-size: 10px; text-align: center; }.stats-card { position: sticky; top: 92px; }
+ .save-btn.saved { border-color: var(--color-lavender); color: var(--color-accent); background: var(--color-ai-bg); }
+@media (max-width: 800px) { .job-detail-header { align-items: flex-start; flex-direction: column; padding: 26px 22px; }.header-actions { width: 100%; }.save-btn, .apply-btn, .delete-btn { flex: 1; justify-content: center; }.job-detail-layout { grid-template-columns: 1fr; }.job-stats-panel { padding: 0 22px 28px; }.apply-sidebar, .stats-card { position: static; }.job-description-panel { padding: 26px 22px 32px; } }
+@media (max-width: 500px) { .job-detail-topbar { padding: 13px 16px; }.source-label { display: none; }.header-main-row { gap: 13px; }.company-logo, .company-logo-placeholder { width: 54px; height: 54px; flex-basis: 54px; border-radius: 12px; }.job-title { font-size: 25px; }.company-row { flex-wrap: wrap; }.header-quick-meta { flex-direction: column; gap: 5px; }.grid-section { grid-template-columns: 1fr; } }
 </style>
