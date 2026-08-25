@@ -40,7 +40,10 @@
         "signInBrandTitle": "Conectamos talento local con oportunidades verificadas",
         "signInBrandNote": "Llanqui es la red de trabajo para todos. Conectamos a personas de cualquier nivel educativo o de experiencia directamente con organizaciones de manera sencilla.",
         "welcomeBack": "Te damos la bienvenida",
-        "orWithEmail": "o con correo electrónico"
+        "orWithEmail": "o con correo electrónico",
+        "error": "Ocurrió un error al autenticar",
+        "authenticating": "Autenticando. Por favor, espere",
+        "redirect": "Redirigiendo a Iniciar Sesión..."
     },
     "sidebar": {
         "news": "Novedades",
@@ -107,6 +110,7 @@
         "companyDescriptionPlaceholder": "Cuéntanos sobre tu empresa, su misión, visión y valores..."
     },
     "common": {
+        "confirm": "Confirmar",
         "next": "Siguiente",
         "return": "Regresar",
         "search": "Buscar",
@@ -135,7 +139,10 @@
         "companyName": "Nombre de la Empresa",
         "district": "Distrito",
         "description": "Descripción",
-        "keywords": "Palabras Clave"
+        "keywords": "Palabras Clave",
+        "notSpecified": "No especificado",
+        "unknown": "Desconocido",
+        "sponsored": "Patrocinado"
     },
     "job": {
         "creationPage": {
@@ -171,7 +178,8 @@
                 "ThreeMonths": "3 meses",
                 "SixMonths": "6 meses",
                 "OneYear": "1 año",
-                "TwoOrMoreYears": "2 years or more"
+                "TwoYears": "2 años",
+                "ThreeOrMoreYears": "3 o más años"
             },
             "type": {
                 "name": "Tipo de trabajo",

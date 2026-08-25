@@ -3,7 +3,7 @@ import { computed, onMounted, reactive, ref, watch } from 'vue';
 import { useAuthenticationStore } from '@/app/auth/services/authentication.store';
 import { JobService } from '../services/job.service';
 import { CreateJobRequestOld } from '../model/old/create-job.request';
-import { Currency } from '../enums/currency.enum';
+import { JobCurrency } from '../enums/job-currency.enum';
 import { Experience } from '../enums/experience.enum';
 import { JobStatus } from '../enums/job-status.enum';
 import { SalaryPeriod } from '../enums/salary-period';
@@ -34,7 +34,7 @@ const form = reactive({
     //Payment
     minSalary: 0,
     maxSalary: 0,
-    currency: Currency.PEN,
+    currency: JobCurrency.PEN,
     salaryPeriod: SalaryPeriod.Monthly,
     compensationType: CompensationType.Fixed,
     //Traceability
@@ -88,7 +88,7 @@ const districts = computed(() => {
 
 //Enums to <select> options
 const experienceOptions = enumToOptions(Experience, 'job.data.experience');
-const currencyOptions = enumToOptions(Currency, 'job.data.currency');
+const currencyOptions = enumToOptions(JobCurrency, 'job.data.currency');
 const salaryPeriodOptions = enumToOptions(SalaryPeriod, 'job.data.salaryPeriod');
 const jobTypeOptions = enumToOptions(JobType, 'job.data.type');
 const compensationTypeOptions = enumToOptions(CompensationType, 'job.data.compensationType');
@@ -173,7 +173,7 @@ async function submit() {
             //Payment
             Number(form.minSalary),
             Number(form.maxSalary),
-            Currency[form.currency],
+            JobCurrency[form.currency],
             SalaryPeriod[form.salaryPeriod],
             CompensationType[form.compensationType],
             //Traceability

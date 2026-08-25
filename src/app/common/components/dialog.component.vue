@@ -1,28 +1,20 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 
-defineProps({
-    title: {
-        type: String,
-        required: true
-    },
-    subtitle: {
-        type: String,
-        default: ''
-    },
-    description: {
-        type: String,
-        default: ''
-    },
-    variant: {
-        type: String as () => 'default' | 'success' | 'danger',
-        default: 'default'
-    }
+withDefaults(defineProps<{
+    title: string;
+    subtitle?: string;
+    description?: string;
+    variant?: 'default' | 'success' | 'danger';
+}>(), {
+    subtitle: '',
+    description: '',
+    variant: 'default'
 });
 
 const emit = defineEmits<{
-    (e: 'confirm'): void;
-    (e: 'cancel'): void;
+    confirm: [];
+    cancel: [];
 }>();
 
 const dialogRef = ref<HTMLDialogElement | null>(null);
@@ -58,8 +50,8 @@ defineExpose({ open, close });
         </section>
 
         <footer class="dialog-footer">
-            <button class="btn cancel" @click="cancel"> Cancel </button>
-            <button class="btn confirm" :class="variant" @click="confirm"> Confirm </button>
+            <button @click="cancel"> {{ $t('common.cancel') }} </button>
+            <button class="confirm" :class="variant" @click="confirm"> {{ $t('common.confirm') }} </button>
         </footer>
     </dialog>
 </template>
@@ -72,7 +64,7 @@ defineExpose({ open, close });
     left: 50%;
     transform: translate(-50%, -50%);
 
-    width: 100%;
+    width: calc(100% - (var(--space-4) * 2));
     max-width: 420px;
     border: none;
     border-radius: 12px;
@@ -80,7 +72,7 @@ defineExpose({ open, close });
     background-color: var(--color-surface);
     box-shadow: 0 15px 40px rgba(0, 0, 0, 0.25);
 
-    /* Entry animation: scale + opacity, sin mover Y (modales se quedan centrados) */
+    /* Animation */
     scale: 1;
     opacity: 1;
     transition: scale 200ms var(--ease-out), opacity 200ms ease;
@@ -93,7 +85,7 @@ defineExpose({ open, close });
     }
 }
 
-/* Backdrop con fade */
+/* Backdrop */
 .base-dialog::backdrop {
     background-color: rgba(15, 15, 26, 0.5);
     transition: background-color 200ms ease;
@@ -105,14 +97,12 @@ defineExpose({ open, close });
 
 /* Header */
 .dialog-header {
-    padding: 20px;
-    border-bottom: 1px solid var(--color-border);
+    padding: var(--space-5);
 }
 
 .dialog-header h2 {
     margin: 0;
-    font-size: 1.3rem;
-    color: var(--color-text-primary);
+    color: var(--color-text-main);
 }
 
 .dialog-header p {
@@ -122,66 +112,37 @@ defineExpose({ open, close });
 
 /* Body */
 .dialog-body {
-    padding: 20px;
-    color: var(--color-text-secondary);
-    font-size: 0.95rem;
+    padding: var(--space-5);
 }
 
 /* Footer */
 .dialog-footer {
     display: flex;
     justify-content: flex-end;
-    gap: 12px;
-    padding: 16px 20px;
-    border-top: 1px solid var(--color-border);
-}
-
-/* Buttons */
-.btn {
-    padding: 8px 16px;
-    border-radius: var(--radius-button);
-    font-weight: 600;
-    cursor: pointer;
-    border: none;
-    transition: background-color 150ms ease, transform 100ms ease-out;
-}
-
-.btn:active:not(:disabled) {
-    transform: scale(0.97);
-}
-
-.cancel {
-    background-color: var(--color-bg);
-    color: var(--color-text-primary);
-}
-
-@media (hover: hover) and (pointer: fine) {
-    .cancel:hover {
-        background-color: var(--color-border);
-    }
-}
-
-.confirm {
-    color: white;
+    gap: var(--space-3);
+    padding: var(--space-4) var(--space-5);
 }
 
 .confirm.default {
-    background-color: var(--color-accent);
+    color: var(--color-text-inverted);
+    background-color: var(--color-brand);
 }
 
 @media (hover: hover) and (pointer: fine) {
     .confirm.default:hover {
-        background-color: var(--color-accent-hover);
+        background-color: var(--color-brand-hover);
     }
 }
 
 .confirm.success {
+    color: var(--color-text);
     background-color: var(--color-state-success);
 }
 
 @media (hover: hover) and (pointer: fine) {
     .confirm.success:hover {
-        background-color: var(--color-state-success-dark);
+        color: var(--color-text-inverted);
+        background-color: var(--color-state-success-hover);
     }
 }
 
@@ -191,7 +152,8 @@ defineExpose({ open, close });
 
 @media (hover: hover) and (pointer: fine) {
     .confirm.danger:hover {
-        background-color: var(--color-state-error-dark);
+        color: var(--color-text-inverted);
+        background-color: var(--color-state-error-hover);
     }
 }
 </style>

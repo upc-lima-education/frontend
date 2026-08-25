@@ -10,8 +10,8 @@ import {
     PROFESSION_OPTIONS,
     INDUSTRY_OPTIONS,
     COMPANY_SIZE_OPTIONS,
-} from '@/app/profiles/model/profile-edit.options';
-import type { WorkExperience, Education, Certification, LanguageEntry } from '@/app/profiles/model/profile-history.model';
+} from '@/app/profiles/model/old/profile-edit.options';
+import type { WorkExperience, Education, Certification, LanguageEntry } from '@/app/profiles/model/old/profile-history.model';
 
 export function useProfileEdit() {
     const authStore = useAuthenticationStore();
@@ -169,7 +169,7 @@ export function useProfileEdit() {
             error.value = '';
             isNewProfile.value = false;
             
-            const response = await profileService.getProfileByUserId(authStore.currentUserId);
+            const response = await profileService.getProfileByUserIdOld(authStore.currentUserId);
             const d = response.data?.data || response.data;
 
             profilePicturePreview.value = d.profilePicture || '';
@@ -376,7 +376,7 @@ export function useProfileEdit() {
                 if (isEmployee.value) {
                     // PUT /profile/{userId}/candidate — no lleva userId ni
                     // profilePicture (esa tiene su propio endpoint de upload).
-                    await profileService.updateCandidateProfile(authStore.currentUserId, {
+                    await profileService.updateCandidateProfileOld(authStore.currentUserId, {
                         firstName: firstName.value,
                         lastName: lastName.value,
                         dni: dni.value,
@@ -387,7 +387,7 @@ export function useProfileEdit() {
                 } else {
                     // PUT /profile/{userId}/company — solo companyName, sector,
                     // ruc, description; no acepta ubigeo/profilePicture/userId.
-                    await profileService.updateCompanyProfile(authStore.currentUserId, {
+                    await profileService.updateCompanyProfileOld(authStore.currentUserId, {
                         companyName: companyName.value,
                         sector: industry.value,
                         ruc: ruc.value,

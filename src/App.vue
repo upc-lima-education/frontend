@@ -1,13 +1,12 @@
 <script setup lang="ts">
 import { RouterView } from 'vue-router';
 import NavbarComponent from './app/common/components/navbar.component.vue';
-import { useAppLayout } from './app/common/composables/useAppLayout.ts';
-
-const { showSidebar: showNavbar } = useAppLayout();
+import { useRoute } from 'vue-router';
+const route = useRoute();
 </script>
 
 <template>
-  <div v-if="showNavbar" class="app-shell">
+  <div v-if="!route.meta.hideSidebar" class="app-shell">
     <NavbarComponent />
     <main class="main-content">
       <RouterView />

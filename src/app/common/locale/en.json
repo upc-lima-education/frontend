@@ -40,7 +40,10 @@
         "signInBrandTitle": "Connecting local talent with verified opportunities",
         "signInBrandNote": "Llanqui is the work network for everyone. We connect people of any educational background or experience level directly with organizations.",
         "welcomeBack": "Welcome back",
-        "orWithEmail": "or with email"
+        "orWithEmail": "or with email",
+        "error": "An error ocurred while authenticating",
+        "authenticating": "Authenticating. Please wait",
+        "redirect": "Redirecting to Sign In..."
     },
     "sidebar": {
         "news": "News",
@@ -107,6 +110,7 @@
         "companyDescriptionPlaceholder": "Tell us about your company, mission, vision and values..."
     },
     "common": {
+        "confirm": "Confirm",
         "next": "Next",
         "return": "Return",
         "search": "Search",
@@ -132,7 +136,10 @@
         "companyName": "Company Name",
         "district": "District",
         "description": "Description",
-        "keywords": "Keywords"
+        "keywords": "Keywords",
+        "notSpecified": "Not specified",
+        "unknown": "Unknown",
+        "sponsored": "Sponsored"
     },
     "job": {
         "creationPage": {
@@ -168,7 +175,8 @@
                 "ThreeMonths": "3 months",
                 "SixMonths": "6 months",
                 "OneYear": "1 year",
-                "TwoOrMoreYears": "2 years or more"
+                "TwoYears": "2 years",
+                "ThreeOrMoreYears": "3 or more years"
             },
             "type": {
                 "name": "Job type",

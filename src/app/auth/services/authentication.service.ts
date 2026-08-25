@@ -1,20 +1,43 @@
 import http from "@/app/common/services/base.service";
-import { SignUpResponse } from "../model/sign-up/sign-up.response";
-import { SignUpRequest } from "../model/sign-up/sign-up.request";
-import { SignInRequest } from "../model/sign-in/sign-in.request";
-import { SignInResponse } from "../model/sign-in/sign-in.response";
-import { UserResponse } from "../model/user.response";
-import { PasswordResetRequest, PasswordResetResponse } from "../model/password/password-reset.response";
+import type { SignUpRequest } from "../model/sign-up.request";
+import type { AuthenticationResponse } from "../model/authentication.response";
+import type { SignInRequest } from "../model/sign-in.request";
+import type { UserResponse } from "../model/user.response";
+import type { ExternalAuthenticationRequest } from "../model/external-authentication.request";
 
 export class AuthenticationService {
     private endpoint = "/auth";
 
-    /**
-     * Mapea el objeto crudo de usuario del backend a UserResponse.
-     * Centraliza el orden de argumentos (antes estaba corrido y dejaba
-     * userType siempre en 'employee') y normaliza el rol: el backend usa
-     * 'candidate'/'organization' (a veces capitalizado) -> 'employee'/'organization'.
-     */
+    async signUp(request: SignUpRequest): Promise<AuthenticationResponse> {
+        const response = await http.post<AuthenticationResponse>(`${this.endpoint}/sign-up`, request);
+        return response.data;
+    }
+
+    async signIn(request: SignInRequest): Promise<AuthenticationResponse> {
+        const response = await http.post<AuthenticationResponse>(`${this.endpoint}/sign-in`, request);
+        return response.data;
+    }
+
+    async getCurrentUser(): Promise<UserResponse> {
+        const response = await http.get<UserResponse>(`${this.endpoint}/me`);
+        return response.data;
+    }
+
+    async getGoogleAuthUrl(): Promise<string> {
+        const response = await http.get<string>('/auth/url');
+        return response.data;
+    }
+
+    async authenticateGoogle(request: ExternalAuthenticationRequest): Promise<AuthenticationResponse> {
+        const response = await http.post<AuthenticationResponse>('/auth/authenticate', request);
+        return response.data;
+    }
+
+    /*
+    TODO: DELETE THIS
+    */
+
+    /*
     private mapUser(u: any): UserResponse {
         const userType: 'employee' | 'organization' =
             String(u?.userType).toLowerCase() === 'organization' ? 'organization' : 'employee';
@@ -32,16 +55,12 @@ export class AuthenticationService {
         );
     }
 
-    /**
-     * Register a new user
-     * POST /api/v1/auth/sign-up
-     */
-    async signUp(signUpRequest: SignUpRequest): Promise<SignUpResponse> {
+    async signUpOld(signUpRequest: SignUpRequest): Promise<SignUpResponse> {
         console.log('🔄 AuthService: SignUp request:', signUpRequest);
-        
+
         const response = await http.post(`${this.endpoint}/sign-up`, signUpRequest);
         console.log('📦 AuthService: SignUp response:', response.data);
-        
+
         return new SignUpResponse(
             response.data.accessToken,
             response.data.refreshToken,
@@ -50,16 +69,12 @@ export class AuthenticationService {
         );
     }
 
-    /**
-     * Sign in with email and password
-     * POST /api/v1/auth/sign-in
-     */
-    async signIn(signInRequest: SignInRequest): Promise<SignInResponse> {
+    async signInOld(signInRequest: SignInRequest): Promise<SignInResponse> {
         console.log('🔄 AuthService: SignIn request:', signInRequest);
-        
+
         const response = await http.post(`${this.endpoint}/sign-in`, signInRequest);
         console.log('📦 AuthService: SignIn response:', response.data);
-        
+
         return new SignInResponse(
             response.data.accessToken,
             response.data.refreshToken,
@@ -68,28 +83,19 @@ export class AuthenticationService {
         );
     }
 
-    /**
-     * Request password reset
-     * POST /api/v1/auth/forgot-password
-     */
-    async requestPasswordReset(email: string): Promise<PasswordResetResponse> {
+    async requestPasswordResetOld(email: string): Promise<PasswordResetResponse> {
         console.log('🔄 AuthService: Password reset request for:', email);
-        
+
         const response = await http.post(`${this.endpoint}/forgot-password`, { email });
         console.log('📦 AuthService: Password reset response:', response.data);
-        
+
         return new PasswordResetResponse(
             response.data.message || 'Password reset email sent',
             email
         );
     }
 
-    /**
-     * Build Google OAuth authorization URL.
-     * GET /api/v1/auth/google/url?userType=employee|organization&mode=signup|login
-     * Backend encodes userType and mode in OAuth state (Google returns state unchanged).
-     */
-    async getGoogleAuthUrl(options?: { userType?: 'employee' | 'organization'; mode?: 'signup' | 'login' }): Promise<string> {
+    async getGoogleAuthUrlOld(options?: { userType?: 'employee' | 'organization'; mode?: 'signup' | 'login' }): Promise<string> {
         const params = new URLSearchParams();
         if (options?.userType) {
             params.set('userType', options.userType);
@@ -104,14 +110,9 @@ export class AuthenticationService {
         return response.data.authUrl || response.data.url;
     }
 
-    /**
-     * Get current authenticated user
-     * GET /api/v1/auth/me
-     * Requires: Authorization header with Bearer token
-     */
-    async getCurrentUser(token: string): Promise<UserResponse> {
+    async getCurrentUserOld(token: string): Promise<UserResponse> {
         console.log('🔄 AuthService: Getting current user with token');
-        
+
         const response = await http.get(`${this.endpoint}/me`, {
             headers: {
                 Authorization: `Bearer ${token}`
@@ -122,10 +123,6 @@ export class AuthenticationService {
         return this.mapUser(response.data.user);
     }
 
-    /**
-     * Sign out on the backend, invalidating the session
-     * POST /api/v1/auth/sign-out
-     */
     async signOut(token: string): Promise<void> {
         await http.post(`${this.endpoint}/sign-out`, {}, {
             headers: {
@@ -134,21 +131,16 @@ export class AuthenticationService {
         });
     }
 
-    /**
-     * Get a user by id
-     * GET /api/v1/auth/users/{id}
-     */
     async getUserById(id: string): Promise<UserResponse> {
         const response = await http.get(`${this.endpoint}/users/${id}`);
         return this.mapUser(response.data);
     }
 
-    /**
-     * Get a user's role
-     * GET /api/v1/auth/users/{id}/role
-     */
     async getUserRole(id: string): Promise<string> {
         const response = await http.get(`${this.endpoint}/users/${id}/role`);
         return response.data?.role ?? response.data;
     }
+    */
 }
+
+export const authenticationService = new AuthenticationService();

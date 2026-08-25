@@ -1,21 +1,18 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue';
 import { useRoute } from 'vue-router';
-import { GetJobByIdResponse } from '../model/old/get-job-by-id.response.ts';
 import { JobService } from '../services/job.service.ts';
 import JobDetailComponent from '../components/job-detail.component.vue';
+import type { JobResponse } from '../model/job.response.ts';
 
 const route = useRoute();
 const jobService = new JobService();
 
-const job = ref<GetJobByIdResponse>();
+const job = ref<JobResponse>();
+const company = ref();
+
 const loading = ref(false);
 const error = ref('');
-
-// El backend no incluye nombre/logo de la empresa en la entidad Job;
-// se muestran valores por defecto hasta que exista un endpoint enriquecido.
-const companyName = 'Empresa';
-const companyImage = '';
 
 onMounted(async () => {
     loading.value = true;
@@ -35,11 +32,8 @@ onMounted(async () => {
 <template>
     <div class="page-content-full">
         <div v-if="job">
-            <JobDetailComponent
-            :job="job"
-            :company-name="companyName"
-            :company-image="companyImage"
-            :is-company="false"/>
+            <JobDetailComponent :job="job" :company-name="companyName" :company-image="companyImage"
+                :is-company="false" />
         </div>
         <div v-else-if="loading" class="job-skeleton" aria-hidden="true">
             <div class="job-skeleton-banner"></div>
@@ -120,9 +114,17 @@ onMounted(async () => {
     border-radius: 4px;
 }
 
-.job-skeleton-line:nth-child(2) { width: 92%; }
-.job-skeleton-line:nth-child(3) { width: 96%; }
-.job-skeleton-line:nth-child(4) { width: 70%; }
+.job-skeleton-line:nth-child(2) {
+    width: 92%;
+}
+
+.job-skeleton-line:nth-child(3) {
+    width: 96%;
+}
+
+.job-skeleton-line:nth-child(4) {
+    width: 70%;
+}
 
 .job-skeleton-logo,
 .job-skeleton-line {
@@ -132,11 +134,17 @@ onMounted(async () => {
 }
 
 @keyframes skeleton-shimmer {
-    0% { background-position: 100% 50%; }
-    100% { background-position: 0 50%; }
+    0% {
+        background-position: 100% 50%;
+    }
+
+    100% {
+        background-position: 0 50%;
+    }
 }
 
 @media (prefers-reduced-motion: reduce) {
+
     .job-skeleton-logo,
     .job-skeleton-line {
         animation: none;

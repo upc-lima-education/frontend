@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xml:space="preserve" width="25px" height="25px" version="1.1" style="shape-rendering:geometricPrecision; text-rendering:geometricPrecision; image-rendering:optimizeQuality; fill-rule:evenodd; clip-rule:evenodd" viewBox="0 0 25 25">
+ <defs>
+  <style type="text/css">
+   <![CDATA[
+    .str0 {stroke:black;stroke-width:1.41;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:22.9256}
+    .fil0 {fill:none}
+   ]]>
+  </style>
+ </defs>
+ <g id="Capa_x0020_1">
+  <rect class="fil0" x="0.08" width="24.83" height="25"/>
+  <rect class="fil0 str0" x="2.83" y="0.76" width="19.34" height="23.5"/>
+  <rect class="fil0 str0" x="5.8" y="4.09" width="4.66" height="4.39"/>
+  <rect class="fil0 str0" x="14.53" y="4.09" width="4.66" height="4.39"/>
+  <rect class="fil0 str0" x="5.8" y="11.31" width="4.66" height="4.39"/>
+  <rect class="fil0 str0" x="14.53" y="11.31" width="4.66" height="4.39"/>
+  <rect class="fil0 str0" x="10.23" y="19.34" width="4.75" height="4.74"/>
+ </g>
+</svg>

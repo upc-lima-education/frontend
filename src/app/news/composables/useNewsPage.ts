@@ -46,7 +46,7 @@ export function useNewsPage() {
         posting.value = true;
         error.value = '';
         try {
-            const profileResponse = await profileService.getProfileByUserId(auth.currentUserId);
+            const profileResponse = await profileService.getProfileByUserIdOld(auth.currentUserId);
             const profileId = profileResponse.data?.id;
             if (!profileId) throw new Error('No se encontró el perfil del usuario.');
 

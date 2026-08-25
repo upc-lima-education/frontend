@@ -1,0 +1,44 @@
+a {
+    text-decoration: none;
+    color: var(--color-brand);
+    transition: color 150ms ease, background-color 150ms ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+    a:hover {
+        color: var(--color-brand-hover);
+    }
+}
+
+a:active {
+    color: var(--color-brand-active);
+}
+
+.link-filled {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-2, 8px);
+
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    font-weight: 600;
+    text-align: center;
+
+    background-color: var(--color-brand);
+    color: var(--color-text-inverted);
+
+    transition: background-color 150ms ease, color 150ms ease, transform 100ms ease-out;
+}
+
+@media (hover: hover) and (pointer: fine) {
+    .link-filled:hover {
+        background-color: var(--color-brand-hover);
+        color: var(--color-text-inverted);
+    }
+}
+
+.link-filled:active {
+    background-color: var(--color-brand-active);
+    transform: scale(0.97);
+}

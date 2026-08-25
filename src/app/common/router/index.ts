@@ -20,15 +20,15 @@ const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
     { path: '/', redirect: ROUTE_CONSTANTS.HOME_PAGE },
-    { path: ROUTE_CONSTANTS.SIGN_UP_PAGE, name: 'sign-up', component: SignUpPage },
+    { path: ROUTE_CONSTANTS.SIGN_UP_PAGE, name: 'sign-up', component: SignUpPage, meta: { hideNavbar: true } },
     {
       path: `${ROUTE_CONSTANTS.SIGN_UP_PAGE}/:legacyPath(.*)`,
       redirect: ROUTE_CONSTANTS.SIGN_UP_PAGE,
     },
 
-    { path: ROUTE_CONSTANTS.SIGN_IN_PAGE, name: 'sign-in', component: SignInPage },
-    { path: ROUTE_CONSTANTS.FORGOT_PASSWORD, name: 'forgot-password', component: ForgotPasswordPage },
-    { path: '/auth/callback', name: 'auth-callback', component: GoogleCallbackPage },
+    { path: ROUTE_CONSTANTS.SIGN_IN_PAGE, name: 'sign-in', component: SignInPage, meta: { hideNavbar: true } },
+    { path: ROUTE_CONSTANTS.FORGOT_PASSWORD, name: 'forgot-password', component: ForgotPasswordPage, meta: { hideNavbar: true } },
+    { path: '/auth/callback', name: 'auth-callback', component: GoogleCallbackPage, meta: { hideNavbar: true } },
 
     { path: ROUTE_CONSTANTS.HOME_PAGE, name: 'home', component: HomePage },
     { path: ROUTE_CONSTANTS.NEWS_PAGE, name: 'news', component: NewsPage },
@@ -44,7 +44,7 @@ const router = createRouter({
     { path: ROUTE_CONSTANTS.MESSAGE_COMPANY, name: 'message-company', component: MessagingCompanyPage, meta: { roles: ['organization'] } },
     { path: ROUTE_CONSTANTS.MESSAGE_EMPLOYEE, name: 'message-user', component: MessagingEmployeePage, meta: { roles: ['employee'] } },
 
-    { path: ROUTE_CONSTANTS.NOT_FOUND_PAGE, name: 'not-found', component: NotFoundPage },
+    { path: ROUTE_CONSTANTS.NOT_FOUND_PAGE, name: 'not-found', component: NotFoundPage, meta: { hideNavbar: true } },
     { path: '/:pathMatch(.*)*', redirect: ROUTE_CONSTANTS.NOT_FOUND_PAGE }, //If no route is matched
   ],
 })

@@ -46,7 +46,7 @@ export function useProfileView() {
     onMounted(async () => {
         try {
             if (authStore.currentUserId) {
-                const response = await profileService.getProfileByUserId(authStore.currentUserId);
+                const response = await profileService.getProfileByUserIdOld(authStore.currentUserId);
                 profile.value = (response.data?.data || response.data) as ProfileViewData;
             }
         } catch (error) {

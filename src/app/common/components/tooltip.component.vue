@@ -1,19 +1,25 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 
-defineProps({
-    text: { type: String, default: 'Asign a custom text using the text prop'},
-    position: { type: String, default: 'right' }
+withDefaults(defineProps<{
+    text?: string;
+    position?: 'top' | 'bottom' | 'left' | 'right';
+}>(), {
+    text: '',
+    position: 'top'
 });
 
-const show = ref(false);
+const isVisible = ref(false);
+
+const show = () => { isVisible.value = true; };
+const hide = () => { isVisible.value = false; };
 </script>
 
 <template>
-    <div class="tooltip-wrapper" @mouseenter="show = true" @mouseleave="show = false">
-        <slot></slot>
+    <div class="tooltip-wrapper" @mouseenter="show" @mouseleave="hide" @focusin="show" @focusout="hide">
+        <slot />
         <Transition name="fade">
-            <div v-if="show" class="tooltip-box" :class="position">
+            <div v-if="isVisible && text" role="tooltip" :class="['tooltip-box', position]">
                 {{ text }}
             </div>
         </Transition>
@@ -25,50 +31,64 @@ const show = ref(false);
     position: relative;
     display: inline-flex;
     align-items: center;
+    justify-content: center;
 }
 
 .tooltip-box {
     position: absolute;
-    background-color: var(--gray-01);
-    color: var(--text-color);
-    padding: 6px 10px;
-    border-radius: 4px;
-    
     width: max-content;
-    max-width: 160px;
-    white-space: normal; 
-    word-wrap: break-word;
-    overflow-wrap: break-word;
-    
-    font-size: 12px;
-    text-align: justify;
+    max-width: 220px;
+    padding: 6px 10px;
+
+    font-size: 0.75rem;
+    /* 12px */
     line-height: 1.4;
+    text-align: left;
+    white-space: normal;
+    word-break: break-word;
+
+    background-color: var(--color-surface);
+    color: var(--color-text-main);
+    border-radius: 6px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+
     pointer-events: none;
-    z-index: 100;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    z-index: 1000;
 }
 
-/* Position class */
-.top {
-    bottom: 140%;
+/* Position */
+/* Top */
+.tooltip-box.top {
+    bottom: calc(100% + 8px);
     left: 50%;
     transform: translateX(-50%);
 }
-.bottom {
-    top: 140%;
+
+/* Bottom */
+.tooltip-box.bottom {
+    top: calc(100% + 8px);
     left: 50%;
     transform: translateX(-50%);
 }
-.left {
-    transform: translateX(-50%);
+
+/* Left */
+.tooltip-box.left {
+    right: calc(100% + 8px);
+    top: 50%;
+    transform: translateY(-50%);
 }
-.right {
-    transform: translateX(50%);
+
+/* Right */
+.tooltip-box.right {
+    left: calc(100% + 8px);
+    top: 50%;
+    transform: translateY(-50%);
 }
-/*Fade animation*/
+
+/* Animation */
 .fade-enter-active,
 .fade-leave-active {
-    transition: opacity 0.15s ease;
+    transition: opacity 150ms ease, transform 150ms ease;
 }
 
 .fade-enter-from,

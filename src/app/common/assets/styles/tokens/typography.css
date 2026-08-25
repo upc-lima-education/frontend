@@ -1,0 +1,15 @@
+:root {
+  --font-family: 'Inter', system-ui, -apple-system, sans-serif;
+
+  --fw-regular:  400;
+  --fw-medium:   500;
+  --fw-semibold: 600;
+  --fw-bold:     700;
+
+  --fs-caption:  12px;
+  --fs-body-sm:  14px;
+  --fs-body:     16px;
+  --fs-subtitle: 20px;
+  --fs-title:    28px;
+  --fs-display:  40px;
+}

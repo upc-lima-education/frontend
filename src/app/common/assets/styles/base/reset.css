@@ -1,0 +1,41 @@
+/*Universal*/
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  color: var(--text-color);
+  font-family: var(--font-family);
+  min-height: 100vh;
+}
+
+html,
+body,
+#app {
+  min-height: 100%;
+}
+
+/*Vue specific*/
+#app {
+  width: 100%;
+}
+
+/*Component specific*/
+img {
+  display: block;
+  max-width: 100%;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}

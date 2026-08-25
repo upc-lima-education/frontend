@@ -1,0 +1,26 @@
+.default-form {
+    width: 80%;
+    display: flex;
+    flex-direction: column;
+    justify-self: center;
+    gap: var(--space-4);
+}
+
+@media (max-width: 1024px) {
+    .default-form {
+        width: 90%;
+    }
+}
+
+@media (max-width: 768px) {
+    .default-form {
+        width: 95%;
+    }
+}
+
+@media (max-width: 480px) {
+    .default-form {
+        width: 100%;
+        gap: var(--space-3);
+    }
+}

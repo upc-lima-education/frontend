@@ -28,7 +28,7 @@ onMounted(async () => {
   // Attempt to load from profile service as well
   try {
     if (authStore.currentUserId) {
-      const res = await profileService.getProfileByUserId(authStore.currentUserId);
+      const res = await profileService.getProfileByUserIdOld(authStore.currentUserId);
       const profile = res.data;
       if (profile) {
         const phone = profile.phone || profile.whatsapp || profile.whatsappNumber;
@@ -64,7 +64,7 @@ async function saveNotificationSettings() {
     // Save to backend profile
     if (authStore.currentUserId) {
       // Fetch current profile first to avoid overwriting other fields
-      const res = await profileService.getProfileByUserId(authStore.currentUserId);
+      const res = await profileService.getProfileByUserIdOld(authStore.currentUserId);
       const currentProfile = res.data || {};
       
       const updatedProfile = {
@@ -78,9 +78,9 @@ async function saveNotificationSettings() {
       };
 
       if (authStore.currentUserType === 'organization') {
-        await profileService.updateCompanyProfile(authStore.currentUserId, updatedProfile);
+        await profileService.updateCompanyProfileOld(authStore.currentUserId, updatedProfile);
       } else {
-        await profileService.updateCandidateProfile(authStore.currentUserId, updatedProfile);
+        await profileService.updateCandidateProfileOld(authStore.currentUserId, updatedProfile);
       }
     }
 

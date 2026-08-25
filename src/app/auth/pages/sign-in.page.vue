@@ -1,57 +1,76 @@
 <script setup lang="ts">
-import SignInFormComponent from '../components/sign-in/sign-in-form.component.vue';
+import AuthBrandPanelComponent from '../components/auth-brand-panel.component.vue';
+import SignInFormComponent from '../components/sign-in-form.component.vue';
+
 </script>
 
 <template>
-    <div class="auth-stage">
-        <SignInFormComponent />
-    </div>
+    <main class="auth-page">
+        <div class="auth-card">
+            <AuthBrandPanelComponent :title="$t('auth.signInBrandTitle')" :note="$t('auth.signInBrandNote')" />
+            <section class="form-container">
+                <header class="form-head">
+                    <span class="form-eyebrow">{{ $t('auth.welcomeBack') }}</span>
+                    <h1 class="welcome">{{ $t('auth.signInCardTitle') }}</h1>
+                </header>
+                <SignInFormComponent />
+            </section>
+        </div>
+    </main>
 </template>
 
 <style scoped>
-.auth-stage {
-    position: relative;
-    box-sizing: border-box;
+.auth-page {
     min-height: 100vh;
     width: 100%;
     display: flex;
     align-items: center;
     justify-content: center;
     padding: clamp(24px, 6vh, 60px) 1rem;
-    overflow: hidden;
     background: linear-gradient(150deg, #0C1145 0%, #1E2BAA 55%, #16217A 100%);
 }
 
-/* Glow orb — top right */
-.auth-stage::before {
-    content: '';
-    position: absolute;
-    width: 580px;
-    height: 580px;
-    border-radius: 50%;
-    background: radial-gradient(circle, rgba(45, 58, 199, 0.55) 0%, transparent 70%);
-    top: -180px;
-    right: -160px;
-    pointer-events: none;
-}
-
-/* Glow orb — bottom left */
-.auth-stage::after {
-    content: '';
-    position: absolute;
-    width: 420px;
-    height: 420px;
-    border-radius: 50%;
-    background: radial-gradient(circle, rgba(184, 192, 232, 0.18) 0%, transparent 70%);
-    bottom: -140px;
-    left: -100px;
-    pointer-events: none;
-}
-
-.auth-stage :deep(.auth-card) {
+.auth-card {
+    width: 100%;
+    max-width: 940px;
+    display: grid;
+    grid-template-columns: 1.05fr 1fr;
+    background: #ffffff;
+    border-radius: 22px;
+    box-shadow: 0 30px 70px -24px rgba(12, 22, 57, 0.45);
+    overflow: hidden;
     animation: card-in 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
-    position: relative;
-    z-index: 1;
+}
+
+.form-container {
+    padding: 3rem 2.75rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.1rem;
+}
+
+.form-head {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    margin-bottom: 0.4rem;
+}
+
+.form-eyebrow {
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--secondary-color);
+}
+
+.welcome {
+    font-family: var(--font-display);
+    font-size: 1.9rem;
+    font-weight: 600;
+    color: var(--main-color-07);
+    margin: 0;
+    letter-spacing: -0.02em;
 }
 
 @keyframes card-in {
@@ -59,15 +78,21 @@ import SignInFormComponent from '../components/sign-in/sign-in-form.component.vu
         opacity: 0;
         transform: translateY(18px);
     }
+
     to {
         opacity: 1;
         transform: translateY(0);
     }
 }
 
-@media (prefers-reduced-motion: reduce) {
-    .auth-stage :deep(.auth-card) {
-        animation: none;
+@media (max-width: 860px) {
+    .auth-card {
+        grid-template-columns: 1fr;
+        max-width: 440px;
+    }
+
+    .form-container {
+        padding: 2.25rem 1.75rem;
     }
 }
 </style>
