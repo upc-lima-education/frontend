@@ -4,7 +4,7 @@ import NewsCardComponent from '../components/news-card.component.vue';
 import DialogComponent from '@/app/shared/components/dialog.component.vue';
 import { useNewsPage } from '@/app/news/composables/useNewsPage';
 import { useAuthenticationStore } from '@/app/auth/services/authentication.store';
-import { Image, Video, Calendar, FileText, ArrowRight, Settings, Loader } from 'lucide-vue-next';
+import { Image, Video, Calendar, FileText, ArrowRight, Settings, Loader, Compass, BriefcaseBusiness, Lightbulb } from 'lucide-vue-next';
 import { RecommendationService, type RecommendationResponse } from '../../job/services/recommendation.service';
 
 const { newsData, posting, error, toggleHeart, createPost } = useNewsPage();
@@ -70,6 +70,18 @@ async function handleCreatePost() {
 
 <template>
     <div class="feed-container">
+        <section class="community-hero" aria-labelledby="community-title">
+            <div class="community-hero-copy">
+                <span class="community-eyebrow"><Compass :size="15" /> Comunidad Llanqui</span>
+                <h1 id="community-title">Ideas que te acercan a tu siguiente oportunidad.</h1>
+                <p>Descubre aprendizajes, señales del mercado y experiencias útiles para avanzar.</p>
+            </div>
+            <div class="community-signals" aria-label="Señales de la comunidad">
+                <span><BriefcaseBusiness :size="15" /> Empleabilidad</span>
+                <span><Lightbulb :size="15" /> Aprendizajes</span>
+            </div>
+        </section>
+
         <!-- Main Grid Layout -->
         <div class="feed-grid">
             <!-- Left Sidebar: Profile Card -->
@@ -117,7 +129,7 @@ async function handleCreatePost() {
                         <img v-if="auth.currentUser?.picture" :src="auth.currentUser.picture" class="post-avatar" alt="Avatar" />
                         <span v-else class="post-avatar-placeholder">{{ initials }}</span>
                         <button class="post-trigger-btn" @click="openCreatePostDialog">
-                            ¿De qué quieres hablar hoy, {{ auth.currentUser?.firstName || 'profesional' }}?
+                        Comparte una experiencia que pueda ayudar a otra persona
                         </button>
                     </div>
                     <div class="post-actions-row">
@@ -164,29 +176,29 @@ async function handleCreatePost() {
             <!-- Right Sidebar: News & Recommendations -->
             <aside class="sidebar-right">
                 <div class="trending-card">
-                    <h3 class="card-title">Tendencias en Llanqui</h3>
+                    <h3 class="card-title">Radar laboral</h3>
                     <ul class="trending-list">
                         <li class="trending-item">
                             <span class="trending-topic">#BúsquedaLaboral2026</span>
-                            <span class="trending-sub">Temas candentes • 1,240 lectores</span>
+                            <span class="trending-sub">Oportunidades y búsqueda</span>
                         </li>
                         <li class="trending-item">
                             <span class="trending-topic">#InteligenciaArtificial</span>
-                            <span class="trending-sub">Tecnología • 840 lectores</span>
+                            <span class="trending-sub">Habilidades en crecimiento</span>
                         </li>
                         <li class="trending-item">
                             <span class="trending-topic">#CVPerfecto</span>
-                            <span class="trending-sub">Consejos prácticos • 2,102 lectores</span>
+                            <span class="trending-sub">Mejora tu perfil</span>
                         </li>
                         <li class="trending-item">
                             <span class="trending-topic">#TrabajoHibrido</span>
-                            <span class="trending-sub">Tendencias • 643 lectores</span>
+                            <span class="trending-sub">Nuevas formas de trabajar</span>
                         </li>
                     </ul>
                 </div>
 
                 <div class="recommend-card">
-                    <h3 class="card-title">Sugerencias de empleo</h3>
+                    <h3 class="card-title">Oportunidades para explorar</h3>
                     
                     <div v-if="loadingRecommendations" class="rec-loading">
                         <Loader :size="16" :stroke-width="1.5" class="rec-spinner" />
@@ -696,5 +708,10 @@ async function handleCreatePost() {
         display: none;
     }
 }
+
+/* Community direction: editorial labor radar, not a professional social feed. */
+.community-hero { display: flex; align-items: center; justify-content: space-between; gap: 28px; min-height: 176px; margin-bottom: 22px; padding: 30px 36px; overflow: hidden; position: relative; color: #fff; background: var(--color-primary); border-radius: 20px; }.community-hero::after { content: ''; position: absolute; width: 260px; height: 260px; right: 10%; top: -120px; border: 1px solid rgba(255,255,255,.18); border-radius: 50%; box-shadow: 0 0 0 36px rgba(255,255,255,.04), 0 0 0 72px rgba(255,255,255,.03); }.community-hero-copy { position: relative; z-index: 1; }.community-eyebrow { display: inline-flex; align-items: center; gap: 7px; color: var(--color-lavender); font-size: 11px; font-weight: var(--fw-bold); letter-spacing: .12em; text-transform: uppercase; }.community-hero h1 { max-width: 680px; margin: 15px 0 8px; color: #fff; font-size: clamp(28px, 4vw, 42px); line-height: 1.04; letter-spacing: -.045em; }.community-hero p { margin: 0; color: rgba(255,255,255,.7); font-size: 14px; }.community-signals { display: flex; flex-direction: column; gap: 8px; position: relative; z-index: 1; min-width: 150px; }.community-signals span { display: inline-flex; align-items: center; gap: 7px; padding: 9px 11px; color: rgba(255,255,255,.8); background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.14); border-radius: 8px; font-size: 11px; }.feed-grid { grid-template-columns: minmax(0, 1fr) 290px; gap: 22px; }.sidebar-left { display: none; }.feed-main { gap: 14px; }.create-post-box { border-left: 3px solid var(--color-accent); padding: 18px 20px; box-shadow: 0 4px 14px rgba(30,43,170,.06); }.post-trigger-btn { border-radius: 9px; background: var(--color-bg); }.post-actions-row { grid-template-columns: repeat(2, 1fr); margin-top: 4px; }.action-btn-item { justify-content: flex-start; padding-left: 10px; }.sidebar-right { gap: 14px; }.trending-card, .recommend-card { border-radius: 13px; box-shadow: none; }.card-title { font-size: 14px; letter-spacing: -.02em; }.trending-item { padding: 3px 0; }.trending-topic { font-size: 12px; }.trending-sub { margin-top: 2px; font-size: 10px; }.recommend-icon { width: 28px; height: 28px; display: grid; place-items: center; border-radius: 8px; color: var(--color-accent); background: var(--color-ai-bg); font-size: 0; }.recommend-icon::before { content: '↗'; font-size: 16px; }.recommend-title { line-height: 1.35; }.posts-list { gap: 12px; }.feed-main :deep(.post-card) { border-radius: 13px; box-shadow: none; }.feed-main :deep(.post-footer) { border-top: 1px solid var(--color-border); padding-top: 5px; }.feed-main :deep(.social-stats) { background: var(--color-bg); padding: 8px 10px; border-radius: 7px; }
+@media (max-width: 768px) { .community-hero { align-items: flex-start; flex-direction: column; min-height: 196px; padding: 27px 24px; border-radius: 16px; }.community-hero h1 { font-size: 31px; }.community-signals { flex-direction: row; min-width: 0; }.community-signals span { font-size: 10px; }.feed-grid { grid-template-columns: 1fr; }.sidebar-right { display: flex; }.post-actions-row { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 480px) { .feed-container { padding-top: 18px; }.community-signals { width: 100%; }.community-signals span { flex: 1; justify-content: center; }.create-post-box { padding: 15px; }.action-btn-item span { font-size: 11px; } }
 </style>
 
