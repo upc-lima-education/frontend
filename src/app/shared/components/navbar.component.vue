@@ -13,10 +13,12 @@ const { signOut } = useLogout();
 type NavLink = { to: string; label: string };
 
 const links = computed<NavLink[]>(() => {
+    const home: NavLink = { to: ROUTE_CONSTANTS.HOME_PAGE, label: 'navbar.home' };
     const news: NavLink = { to: ROUTE_CONSTANTS.NEWS_PAGE, label: 'navbar.news' };
     const profile: NavLink = { to: ROUTE_CONSTANTS.SETTINGS_PAGE, label: 'navbar.profile' };
     if (auth.currentUserType === 'organization') {
         return [
+            home,
             news,
             { to: ROUTE_CONSTANTS.RECRUITMENT_APPLICATIONS, label: 'navbar.applications' },
             { to: ROUTE_CONSTANTS.MESSAGE_COMPANY, label: 'navbar.messages' },
@@ -24,6 +26,7 @@ const links = computed<NavLink[]>(() => {
         ];
     }
     return [
+        home,
         news,
         { to: ROUTE_CONSTANTS.JOB_SEARCH, label: 'navbar.findJob' },
         { to: ROUTE_CONSTANTS.MESSAGE_EMPLOYEE, label: 'navbar.messages' },
@@ -84,7 +87,7 @@ async function handleLogout() {
     <header ref="rootEl" class="navbar">
         <div class="navbar-inner">
             <!-- Left: brand -->
-            <RouterLink :to="ROUTE_CONSTANTS.NEWS_PAGE" class="brand">
+            <RouterLink :to="ROUTE_CONSTANTS.HOME_PAGE" class="brand">
                 <img class="brand-logo" src="../assets/icons/logo.svg" alt="" />
                 <span class="brand-name">{{ $t('appName') }}</span>
             </RouterLink>

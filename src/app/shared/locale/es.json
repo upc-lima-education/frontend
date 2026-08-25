@@ -52,6 +52,7 @@
         "logout": "Cerrar sesión"
     },
     "navbar": {
+        "home": "Inicio",
         "news": "Novedades",
         "messages": "Mensajes",
         "applications": "Postulaciones",

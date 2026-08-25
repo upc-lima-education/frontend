@@ -52,6 +52,7 @@
         "logout": "Logout"
     },
     "navbar": {
+        "home": "Home",
         "news": "News",
         "messages": "Messages",
         "applications": "Applications",
