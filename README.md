@@ -8,7 +8,7 @@ Este documento describe cómo el frontend separa **Autenticación (Auth)** y **P
 
 **Responsabilidad:** identidad, sesión y autorización de peticiones.
 
-**Base URL API (ejemplo):** `VITE_API_URL` o por defecto `http://localhost:5155/api/v1`  
+**Base URL API (ejemplo):** `VITE_API_URL` o por defecto `http://localhost:5000/api/v1`  
 Todas las rutas de este documento son relativas a ese prefijo. El prefijo de auth en código es **`/auth`** → p. ej. `POST /api/v1/auth/sign-in`.
 
 ### 1.1 Almacenamiento en el cliente (después de login / signup / OAuth)
