@@ -15,6 +15,7 @@ import MessagingCompanyPage from '@/app/message/pages/messaging-company.page.vue
 import MessagingEmployeePage from '@/app/message/pages/messaging-employee.page.vue';
 import JobDetailPage from '@/app/job/pages/job-detail.page.vue';
 import ApplicationsTrackingPage from '@/app/recruitment/pages/applications-tracking.page.vue';
+import MyApplicationsPage from '@/app/recruitment/pages/my-applications.page.vue';
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -40,6 +41,7 @@ const router = createRouter({
     { path: ROUTE_CONSTANTS.JOB_PUBLISH, name: 'job-publish', component: PublishJobPage, meta: { roles: ['organization'] } },
 
     { path: ROUTE_CONSTANTS.RECRUITMENT_APPLICATIONS, name: 'recruitment-applications', component: ApplicationsTrackingPage, meta: { roles: ['organization'] } },
+    { path: ROUTE_CONSTANTS.MY_APPLICATIONS, name: 'my-applications', component: MyApplicationsPage, meta: { roles: ['employee'] } },
 
     { path: ROUTE_CONSTANTS.MESSAGE_COMPANY, name: 'message-company', component: MessagingCompanyPage, meta: { roles: ['organization'] } },
     { path: ROUTE_CONSTANTS.MESSAGE_EMPLOYEE, name: 'message-user', component: MessagingEmployeePage, meta: { roles: ['employee'] } },

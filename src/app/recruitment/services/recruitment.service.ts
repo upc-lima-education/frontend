@@ -126,13 +126,50 @@ const mockApplications: ApplicationResponse[] = [
     },
 ];
 
+const CANDIDATE_APPLICATIONS_KEY = 'llanqui.candidateApplications';
+
+function readCandidateApplications(candidateId: string): ApplicationResponse[] {
+    try {
+        const stored = localStorage.getItem(`${CANDIDATE_APPLICATIONS_KEY}.${candidateId}`);
+        return stored ? JSON.parse(stored) as ApplicationResponse[] : [];
+    } catch {
+        return [];
+    }
+}
+
+function writeCandidateApplications(candidateId: string, applications: ApplicationResponse[]): void {
+    localStorage.setItem(`${CANDIDATE_APPLICATIONS_KEY}.${candidateId}`, JSON.stringify(applications));
+}
+
 export class RecruitmentService {
     private endpoint = '/recruitment/applications';
 
     /** POST /recruitment/applications — el candidato postula a una oferta. */
     async createApplication(request: CreateApplicationRequest): Promise<ApplicationResponse> {
         const { data } = await http.post(this.endpoint, request);
-        return data;
+        const application: ApplicationResponse = {
+            id: data.id,
+            jobId: request.jobId,
+            jobTitle: request.jobTitle,
+            applicant: {
+                id: request.candidateId,
+                fullName: request.candidateName,
+                email: undefined,
+            },
+            status: data.status || ApplicationStatus.Applied,
+            appliedAt: new Date().toISOString(),
+        };
+        const previous = readCandidateApplications(request.candidateId);
+        writeCandidateApplications(request.candidateId, [application, ...previous.filter((item) => item.id !== application.id)]);
+        return application;
+    }
+
+    /**
+     * El backend aún no expone GET /recruitment/applications del candidato.
+     * Mientras tanto, devuelve las postulaciones reales creadas desde este navegador.
+     */
+    async getCandidateApplications(candidateId: string): Promise<ApplicationResponse[]> {
+        return readCandidateApplications(candidateId);
     }
 
     /** Listado de postulaciones de la organización (mock, ver nota arriba). */

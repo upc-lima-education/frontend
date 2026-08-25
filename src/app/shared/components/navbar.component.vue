@@ -29,6 +29,7 @@ const links = computed<NavLink[]>(() => {
         home,
         news,
         { to: ROUTE_CONSTANTS.JOB_SEARCH, label: 'navbar.findJob' },
+        { to: ROUTE_CONSTANTS.MY_APPLICATIONS, label: 'navbar.applications' },
         { to: ROUTE_CONSTANTS.MESSAGE_EMPLOYEE, label: 'navbar.messages' },
         profile,
     ];
