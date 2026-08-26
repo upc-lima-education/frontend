@@ -56,6 +56,26 @@ html {
   font-family: var(--font-family);
 }
 
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  font-family: var(--font-display);
+  letter-spacing: -0.025em;
+}
+
+:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--color-brand-lime) 75%, white);
+  outline-offset: 3px;
+}
+
 body{
   height: 100vh;
 }
@@ -63,4 +83,14 @@ body{
 #app{
   height: 100%;
   width: 100%;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
 }

@@ -1,18 +1,20 @@
 :root {
     /* ============================================================
-       PALETA OFICIAL LLANQUI — fuente de verdad. No cambiar.
+       SISTEMA VISUAL LLANQUI — azul de confianza + lima de impulso.
        ============================================================ */
     --color-primary:        #1E2BAA;   /* azul profundo, panel y elementos clave */
-    --color-primary-dark:   #16217A;   /* hover y estados activos */
-    --color-accent:         #2D3AC7;   /* botones de accion principal */
-    --color-accent-hover:   #3D4DD4;   /* hover de botones */
-    --color-bg:             #E8EAF2;   /* fondo general de la app */
+    --color-primary-dark:   #14207F;   /* hover y estados activos */
+    --color-accent:         #1E2BAA;   /* acciones principales */
+    --color-accent-hover:   #14207F;   /* hover de botones */
+    --color-brand-lime:     #C7F36B;   /* energia, progreso y estados positivos */
+    --color-bg:             #F5F6F8;   /* fondo suave de la aplicacion */
     --color-surface:        #FFFFFF;   /* tarjetas, formularios, paneles */
-    --color-text-primary:   #0F0F1A;   /* titulos y texto principal */
-    --color-text-secondary: #4A5080;   /* texto de apoyo */
-    --color-text-muted:     #8890B8;   /* labels, placeholders */
-    --color-border:         #D0D4E8;   /* bordes de inputs y divisores */
-    --color-lavender:       #B8C0E8;   /* acentos decorativos suaves */
+    --color-text-primary:   #1F2937;   /* titulos y texto principal */
+    --color-text-secondary: #5E6B86;   /* texto de apoyo */
+    --color-text-muted:     #8A94A8;   /* labels, placeholders */
+    --color-border:         #E3E7F0;   /* bordes de inputs y divisores */
+    --color-lavender:       #E9ECFF;   /* acentos decorativos suaves */
+    --color-dark-slate:     #1F2937;
 
     /* Estados semanticos. El naranja vive SOLO aqui, nunca en branding. */
     --color-state-alert:        #EC4E10;   /* alertas / acentos de estado */
@@ -34,6 +36,7 @@
        TIPOGRAFIA — una sola familia para todo.
        ============================================================ */
     --font-family: 'Inter', sans-serif;
+    --font-display: 'Poppins', 'Inter', sans-serif;
 
     --fw-regular:  400;
     --fw-medium:   500;
@@ -50,13 +53,14 @@
     /* ============================================================
        FORMA Y ESPACIADO
        ============================================================ */
-    --radius-button: 6px;
-    --radius-card:   8px;
+    --radius-button: 8px;
+    --radius-card:   14px;
     --radius-input:  8px;
     --radius-navbar: 0px;
 
     /* Unica sombra permitida: tarjetas de contenido principal. */
-    --shadow-card: 0 1px 3px rgba(30, 43, 170, 0.08);
+    --shadow-card: 0 8px 24px rgba(30, 43, 170, 0.07);
+    --shadow-elevated: 0 16px 36px rgba(30, 43, 170, 0.12);
 
     /* Sistema de espaciado de 8px */
     --space-1: 8px;
@@ -87,14 +91,14 @@
        paleta oficial para no romper componentes aun sin refactor.
        A medida que migremos cada componente, eliminar su uso.
        ============================================================ */
-    --gray-01: #F7F7F7;
-    --gray-02: #E8EAF2;
-    --gray-03: #D0D4E8;
-    --gray-04: #B8C0E8;
-    --gray-05: #8890B8;
-    --gray-06: #4A5080;
-    --gray-07: #0F0F1A;
-    --gray-08: #0F0F1A;
+    --gray-01: #FFFFFF;
+    --gray-02: #F5F6F8;
+    --gray-03: #E3E7F0;
+    --gray-04: #C8D0E1;
+    --gray-05: #8A94A8;
+    --gray-06: #5E6B86;
+    --gray-07: #1F2937;
+    --gray-08: #1F2937;
 
     --main-color:    var(--color-primary);
     --main-color-00: var(--color-lavender);
@@ -118,7 +122,5 @@
     --yellow-color:      var(--color-state-warning);
     --yellow-color-dark: var(--color-state-warning-dark);
 
-    /* Antes Bricolage Grotesque; ahora unificado a Inter. */
-    --font-display: var(--font-family);
     --font-body:    var(--font-family);
 }

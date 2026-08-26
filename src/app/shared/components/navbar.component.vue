@@ -14,12 +14,11 @@ type NavLink = { to: string; label: string };
 
 const links = computed<NavLink[]>(() => {
     const home: NavLink = { to: ROUTE_CONSTANTS.HOME_PAGE, label: 'navbar.home' };
-    const news: NavLink = { to: ROUTE_CONSTANTS.NEWS_PAGE, label: 'navbar.news' };
     const profile: NavLink = { to: ROUTE_CONSTANTS.SETTINGS_PAGE, label: 'navbar.profile' };
     if (auth.currentUserType === 'organization') {
         return [
             home,
-            news,
+            { to: ROUTE_CONSTANTS.NEWS_PAGE, label: 'navbar.news' },
             { to: ROUTE_CONSTANTS.RECRUITMENT_APPLICATIONS, label: 'navbar.applications' },
             { to: ROUTE_CONSTANTS.MESSAGE_COMPANY, label: 'navbar.messages' },
             profile,
@@ -27,9 +26,8 @@ const links = computed<NavLink[]>(() => {
     }
     return [
         home,
-        news,
         { to: ROUTE_CONSTANTS.JOB_SEARCH, label: 'navbar.findJob' },
-        { to: ROUTE_CONSTANTS.MY_APPLICATIONS, label: 'navbar.applications' },
+        { to: ROUTE_CONSTANTS.MY_APPLICATIONS, label: 'navbar.myApplications' },
         { to: ROUTE_CONSTANTS.MESSAGE_EMPLOYEE, label: 'navbar.messages' },
         profile,
     ];
@@ -200,8 +198,8 @@ async function handleLogout() {
 .navbar-inner {
     display: flex;
     align-items: center;
-    gap: var(--space-3);
-    height: 64px;
+    gap: clamp(16px, 3vw, 44px);
+    height: 72px;
     padding: 0 var(--page-gutter);
     max-width: var(--page-max);
     margin: 0 auto;
@@ -217,12 +215,13 @@ async function handleLogout() {
 }
 
 .brand-logo {
-    width: 28px;
-    height: 28px;
+    width: 34px;
+    height: 34px;
 }
 
 .brand-name {
-    font-size: var(--fs-subtitle);
+    font-family: var(--font-display);
+    font-size: 21px;
     font-weight: var(--fw-bold);
     letter-spacing: -0.01em;
     color: var(--color-primary);
@@ -232,14 +231,15 @@ async function handleLogout() {
 .nav-links {
     display: flex;
     align-items: center;
-    gap: var(--space-1);
+    gap: 4px;
     margin: 0 auto;
 }
 
 .nav-link {
-    padding: var(--space-1) 12px;
-    border-radius: var(--radius-button);
-    font-size: var(--fs-body-sm);
+    position: relative;
+    padding: 27px 12px 25px;
+    border-radius: 0;
+    font-size: 13px;
     font-weight: var(--fw-medium);
     color: var(--color-text-secondary);
     text-decoration: none;
@@ -248,12 +248,23 @@ async function handleLogout() {
 
 .nav-link:hover {
     color: var(--color-text-primary);
-    background: var(--color-bg);
+    background: transparent;
 }
 
 .nav-link.router-link-active {
-    color: var(--color-accent);
+    color: var(--color-primary);
     font-weight: var(--fw-semibold);
+}
+
+.nav-link.router-link-active::after {
+    content: '';
+    position: absolute;
+    right: 12px;
+    bottom: 0;
+    left: 12px;
+    height: 3px;
+    border-radius: 3px 3px 0 0;
+    background: var(--color-primary);
 }
 
 /* Right actions */
@@ -288,8 +299,8 @@ async function handleLogout() {
     display: inline-flex;
     align-items: center;
     padding: 10px var(--space-3);
-    border-radius: var(--radius-button);
-    background: var(--color-accent);
+    border-radius: 7px;
+    background: var(--color-primary);
     color: #fff;
     font-size: var(--fs-body-sm);
     font-weight: var(--fw-semibold);
@@ -298,7 +309,7 @@ async function handleLogout() {
 }
 
 .cta:hover {
-    background: var(--color-accent-hover);
+    background: var(--color-primary-dark);
 }
 
 /* Avatar + dropdown */
@@ -313,7 +324,7 @@ async function handleLogout() {
     padding: 4px 6px 4px 4px;
     border: 1px solid var(--color-border);
     border-radius: 999px;
-    background: var(--color-surface);
+    background: var(--color-bg);
     color: var(--color-text-muted);
     cursor: pointer;
     transition: background-color 150ms ease, color 150ms ease, border-color 150ms ease, transform 100ms ease-out;
