@@ -2,6 +2,7 @@
 import { ArrowUpRight, BriefcaseBusiness, ChevronRight, CircleUserRound, FileCheck2, Sparkles } from 'lucide-vue-next';
 import { ROUTE_CONSTANTS } from '@/app/shared/router/route-constants';
 import { useHomePage } from '@/app/public/composables/useHomePage';
+import ProgressBar from '@/app/shared/components/ui/progress-bar.component.vue';
 
 const {
   userDisplayName,
@@ -22,6 +23,7 @@ const {
 <template>
   <div class="home-page">
     <main class="home-content">
+      <section class="dashboard-top">
       <section class="welcome-hero" aria-labelledby="welcome-title">
         <div class="hero-copy">
           <span class="eyebrow"><Sparkles :size="15" /> Tu brújula laboral</span>
@@ -33,6 +35,14 @@ const {
           </div>
         </div>
         <div class="hero-orbit" aria-hidden="true"><div class="orbit orbit-one"></div><div class="orbit orbit-two"></div><div class="orbit-dot"></div><span>hoy</span></div>
+      </section>
+
+      <aside class="progress-card" aria-label="Progreso del perfil">
+        <div class="progress-card__heading"><span class="progress-ring" :style="{ '--progress': `${profileCompletion}%` }"><strong>{{ loading ? '…' : `${profileCompletion}%` }}</strong></span><div><span class="section-kicker">Tu progreso</span><h2>{{ loading ? 'Cargando…' : `${profileCompletion}%` }}</h2><p>Perfil completo</p></div></div>
+        <ProgressBar :value="profileCompletion" :show-value="true" />
+        <div class="progress-card__next"><strong>Siguiente paso sugerido</strong><span>{{ nextStepTitle }}</span><small>{{ nextStepDescription }}</small></div>
+        <RouterLink :to="profileCompletion < 100 ? ROUTE_CONSTANTS.SETTINGS_PAGE : ROUTE_CONSTANTS.JOB_SEARCH" class="progress-card__button">{{ profileCompletion < 100 ? 'Completar perfil' : 'Explorar empleos' }} <ArrowUpRight :size="16" /></RouterLink>
+      </aside>
       </section>
 
       <section class="metrics-grid" aria-label="Resumen de actividad">
@@ -77,4 +87,6 @@ const {
  .opportunity-list{display:flex;flex-direction:column;gap:12px}.opportunity-list .opportunity-card--compact{display:block;margin-top:0;padding:18px 22px}.opportunity-list .opportunity-card--compact .opportunity-body{margin:0 0 16px}.dashboard-error{margin:0 0 22px;padding:12px 14px;border:1px solid rgba(210,38,38,.2);border-radius:9px;color:var(--color-state-error);background:rgba(210,38,38,.06);font-size:12px}.dashboard-loading{display:flex;flex-direction:column;gap:12px}.dashboard-loading span{display:block;height:150px;border-radius:16px;background:linear-gradient(90deg,var(--color-surface) 25%,var(--color-bg) 37%,var(--color-surface) 63%);background-size:400% 100%;animation:dashboard-shimmer 1.4s ease infinite}.dashboard-loading span:nth-child(2){height:92px}.dashboard-loading span:nth-child(3){height:92px}.dashboard-empty{display:flex;flex-direction:column;align-items:center;gap:10px;padding:42px 20px;border:1px dashed var(--color-border);border-radius:16px;color:var(--color-text-muted);text-align:center}.dashboard-empty p{margin:0;font-size:13px}.dashboard-empty svg{color:var(--color-accent)}@keyframes dashboard-shimmer{0%{background-position:100% 50%}100%{background-position:0 50%}}@media (prefers-reduced-motion:reduce){.dashboard-loading span{animation:none;background:var(--color-bg)}}
 @media (max-width:800px){.hero-orbit{opacity:.45;margin-right:-28px}.dashboard-grid{grid-template-columns:1fr;gap:34px}.metrics-grid{grid-template-columns:1fr;margin-bottom:34px}.metric-card{min-height:70px}.quick-action-list{grid-template-columns:1fr}}@media (max-width:500px){.home-content{padding-top:18px}.welcome-hero{min-height:190px;padding:25px 22px;border-radius:16px}.welcome-hero h1{font-size:36px}.welcome-hero p{max-width:210px;font-size:14px}.hero-orbit{position:absolute;right:-38px;opacity:.28}.section-heading{align-items:flex-start;flex-direction:column;gap:9px}.opportunity-footer{align-items:flex-start;flex-direction:column}.button-primary{width:100%;justify-content:center}.opportunity-card--compact{padding:15px}}@media (prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;transition-duration:.01ms!important;animation-duration:.01ms!important}}
 .hero-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:24px}.hero-button{display:inline-flex;align-items:center;gap:8px;padding:12px 18px;border:1px solid transparent;border-radius:8px;font-size:12px;font-weight:var(--fw-bold);text-decoration:none}.hero-button--solid{color:var(--color-primary);background:#fff}.hero-button--outline{color:#fff;border-color:rgba(255,255,255,.6)}.hero-button--outline:hover{background:rgba(255,255,255,.1)}
+.dashboard-top{display:grid;grid-template-columns:minmax(0,2.1fr) minmax(290px,.9fr);gap:24px;align-items:stretch}.progress-card{display:flex;flex-direction:column;gap:16px;padding:26px 24px;background:var(--color-surface);border:1px solid var(--color-border);border-radius:22px;box-shadow:var(--shadow-card)}.progress-card__heading{display:flex;align-items:center;gap:16px}.progress-card__heading h2{margin:3px 0 0;color:var(--color-primary);font-size:28px;line-height:1}.progress-card__heading p{margin:5px 0 0;color:var(--color-text-secondary);font-size:12px}.progress-ring{display:grid;place-items:center;width:72px;height:72px;border-radius:50%;background:radial-gradient(circle at center,var(--color-surface) 58%,transparent 59%),conic-gradient(var(--color-brand-lime) var(--progress, 40%),var(--color-lavender) 0);font-family:var(--font-display)}.progress-ring strong{color:var(--color-primary);font-size:14px}.progress-card__bar{height:8px;overflow:hidden;border-radius:8px;background:var(--color-lavender)}.progress-card__bar span{display:block;height:100%;border-radius:inherit;background:var(--color-primary)}.progress-card__next{display:flex;flex-direction:column;gap:5px;padding:14px;border-radius:14px;background:#F7F8FF}.progress-card__next strong{font-size:12px}.progress-card__next span{color:var(--color-primary);font-size:14px;font-weight:var(--fw-semibold)}.progress-card__next small{color:var(--color-text-secondary);font-size:11px;line-height:1.4}.progress-card__button{display:flex;align-items:center;justify-content:center;gap:8px;padding:11px 14px;border:1px solid var(--color-primary);border-radius:8px;color:var(--color-primary);font-size:12px;font-weight:var(--fw-bold);text-decoration:none}.progress-card__button:hover{color:#fff;background:var(--color-primary)}
+@media (max-width:900px){.dashboard-top{grid-template-columns:1fr}.progress-card{display:grid;grid-template-columns:1fr 1fr;align-items:center}.progress-card__heading{grid-row:span 2}.progress-card__button{grid-column:2}}@media (max-width:500px){.progress-card{display:flex}.progress-card__button{width:100%}}
 </style>

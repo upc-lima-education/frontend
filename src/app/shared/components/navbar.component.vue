@@ -199,7 +199,7 @@ async function handleLogout() {
     display: flex;
     align-items: center;
     gap: clamp(16px, 3vw, 44px);
-    height: 72px;
+    height: 78px;
     padding: 0 var(--page-gutter);
     max-width: var(--page-max);
     margin: 0 auto;

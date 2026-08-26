@@ -1,0 +1,9 @@
+<script setup lang="ts">
+defineProps<{ title: string; company?: string; location?: string; modality?: string; salary?: string; featured?: boolean }>();
+</script>
+
+<template><article class="job-card"><div class="company-mark">{{ title.charAt(0).toUpperCase() }}</div><div class="job-card__body"><div class="job-card__heading"><div><span v-if="featured" class="job-card__badge">Para ti</span><h3>{{ title }}</h3><p>{{ company || 'Empresa' }}</p></div><slot name="action" /></div><div class="job-card__meta"><span v-if="location">⌖ {{ location }}</span><span v-if="modality">▣ {{ modality }}</span><span v-if="salary">$ {{ salary }}</span></div></div><slot name="button" /></article></template>
+
+<style scoped>
+.job-card{display:flex;align-items:center;gap:16px;padding:20px;background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-card);transition:var(--transition)}.job-card:hover{border-color:var(--color-primary);box-shadow:var(--shadow-card)}.company-mark{display:grid;place-items:center;width:52px;height:52px;flex:0 0 52px;border-radius:12px;color:#fff;background:var(--color-primary);font-size:21px;font-weight:var(--fw-bold)}.job-card__body{min-width:0;flex:1}.job-card__heading{display:flex;justify-content:space-between;gap:12px}.job-card h3{margin:0 0 5px;color:var(--color-text-primary);font-size:16px}.job-card p{margin:0;color:var(--color-text-secondary);font-size:13px}.job-card__badge{display:inline-flex;margin-bottom:5px;padding:4px 8px;border-radius:999px;color:#315100;background:var(--color-brand-lime);font-size:10px;font-weight:var(--fw-bold)}.job-card__meta{display:flex;flex-wrap:wrap;gap:14px;margin-top:13px;color:var(--color-text-secondary);font-size:12px}@media (max-width:600px){.job-card{align-items:flex-start;padding:16px}.job-card__meta{gap:8px;flex-direction:column}.job-card> :last-child{margin-left:auto}}
+</style>

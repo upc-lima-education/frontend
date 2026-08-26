@@ -2,19 +2,19 @@
     /* ============================================================
        SISTEMA VISUAL LLANQUI — azul de confianza + lima de impulso.
        ============================================================ */
-    --color-primary:        #1E2BAA;   /* azul profundo, panel y elementos clave */
-    --color-primary-dark:   #14207F;   /* hover y estados activos */
-    --color-accent:         #1E2BAA;   /* acciones principales */
-    --color-accent-hover:   #14207F;   /* hover de botones */
-    --color-brand-lime:     #C7F36B;   /* energia, progreso y estados positivos */
-    --color-bg:             #F5F6F8;   /* fondo suave de la aplicacion */
+    --color-primary:        #2838D3;   /* azul de marca y acciones principales */
+    --color-primary-dark:   #202EB7;   /* hover y estados activos */
+    --color-accent:         #2838D3;   /* acciones principales */
+    --color-accent-hover:   #202EB7;   /* hover de botones */
+    --color-brand-lime:     #B9EF4A;   /* energia, progreso y estados positivos */
+    --color-bg:             #F6F7FB;   /* fondo suave de la aplicacion */
     --color-surface:        #FFFFFF;   /* tarjetas, formularios, paneles */
     --color-text-primary:   #1F2937;   /* titulos y texto principal */
     --color-text-secondary: #5E6B86;   /* texto de apoyo */
     --color-text-muted:     #8A94A8;   /* labels, placeholders */
     --color-border:         #E3E7F0;   /* bordes de inputs y divisores */
-    --color-lavender:       #E9ECFF;   /* acentos decorativos suaves */
-    --color-dark-slate:     #1F2937;
+    --color-lavender:       #EEF1FF;   /* acentos decorativos suaves */
+    --color-dark-slate:     #11182D;
 
     /* Estados semanticos. El naranja vive SOLO aqui, nunca en branding. */
     --color-state-alert:        #EC4E10;   /* alertas / acentos de estado */
@@ -36,7 +36,7 @@
        TIPOGRAFIA — una sola familia para todo.
        ============================================================ */
     --font-family: 'Inter', sans-serif;
-    --font-display: 'Poppins', 'Inter', sans-serif;
+    --font-display: 'Inter', sans-serif;
 
     --fw-regular:  400;
     --fw-medium:   500;
@@ -54,7 +54,7 @@
        FORMA Y ESPACIADO
        ============================================================ */
     --radius-button: 8px;
-    --radius-card:   14px;
+    --radius-card:   16px;
     --radius-input:  8px;
     --radius-navbar: 0px;
 
