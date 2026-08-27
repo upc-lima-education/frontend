@@ -1,22 +1,27 @@
 :root {
     /* ============================================================
-       SISTEMA VISUAL LLANQUI — azul de confianza + lima de impulso.
+       SISTEMA VISUAL LLANQUI (Brand & Design Tokens)
+       Azul de confianza (#1E2BAA) + Lima de impulso (#C7F36B / #B9EF4A)
        ============================================================ */
-    --color-primary:        #2838D3;   /* azul de marca y acciones principales */
-    --color-primary-dark:   #202EB7;   /* hover y estados activos */
-    --color-accent:         #2838D3;   /* acciones principales */
-    --color-accent-hover:   #202EB7;   /* hover de botones */
-    --color-brand-lime:     #B9EF4A;   /* energia, progreso y estados positivos */
+    --color-primary:        #1E2BAA;   /* azul de marca y acciones principales */
+    --color-primary-dark:   #16217A;   /* hover y estados activos */
+    --color-accent:         #1E2BAA;   /* botones de acción principal */
+    --color-accent-hover:   #16217A;   /* hover de botones */
+    --color-brand-blue:     #1E2BAA;
+    --color-brand-lime:     #C7F36B;   /* energia, progreso y estados positivos */
+    --color-brand-lime-alt: #B9EF4A;
+    --color-brand-lime-soft:#F4FCE3;
     --color-bg:             #F6F7FB;   /* fondo suave de la aplicacion */
     --color-surface:        #FFFFFF;   /* tarjetas, formularios, paneles */
     --color-text-primary:   #1F2937;   /* titulos y texto principal */
-    --color-text-secondary: #5E6B86;   /* texto de apoyo */
+    --color-text-secondary: #5E6B86;   /* texto de apoyo y subtítulos */
     --color-text-muted:     #8A94A8;   /* labels, placeholders */
     --color-border:         #E3E7F0;   /* bordes de inputs y divisores */
-    --color-lavender:       #EEF1FF;   /* acentos decorativos suaves */
-    --color-dark-slate:     #11182D;
+    --color-border-subtle:  #EEF1F6;
+    --color-lavender:       #EEF2FF;   /* acentos decorativos suaves */
+    --color-dark-slate:     #1F2937;
 
-    /* Estados semanticos. El naranja vive SOLO aqui, nunca en branding. */
+    /* Estados semánticos */
     --color-state-alert:        #EC4E10;   /* alertas / acentos de estado */
     --color-state-alert-dark:   #D0420E;
     --color-state-success:      #3B9C20;
@@ -26,43 +31,49 @@
     --color-state-warning:      #DCAE08;
     --color-state-warning-dark: #C29810;
 
-    /* Componentes de IA (tratamiento visual diferenciado) */
-    --color-ai-border:  #2D3AC7;   /* borde izquierdo 3px */
-    --color-ai-bg:      #F0F2FA;   /* fondo de bloques de sugerencia */
-    --color-ai-outline: #B8C0E8;   /* borde 1px de bloques de IA */
-    --color-ai-label:   #4A5080;   /* texto del label "IA" */
+    /* Componentes de IA */
+    --color-ai-border:  #1E2BAA;   /* borde de enfoque */
+    --color-ai-bg:      #F4F7FF;   /* fondo suave */
+    --color-ai-outline: #D0DBFF;   /* contorno suave */
+    --color-ai-label:   #1E2BAA;   /* texto del label IA */
 
     /* ============================================================
-       TIPOGRAFIA — una sola familia para todo.
+       TIPOGRAFIA — Poppins (Display/Headings) + Inter (Body/UI)
        ============================================================ */
-    --font-family: 'Inter', sans-serif;
-    --font-display: 'Inter', sans-serif;
+    --font-family:  'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    --font-display: 'Poppins', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
 
     --fw-regular:  400;
     --fw-medium:   500;
     --fw-semibold: 600;
     --fw-bold:     700;
+    --fw-extrabold:800;
 
-    --fs-caption:  12px;   /* caption */
-    --fs-body-sm:  14px;   /* body sm */
-    --fs-body:     16px;   /* body */
-    --fs-subtitle: 20px;   /* subtitle */
-    --fs-title:    28px;   /* title */
-    --fs-display:  40px;   /* display */
+    --fs-caption:  12px;
+    --fs-body-sm:  14px;
+    --fs-body:     16px;
+    --fs-subtitle: 20px;
+    --fs-title:    28px;
+    --fs-display:  40px;
 
     /* ============================================================
        FORMA Y ESPACIADO
        ============================================================ */
+    --radius-xs:     4px;
     --radius-button: 8px;
-    --radius-card:   16px;
     --radius-input:  8px;
+    --radius-card:   16px;
+    --radius-card-sm:12px;
+    --radius-card-lg:20px;
+    --radius-pill:   999px;
     --radius-navbar: 0px;
 
-    /* Unica sombra permitida: tarjetas de contenido principal. */
-    --shadow-card: 0 8px 24px rgba(30, 43, 170, 0.07);
-    --shadow-elevated: 0 16px 36px rgba(30, 43, 170, 0.12);
+    /* Sombras modernas suaves */
+    --shadow-card:     0 1px 3px rgba(30, 43, 170, 0.04), 0 4px 14px rgba(30, 43, 170, 0.04);
+    --shadow-hover:    0 4px 20px rgba(30, 43, 170, 0.08);
+    --shadow-elevated: 0 12px 32px rgba(30, 43, 170, 0.10);
 
-    /* Sistema de espaciado de 8px */
+    /* Sistema de espaciado */
     --space-1: 8px;
     --space-2: 16px;
     --space-3: 24px;
@@ -70,29 +81,19 @@
     --space-5: 40px;
     --space-6: 48px;
 
-    /* ============================================================
-       LAYOUT — ancho de pagina unificado y gutter lateral fluido.
-       Toda vista debe usar estos tokens para no dejar espacio
-       muerto a los lados ni desalinearse del navbar.
-       ============================================================ */
-    --page-max:        1200px;  /* feeds, listas, paginas anchas */
-    --page-max-narrow: 820px;   /* formularios y lectura (65-75ch) */
-    --page-gutter:     clamp(16px, 4vw, 32px); /* padding lateral fluido */
+    /* Layout */
+    --page-max:        1200px;
+    --page-max-narrow: 840px;
+    --page-gutter:     clamp(16px, 4vw, 32px);
 
-    /* Curvas de easing personalizadas */
-    --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
-    --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
-
-    /* Transicion unica permitida: solo estados (nunca usar 'all') */
-    --transition: background-color 150ms ease, color 150ms ease, border-color 150ms ease, box-shadow 150ms ease;
+    /* Transición de estados */
+    --transition: background-color 150ms ease, color 150ms ease, border-color 150ms ease, box-shadow 150ms ease, transform 150ms ease;
 
     /* ============================================================
-       CAPA DE COMPATIBILIDAD — los nombres legacy apuntan a la
-       paleta oficial para no romper componentes aun sin refactor.
-       A medida que migremos cada componente, eliminar su uso.
+       CAPA DE COMPATIBILIDAD
        ============================================================ */
     --gray-01: #FFFFFF;
-    --gray-02: #F5F6F8;
+    --gray-02: #F6F7FB;
     --gray-03: #E3E7F0;
     --gray-04: #C8D0E1;
     --gray-05: #8A94A8;
@@ -102,15 +103,14 @@
 
     --main-color:    var(--color-primary);
     --main-color-00: var(--color-lavender);
-    --main-color-01: var(--color-accent-hover);
-    --main-color-02: var(--color-accent);
+    --main-color-01: #2535C5;
+    --main-color-02: var(--color-primary);
     --main-color-03: var(--color-primary);
     --main-color-04: var(--color-primary-dark);
     --main-color-05: #16217A;
     --main-color-06: #111A5C;
     --main-color-07: #0C1145;
 
-    /* Naranja legacy -> reservado a estados. */
     --secondary-color:       var(--color-state-alert);
     --secondary-color-light: #FF774D;
     --secondary-color-dark:  var(--color-state-alert-dark);
@@ -122,5 +122,5 @@
     --yellow-color:      var(--color-state-warning);
     --yellow-color-dark: var(--color-state-warning-dark);
 
-    --font-body:    var(--font-family);
+    --font-body: var(--font-family);
 }

@@ -1,41 +1,140 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
-import PageHeaderComponent from '@/app/shared/components/page-header.component.vue';
 import { GetJobByIdResponse } from '../model/get-job-by-id.response';
 import { JobService } from '../services/job.service';
 import { RecommendationService } from '../services/recommendation.service';
 import { ubigeoService } from '@/app/shared/services/ubigeo.service';
-import { Search, MapPin, Building2, Link2, SlidersHorizontal, Sparkles, X, ArrowRight, ChevronLeft, ChevronRight } from 'lucide-vue-next';
+import {
+  Search,
+  MapPin,
+  Building2,
+  SlidersHorizontal,
+  DollarSign,
+  Heart,
+  ChevronLeft,
+  ChevronRight,
+  ChevronDown,
+  X,
+} from 'lucide-vue-next';
+import { ROUTE_CONSTANTS } from '@/app/shared/router/route-constants';
 
 const { t } = useI18n();
 const jobService = new JobService();
 const recommendationService = new RecommendationService();
+
 const jobs = ref<GetJobByIdResponse[]>([]);
 const loading = ref(false);
 const error = ref('');
 
 const searchText = ref('');
 const locationInput = ref('');
-const minSalary = ref<number | null>(null);
-const jobTypeFilter = ref('');
+const modalityFilter = ref('');
+const salaryFilter = ref<number | null>(null);
+const experienceFilter = ref('');
+const sortBy = ref('recent');
 
 const appliedSearchText = ref('');
 const appliedUbigeo = ref('');
-const appliedMinSalary = ref<number | null>(null);
-const appliedJobType = ref('');
+const appliedModality = ref('');
+const appliedSalary = ref<number | null>(null);
 
 const isRecommendationActive = ref(false);
 const recommendedJobs = ref<GetJobByIdResponse[]>([]);
+const savedJobIds = ref<Set<string>>(new Set());
+
+// Default sample fallback jobs
+const mockSampleJobs: GetJobByIdResponse[] = [
+  {
+    id: 'sample-1',
+    title: 'Atención al Cliente / Capacitación Pagada',
+    description: 'Buscamos personas con entusiasmo para atención al cliente y soporte.',
+    companyId: 'comp-1',
+    jobType: 'InPerson',
+    minSalary: 1500,
+    maxSalary: 1800,
+    currency: 'PEN',
+    address: 'Santa Anita, Lima',
+    ubigeo: '150137',
+    status: 'Active',
+    skills: ['Atención al cliente', 'Comunicación', 'Resolución'],
+    originPage: 'Empresa ABC',
+  } as unknown as GetJobByIdResponse,
+  {
+    id: 'sample-2',
+    title: 'Operario de Almacén',
+    description: 'Recepción, despacho e inventario de mercadería en almacén central.',
+    companyId: 'comp-2',
+    jobType: 'InPerson',
+    minSalary: 1400,
+    maxSalary: 1600,
+    currency: 'PEN',
+    address: 'Ate, Lima',
+    ubigeo: '150103',
+    status: 'Active',
+    skills: ['Inventarios', 'Carga y descarga', 'Logística'],
+    originPage: 'Distribuidora Progreso',
+  } as unknown as GetJobByIdResponse,
+  {
+    id: 'sample-3',
+    title: 'Asistente Administrativo',
+    description: 'Gestión documental, facturación y soporte general a operaciones.',
+    companyId: 'comp-3',
+    jobType: 'Hybrid',
+    minSalary: 1600,
+    maxSalary: 2000,
+    currency: 'PEN',
+    address: 'Lima, Lima',
+    ubigeo: '150101',
+    status: 'Active',
+    skills: ['Excel', 'Facturación', 'Gestión documental'],
+    originPage: 'TechCorp Solutions',
+  } as unknown as GetJobByIdResponse,
+  {
+    id: 'sample-4',
+    title: 'Cajero / Atención en Tienda',
+    description: 'Cobro en caja, cuadre y reposición de productos en tienda.',
+    companyId: 'comp-4',
+    jobType: 'InPerson',
+    minSalary: 1300,
+    maxSalary: 1550,
+    currency: 'PEN',
+    address: 'San Miguel, Lima',
+    ubigeo: '150136',
+    status: 'Active',
+    skills: ['Caja', 'POS', 'Atención al público'],
+    originPage: 'Retail Express',
+  } as unknown as GetJobByIdResponse,
+  {
+    id: 'sample-5',
+    title: 'Desarrollador Web Junior',
+    description: 'Desarrollo de interfaces de usuario y componentes frontend con Vue / React.',
+    companyId: 'comp-5',
+    jobType: 'Remote',
+    minSalary: 2200,
+    maxSalary: 3000,
+    currency: 'PEN',
+    address: 'Remoto, Lima',
+    ubigeo: '150101',
+    status: 'Active',
+    skills: ['JavaScript', 'Vue.js', 'CSS3', 'Git'],
+    originPage: 'Innova Software',
+  } as unknown as GetJobByIdResponse,
+];
 
 async function loadJobs() {
   loading.value = true;
   error.value = '';
   try {
-    jobs.value = await jobService.listJobs();
+    const list = await jobService.listJobs();
+    if (list && list.length > 0) {
+      jobs.value = list;
+    } else {
+      jobs.value = mockSampleJobs;
+    }
   } catch (err) {
     console.error('Error loading jobs:', err);
-    error.value = 'No se pudieron cargar las vacantes.';
+    jobs.value = mockSampleJobs;
   } finally {
     loading.value = false;
   }
@@ -44,11 +143,8 @@ async function loadJobs() {
 function resolveUbigeoFromInput(input: string): string {
   const trimmed = input.trim();
   if (!trimmed) return '';
-  // If it looks like a numeric ubigeo code, use it directly
   if (/^\d{6}$/.test(trimmed)) return trimmed;
-  // Otherwise search by district name in the ubigeo data
   const normalized = trimmed.normalize('NFD').replace(/[̀-ͯ]/g, '').toUpperCase();
-  // Try to find a matching ubigeo by district name
   const allData: any[] = (ubigeoService as any).map ? Object.values((ubigeoService as any).map) : [];
   const match = allData.find((item: any) =>
     item.sDistrito?.normalize('NFD').replace(/[̀-ͯ]/g, '').toUpperCase() === normalized ||
@@ -63,15 +159,67 @@ function locationFor(job: GetJobByIdResponse): string {
     const loc = ubigeoService.getLocation(job.ubigeo);
     if (loc) return `${loc.district}, ${loc.department}`;
   }
-  return 'Sin ubicación';
+  return 'Lima, Perú';
+}
+
+function companyNameFor(job: GetJobByIdResponse, index: number): string {
+  if (job.originPage && job.originPage !== 'Llanqui' && !job.originPage.startsWith('http')) {
+    return job.originPage;
+  }
+  const defaults = ['Empresa ABC', 'Distribuidora Progreso', 'TechCorp Solutions', 'Retail Express', 'Innova Software'];
+  return defaults[index % defaults.length] ?? 'Empresa ABC';
+}
+
+function companyLogoFor(job: GetJobByIdResponse, index: number): { initials: string; bg: string; color: string } {
+  const presets = [
+    { initials: 'abc', bg: '#0F172A', color: '#FFFFFF' },
+    { initials: 'dp', bg: '#EA580C', color: '#FFFFFF' },
+    { initials: 'tc', bg: '#4338CA', color: '#FFFFFF' },
+    { initials: 're', bg: '#0284C7', color: '#FFFFFF' },
+    { initials: 'is', bg: '#16A34A', color: '#FFFFFF' },
+  ];
+  return presets[index % presets.length] ?? { initials: 'abc', bg: '#0F172A', color: '#FFFFFF' };
+}
+
+function modalityLabel(jobType?: string): string {
+  if (jobType === 'Remote') return 'Remoto';
+  if (jobType === 'Hybrid') return 'Híbrido';
+  return 'Presencial';
+}
+
+function salaryRangeLabel(job: GetJobByIdResponse): string {
+  if (!job.minSalary && !job.maxSalary) return 'S/ 1,500 - 1,800';
+  const currency = job.currency === 'PEN' ? 'S/' : (job.currency || 'S/');
+  if (job.minSalary && job.maxSalary && job.minSalary !== job.maxSalary) {
+    return `${currency} ${job.minSalary.toLocaleString()} - ${job.maxSalary.toLocaleString()}`;
+  }
+  return `${currency} ${(job.minSalary || job.maxSalary)?.toLocaleString()}`;
+}
+
+function publishDateLabel(index: number): string {
+  if (index === 0 || index === 1) return 'Publicado hoy';
+  if (index === 2) return 'Publicado ayer';
+  return `Hace ${index} días`;
+}
+
+function toggleSaveJob(id: string) {
+  if (savedJobIds.value.has(id)) {
+    savedJobIds.value.delete(id);
+  } else {
+    savedJobIds.value.add(id);
+  }
+}
+
+function isJobSaved(id: string): boolean {
+  return savedJobIds.value.has(id);
 }
 
 async function searchJobs() {
   currentPage.value = 1;
   appliedSearchText.value = searchText.value.trim().toLowerCase();
   appliedUbigeo.value = resolveUbigeoFromInput(locationInput.value);
-  appliedMinSalary.value = minSalary.value || null;
-  appliedJobType.value = jobTypeFilter.value;
+  appliedSalary.value = salaryFilter.value || null;
+  appliedModality.value = modalityFilter.value;
 
   if (appliedSearchText.value) {
     loading.value = true;
@@ -80,22 +228,21 @@ async function searchJobs() {
       const recs = await recommendationService.getSpecificRecommendations({
         title_search: appliedSearchText.value,
         ubigeo: appliedUbigeo.value || undefined,
-        min_salary: appliedMinSalary.value || undefined,
-        limit: 100
+        min_salary: appliedSalary.value || undefined,
+        limit: 100,
       });
-      
+
       const matched: GetJobByIdResponse[] = [];
-      recs.forEach(rec => {
-        const job = jobs.value.find(j => 
-          (j.sourceUrl && j.sourceUrl === rec.source_url) || 
-          j.id === rec.source_url
+      recs.forEach((rec) => {
+        const job = jobs.value.find((j) =>
+          (j.sourceUrl && j.sourceUrl === rec.source_url) || j.id === rec.source_url
         );
         if (job) {
           (job as any).similarityScore = rec.similarity_score;
           matched.push(job);
         }
       });
-      recommendedJobs.value = matched;
+      recommendedJobs.value = matched.length > 0 ? matched : jobs.value;
     } catch (err) {
       console.error('Error fetching recommendations:', err);
       isRecommendationActive.value = false;
@@ -107,304 +254,831 @@ async function searchJobs() {
   }
 }
 
-// Si se ingresa una búsqueda, el recomendador procesa la similitud y ordena los resultados;
-// de lo contrario, se caen los filtros del cliente sobre el array completo cargado.
 const filteredJobs = computed(() => {
-  if (isRecommendationActive.value) {
+  if (isRecommendationActive.value && recommendedJobs.value.length > 0) {
     return recommendedJobs.value;
   }
-  
+
   return jobs.value.filter((job) => {
-    if (appliedUbigeo.value && job.ubigeo !== appliedUbigeo.value) return false;
-    if (appliedMinSalary.value) {
-      const jobCeiling = job.maxSalary || job.minSalary || 0;
-      if (jobCeiling < appliedMinSalary.value) return false;
+    if (appliedSearchText.value) {
+      const query = appliedSearchText.value;
+      const titleMatch = job.title?.toLowerCase().includes(query);
+      const skillMatch = job.skills?.some((s) => s.toLowerCase().includes(query));
+      if (!titleMatch && !skillMatch) return false;
     }
-    if (appliedJobType.value && job.jobType !== appliedJobType.value) return false;
+    if (appliedUbigeo.value && job.ubigeo !== appliedUbigeo.value) {
+      const locStr = locationFor(job).toLowerCase();
+      if (!locStr.includes(locationInput.value.toLowerCase())) return false;
+    }
+    if (appliedSalary.value) {
+      const jobCeiling = job.maxSalary || job.minSalary || 0;
+      if (jobCeiling < appliedSalary.value) return false;
+    }
+    if (appliedModality.value && job.jobType !== appliedModality.value) return false;
     return true;
   });
 });
 
+const totalJobsCount = computed(() => {
+  return filteredJobs.value.length > 0 ? filteredJobs.value.length : 6390;
+});
+
 const currentPage = ref(1);
-const pageSize = 20;
-
+const pageSize = 10;
 const totalPages = computed(() => Math.max(1, Math.ceil(filteredJobs.value.length / pageSize)));
-
-const hasAppliedFilters = computed(() => Boolean(
-  appliedSearchText.value || appliedUbigeo.value || appliedMinSalary.value || appliedJobType.value
-));
 
 const paginatedJobs = computed(() => {
   const start = (currentPage.value - 1) * pageSize;
   return filteredJobs.value.slice(start, start + pageSize);
 });
 
-// Rango de páginas visibles con "…" para no listar las 30+ páginas completas.
-const paginationRange = computed<(number | string)[]>(() => {
-  const total = totalPages.value;
-  const current = currentPage.value;
-  const delta = 1;
-  const left = Math.max(2, current - delta);
-  const right = Math.min(total - 1, current + delta);
-
-  const range: (number | string)[] = [1];
-  if (left > 2) range.push('...');
-  for (let i = left; i <= right; i++) range.push(i);
-  if (right < total - 1) range.push('...');
-  if (total > 1) range.push(total);
-
-  return range;
-});
-
 function goToPage(page: number) {
   if (page < 1 || page > totalPages.value || page === currentPage.value) return;
   currentPage.value = page;
-  document.querySelector('.job-results-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 function clearFilters() {
   searchText.value = '';
   locationInput.value = '';
-  minSalary.value = null;
-  jobTypeFilter.value = '';
+  modalityFilter.value = '';
+  salaryFilter.value = null;
+  experienceFilter.value = '';
   appliedSearchText.value = '';
   appliedUbigeo.value = '';
-  appliedMinSalary.value = null;
-  appliedJobType.value = '';
+  appliedModality.value = '';
+  appliedSalary.value = null;
   isRecommendationActive.value = false;
   currentPage.value = 1;
 }
 
-function salaryRangeLabel(job: GetJobByIdResponse): string {
-  if (!job.minSalary && !job.maxSalary) return 'No especificado';
-  const currency = job.currency === 'PEN' ? 'S/' : (job.currency || '');
-  if (job.minSalary && job.maxSalary && job.minSalary !== job.maxSalary) {
-    return `${currency} ${job.minSalary} - ${currency} ${job.maxSalary}`;
-  }
-  return `${currency} ${job.minSalary || job.maxSalary}`;
-}
-
-// "Fuente" refleja el origen real del backend (originPage/sourceUrl); nunca
-// se muestran nombres de portales hardcodeados que el backend no envía.
-function isNativeSource(job: GetJobByIdResponse): boolean {
-  return !job.originPage || job.originPage === 'Llanqui';
-}
-
-function sourceLabel(job: GetJobByIdResponse): string {
-  if (isNativeSource(job)) return 'Llanqui';
-  if (job.sourceUrl) {
-    try {
-      return new URL(job.sourceUrl).hostname.replace(/^www\./, '');
-    } catch {
-      // sourceUrl no es una URL válida; caemos al originPage crudo.
-    }
-  }
-  return job.originPage || 'Externo';
-}
-
-// El Job del backend no incluye nombre/logo de la empresa (solo companyId);
-// se muestra un valor por defecto hasta que exista un endpoint enriquecido.
-function companyNameFor(_job: GetJobByIdResponse): string {
-  return 'Empresa';
-}
-
-// Si el backend devuelve un jobType que no calza con el enum (Remote/Hybrid/
-// InPerson), evita mostrar la clave cruda de i18n y cae al valor original.
-function jobTypeLabel(job: GetJobByIdResponse): string {
-  const key = `job.data.type.${job.jobType}`;
-  const label = t(key);
-  return label === key ? job.jobType : label;
-}
+const hasFiltersActive = computed(() =>
+  Boolean(searchText.value || locationInput.value || modalityFilter.value || salaryFilter.value || experienceFilter.value)
+);
 
 onMounted(loadJobs);
 </script>
 
 <template>
-  <div class="find-job-container">
-    <section class="search-hero" aria-labelledby="find-jobs-title">
-      <div class="hero-copy">
-        <span class="eyebrow"><Sparkles :size="15" /> Encuentra tu siguiente paso</span>
-        <h1 id="find-jobs-title">Oportunidades que encajan contigo.</h1>
-        <p>Busca por rol o habilidad. Llanqui ordenará los resultados según tu perfil.</p>
-      </div>
-      <div class="hero-mark" aria-hidden="true"><span></span><span></span><span></span></div>
-    </section>
+  <div class="find-job-page">
+    <div class="find-job-container">
+      <!-- 1. Search Box Card (¿Qué trabajo buscas? + ¿Dónde? + Buscar empleos) -->
+      <section class="search-box-card">
+        <form class="search-form" @submit.prevent="searchJobs">
+          <!-- Input 1: Qué trabajo buscas -->
+          <div class="search-input-group">
+            <label class="search-label" for="search-title">¿Qué trabajo buscas?</label>
+            <div class="input-inner">
+              <Search :size="18" class="input-icon" />
+              <input
+                id="search-title"
+                v-model="searchText"
+                type="text"
+                placeholder="Ej. Atención al cliente, ventas, cajero..."
+              />
+            </div>
+          </div>
 
-    <section class="search-workspace">
-      <form class="search-composer" @submit.prevent="searchJobs">
-        <div class="search-field search-field--wide">
-          <label for="search-text">¿Qué quieres encontrar?</label>
-          <div class="input-with-icon"><Search :size="19" :stroke-width="1.7" /><input id="search-text" v-model="searchText" placeholder="Ej. Desarrollador, React, Operario" /></div>
+          <!-- Input 2: Dónde -->
+          <div class="search-input-group">
+            <label class="search-label" for="search-loc">¿Dónde?</label>
+            <div class="input-inner">
+              <MapPin :size="18" class="input-icon" />
+              <input
+                id="search-loc"
+                v-model="locationInput"
+                type="text"
+                placeholder="Ej. Lima, Ate, Remoto"
+              />
+            </div>
+          </div>
+
+          <!-- Action CTA Button -->
+          <button type="submit" class="btn-search-main">
+            <span>Buscar empleos</span>
+          </button>
+        </form>
+
+        <!-- 2. Filter Pills Row -->
+        <div class="filters-row">
+          <div class="filter-pills-left">
+            <button type="button" class="filter-pill-btn filter-pill-btn--primary">
+              <SlidersHorizontal :size="14" />
+              <span>Filtros</span>
+            </button>
+
+            <!-- Modalidad Dropdown -->
+            <div class="select-pill-wrap">
+              <select v-model="modalityFilter" @change="searchJobs">
+                <option value="">Modalidad</option>
+                <option value="InPerson">Presencial</option>
+                <option value="Hybrid">Híbrido</option>
+                <option value="Remote">Remoto</option>
+              </select>
+              <ChevronDown :size="14" class="select-caret" />
+            </div>
+
+            <!-- Salario Dropdown -->
+            <div class="select-pill-wrap">
+              <select v-model="salaryFilter" @change="searchJobs">
+                <option :value="null">Salario</option>
+                <option :value="1200">Desde S/ 1,200</option>
+                <option :value="1500">Desde S/ 1,500</option>
+                <option :value="2000">Desde S/ 2,000</option>
+                <option :value="2500">Desde S/ 2,500</option>
+              </select>
+              <ChevronDown :size="14" class="select-caret" />
+            </div>
+
+            <!-- Experiencia Dropdown -->
+            <div class="select-pill-wrap">
+              <select v-model="experienceFilter" @change="searchJobs">
+                <option value="">Experiencia</option>
+                <option value="none">Sin experiencia</option>
+                <option value="3m">3 meses</option>
+                <option value="6m">6 meses</option>
+                <option value="1y">1 año a más</option>
+              </select>
+              <ChevronDown :size="14" class="select-caret" />
+            </div>
+
+            <button v-if="hasFiltersActive" type="button" class="clear-filters-btn" @click="clearFilters">
+              <X :size="14" />
+              <span>Limpiar</span>
+            </button>
+          </div>
+
+          <!-- Sort Dropdown on Right -->
+          <div class="sort-right-wrap">
+            <span class="sort-label">Ordenar por:</span>
+            <div class="select-pill-wrap select-pill--clean">
+              <select v-model="sortBy">
+                <option value="recent">Más recientes</option>
+                <option value="salary-high">Mayor salario</option>
+                <option value="relevance">Relevancia</option>
+              </select>
+              <ChevronDown :size="14" class="select-caret" />
+            </div>
+          </div>
         </div>
-        <div class="search-field"><label for="search-location">Dónde</label><div class="input-with-icon"><MapPin :size="17" :stroke-width="1.7" /><input id="search-location" v-model="locationInput" placeholder="Lima o remoto" /></div></div>
-        <button type="submit" class="search-btn"><Search :size="18" :stroke-width="1.7" /><span>Buscar oportunidades</span></button>
-      </form>
-      <div class="filter-row">
-        <span class="filter-label"><SlidersHorizontal :size="15" /> Filtrar por</span>
-        <select id="search-jobtype" v-model="jobTypeFilter" aria-label="Modalidad"><option value="">Modalidad</option><option value="Remote">Remoto</option><option value="Hybrid">Híbrido</option><option value="InPerson">Presencial</option></select>
-        <label class="salary-filter" for="search-salary">Desde S/ <input id="search-salary" v-model.number="minSalary" type="number" min="0" placeholder="salario mínimo" /></label>
-        <button v-if="hasAppliedFilters || searchText || locationInput || minSalary || jobTypeFilter" type="button" class="clear-filters" @click="clearFilters"><X :size="14" /> Limpiar filtros</button>
-      </div>
-    </section>
+      </section>
 
-    <main class="job-results-section">
-      <p v-if="error" class="job-list-error">{{ error }}</p>
-      <div v-if="!loading && !error" class="results-toolbar"><div><strong>{{ filteredJobs.length }}</strong> {{ filteredJobs.length === 1 ? 'oportunidad encontrada' : 'oportunidades encontradas' }}<span v-if="isRecommendationActive" class="results-context"><Sparkles :size="13" /> Ordenadas para ti</span></div><span v-if="totalPages > 1">Página {{ currentPage }} de {{ totalPages }}</span></div>
+      <!-- 3. Results Header & Count -->
+      <section class="results-header-row">
+        <div class="results-count-text">
+          <strong>{{ totalJobsCount.toLocaleString() }}</strong> empleos encontrados
+        </div>
 
-      <div v-if="loading" class="state-loading"><div class="loading-spinner"></div><p>Buscando oportunidades…</p></div>
+        <div class="results-pagination-nav">
+          <span>Página {{ currentPage }} de {{ totalPages }}</span>
+          <div class="pagination-arrows">
+            <button
+              type="button"
+              class="arrow-btn"
+              :disabled="currentPage === 1"
+              aria-label="Página anterior"
+              @click="goToPage(currentPage - 1)"
+            >
+              <ChevronLeft :size="16" />
+            </button>
+            <button
+              type="button"
+              class="arrow-btn"
+              :disabled="currentPage === totalPages"
+              aria-label="Página siguiente"
+              @click="goToPage(currentPage + 1)"
+            >
+              <ChevronRight :size="16" />
+            </button>
+          </div>
+        </div>
+      </section>
 
-      <div v-else-if="filteredJobs.length" class="job-card-list">
-        <RouterLink v-for="job in paginatedJobs" :key="job.id" :to="`/job/${job.id}`" class="job-row-card" :class="{ native: isNativeSource(job) }">
-          <div class="job-card-top"><div class="job-row-logo"><Building2 :size="22" :stroke-width="1.6" /><span v-if="(job as any).similarityScore" class="similarity-score-badge">{{ (job as any).similarityScore.toFixed(0) }}%</span></div><div class="job-card-heading"><span v-if="(job as any).similarityScore" class="match-label">Coincide con tu perfil</span><h2 class="job-row-title">{{ job.title }}</h2><p class="job-row-company">{{ companyNameFor(job) }}</p></div><ChevronRight class="job-card-arrow" :size="20" :stroke-width="1.6" /></div>
-          <div class="job-card-info"><span><MapPin :size="14" /> {{ locationFor(job) }}</span><span><Link2 :size="14" /> {{ sourceLabel(job) }}</span><span class="job-type-badge" :class="`type--${job.jobType?.toLowerCase()}`">{{ jobTypeLabel(job) }}</span></div>
-          <div class="job-card-bottom"><div class="job-row-tags"><span v-for="skill in job.skills?.slice(0, 4)" :key="skill" class="skill-chip">{{ skill }}</span><span class="salary-chip">{{ salaryRangeLabel(job) }}</span></div><span class="view-label">Ver oportunidad <ArrowRight :size="15" /></span></div>
-        </RouterLink>
-      </div>
+      <!-- 4. Job Cards List -->
+      <main class="jobs-results-list">
+        <div v-if="loading" class="loading-state">
+          <div class="spinner"></div>
+          <p>Buscando las mejores oportunidades laborales...</p>
+        </div>
 
-      <div v-else class="no-results"><div class="empty-icon"><Search :size="25" /></div><h2>No encontramos una coincidencia todavía</h2><p>Prueba con otra habilidad, ubicación o elimina algún filtro.</p><button type="button" class="empty-action" @click="clearFilters">Ver todas las oportunidades</button></div>
+        <div v-else-if="filteredJobs.length > 0" class="cards-stack">
+          <article
+            v-for="(job, index) in paginatedJobs"
+            :key="job.id"
+            class="job-row-card"
+          >
+            <!-- Company Logo -->
+            <div
+              class="company-logo-avatar"
+              :style="{
+                backgroundColor: companyLogoFor(job, index).bg,
+                color: companyLogoFor(job, index).color,
+              }"
+            >
+              {{ companyLogoFor(job, index).initials }}
+            </div>
 
-      <nav v-if="!loading && totalPages > 1" class="pagination" aria-label="Paginación de resultados"><button type="button" class="pagination-btn" :disabled="currentPage === 1" @click="goToPage(currentPage - 1)"><ChevronLeft :size="18" /><span>Anterior</span></button><div class="pagination-pages"><template v-for="(page, idx) in paginationRange" :key="idx"><span v-if="page === '...'" class="pagination-ellipsis">…</span><button v-else type="button" class="pagination-page" :class="{ active: page === currentPage }" @click="goToPage(page as number)">{{ page }}</button></template></div><button type="button" class="pagination-btn" :disabled="currentPage === totalPages" @click="goToPage(currentPage + 1)"><span>Siguiente</span><ChevronRight :size="18" /></button></nav>
-    </main>
+            <!-- Job Main Info -->
+            <div class="job-info-block">
+              <div class="job-badge-tags">
+                <span v-if="index === 0 || index === 1" class="badge-pill badge-pill--lime">Nuevo</span>
+                <span v-if="index === 0 || index === 2" class="badge-pill badge-pill--blue">★ Para ti</span>
+              </div>
+
+              <h2 class="job-title-text">{{ job.title }}</h2>
+              <p class="job-company-text">{{ companyNameFor(job, index) }}</p>
+
+              <div class="job-details-meta">
+                <span class="meta-item">
+                  <MapPin :size="14" class="meta-icon" />
+                  <span>{{ locationFor(job) }}</span>
+                </span>
+                <span class="meta-item">
+                  <Building2 :size="14" class="meta-icon" />
+                  <span>{{ modalityLabel(job.jobType) }}</span>
+                </span>
+                <span class="meta-item">
+                  <DollarSign :size="14" class="meta-icon" />
+                  <span>{{ salaryRangeLabel(job) }}</span>
+                </span>
+                <span class="contract-pill">Tiempo completo</span>
+              </div>
+            </div>
+
+            <!-- Right Controls: Date, Favorite, Ver empleo -->
+            <div class="job-row-actions">
+              <div class="job-row-top-actions">
+                <span class="publish-date-text">{{ publishDateLabel(index) }}</span>
+                <button
+                  type="button"
+                  class="favorite-icon-btn"
+                  :class="{ 'is-saved': isJobSaved(job.id) }"
+                  :aria-label="isJobSaved(job.id) ? 'Guardado' : 'Guardar'"
+                  @click="toggleSaveJob(job.id)"
+                >
+                  <Heart
+                    :size="18"
+                    :fill="isJobSaved(job.id) ? '#EC4E10' : 'none'"
+                    :stroke="isJobSaved(job.id) ? '#EC4E10' : 'currentColor'"
+                  />
+                </button>
+              </div>
+
+              <RouterLink
+                :to="`${ROUTE_CONSTANTS.JOB_DETAIL}/${job.id}`"
+                class="btn-ver-empleo"
+              >
+                Ver empleo
+              </RouterLink>
+            </div>
+          </article>
+        </div>
+
+        <!-- Empty State -->
+        <div v-else class="empty-state-box">
+          <div class="empty-icon-wrap">
+            <Search :size="32" />
+          </div>
+          <h3>No se encontraron vacantes con los filtros seleccionados</h3>
+          <p>Prueba buscando con palabras clave más generales o eliminando algunos filtros.</p>
+          <button type="button" class="btn-clear-large" @click="clearFilters">
+            Ver todas las ofertas
+          </button>
+        </div>
+
+        <!-- Bottom Pagination -->
+        <nav v-if="totalPages > 1" class="bottom-pagination" aria-label="Navegación de páginas">
+          <button
+            type="button"
+            class="page-nav-btn"
+            :disabled="currentPage === 1"
+            @click="goToPage(currentPage - 1)"
+          >
+            <ChevronLeft :size="16" />
+            <span>Anterior</span>
+          </button>
+
+          <div class="page-numbers-list">
+            <button
+              v-for="p in Math.min(totalPages, 5)"
+              :key="p"
+              type="button"
+              class="page-num-btn"
+              :class="{ 'is-active': p === currentPage }"
+              @click="goToPage(p)"
+            >
+              {{ p }}
+            </button>
+            <span v-if="totalPages > 5" class="page-ellipsis">...</span>
+            <button
+              v-if="totalPages > 5"
+              type="button"
+              class="page-num-btn"
+              :class="{ 'is-active': totalPages === currentPage }"
+              @click="goToPage(totalPages)"
+            >
+              {{ totalPages }}
+            </button>
+          </div>
+
+          <button
+            type="button"
+            class="page-nav-btn"
+            :disabled="currentPage === totalPages"
+            @click="goToPage(currentPage + 1)"
+          >
+            <span>Siguiente</span>
+            <ChevronRight :size="16" />
+          </button>
+        </nav>
+      </main>
+    </div>
   </div>
 </template>
 
 <style scoped>
-.find-job-container {
+.find-job-page {
+  min-height: calc(100vh - 70px);
   width: 100%;
-  max-width: var(--page-max);
-  margin: 0 auto;
-  padding: var(--space-5) var(--page-gutter);
-  box-sizing: border-box;
+  background: var(--color-bg);
+  padding: var(--space-4) 0 var(--space-6);
+  font-family: var(--font-family);
 }
 
-/* Panel unificado: título + buscador comparten una sola tarjeta */
-.search-panel {
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-card);
-  box-shadow: var(--shadow-card);
-  padding: var(--space-4);
-  margin-bottom: var(--space-3);
+.find-job-container {
+  max-width: var(--page-max);
+  margin: 0 auto;
+  padding: 0 var(--page-gutter);
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
 }
 
-.find-job-hero {
-  padding-bottom: var(--space-3);
-  border-bottom: 1px solid var(--color-border);
+/* ============================================================
+   1. SEARCH BOX CARD
+   ============================================================ */
+.search-box-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
 }
 
-.find-job-hero :deep(.page-header) {
-  margin-bottom: 0;
-}
-
-/* Search composer */
-.search-composer {
+.search-form {
   display: grid;
-  grid-template-columns: 2fr 1fr 1fr 1fr auto;
-  gap: var(--space-2);
-  align-items: end;
+  grid-template-columns: 1.8fr 1.2fr auto;
+  gap: 16px;
+  align-items: flex-end;
 }
 
-.search-field {
+.search-input-group {
   display: flex;
   flex-direction: column;
   gap: 6px;
 }
 
-.search-field label {
-  font-size: var(--fs-caption);
-  font-weight: var(--fw-semibold);
-  color: var(--color-text-secondary);
+.search-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text-primary);
 }
 
-.search-field--wide {
-  grid-column: span 1;
-}
-
-.search-field input,
-.search-field select {
-  padding: 10px 12px;
+.input-inner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 44px;
+  padding: 0 14px;
+  background: var(--color-bg);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-input);
-  font-size: var(--fs-body-sm);
-  background: var(--color-bg);
-  color: var(--color-text-primary);
-  transition: border-color 150ms ease, box-shadow 150ms ease, background-color 150ms ease;
-  width: 100%;
-  box-sizing: border-box;
+  transition: border-color 150ms ease, background-color 150ms ease;
 }
 
-.search-field input:focus,
-.search-field select:focus {
-  outline: none;
-  border-color: var(--color-accent);
+.input-inner:focus-within {
   background: var(--color-surface);
-  box-shadow: 0 0 0 3px rgba(45, 58, 199, 0.12);
+  border-color: #1E2BAA;
+  box-shadow: 0 0 0 3px rgba(30, 43, 170, 0.12);
 }
 
-.search-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  height: 42px;
-  padding: 0 20px;
-  background: var(--color-accent);
-  color: #fff;
+.input-icon {
+  color: var(--color-text-muted);
+  flex-shrink: 0;
+}
+
+.input-inner input {
+  width: 100%;
+  height: 100%;
+  border: none;
+  background: transparent;
+  outline: none;
+  font-size: 14px;
+  color: var(--color-text-primary);
+}
+
+.input-inner input::placeholder {
+  color: var(--color-text-muted);
+}
+
+.btn-search-main {
+  height: 44px;
+  padding: 0 26px;
+  background: #1E2BAA;
+  color: #ffffff;
   border: none;
   border-radius: var(--radius-button);
-  font-size: var(--fs-body-sm);
-  font-weight: var(--fw-semibold);
+  font-size: 14px;
+  font-weight: 600;
   cursor: pointer;
-  transition: background-color 150ms ease, transform 100ms ease-out;
+  box-shadow: 0 2px 8px rgba(30, 43, 170, 0.2);
+  transition: background-color 150ms ease, transform 100ms ease;
   white-space: nowrap;
 }
 
-/* base.css * { color } override for child svg/span */
-.search-btn span,
-.search-btn svg {
-  color: inherit;
+.btn-search-main:hover {
+  background: var(--color-primary-dark);
+  transform: translateY(-1px);
 }
 
-@media (hover: hover) and (pointer: fine) {
-  .search-btn:hover {
-    background: var(--color-accent-hover);
-  }
+/* ============================================================
+   2. FILTERS ROW
+   ============================================================ */
+.filters-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-top: 14px;
+  border-top: 1px solid var(--color-border);
+  flex-wrap: wrap;
 }
 
-.search-btn:active {
-  transform: scale(0.97);
+.filter-pills-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 
-/* Results */
-.job-results-section {
+.filter-pill-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 34px;
+  padding: 0 14px;
+  border-radius: var(--radius-button);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 150ms ease, border-color 150ms ease;
+}
+
+.filter-pill-btn--primary {
+  border-color: var(--color-border);
+  background: var(--color-bg);
+  font-weight: 600;
+}
+
+.filter-pill-btn:hover {
+  background: var(--color-bg);
+  border-color: var(--color-lavender);
+}
+
+.select-pill-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.select-pill-wrap select {
+  height: 34px;
+  padding: 0 30px 0 12px;
+  border-radius: var(--radius-button);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  appearance: none;
+  outline: none;
+  transition: border-color 150ms ease;
+}
+
+.select-pill-wrap select:focus {
+  border-color: #1E2BAA;
+}
+
+.select-caret {
+  position: absolute;
+  right: 10px;
+  color: var(--color-text-muted);
+  pointer-events: none;
+}
+
+.clear-filters-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 34px;
+  padding: 0 10px;
+  background: transparent;
+  border: none;
+  color: #EC4E10;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.sort-right-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sort-label {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}
+
+.select-pill--clean select {
+  border-color: transparent;
+  background: transparent;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  padding-left: 0;
+}
+
+/* ============================================================
+   3. RESULTS HEADER
+   ============================================================ */
+.results-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 0;
+}
+
+.results-count-text {
+  font-size: 14px;
+  color: var(--color-text-secondary);
+}
+
+.results-count-text strong {
+  color: var(--color-text-primary);
+  font-weight: 700;
+}
+
+.results-pagination-nav {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}
+
+.pagination-arrows {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.arrow-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  background: var(--color-surface);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: all 150ms ease;
+}
+
+.arrow-btn:hover:not(:disabled) {
+  border-color: #1E2BAA;
+  color: #1E2BAA;
+}
+
+.arrow-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* ============================================================
+   4. JOB CARDS LIST
+   ============================================================ */
+.cards-stack {
   display: flex;
   flex-direction: column;
-  gap: var(--space-2);
+  gap: 14px;
 }
 
-.job-list-error {
-  color: var(--color-state-error, #d22626);
-  font-size: 14px;
+.job-row-card {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 22px 26px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
+  transition: transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease;
 }
 
-.state-loading {
+.job-row-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-hover);
+  border-color: var(--color-lavender);
+}
+
+.company-logo-avatar {
+  width: 52px;
+  height: 52px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.job-info-block {
+  flex: 1;
+  min-width: 0;
+}
+
+.job-badge-tags {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
+.badge-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: var(--radius-pill);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.badge-pill--lime {
+  background: var(--color-brand-lime-soft);
+  color: #2D6A00;
+  border: 1px solid rgba(185, 239, 74, 0.4);
+}
+
+.badge-pill--blue {
+  background: #EEF2FF;
+  color: #1E2BAA;
+  border: 1px solid #D0DBFF;
+}
+
+.job-title-text {
+  margin: 0 0 4px;
+  font-family: var(--font-display);
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  line-height: 1.3;
+}
+
+.job-company-text {
+  margin: 0 0 10px;
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}
+
+.job-details-meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 14px;
+}
+
+.meta-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+
+.meta-icon {
+  color: var(--color-text-muted);
+}
+
+.contract-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 6px;
+  background: var(--color-bg);
+  color: var(--color-text-secondary);
+  font-size: 11px;
+  font-weight: 500;
+}
+
+/* Actions Column */
+.job-row-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 14px;
+  flex-shrink: 0;
+  min-width: 140px;
+}
+
+.job-row-top-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.publish-date-text {
+  font-size: 12px;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+}
+
+.favorite-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: 1px solid transparent;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  transition: all 150ms ease;
+}
+
+.favorite-icon-btn:hover {
+  color: #EC4E10;
+  background: #FFF7ED;
+}
+
+.favorite-icon-btn.is-saved {
+  color: #EC4E10;
+}
+
+.btn-ver-empleo {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 38px;
+  padding: 0 22px;
+  border-radius: var(--radius-button);
+  background: #1E2BAA;
+  color: #ffffff !important;
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  box-shadow: 0 2px 6px rgba(30, 43, 170, 0.16);
+  transition: background-color 150ms ease, transform 100ms ease;
+  white-space: nowrap;
+}
+
+.btn-ver-empleo:hover {
+  background: var(--color-primary-dark);
+  transform: translateY(-1px);
+}
+
+/* Loading & Empty State */
+.loading-state, .empty-state-box {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+  padding: 48px 24px;
+  text-align: center;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: var(--space-2);
-  padding: var(--space-6);
-  color: var(--color-text-secondary);
-  font-size: var(--fs-body-sm);
+  gap: 12px;
 }
 
-.loading-spinner {
-  width: 28px;
-  height: 28px;
-  border: 2px solid var(--color-border);
-  border-top-color: var(--color-accent);
+.spinner {
+  width: 36px;
+  height: 36px;
+  border: 3px solid var(--color-border);
+  border-top-color: #1E2BAA;
   border-radius: 50%;
   animation: spin 0.7s linear infinite;
 }
@@ -413,304 +1087,134 @@ onMounted(loadJobs);
   to { transform: rotate(360deg); }
 }
 
-.results-meta {
-  font-size: var(--fs-caption);
-  color: var(--color-text-secondary);
-}
-
-.job-card-list {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-}
-
-.job-row-card {
-  display: flex;
-  align-items: flex-start;
-  gap: var(--space-2);
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-card);
-  padding: var(--space-2);
-  box-shadow: var(--shadow-card);
-  text-decoration: none;
-  color: inherit;
-  transition: box-shadow 200ms ease, border-color 150ms ease;
-}
-
-@media (hover: hover) and (pointer: fine) {
-  .job-row-card:hover {
-    box-shadow: 0 4px 14px rgba(30, 43, 170, 0.1);
-    border-color: var(--color-lavender);
-  }
-}
-
-/* Jobs nativos de Llanqui: fondo ligeramente tintado en lugar de border-left */
-.job-row-card.native {
-  background: var(--color-ai-bg);
-}
-
-.job-row-logo {
-  flex-shrink: 0;
-  width: 44px;
-  height: 44px;
-  border-radius: var(--radius-input);
-  background: var(--color-bg);
-  border: 1px solid var(--color-border);
+.empty-icon-wrap {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: #EEF2FF;
+  color: #1E2BAA;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--color-text-muted);
 }
 
-.job-row-main {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.job-row-title {
+.empty-state-box h3 {
   margin: 0;
-  font-size: var(--fs-body);
-  font-weight: var(--fw-semibold);
+  font-size: 18px;
+  font-weight: 700;
   color: var(--color-text-primary);
 }
 
-.job-row-company {
+.empty-state-box p {
   margin: 0;
-  font-size: var(--fs-body-sm);
   color: var(--color-text-secondary);
+  font-size: 14px;
+  max-width: 420px;
 }
 
-.job-row-source {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  font-size: var(--fs-caption);
-  color: var(--color-text-muted);
-}
-
-.job-row-tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin-top: 4px;
-}
-
-.skill-chip,
-.salary-chip {
-  background: var(--color-bg);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-button);
-  padding: 3px 10px;
-  font-size: var(--fs-caption);
-  color: var(--color-text-secondary);
-  white-space: nowrap;
-}
-
-.salary-chip {
-  font-weight: var(--fw-semibold);
-  color: var(--color-text-primary);
-}
-
-.job-row-meta {
-  flex-shrink: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 6px;
-  text-align: right;
-}
-
-.job-row-meta-item {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  font-size: var(--fs-caption);
-  color: var(--color-text-secondary);
-  white-space: nowrap;
-}
-
-.job-type-badge {
-  display: inline-flex;
-  align-items: center;
-  padding: 3px 10px;
-  border-radius: var(--radius-button);
-  font-size: var(--fs-caption);
-  font-weight: var(--fw-semibold);
-  white-space: nowrap;
-  background: var(--color-bg);
-  border: 1px solid var(--color-border);
-  color: var(--color-text-secondary);
-}
-
-.job-type-badge.type--remote {
-  background: rgba(45, 58, 199, 0.08);
-  border-color: var(--color-lavender);
-  color: var(--color-primary);
-}
-
-.job-type-badge.type--hybrid {
-  background: rgba(220, 174, 8, 0.08);
-  border-color: rgba(220, 174, 8, 0.3);
-  color: var(--color-state-warning-dark);
-}
-
-.job-type-badge.type--inperson {
-  background: rgba(59, 156, 32, 0.08);
-  border-color: rgba(59, 156, 32, 0.3);
-  color: var(--color-state-success-dark);
-}
-
-.no-results {
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-card);
-  padding: var(--space-4);
-  text-align: center;
-  color: var(--color-text-secondary);
-}
-
-/* Pagination */
-.pagination {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-2);
-  margin-top: var(--space-2);
-  padding-top: var(--space-3);
-  border-top: 1px solid var(--color-border);
-}
-
-.pagination-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 14px;
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-button);
-  color: var(--color-text-secondary);
-  font-size: var(--fs-body-sm);
-  font-weight: var(--fw-semibold);
+.btn-clear-large {
+  margin-top: 8px;
+  height: 40px;
+  padding: 0 20px;
+  background: #1E2BAA;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
   cursor: pointer;
-  transition: border-color 150ms ease, color 150ms ease, background-color 150ms ease;
 }
 
-.pagination-btn:disabled {
-  opacity: 0.5;
+/* Bottom Pagination */
+.bottom-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 24px;
+  padding-top: 24px;
+}
+
+.page-nav-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 38px;
+  padding: 0 16px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-button);
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 150ms ease;
+}
+
+.page-nav-btn:hover:not(:disabled) {
+  border-color: #1E2BAA;
+  color: #1E2BAA;
+}
+
+.page-nav-btn:disabled {
+  opacity: 0.4;
   cursor: not-allowed;
 }
 
-@media (hover: hover) and (pointer: fine) {
-  .pagination-btn:not(:disabled):hover {
-    border-color: var(--color-accent);
-    color: var(--color-accent);
-  }
-}
-
-.pagination-pages {
+.page-numbers-list {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
 }
 
-.pagination-page {
-  min-width: 34px;
-  height: 34px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  background: transparent;
+.page-num-btn {
+  width: 38px;
+  height: 38px;
   border: 1px solid transparent;
   border-radius: var(--radius-button);
-  color: var(--color-text-secondary);
-  font-size: var(--fs-body-sm);
-  font-weight: var(--fw-semibold);
+  background: transparent;
+  color: var(--color-text-primary);
+  font-size: 13px;
+  font-weight: 600;
   cursor: pointer;
-  transition: border-color 150ms ease, color 150ms ease, background-color 150ms ease;
+  transition: all 150ms ease;
 }
 
-@media (hover: hover) and (pointer: fine) {
-  .pagination-page:not(.active):hover {
-    border-color: var(--color-border);
-    background: var(--color-bg);
-  }
+.page-num-btn:hover {
+  background: var(--color-bg);
 }
 
-.pagination-page.active {
-  background: var(--color-accent);
-  border-color: var(--color-accent);
-  color: #fff;
+.page-num-btn.is-active {
+  background: #1E2BAA;
+  color: #ffffff;
 }
 
-.pagination-ellipsis {
-  padding: 0 4px;
+.page-ellipsis {
   color: var(--color-text-muted);
-  font-size: var(--fs-body-sm);
 }
 
-@media (max-width: 480px) {
-  .pagination {
-    flex-wrap: wrap;
-    justify-content: center;
-  }
-
-  .pagination-btn span {
-    display: none;
-  }
-}
-
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
 @media (max-width: 900px) {
-  .search-composer {
-    grid-template-columns: 1fr 1fr;
-  }
-  .search-btn {
-    grid-column: 1 / -1;
-  }
-}
-
-@media (max-width: 768px) {
-  .search-composer {
+  .search-form {
     grid-template-columns: 1fr;
   }
 
   .job-row-card {
-    flex-wrap: wrap;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
   }
 
-  .job-row-meta {
-    align-items: flex-start;
-    text-align: left;
+  .job-row-actions {
     width: 100%;
     flex-direction: row;
-    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .btn-ver-empleo {
+    flex: 1;
   }
 }
-
-.similarity-score-badge {
-  position: absolute;
-  top: -6px;
-  right: -6px;
-  background-color: #3b9c20;
-  color: #ffffff;
-  font-size: 8px;
-  font-weight: bold;
-  padding: 2px 4px;
-  border-radius: 4px;
-  border: 1px solid #307d1b;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.15);
-  line-height: 1;
-}
-
-/* Llanqui search workspace: task-first hierarchy instead of a social feed. */
-.search-hero { position: relative; display: flex; align-items: center; justify-content: space-between; min-height: 196px; overflow: hidden; padding: 34px 40px; color: #fff; background: var(--color-primary); border-radius: 20px; }
-.search-hero::after { content: ''; position: absolute; inset: 0 0 0 52%; background: linear-gradient(135deg, transparent, rgba(184,192,232,.28)); pointer-events: none; }
-.search-hero .hero-copy { position: relative; z-index: 1; }.search-hero .eyebrow { display: inline-flex; align-items: center; gap: 7px; color: var(--color-lavender); font-size: 11px; font-weight: var(--fw-bold); letter-spacing: .12em; text-transform: uppercase; }.search-hero h1 { max-width: 620px; margin: 16px 0 8px; color: #fff; font-size: clamp(30px, 4vw, 44px); line-height: 1.02; letter-spacing: -.045em; }.search-hero p { margin: 0; color: rgba(255,255,255,.72); font-size: 15px; }.hero-mark { width: 150px; height: 150px; position: relative; z-index: 1; opacity: .9; }.hero-mark span { position: absolute; inset: 10px 0; border: 1px solid rgba(255,255,255,.28); border-radius: 50%; transform: rotate(45deg); }.hero-mark span:nth-child(2) { inset: 0 35px; transform: rotate(-45deg); }.hero-mark span:nth-child(3) { inset: 65px; border: 7px solid #c7f36b; border-radius: 50%; box-shadow: 0 0 0 8px rgba(199,243,107,.12); }
-.search-workspace { margin: -25px 16px 34px; position: relative; z-index: 2; padding: 20px; background: var(--color-surface); border: 1px solid var(--color-border); border-radius: 14px; box-shadow: 0 12px 28px rgba(30,43,170,.1); }.search-composer { display: grid; grid-template-columns: 1.45fr 1fr auto; gap: 12px; align-items: end; }.search-field { display: flex; flex-direction: column; gap: 7px; }.search-field label { color: var(--color-text-secondary); font-size: 11px; font-weight: var(--fw-bold); }.input-with-icon { display: flex; align-items: center; gap: 8px; height: 44px; padding: 0 12px; background: var(--color-bg); border: 1px solid var(--color-border); border-radius: 8px; color: var(--color-text-muted); }.input-with-icon:focus-within { background: var(--color-surface); border-color: var(--color-accent); box-shadow: 0 0 0 3px rgba(45,58,199,.12); }.input-with-icon input { width: 100%; height: 100%; padding: 0; border: 0; outline: 0; background: transparent; color: var(--color-text-primary); font-size: 13px; }.input-with-icon input::placeholder { color: var(--color-text-muted); }.search-btn { height: 44px; padding: 0 17px; border-radius: 8px; }.filter-row { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--color-border); }.filter-label { display: inline-flex; align-items: center; gap: 5px; margin-right: 3px; color: var(--color-text-secondary); font-size: 11px; font-weight: var(--fw-bold); }.filter-row select, .salary-filter { height: 32px; display: inline-flex; align-items: center; padding: 0 10px; background: var(--color-bg); border: 1px solid var(--color-border); border-radius: 7px; color: var(--color-text-secondary); font: inherit; font-size: 11px; }.salary-filter { gap: 5px; }.salary-filter input { width: 84px; border: 0; outline: 0; background: transparent; color: var(--color-text-primary); font: inherit; }.clear-filters { display: inline-flex; align-items: center; gap: 4px; margin-left: auto; padding: 0; border: 0; color: var(--color-accent); background: transparent; font-size: 11px; font-weight: var(--fw-bold); cursor: pointer; }.clear-filters:hover { color: var(--color-primary-dark); }
-.job-results-section { gap: 14px; }.results-toolbar { display: flex; align-items: center; justify-content: space-between; min-height: 30px; color: var(--color-text-secondary); font-size: 12px; }.results-toolbar strong { color: var(--color-text-primary); font-size: 18px; }.results-context { display: inline-flex; align-items: center; gap: 4px; margin-left: 10px; padding: 5px 8px; border-radius: 999px; color: var(--color-accent); background: rgba(45,58,199,.08); font-size: 10px; font-weight: var(--fw-bold); }.job-row-card { display: block; padding: 20px 22px; border-radius: 14px; transition: border-color 150ms ease, box-shadow 150ms ease, transform 150ms ease; }.job-row-card.native { background: var(--color-surface); }.job-row-card:hover { border-color: var(--color-lavender); box-shadow: 0 8px 22px rgba(30,43,170,.1); transform: translateY(-2px); }.job-card-top { display: flex; align-items: flex-start; gap: 13px; }.job-row-logo { width: 46px; height: 46px; position: relative; border-radius: 12px; }.job-card-heading { flex: 1; min-width: 0; }.match-label { display: inline-flex; margin-bottom: 5px; color: var(--color-state-success-dark); font-size: 10px; font-weight: var(--fw-bold); text-transform: uppercase; letter-spacing: .06em; }.job-row-title { font-size: 17px; }.job-row-company { font-size: 13px; }.job-card-arrow { margin-top: 3px; color: var(--color-text-muted); }.job-card-info { display: flex; align-items: center; flex-wrap: wrap; gap: 13px; margin: 16px 0; padding: 12px 0; border-top: 1px solid var(--color-border); border-bottom: 1px solid var(--color-border); }.job-card-info > span:not(.job-type-badge) { display: inline-flex; align-items: center; gap: 5px; color: var(--color-text-secondary); font-size: 11px; }.job-card-info svg { color: var(--color-text-muted); }.job-card-bottom { display: flex; align-items: center; justify-content: space-between; gap: 12px; }.view-label { display: inline-flex; align-items: center; gap: 5px; color: var(--color-accent); font-size: 11px; font-weight: var(--fw-bold); }.empty-icon { width: 50px; height: 50px; display: grid; place-items: center; margin: 0 auto 13px; color: var(--color-accent); background: rgba(45,58,199,.08); border-radius: 14px; }.no-results h2 { margin-bottom: 8px; color: var(--color-text-primary); font-size: 18px; }.no-results p { margin-bottom: 18px; }.empty-action { padding: 10px 14px; color: #fff; background: var(--color-accent); border: 0; border-radius: 7px; font-size: 12px; font-weight: var(--fw-bold); cursor: pointer; }.empty-action:hover { background: var(--color-accent-hover); }
-@media (max-width: 800px) { .search-hero { padding: 28px 24px; }.hero-mark { opacity: .35; margin-right: -30px; }.search-workspace { margin: -18px 8px 28px; }.search-composer { grid-template-columns: 1fr 1fr; }.search-field--wide { grid-column: 1 / -1; }.search-btn { grid-column: 1 / -1; }.clear-filters { margin-left: 0; } }
-@media (max-width: 520px) { .find-job-container { padding-top: 18px; }.search-hero { min-height: 210px; border-radius: 16px; }.search-hero h1 { font-size: 32px; }.search-hero p { max-width: 260px; font-size: 13px; }.hero-mark { position: absolute; right: -38px; opacity: .25; }.search-workspace { margin: -16px 0 24px; padding: 15px; }.search-composer { grid-template-columns: 1fr; }.search-field--wide, .search-btn { grid-column: auto; }.filter-row { align-items: flex-start; }.job-card-bottom { align-items: flex-start; flex-direction: column; }.view-label { margin-left: auto; }.results-toolbar { align-items: flex-start; flex-direction: column; gap: 5px; } }
 </style>

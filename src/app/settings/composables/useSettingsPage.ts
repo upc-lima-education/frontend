@@ -12,16 +12,14 @@ export function useSettingsPage() {
     const isOrganization = computed(() => authStore.currentUserType === 'organization');
 
     const activeTab = computed(() => {
-        const tab = route.query.tab as string;
-        if (tab === 'edit' || tab === 'settings' || tab === 'privacy' || tab === 'payments') return tab;
-        return 'profile';
+        const tab = (route.query.tab as string) || 'profile';
+        return tab;
     });
 
     const profileTabLabel = computed(() =>
         isOrganization.value ? t('settings.tabCompanyProfile') : t('settings.tabMyProfile')
     );
 
-    // Empresas: "Destacar vacantes" (visibilidad). Empleados: "Comprar Créditos" (CV).
     const paymentsTabLabel = computed(() =>
         isOrganization.value ? t('settings.tabBoost') : t('settings.tabPayments')
     );
