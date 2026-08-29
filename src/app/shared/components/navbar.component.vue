@@ -5,6 +5,7 @@ import { Bell, Menu, X, ChevronDown, User, Settings, LogOut, Search, PlusCircle 
 import { useAuthenticationStore } from '@/app/auth/services/authentication.store';
 import { useLogout } from '@/app/shared/composables/useLogout';
 import { ROUTE_CONSTANTS } from '@/app/shared/router/route-constants';
+import { notificationService } from '@/app/recruitment/services/notification.service';
 
 const route = useRoute();
 const auth = useAuthenticationStore();
@@ -23,7 +24,7 @@ const links = computed<NavLink[]>(() => {
             home,
             { to: ROUTE_CONSTANTS.NEWS_PAGE, label: 'Novedades' },
             { to: ROUTE_CONSTANTS.RECRUITMENT_APPLICATIONS, label: 'Postulaciones' },
-            { to: ROUTE_CONSTANTS.MESSAGE_COMPANY, label: 'Mensajes', badge: 3 },
+            { to: ROUTE_CONSTANTS.MESSAGE_COMPANY, label: 'Mensajes' },
             profile,
         ];
     }
@@ -31,7 +32,7 @@ const links = computed<NavLink[]>(() => {
         home,
         { to: ROUTE_CONSTANTS.JOB_SEARCH, label: 'Explorar empleos' },
         { to: ROUTE_CONSTANTS.MY_APPLICATIONS, label: 'Mis postulaciones' },
-        { to: ROUTE_CONSTANTS.MESSAGE_EMPLOYEE, label: 'Mensajes', badge: 3 },
+        { to: ROUTE_CONSTANTS.MESSAGE_EMPLOYEE, label: 'Mensajes' },
         profile,
     ];
 });
@@ -75,7 +76,7 @@ const initials = computed(() => {
 // Dropdown + mobile menu state
 const menuOpen = ref(false);
 const mobileOpen = ref(false);
-const notificationCount = ref(2);
+const notificationCount = ref(0);
 
 const rootEl = ref<HTMLElement | null>(null);
 
@@ -85,7 +86,16 @@ function onDocClick(e: MouseEvent) {
     }
 }
 
-onMounted(() => document.addEventListener('click', onDocClick));
+onMounted(async () => {
+    document.addEventListener('click', onDocClick);
+    try {
+        const notifications = await notificationService.getNotifications();
+        notificationCount.value = notifications.length;
+    } catch (error) {
+        console.error('No se pudieron cargar las notificaciones del navbar:', error);
+        notificationCount.value = 0;
+    }
+});
 onBeforeUnmount(() => document.removeEventListener('click', onDocClick));
 
 watch(() => route.fullPath, () => {
@@ -132,7 +142,7 @@ async function handleLogout() {
                 </RouterLink>
 
                 <!-- Notification Bell with Counter -->
-                <button type="button" class="icon-btn notif-btn" aria-label="Notificaciones">
+                <button type="button" class="icon-btn notif-btn" :aria-label="`${notificationCount} notificaciones`" title="Notificaciones de tu cuenta">
                     <Bell :size="20" :stroke-width="1.8" />
                     <span v-if="notificationCount > 0" class="notif-badge">{{ notificationCount }}</span>
                 </button>

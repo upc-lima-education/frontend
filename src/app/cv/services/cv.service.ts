@@ -1,35 +1,40 @@
-import http from "@/app/shared/services/base.service";
-import type { GenerateCvRequest, GenerateCvResponse, CvStatusResponse } from "../model/cv.model";
+import http from '@/app/shared/services/base.service';
+import type { CreateStructuredCvRequest, GenerateCvResponse, StructuredCvResponse } from '../model/cv.model';
 
-/**
- * Servicio de generación de CV con IA.
- * Flujo asíncrono: POST /cv -> poll GET /cv/{id}/status -> GET /cv/{id}/preview|download.
- */
 export class CvService {
     private endpoint = '/cv';
 
-    /** POST /api/v1/cv — inicia la generación. */
-    async generate(request: GenerateCvRequest): Promise<GenerateCvResponse> {
-        const { data } = await http.post(this.endpoint, request);
+    async generate(): Promise<GenerateCvResponse> {
+        const { data } = await http.post<GenerateCvResponse>(this.endpoint);
         return data;
     }
 
-    /** GET /api/v1/cv/{id}/status — estado de la generación. */
-    async getStatus(id: string): Promise<CvStatusResponse> {
-        const { data } = await http.get(`${this.endpoint}/${id}/status`);
+    async createStructured(request: CreateStructuredCvRequest): Promise<string> {
+        const { data } = await http.post<string>(`${this.endpoint}/structured`, request);
         return data;
     }
 
-    /** GET /api/v1/cv/{id}/preview — PDF/imagen de previsualización (blob). */
-    async getPreviewBlob(id: string): Promise<Blob> {
-        const { data } = await http.get(`${this.endpoint}/${id}/preview`, { responseType: 'blob' });
+    async upload(title: string, isCurrent: boolean, cv: File): Promise<string> {
+        const form = new FormData();
+        form.append('title', title);
+        form.append('isCurrent', String(isCurrent));
+        form.append('cv', cv);
+        const { data } = await http.post<string>(`${this.endpoint}/uploaded`, form);
         return data;
     }
 
-    /** GET /api/v1/cv/{id}/download — PDF final (blob). */
-    async getDownloadBlob(id: string): Promise<Blob> {
-        const { data } = await http.get(`${this.endpoint}/${id}/download`, { responseType: 'blob' });
+    async getStructured(id: string): Promise<StructuredCvResponse> {
+        const { data } = await http.get<StructuredCvResponse>(`${this.endpoint}/${id}/structured`);
         return data;
+    }
+
+    async getFile(id: string): Promise<Blob> {
+        const { data } = await http.get(`${this.endpoint}/${id}/file`, { responseType: 'blob' });
+        return data;
+    }
+
+    async delete(id: string): Promise<void> {
+        await http.delete(`${this.endpoint}/${id}`);
     }
 }
 

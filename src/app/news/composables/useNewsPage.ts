@@ -30,14 +30,6 @@ export function useNewsPage() {
         }
     }
 
-    async function toggleHeart(postId: string, userId: string, isHearted: boolean) {
-        try {
-            await newsService.heartNews(postId, userId, isHearted);
-        } catch (err) {
-            console.error('Error reacting to post:', err);
-        }
-    }
-
     /**
      * News body requires the poster's Profile ID (not the User ID) as `companyId`,
      * for both candidates and organizations — see API.MD "News (Publicaciones)".
@@ -75,7 +67,6 @@ export function useNewsPage() {
         posting,
         error,
         fetchNewsData,
-        toggleHeart,
         createPost,
     };
 }

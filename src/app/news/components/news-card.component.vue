@@ -1,7 +1,6 @@
 <script setup lang="ts">
-import DialogComponent from '@/app/shared/components/dialog.component.vue';
 import { computed, ref } from 'vue';
-import { Heart, MessageSquare, Share2, Send as SendIcon, ChevronLeft, ChevronRight, MoreHorizontal } from 'lucide-vue-next';
+import { ChevronLeft, ChevronRight } from 'lucide-vue-next';
 
 const props = defineProps({
     id: { type: String, required: true },
@@ -11,10 +10,6 @@ const props = defineProps({
     publishedAt: { type: Date, required: true },
     images: { type: Array as () => string[], default: () => [] }
 });
-
-const emit = defineEmits<{
-    (e: 'toggle-heart', id: string, isHearted: boolean): void
-}>();
 
 const formattedDate = computed(() => {
     // Relative date representation or short locale date
@@ -36,23 +31,6 @@ const prevImage = () => {
     }
 };
 
-/*Dialog setup*/
-const dialogRef = ref<InstanceType<typeof DialogComponent>>();
-
-const isLiked = ref(false);
-
-const handleLikeClick = () => {
-    dialogRef.value?.open();
-};
-
-const heartedItem = () => {
-    isLiked.value = !isLiked.value;
-    emit('toggle-heart', props.id, isLiked.value);
-};
-
-function notifyComingSoon(message: string) {
-    alert(message);
-}
 </script>
 
 <template>
@@ -67,9 +45,6 @@ function notifyComingSoon(message: string) {
                     <p class="user-headline">Profesional en Llanqui • {{ formattedDate }}</p>
                 </div>
             </div>
-            <button class="options-btn" aria-label="Opciones">
-                <MoreHorizontal :size="20" />
-            </button>
         </header>
 
         <!-- Content -->
@@ -106,43 +81,6 @@ function notifyComingSoon(message: string) {
             </div>
         </section>
 
-        <!-- Social Activity Stats Row -->
-        <div class="social-stats">
-            <div class="likes-count">
-                <span class="heart-icon-mini">❤️</span>
-                <span class="stats-text">{{ isLiked ? 'Tú y otras 12 personas' : '12 personas' }}</span>
-            </div>
-            <div class="comments-count">
-                <span class="stats-text">3 comentarios • 1 compartido</span>
-            </div>
-        </div>
-
-        <div class="divider"></div>
-
-        <!-- Footer Actions -->
-        <footer class="post-footer">
-            <button class="action-btn" :class="{ active: isLiked }" @click="handleLikeClick">
-                <Heart :size="18" :class="{ 'filled-heart': isLiked }" />
-                <span>{{ isLiked ? 'Me gusta' : 'Reaccionar' }}</span>
-            </button>
-            <button class="action-btn" @click="notifyComingSoon('Comentarios próximamente')">
-                <MessageSquare :size="18" />
-                <span>Comentar</span>
-            </button>
-            <button class="action-btn" @click="notifyComingSoon('Compartido en tu perfil')">
-                <Share2 :size="18" />
-                <span>Compartir</span>
-            </button>
-            <button class="action-btn" @click="notifyComingSoon('Enviado por mensaje privado')">
-                <SendIcon :size="18" />
-                <span>Enviar</span>
-            </button>
-        </footer>
-
-        <DialogComponent ref="dialogRef" :title="isLiked ? 'Quitar Reacción' : 'Reaccionar'" :subtitle="isLiked ? '¿Quieres quitar tu reacción a este post?' : '¿Quieres reaccionar a esta publicación?'" variant="default"
-            @confirm="heartedItem">
-            <p>{{ isLiked ? 'Esta acción quitará tu Me Gusta de la publicación.' : 'Se añadirá tu reacción a esta publicación para que otros usuarios la vean.' }}</p>
-        </DialogComponent>
     </article>
 </template>
 

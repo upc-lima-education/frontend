@@ -85,32 +85,7 @@ async function boostJob() {
     errorMessage.value = 'Selecciona primero la vacante que quieres destacar.';
     return;
   }
-  errorMessage.value = '';
-  isProcessing.value = true;
-
-  const base = window.location.origin + window.location.pathname;
-  const common = `tab=payments&boostJob=${selectedJob.value.id}&boostDays=${selectedDays.value}`;
-  const returnUrl = `${base}?${common}&status=success`;
-  const cancelUrl = `${base}?${common}&status=cancel`;
-
-  try {
-    // El backend debe tener configurados los planes Boost7/Boost15/Boost30.
-    const res = await paymentService.createOrder({
-      planName: `Boost${selectedDays.value}`,
-      returnUrl,
-      cancelUrl,
-    });
-    if (res.approvalUrl) {
-      window.location.href = res.approvalUrl;
-    } else {
-      errorMessage.value = 'No se pudo obtener el enlace de pago de PayPal.';
-    }
-  } catch (err) {
-    console.error('Error iniciando el impulso:', err);
-    errorMessage.value = 'Error al iniciar el pago del impulso.';
-  } finally {
-    isProcessing.value = false;
-  }
+  errorMessage.value = 'La promoción de vacantes no está disponible: el backend solo admite los planes de créditos Starter, Pro y Max.';
 }
 
 async function handleCallback() {

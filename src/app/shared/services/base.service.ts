@@ -13,5 +13,25 @@ const http = axios.create({
 // Add authentication interceptor to automatically include token in requests
 http.interceptors.request.use(authenticationInterceptor);
 
+let refreshRequest: Promise<string | null> | null = null;
+http.interceptors.response.use(
+    response => response,
+    async error => {
+        const original = error.config;
+        if (error.response?.status !== 401 || original?._retried || String(original?.url).includes('/auth/refresh')) {
+            return Promise.reject(error);
+        }
+        original._retried = true;
+        const { useAuthenticationStore } = await import('@/app/auth/services/authentication.store');
+        const store = useAuthenticationStore();
+        refreshRequest ??= store.refreshSession().finally(() => { refreshRequest = null; });
+        const token = await refreshRequest;
+        if (!token) return Promise.reject(error);
+        original.headers = original.headers ?? {};
+        original.headers.Authorization = `Bearer ${token}`;
+        return http(original);
+    },
+);
+
 // Export the http object
 export default http;

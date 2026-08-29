@@ -1,6 +1,5 @@
 import http from "@/app/shared/services/base.service";
 import { GetJobByIdResponse } from "../model/get-job-by-id.response";
-import { UpdateJobResponse } from "../model/update-job.response";
 import { DeleteJobResponse } from "../model/delete-job.response";
 import type { CreateJobRequest } from "../model/create-job.request";
 import type { GetJobByIdRequest } from "../model/get-job-by-id.request";
@@ -109,19 +108,9 @@ export class JobService {
         return items.map((item: any) => this.mapJobListItem(item));
     }
 
-    async updateJob(id: string, request: UpdateJobRequest): Promise<UpdateJobResponse> {
+    async updateJob(id: string, request: UpdateJobRequest): Promise<GetJobByIdResponse> {
         const response = await http.put(`${this.endpoint}/${id}`, request);
-        return new UpdateJobResponse(
-            response.data.id,
-            response.data.companyId,
-            response.data.title,
-            response.data.description,
-            response.data.address,
-            response.data.minSalary,
-            response.data.maxSalary,
-            response.data.jobStatus,
-            new Date(response.data.creationDate)
-        );
+        return this.mapJobDetail(response.data);
     }
 
     async deleteJob(request: DeleteJobRequest): Promise<DeleteJobResponse> {
@@ -133,12 +122,16 @@ export class JobService {
      * Schedule a job's publish window
      * PATCH /api/v1/job/{id}/schedule
      */
-    async scheduleJob(id: string, schedule: { opensAt?: Date; closesAt?: Date }): Promise<void> {
+    async scheduleJob(id: string, schedule: { opensAt: string; closesAt: string }): Promise<void> {
         await http.patch(`${this.endpoint}/${id}/schedule`, schedule);
     }
 
     /** Reemplaza la lista completa, como exige PATCH /job/{id}/skill. */
     async updateJobSkills(id: string, skills: string[]): Promise<void> {
         await http.patch(`${this.endpoint}/${id}/skill`, { skills });
+    }
+
+    async claimJob(id: string): Promise<void> {
+        await http.patch(`${this.endpoint}/${id}/claim`);
     }
 }

@@ -2,7 +2,8 @@ import axios from "axios";
 import { authenticationInterceptor } from "@/app/auth/services/authentication.interceptor";
 
 export interface CreateOrderRequest {
-    planName: string;
+    creditPlan: 'Starter' | 'Pro' | 'Max';
+    platform: 'Paypal' | 'MercadoPago' | 'IziPay' | 'Culqui';
     returnUrl: string;
     cancelUrl: string;
 }
@@ -17,11 +18,6 @@ export interface CaptureOrderResponse {
     creditsAdded: number;
     newBalance: number;
     transactionId: string;
-}
-
-export interface BalanceResponse {
-    userId: string;
-    balance: number;
 }
 
 // El API_URL apunta a /api/v1 (recursos versionados), pero /payments vive
@@ -46,12 +42,7 @@ export class PaymentService {
     }
 
     async captureOrder(orderId: string): Promise<CaptureOrderResponse> {
-        const { data } = await paymentHttp.post(`${this.endpoint}/capture`, { orderId });
-        return data;
-    }
-
-    async getBalance(): Promise<BalanceResponse> {
-        const { data } = await paymentHttp.get(`${this.endpoint}/balance`);
+        const { data } = await paymentHttp.post(`${this.endpoint}/capture/${encodeURIComponent(orderId)}`);
         return data;
     }
 }

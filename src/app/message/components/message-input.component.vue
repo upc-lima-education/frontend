@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
-import { Send, Paperclip } from 'lucide-vue-next';
+import { Send } from 'lucide-vue-next';
 
 const message = ref("");
 
@@ -16,16 +16,10 @@ const isButtonDisabled = computed(() => {
     return message.value == null || message.value.trim() === '';
 });
 
-function notifyComingSoon(text: string) {
-    alert(text);
-}
 </script>
 
 <template>
     <form class="message-input-form" @submit.prevent="send">
-        <button type="button" class="btn-attach" title="Adjuntar archivo" @click="notifyComingSoon('Adjuntar archivos próximamente')">
-            <Paperclip :size="18" />
-        </button>
         <div class="input-field-wrap">
             <input 
                 v-model="message" 

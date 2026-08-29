@@ -34,6 +34,7 @@ export function useHomePage() {
     const recommendations = ref<RecommendationResponse[]>([]);
     const notifications = ref<NotificationResponse[]>([]);
     const jobsError = ref('');
+    const isOrganization = computed(() => authStore.currentUserType === 'organization');
 
     const userDisplayName = computed(() => {
         const user = authStore.currentUser;
@@ -130,10 +131,14 @@ export function useHomePage() {
 
         const userId = authStore.currentUserId;
         try {
+            const companyProfileId = localStorage.getItem('profileId');
+            const jobsPromise = isOrganization.value && companyProfileId
+                ? jobService.getJobsByCompany(companyProfileId)
+                : jobService.listJobs();
             const [jobsResult, profileResult, recommendationsResult, notificationsResult] = await Promise.allSettled([
-                jobService.listJobs(),
+                jobsPromise,
                 userId ? profileService.getProfileByUserId(userId) : Promise.resolve(null),
-                recommendationService.getGeneralRecommendations([], 4),
+                isOrganization.value ? Promise.resolve([]) : recommendationService.getGeneralRecommendations([], 4),
                 userId ? notificationService.getNotifications() : Promise.resolve([]),
             ]);
 
@@ -184,6 +189,7 @@ export function useHomePage() {
 
     return {
         userDisplayName,
+        isOrganization,
         userFirstName,
         loading,
         error,

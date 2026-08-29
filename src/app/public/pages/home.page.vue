@@ -5,7 +5,7 @@ import EmptyState from '@/app/shared/components/ui/empty-state.component.vue';
 import ProgressBar from '@/app/shared/components/ui/progress-bar.component.vue';
 import { useHomePage } from '@/app/public/composables/useHomePage';
 
-const { userFirstName, loading, profileCompletion, displayJobs, jobCount, jobsError, recentNotifications, locationFor, salaryFor, companyNameFor, modalityLabel, reload } = useHomePage();
+const { userFirstName, isOrganization, loading, profileCompletion, displayJobs, jobCount, jobsError, recentNotifications, locationFor, salaryFor, companyNameFor, modalityLabel, reload } = useHomePage();
 
 function notificationDate(value: string) {
   const date = new Date(value);
@@ -14,7 +14,16 @@ function notificationDate(value: string) {
 </script>
 
 <template>
-  <main class="candidate-home">
+  <main v-if="isOrganization" class="candidate-home">
+    <div class="candidate-home__container">
+      <div class="dashboard-top">
+        <section class="welcome-hero"><div class="welcome-hero__copy"><p class="welcome-hero__eyebrow"><Sparkles :size="15" /> Centro de contratación</p><h1>Hola, {{ userFirstName }}</h1><p>Publica oportunidades y gestiona postulantes desde un solo lugar.</p><div class="welcome-hero__actions"><RouterLink :to="ROUTE_CONSTANTS.JOB_PUBLISH" class="hero-action hero-action--light">Publicar empleo</RouterLink><RouterLink :to="ROUTE_CONSTANTS.RECRUITMENT_APPLICATIONS" class="hero-action hero-action--outline">Ver postulaciones</RouterLink></div></div></section>
+        <section class="profile-progress"><div class="progress-summary"><div class="progress-ring" :style="{ '--progress': `${profileCompletion * 3.6}deg` }"><UserRound :size="22" /></div><div><p>Perfil de empresa</p><strong>{{ profileCompletion }}%</strong><span>Perfil completo</span></div></div><ProgressBar :value="profileCompletion" /><RouterLink :to="ROUTE_CONSTANTS.SETTINGS_PAGE" class="complete-profile">Completar empresa <ArrowRight :size="16" /></RouterLink></section>
+      </div>
+      <div class="dashboard-grid"><section class="dashboard-main"><div class="metric-grid"><RouterLink :to="ROUTE_CONSTANTS.JOB_PUBLISH" class="metric-card"><span class="metric-icon metric-icon--blue"><BriefcaseBusiness :size="23" /></span><span><small>Vacantes publicadas</small><b>{{ jobCount }}</b><em>Publicar nueva vacante <ArrowRight :size="14" /></em></span></RouterLink><RouterLink :to="ROUTE_CONSTANTS.RECRUITMENT_APPLICATIONS" class="metric-card"><span class="metric-icon metric-icon--lime"><FileCheck2 :size="23" /></span><span><small>Centro de postulantes</small><b>Ver</b><em>Gestionar por vacante <ArrowRight :size="14" /></em></span></RouterLink></div><section class="recommendations"><header class="section-heading"><div><p>TUS OPORTUNIDADES</p><h2>Vacantes de la empresa</h2></div></header><div v-if="loading" class="jobs-message">Cargando vacantes…</div><EmptyState v-else-if="displayJobs.length === 0" title="Aún no has publicado vacantes" description="Publica una oportunidad para empezar a recibir postulaciones."><template #icon><BriefcaseBusiness /></template><RouterLink :to="ROUTE_CONSTANTS.JOB_PUBLISH" class="retry-button">Publicar empleo</RouterLink></EmptyState><div v-else class="job-list"><RouterLink v-for="job in displayJobs" :key="job.id" :to="`${ROUTE_CONSTANTS.JOB_DETAIL}/${job.id}`" class="job-row"><span class="job-logo">{{ job.title.charAt(0).toUpperCase() }}</span><span class="job-row__content"><b>{{ job.title }}</b><span class="job-meta"><span><MapPin :size="14" />{{ locationFor(job) }}</span><span><BriefcaseBusiness :size="14" />{{ modalityLabel(job.jobType) }}</span></span></span><span class="view-job">Administrar <ArrowRight :size="15" /></span></RouterLink></div></section></section><aside class="dashboard-aside"><section class="side-card"><h2>Acciones rápidas</h2><div class="quick-actions"><RouterLink :to="ROUTE_CONSTANTS.JOB_PUBLISH"><BriefcaseBusiness /><span>Publicar<br>empleo</span></RouterLink><RouterLink :to="ROUTE_CONSTANTS.RECRUITMENT_APPLICATIONS"><FileCheck2 /><span>Ver<br>postulantes</span></RouterLink><RouterLink :to="ROUTE_CONSTANTS.MESSAGE_COMPANY"><Bell /><span>Mis<br>mensajes</span></RouterLink><RouterLink :to="ROUTE_CONSTANTS.SETTINGS_PAGE"><UserRound /><span>Mi<br>empresa</span></RouterLink></div></section></aside></div>
+    </div>
+  </main>
+  <main v-else class="candidate-home">
     <div class="candidate-home__container">
       <div class="dashboard-top">
         <section class="welcome-hero" aria-labelledby="welcome-heading">

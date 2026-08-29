@@ -31,9 +31,6 @@ export class NewsService {
         await http.delete(`${this.endpoint}/${id}/${profileId}`);
     }
 
-    async heartNews(_postId?: string, _userId?: string, _isHearted?: boolean): Promise<void> {
-        throw new Error('El backend actual no permite reaccionar a publicaciones.');
-    }
 }
 
 export const newsService = new NewsService();

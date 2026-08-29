@@ -4,10 +4,10 @@ import NewsCardComponent from '../components/news-card.component.vue';
 import DialogComponent from '@/app/shared/components/dialog.component.vue';
 import { useNewsPage } from '@/app/news/composables/useNewsPage';
 import { useAuthenticationStore } from '@/app/auth/services/authentication.store';
-import { Image, Video, Calendar, FileText, ArrowRight, Settings, Loader, Compass, BriefcaseBusiness, Lightbulb } from 'lucide-vue-next';
+import { ArrowRight, Settings, Loader, Compass, BriefcaseBusiness, Lightbulb } from 'lucide-vue-next';
 import { RecommendationService, type RecommendationResponse } from '../../job/services/recommendation.service';
 
-const { newsData, posting, error, toggleHeart, createPost } = useNewsPage();
+const { newsData, posting, error, createPost } = useNewsPage();
 const auth = useAuthenticationStore();
 
 const createPostDialogRef = ref<InstanceType<typeof DialogComponent>>();
@@ -34,10 +34,6 @@ onMounted(() => {
     loadRecommendations();
 });
 
-function handleToggleHeart(postId: string, isHearted: boolean) {
-    toggleHeart(postId, auth.currentUserId, isHearted);
-}
-
 const displayName = computed(() => {
     const u = auth.currentUser;
     if (!u) return 'Usuario';
@@ -52,10 +48,6 @@ const initials = computed(() => {
     const chars = parts.length > 1 ? (parts[0]?.[0] ?? '') + (parts[1]?.[0] ?? '') : name.slice(0, 2);
     return chars.toUpperCase();
 });
-
-function openCreatePostAlert() {
-    alert("¡Funcionalidad de publicación próximamente!");
-}
 
 function openCreatePostDialog() {
     postContent.value = '';
@@ -99,19 +91,6 @@ async function handleCreatePost() {
                     
                     <div class="divider"></div>
 
-                    <div class="profile-stats">
-                        <div class="stat-row">
-                            <span class="stat-label">Vistas del perfil</span>
-                            <span class="stat-value text-primary-color">47</span>
-                        </div>
-                        <div class="stat-row">
-                            <span class="stat-label">Impresiones del post</span>
-                            <span class="stat-value text-primary-color">124</span>
-                        </div>
-                    </div>
-
-                    <div class="divider"></div>
-
                     <div class="profile-footer">
                         <RouterLink to="/settings" class="manage-account-link">
                             <Settings :size="13" :stroke-width="1.5" />
@@ -132,24 +111,6 @@ async function handleCreatePost() {
                         Comparte una experiencia que pueda ayudar a otra persona
                         </button>
                     </div>
-                    <div class="post-actions-row">
-                        <button class="action-btn-item photo-btn" @click="openCreatePostAlert">
-                            <Image :size="18" />
-                            <span>Foto</span>
-                        </button>
-                        <button class="action-btn-item video-btn" @click="openCreatePostAlert">
-                            <Video :size="18" />
-                            <span>Video</span>
-                        </button>
-                        <button class="action-btn-item event-btn" @click="openCreatePostAlert">
-                            <Calendar :size="18" />
-                            <span>Evento</span>
-                        </button>
-                        <button class="action-btn-item article-btn" @click="openCreatePostAlert">
-                            <FileText :size="18" />
-                            <span>Escribir artículo</span>
-                        </button>
-                    </div>
                 </div>
 
                 <p v-if="error" class="feed-error">{{ error }}</p>
@@ -165,7 +126,6 @@ async function handleCreatePost() {
                         :content="news.content"
                         :published-at="news.publishedDate"
                         :images="news.imageUrls"
-                        @toggle-heart="handleToggleHeart"
                     />
                     <div v-if="newsData.length === 0" class="no-posts">
                         <p>No hay novedades disponibles en este momento.</p>

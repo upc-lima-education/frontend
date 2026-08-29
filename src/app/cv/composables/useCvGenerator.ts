@@ -62,15 +62,12 @@ export function useCvGenerator() {
         state.value = 'error';
     }
 
-    async function generate(prompt?: string) {
+    async function generate(_prompt?: string) {
         reset();
         state.value = 'generating';
         try {
-            const res = await cvService.generate({ 
-                mode: 'General', 
-                prompt: prompt?.trim() || null 
-            });
-            cvId.value = res.cvGenerationId;
+            const res = await cvService.generate();
+            cvId.value = res.cvId;
             pollCount = 0;
             schedulePoll();
         } catch (e: any) {
@@ -85,39 +82,26 @@ export function useCvGenerator() {
     async function checkStatus() {
         if (!cvId.value) return;
         try {
-            const s = await cvService.getStatus(cvId.value);
-            const status = (s.status || '').toLowerCase();
-
-            if (s.errorMessage || status.includes('fail') || status.includes('error')) {
-                return fail(s.errorMessage || 'La generación del CV falló.');
-            }
-            if (s.hasPdf || ['complete', 'done', 'ready', 'success'].some((k) => status.includes(k))) {
-                return loadPreview();
-            }
-            if (++pollCount >= MAX_POLLS) {
-                return fail('La generación está tardando demasiado. Inténtalo de nuevo.');
-            }
-            schedulePoll();
-        } catch {
-            fail('Error consultando el estado del CV.');
-        }
-    }
-
-    async function loadPreview() {
-        if (!cvId.value) return;
-        try {
-            const blob = await cvService.getPreviewBlob(cvId.value);
+            const blob = await cvService.getFile(cvId.value);
             revokePreview();
             previewUrl.value = URL.createObjectURL(blob);
             state.value = 'ready';
-        } catch {
-            fail('El CV se generó, pero no se pudo cargar la vista previa.');
+            stopPolling();
+            return;
+        } catch (error: any) {
+            if (error?.response?.status === 404 && ++pollCount < MAX_POLLS) {
+                schedulePoll();
+                return;
+            }
+            fail(pollCount >= MAX_POLLS
+                ? 'La generación está tardando demasiado. Inténtalo de nuevo.'
+                : 'No se pudo recuperar el archivo generado.');
         }
     }
 
     async function download() {
         if (!cvId.value) return;
-        const blob = await cvService.getDownloadBlob(cvId.value);
+        const blob = await cvService.getFile(cvId.value);
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;

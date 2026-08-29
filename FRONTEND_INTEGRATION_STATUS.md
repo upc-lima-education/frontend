@@ -42,6 +42,7 @@ Este documento registra el estado real de la comunicación entre el frontend de 
 ### Vistas compartidas
 
 - [x] `/home` es compartida y adapta sus acciones al rol.
+- [x] `/home` renderiza un dashboard distinto: oportunidades para candidato y administración de vacantes para company.
 - [x] `/news` es compartida.
 - [x] `/settings` es compartida y cambia secciones según el rol.
 - [x] `/job/:id` es compartida, con acciones diferentes para candidato y company.
@@ -56,8 +57,9 @@ Este documento registra el estado real de la comunicación entre el frontend de 
 - [x] Se reconocen `Candidate`, `Company`, `employee` y `organization` sin depender de capitalización.
 - [x] El logout es local y ya no llama a `POST /auth/sign-out`.
 - [x] `GET /auth/me` acepta la respuesta directa de `UserData` y también el formato anidado usado por sign-in/sign-up.
-- [ ] Implementar renovación con `POST /api/v1/auth/refresh` o retirar supuestos de sesión no soportados.
-- [ ] Eliminar o dejar fuera de uso `GET /auth/users/{id}` y `GET /auth/users/{id}/role`; no existen.
+- [x] La sesión se renueva con `POST /api/v1/auth/refresh`; ante `401` se actualizan tokens y se reintenta una vez.
+- [x] Se retiraron `GET /auth/users/{id}` y `GET /auth/users/{id}/role` porque no existen.
+- [x] Google OAuth intercambia el `code` mediante `POST /api/v1/auth/google/authenticate`; ya no confunde `id_token` con refresh token.
 
 ## Contraseñas
 
@@ -112,13 +114,13 @@ Este documento registra el estado real de la comunicación entre el frontend de 
 
 ### Currículum
 
-- [ ] Crear CV estructurado con `POST /api/v1/cv/structured`.
-- [ ] Subir CV con `POST /api/v1/cv/uploaded` y `multipart/form-data`.
-- [ ] Consultar CV estructurado con `GET /api/v1/cv/{id}/structured`.
-- [ ] Descargar archivo con `GET /api/v1/cv/{cvId}/file`.
-- [ ] Eliminar CV con `DELETE /api/v1/cv/{id}`.
-- [ ] Adecuar generación asistida a `POST /api/v1/cv` y su respuesta `202 Accepted`.
-- [-] Los endpoints `/status`, `/preview` y `/download` usados actualmente no existen.
+- [x] El servicio crea CV estructurado con `POST /api/v1/cv/structured`.
+- [x] El servicio sube CV con `POST /api/v1/cv/uploaded` y `multipart/form-data`.
+- [x] El servicio consulta CV estructurado con `GET /api/v1/cv/{id}/structured`.
+- [x] La generación y descarga recuperan el archivo con `GET /api/v1/cv/{cvId}/file`.
+- [x] El servicio elimina CV con `DELETE /api/v1/cv/{id}`.
+- [x] La generación asistida usa `POST /api/v1/cv`, procesa `202 Accepted` y conserva `cvId`.
+- [x] Se retiró el consumo de los endpoints inexistentes `/status`, `/preview` y `/download`; mientras el proceso está pendiente se consulta el archivo de forma acotada.
 
 ## Flujo de company
 
@@ -127,12 +129,12 @@ Este documento registra el estado real de la comunicación entre el frontend de 
 - [x] La creación usa `CreateInternalJobRequest`.
 - [x] Se envían `workHours`, `educationLevel`, `location` y `payment` con la estructura del backend.
 - [x] No se envía `companyId`; el backend obtiene la company desde la sesión.
-- [!] `PUT /api/v1/job/{id}` existe; validar el DTO de edición antes de habilitar la vista.
+- [x] El servicio `PUT /api/v1/job/{id}` usa el DTO completo real de creación/edición.
 - [x] `DELETE /api/v1/job/{id}` maneja correctamente la respuesta `204 No Content`.
-- [!] `PATCH /api/v1/job/{id}/schedule` existe, pero no está conectado a una vista activa.
+- [x] El servicio de agenda usa `PATCH /api/v1/job/{id}/schedule` con ambas fechas requeridas; no se muestra una acción hasta tener formulario de edición.
 - [x] Las habilidades usan `PATCH /api/v1/job/{id}/skill` enviando `skills: string[]`.
 - [-] `GET /job/{id}/skills` y `DELETE /job/{jobId}/skill/{skillId}` no existen.
-- [!] `PATCH /api/v1/job/{id}/claim` existe y todavía no tiene acción frontend.
+- [x] El servicio dispone de `PATCH /api/v1/job/{id}/claim`; la acción no se muestra automáticamente para evitar reclamar ofertas sin confirmación explícita.
 - [x] La sincronización del scraper fue retirada del servicio frontend; solo corresponde al proceso de scraping.
 
 ### Gestión de postulantes
@@ -159,8 +161,10 @@ Este documento registra el estado real de la comunicación entre el frontend de 
 
 - [x] La base correcta de Payments es `/api/payments` sin `/v1`.
 - [x] Crear orden usa `POST /api/payments/create`.
-- [ ] Capturar orden debe usar `POST /api/payments/capture/{orderId}`.
-- [-] `GET /api/payments/balance` no existe; no mostrar un saldo obtenido de esa ruta.
+- [x] La captura usa `POST /api/payments/capture/{orderId}` sin body ficticio.
+- [x] La creación envía `creditPlan`, `platform`, `returnUrl` y `cancelUrl` según el DTO real.
+- [x] Se retiró el consumo de `GET /api/payments/balance`; la UI explica que el saldo solo se conoce tras capturar una compra.
+- [-] Los planes `Boost7/Boost15/Boost30` no existen; la promoción de vacantes queda deshabilitada sin simular una compra.
 
 ## Novedades y notificaciones
 
@@ -168,11 +172,11 @@ Este documento registra el estado real de la comunicación entre el frontend de 
 - [x] Detalle: `GET /api/v1/news/{id}`.
 - [x] Crear: `POST /api/v1/news`.
 - [x] Eliminar: `DELETE /api/v1/news/{id}/{profileId}`.
-- [-] Reacciones o “me gusta” no tienen endpoint.
+- [x] Reacciones, comentarios, compartidos y contadores simulados fueron retirados porque no tienen endpoint.
 - [ ] Revisar si búsqueda y publicaciones por empleo/perfil deben exponerse en alguna vista real.
 - [x] Notificaciones propias: `GET /api/v1/notifications`.
 - [!] Envío: `POST /api/v1/notifications/send`; validar permisos y `profileId` antes de activarlo para company.
-- [ ] Reemplazar los contadores estáticos del navbar por la respuesta real de notificaciones.
+- [x] El navbar usa `GET /api/v1/notifications`; se retiraron los contadores ficticios de mensajes.
 
 ## Endpoints existentes todavía sin vista conectada
 
@@ -182,7 +186,7 @@ Este documento registra el estado real de la comunicación entre el frontend de 
 - [ ] `GET /api/v1/news/profile/{profileId}/own/{ownId}`.
 - [ ] `POST /api/v1/conversation/{id}/users`.
 - [ ] `DELETE /api/v1/conversation/{id}/users`.
-- [ ] `POST /api/v1/auth/refresh`.
+- [x] `POST /api/v1/auth/refresh`.
 
 ## Registro de validaciones
 
@@ -204,3 +208,6 @@ Agregar aquí cada cambio confirmado con el formato:
 - 2026-08-29 — Empleos company — Publicación adaptada al DTO real, detalle separado por rol, eliminación 204, actualización de habilidades e identificación por `companyProfileId` — `npm run type-check` correcto — Pendiente commit.
 - 2026-08-29 — Postulantes company — Selección de vacante real, listado por `jobId`, estados `Pending/Accepted/Rejected`, campos reales y retiro de selección ficticia — Pendiente validación final y commit.
 - 2026-08-29 — Contraseñas — Recuperación completa por correo, verificación de código y restablecimiento usando `/password/*`; métodos autenticados alineados — Pendiente validación final y commit.
+- 2026-08-29 — Currículum — Servicio alineado a CV estructurado/subido, generación 202, archivo real, eliminación y retiro de rutas inexistentes — Pendiente validación final y commit.
+- 2026-08-29 — Pagos — DTO real de creación, plataforma PayPal, captura por URL, retiro de saldo inexistente y bloqueo de planes Boost no soportados — Pendiente validación final y commit.
+- 2026-08-29 — Flujo por rol — Refresh automático, Google OAuth real, Home company, navbar con notificaciones, contratos de edición de empleo y retiro de interacciones/datos simulados — Pendiente validación final y commit.

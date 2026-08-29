@@ -52,17 +52,6 @@ export class ProfileService {
     }
 
     /**
-     * Datos de onboarding/completitud del perfil
-     * GET /api/v1/profile/{userId}/bootstrap
-     */
-    async getProfileBootstrap(userId: string) {
-        console.log('🔄 ProfileService: Getting bootstrap for user:', userId);
-        const response = await http.get(`${this.endpoint}/${userId}/bootstrap`);
-        console.log('📦 ProfileService: Bootstrap response:', response.data);
-        return response;
-    }
-
-    /**
      * Crear perfil de empleado/persona natural
      * POST /api/v1/profile/employee
      */

@@ -119,7 +119,12 @@ export class AuthenticationService {
         const path = query ? `${this.endpoint}/google/url?${query}` : `${this.endpoint}/google/url`;
 
         const response = await http.get(path);
-        return response.data.authUrl || response.data.url;
+        return typeof response.data === 'string' ? response.data : (response.data.authUrl || response.data.url);
+    }
+
+    async authenticateGoogle(code: string, profileType?: 'Candidate' | 'Company'): Promise<SignInResponse> {
+        const { data } = await http.post(`${this.endpoint}/google/authenticate`, { code, profileType });
+        return new SignInResponse(data.accessToken, data.refreshToken, data.expiresIn, this.mapUser(data.user));
     }
 
     /**
@@ -140,21 +145,13 @@ export class AuthenticationService {
         return this.mapUser(response.data?.user ?? response.data);
     }
 
-    /**
-     * Get a user by id
-     * GET /api/v1/auth/users/{id}
-     */
-    async getUserById(id: string): Promise<UserResponse> {
-        const response = await http.get(`${this.endpoint}/users/${id}`);
-        return this.mapUser(response.data);
-    }
-
-    /**
-     * Get a user's role
-     * GET /api/v1/auth/users/{id}/role
-     */
-    async getUserRole(id: string): Promise<string> {
-        const response = await http.get(`${this.endpoint}/users/${id}/role`);
-        return response.data?.role ?? response.data;
+    async refreshSession(refreshToken: string): Promise<SignInResponse> {
+        const { data } = await http.post(`${this.endpoint}/refresh`, { refreshToken });
+        return new SignInResponse(
+            data.accessToken,
+            data.refreshToken,
+            data.expiresIn,
+            this.mapUser(data.user),
+        );
     }
 }

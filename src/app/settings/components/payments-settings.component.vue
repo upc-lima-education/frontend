@@ -58,18 +58,8 @@ const plans = [
   }
 ];
 
-async function fetchBalance() {
-  isLoadingBalance.value = true;
-  errorMessage.value = '';
-  try {
-    const res = await paymentService.getBalance();
-    balance.value = res.balance;
-  } catch (err) {
-    console.error('Error fetching balance:', err);
-    errorMessage.value = 'No se pudo obtener el saldo de créditos.';
-  } finally {
-    isLoadingBalance.value = false;
-  }
+function fetchBalance() {
+  errorMessage.value = 'El backend actual no ofrece una consulta de saldo. El saldo se actualizará después de una compra confirmada.';
 }
 
 async function buyPlan(planName: string) {
@@ -83,7 +73,8 @@ async function buyPlan(planName: string) {
 
   try {
     const res = await paymentService.createOrder({
-      planName,
+      creditPlan: planName as 'Starter' | 'Pro' | 'Max',
+      platform: 'Paypal',
       returnUrl,
       cancelUrl
     });
@@ -138,10 +129,7 @@ async function handlePaymentCallback() {
   }
 }
 
-onMounted(() => {
-  fetchBalance();
-  handlePaymentCallback();
-});
+onMounted(handlePaymentCallback);
 </script>
 
 <template>

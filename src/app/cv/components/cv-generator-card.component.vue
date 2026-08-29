@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch, onMounted, onBeforeUnmount } from 'vue';
+import { ref, watch, onBeforeUnmount } from 'vue';
 import { useRouter } from 'vue-router';
 import {
   Download,
@@ -15,25 +15,9 @@ import {
   CreditCard
 } from 'lucide-vue-next';
 import { useCvGenerator } from '@/app/cv/composables/useCvGenerator';
-import { paymentService } from '@/app/shared/services/payment.service';
 
 const router = useRouter();
 const { state, errorMessage, isCreditError, previewUrl, generate, download, reset } = useCvGenerator();
-
-const creditBalance = ref<number | null>(null);
-
-async function loadBalance() {
-  try {
-    const res = await paymentService.getBalance();
-    creditBalance.value = res.balance;
-  } catch (err) {
-    console.error('Error loading balance on cv card:', err);
-  }
-}
-
-onMounted(() => {
-  loadBalance();
-});
 
 function goToPayments() {
   router.push({ path: '/settings', query: { tab: 'payments' } });
@@ -117,7 +101,7 @@ async function copyPreviewLink() {
         </span>
         <span class="credits-badge">
           <Sparkle :size="10" />
-          <span v-if="creditBalance !== null">Saldo: {{ creditBalance }} crédito(s) (Consume 1)</span>
+          <span>La generación puede consumir créditos según la configuración de tu cuenta.</span>
           <span v-else>Consume 1 crédito</span>
         </span>
       </div>

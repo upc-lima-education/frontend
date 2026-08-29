@@ -156,7 +156,7 @@ export const useAuthenticationStore = defineStore('authentication', () => {
      */
     async function loadCurrentUser(): Promise<boolean> {
         try {
-            const token = localStorage.getItem('idToken') || accessToken.value;
+            const token = accessToken.value;
             if (!token) {
                 console.log('❌ No token found');
                 return false;
@@ -176,6 +176,48 @@ export const useAuthenticationStore = defineStore('authentication', () => {
         } catch (error) {
             console.error('❌ Failed to load current user:', error);
             signOut();
+            return false;
+        }
+    }
+
+    async function refreshSession(): Promise<string | null> {
+        const currentRefreshToken = refreshToken.value;
+        if (!currentRefreshToken) return null;
+        try {
+            const response = await authenticationService.refreshSession(currentRefreshToken);
+            accessToken.value = response.accessToken;
+            refreshToken.value = response.refreshToken;
+            user.value = response.user;
+            signedIn.value = true;
+            localStorage.setItem('accessToken', response.accessToken);
+            localStorage.setItem('refreshToken', response.refreshToken);
+            localStorage.setItem('expiresIn', response.expiresIn.toString());
+            if (response.user?.userType) setUserType(response.user.userType);
+            return response.accessToken;
+        } catch (error) {
+            console.error('No se pudo renovar la sesión:', error);
+            await signOut();
+            return null;
+        }
+    }
+
+    async function authenticateGoogle(code: string, requestedRole?: 'employee' | 'organization'): Promise<boolean> {
+        try {
+            const response = await authenticationService.authenticateGoogle(
+                code,
+                requestedRole === 'organization' ? 'Company' : requestedRole === 'employee' ? 'Candidate' : undefined,
+            );
+            accessToken.value = response.accessToken;
+            refreshToken.value = response.refreshToken;
+            user.value = response.user;
+            signedIn.value = true;
+            localStorage.setItem('accessToken', response.accessToken);
+            localStorage.setItem('refreshToken', response.refreshToken);
+            localStorage.setItem('expiresIn', response.expiresIn.toString());
+            if (response.user?.userType) setUserType(response.user.userType);
+            return true;
+        } catch (error) {
+            console.error('Falló la autenticación con Google:', error);
             return false;
         }
     }
@@ -226,6 +268,8 @@ export const useAuthenticationStore = defineStore('authentication', () => {
         signOut,
         requestPasswordReset,
         loadCurrentUser,
+        refreshSession,
+        authenticateGoogle,
         setUserType,
         setAccessToken,
         setRefreshToken

@@ -23,7 +23,7 @@ export const authenticationGuard = (
         to.path === prefix || to.path.startsWith(prefix + '/')
     );
 
-    const hasToken = localStorage.getItem('accessToken') || localStorage.getItem('idToken');
+    const hasToken = localStorage.getItem('accessToken');
     const isSignedIn = authenticationStore.isSignedIn;
 
     // Comprueba el rol contra meta.roles y resuelve el next() adecuado.
