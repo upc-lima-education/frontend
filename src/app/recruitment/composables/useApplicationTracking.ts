@@ -1,4 +1,5 @@
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
+import { JobService } from '@/app/job/services/job.service';
 import { recruitmentService } from '../services/recruitment.service';
 import { notificationService } from '../services/notification.service';
 import {
@@ -15,20 +16,30 @@ import { NotificationChannel, NotificationType } from '../model/notification.mod
  */
 
 export function useApplicationTracking() {
+    const jobService = new JobService();
     const applications = ref<ApplicationResponse[]>([]);
     const loading = ref(false);
     const actionPending = ref(false);
     const errorMessage = ref('');
     const unavailable = ref(false);
+    const hydratingJobs = ref(false);
 
-    const selectedJobId = ref<string>('all');
+    const selectedJobId = ref<string>('');
+    const jobs = ref<{ id: string; title: string }[]>([]);
     const selectedApplication = ref<ApplicationResponse | null>(null);
 
     async function load(): Promise<void> {
         loading.value = true;
         errorMessage.value = '';
         try {
-            applications.value = await recruitmentService.getApplications();
+            const companyProfileId = localStorage.getItem('profileId');
+            if (!companyProfileId) throw new Error('No se encontró el perfil de la empresa.');
+            jobs.value = (await jobService.getJobsByCompany(companyProfileId))
+                .map(job => ({ id: job.id, title: job.title }));
+            hydratingJobs.value = true;
+            selectedJobId.value = jobs.value[0]?.id ?? '';
+            await loadSelectedJob();
+            hydratingJobs.value = false;
             unavailable.value = false;
         } catch (err) {
             console.error('Error cargando postulaciones:', err);
@@ -39,17 +50,26 @@ export function useApplicationTracking() {
         }
     }
 
+    async function loadSelectedJob(): Promise<void> {
+        selectedApplication.value = null;
+        if (!selectedJobId.value) {
+            applications.value = [];
+            return;
+        }
+        const job = jobs.value.find(item => item.id === selectedJobId.value);
+        applications.value = await recruitmentService.getApplicationsByJob(
+            selectedJobId.value,
+            job?.title ?? 'Vacante',
+        );
+    }
+
     /** Ofertas únicas para el filtro superior. */
     const jobOptions = computed(() => {
-        const map = new Map<string, string>();
-        for (const a of applications.value) map.set(a.jobId, a.jobTitle);
-        return Array.from(map, ([id, title]) => ({ id, title }));
+        return jobs.value;
     });
 
     const visibleApplications = computed(() =>
-        selectedJobId.value === 'all'
-            ? applications.value
-            : applications.value.filter((a) => a.jobId === selectedJobId.value),
+        applications.value,
     );
 
     /** Postulaciones agrupadas por estado, en el orden del pipeline. */
@@ -63,7 +83,7 @@ export function useApplicationTracking() {
     /** Postulantes aprobados o seleccionados (para exportar a Excel). */
     const shortlisted = computed(() =>
         visibleApplications.value.filter(
-            (a) => a.status === ApplicationStatus.Approved || a.status === ApplicationStatus.Selected,
+            (a) => a.status === ApplicationStatus.Accepted,
         ),
     );
 
@@ -82,14 +102,8 @@ export function useApplicationTracking() {
     }
 
     async function approve(application: ApplicationResponse): Promise<void> {
-        await runDecision(application, ApplicationStatus.Approved, () =>
+        await runDecision(application, ApplicationStatus.Accepted, () =>
             recruitmentService.approve(application.id),
-        );
-    }
-
-    async function select(application: ApplicationResponse): Promise<void> {
-        await runDecision(application, ApplicationStatus.Selected, () =>
-            recruitmentService.select(application.id),
         );
     }
 
@@ -112,8 +126,11 @@ export function useApplicationTracking() {
             await call();
         } catch (err) {
             console.error('Error actualizando la postulación:', err);
-            patchStatus(application.id, previous); // revertir
-            errorMessage.value = 'No se pudo actualizar la postulación. Intenta de nuevo.';
+            await loadSelectedJob().catch(() => patchStatus(application.id, previous));
+            const persisted = applications.value.find(item => item.id === application.id);
+            if (persisted?.status !== nextStatus) {
+                errorMessage.value = 'No se pudo actualizar la postulación. Intenta de nuevo.';
+            }
         } finally {
             actionPending.value = false;
         }
@@ -131,7 +148,7 @@ export function useApplicationTracking() {
         errorMessage.value = '';
         try {
             await notificationService.send({
-                profileId: application.applicant.id,
+                profileId: application.candidateId,
                 type: params.type,
                 channels: [NotificationChannel.Email],
                 subject: params.title,
@@ -146,6 +163,21 @@ export function useApplicationTracking() {
             actionPending.value = false;
         }
     }
+
+    watch(selectedJobId, async (_current, previous) => {
+        if (previous === undefined || hydratingJobs.value) return;
+        loading.value = true;
+        errorMessage.value = '';
+        try {
+            await loadSelectedJob();
+        } catch (err) {
+            console.error('Error cargando postulaciones de la vacante:', err);
+            applications.value = [];
+            errorMessage.value = 'No se pudieron cargar las postulaciones de esta vacante.';
+        } finally {
+            loading.value = false;
+        }
+    });
 
     return {
         applications,
@@ -162,7 +194,6 @@ export function useApplicationTracking() {
         openApplicant,
         closeApplicant,
         approve,
-        select,
         reject,
         notify,
     };

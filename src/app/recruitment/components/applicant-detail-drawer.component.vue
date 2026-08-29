@@ -20,7 +20,6 @@ const props = defineProps<{
 const emit = defineEmits<{
     (e: 'close'): void;
     (e: 'approve', application: ApplicationResponse): void;
-    (e: 'select', application: ApplicationResponse): void;
     (e: 'reject', application: ApplicationResponse): void;
     (e: 'message', application: ApplicationResponse): void;
     (e: 'notify', payload: { application: ApplicationResponse; type: NotificationType; title: string; message: string }): void;
@@ -40,7 +39,7 @@ const steps = computed(() =>
 );
 
 function stepState(step: ApplicationStatus): 'done' | 'current' | 'todo' {
-    const order = [ApplicationStatus.Applied, ApplicationStatus.Approved, ApplicationStatus.Selected];
+    const order = [ApplicationStatus.Pending, ApplicationStatus.Accepted];
     const current = order.indexOf(props.application.status);
     const idx = order.indexOf(step);
     if (props.application.status === ApplicationStatus.Rejected) return 'todo';
@@ -57,7 +56,7 @@ const NOTIFY_OPTIONS: { type: NotificationType; label: string }[] = [
 ];
 
 function defaultTypeFor(status: ApplicationStatus): NotificationType {
-    if (status === ApplicationStatus.Selected) return NotificationType.CandidateSelected;
+    if (status === ApplicationStatus.Accepted) return NotificationType.ApplicationAccepted;
     if (status === ApplicationStatus.Rejected) return NotificationType.ApplicationRejected;
     return NotificationType.ApplicationAccepted;
 }
@@ -210,19 +209,11 @@ function emitNotify(): void {
                     <div class="decision-grid">
                         <button
                             type="button" class="btn-decision approve"
-                            :disabled="actionPending || application.status === ApplicationStatus.Approved"
+                            :disabled="actionPending || application.status === ApplicationStatus.Accepted"
                             @click="$emit('approve', application)"
                         >
                             <Check :size="16" :stroke-width="1.5" />
                             <span>Aprobar</span>
-                        </button>
-                        <button
-                            type="button" class="btn-decision select"
-                            :disabled="actionPending || application.status === ApplicationStatus.Selected"
-                            @click="$emit('select', application)"
-                        >
-                            <UserCheck :size="16" :stroke-width="1.5" />
-                            <span>Seleccionar</span>
                         </button>
                         <button
                             type="button" class="btn-decision reject"
@@ -233,7 +224,7 @@ function emitNotify(): void {
                             <span>Descartar</span>
                         </button>
                     </div>
-                    <p class="auto-note">Aprobar, seleccionar o descartar envía una notificación de WhatsApp automática al postulante.</p>
+                    <p class="auto-note">Las decisiones se guardan usando el flujo disponible del backend.</p>
                     <button type="button" class="btn-message" @click="$emit('message', application)">
                         <MessageSquare :size="16" :stroke-width="1.5" />
                         <span>Abrir chat con el postulante</span>

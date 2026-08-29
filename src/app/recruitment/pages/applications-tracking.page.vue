@@ -17,7 +17,7 @@ const auth = useAuthenticationStore();
 const {
     loading, actionPending, errorMessage, unavailable,
     selectedJobId, selectedApplication, jobOptions, columns, shortlisted,
-    load, openApplicant, closeApplicant, approve, select, reject, notify,
+    load, openApplicant, closeApplicant, approve, reject, notify,
 } = useApplicationTracking();
 
 onMounted(load);
@@ -25,8 +25,7 @@ onMounted(load);
 /** Color de acento por columna (solo tokens de paleta). */
 function columnColor(status: ApplicationStatus): string {
     switch (status) {
-        case ApplicationStatus.Approved: return 'var(--color-accent)';
-        case ApplicationStatus.Selected: return 'var(--color-state-success)';
+        case ApplicationStatus.Accepted: return 'var(--color-state-success)';
         case ApplicationStatus.Rejected: return 'var(--color-state-error)';
         default: return 'var(--color-text-muted)';
     }
@@ -73,7 +72,7 @@ function exportShortlist(): void {
                 <label v-if="jobOptions.length" class="job-filter">
                     <span class="filter-label">Oferta</span>
                     <select v-model="selectedJobId" class="filter-select">
-                        <option value="all">Todas las ofertas</option>
+                        <option value="" disabled>Selecciona una oferta</option>
                         <option v-for="job in jobOptions" :key="job.id" :value="job.id">{{ job.title }}</option>
                     </select>
                 </label>
@@ -101,8 +100,8 @@ function exportShortlist(): void {
             <Inbox :size="32" :stroke-width="1.5" />
             <h3>Seguimiento próximamente</h3>
             <p>
-                Aún no puedes ver aquí el listado de postulantes: el backend no expone todavía un
-                endpoint para listar postulaciones. Esta sección se activará en cuanto esté disponible.
+                No fue posible cargar las vacantes o sus postulaciones. Verifica que el perfil de empresa
+                esté completo y vuelve a intentarlo.
             </p>
         </div>
 
@@ -135,7 +134,6 @@ function exportShortlist(): void {
             :action-pending="actionPending"
             @close="closeApplicant"
             @approve="approve"
-            @select="select"
             @reject="reject"
             @message="goToChat"
             @notify="onNotify"

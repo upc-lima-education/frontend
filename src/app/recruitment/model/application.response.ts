@@ -19,6 +19,8 @@ export interface Applicant {
  */
 export interface ApplicationResponse {
     id: string;
+    /** Único identificador del candidato que devuelve el backend. */
+    candidateId: string;
     jobId: string;
     jobTitle: string;
     applicant: Applicant;

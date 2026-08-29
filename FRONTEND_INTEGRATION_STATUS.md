@@ -137,14 +137,14 @@ Este documento registra el estado real de la comunicación entre el frontend de 
 
 ### Gestión de postulantes
 
-- [ ] La company debe seleccionar primero una vacante propia.
-- [ ] Cargar postulaciones mediante `GET /api/v1/recruitment/applications/job/{jobId}`.
-- [ ] Adaptar la respuesta real: `id`, `candidateId`, `status` y `createdAt`.
-- [ ] No asumir que la respuesta incluye nombre, título de empleo, fotografía, ubicación o mensajes.
-- [x] Aprobar utiliza `POST /api/v1/recruitment/applications/{id}/approve`.
+- [x] La company selecciona primero una vacante propia obtenida con su `companyProfileId`.
+- [x] Las postulaciones se cargan mediante `GET /api/v1/recruitment/applications/job/{jobId}`.
+- [x] La respuesta se adapta únicamente desde `id`, `candidateId`, `status` y `createdAt`.
+- [x] La UI no asume nombre, fotografía, correo, teléfono, ubicación ni mensajes que la API no devuelve.
+- [!] Aprobar utiliza `POST /api/v1/recruitment/applications/{id}/approve`, pero el caso de uso actual termina lanzando `NotImplementedException` después de guardar; el frontend vuelve a consultar para reflejar el estado persistido.
 - [x] Rechazar utiliza `POST /api/v1/recruitment/applications/{id}/reject`.
-- [-] La acción “Seleccionar” no tiene endpoint y debe retirarse o deshabilitarse.
-- [ ] Las notificaciones deben usar el `profileId` real del candidato, no un objeto `applicant` inexistente.
+- [x] La acción “Seleccionar” fue retirada porque no tiene endpoint ni estado equivalente.
+- [x] Las notificaciones usan el `candidateId` real como `profileId`, no un objeto `applicant` inexistente.
 
 ### Mensajes de company
 
@@ -202,3 +202,4 @@ Agregar aquí cada cambio confirmado con el formato:
 - 2026-08-28 — Autenticación — Mapeo real de `profileType`, soporte de respuesta directa de `/auth/me`, logout local y redirección a `/home` — Pendiente commit.
 - 2026-08-29 — Perfiles — Rutas y métodos reales para candidate/company, formularios multipart, foto, validación RUC, mapeo de respuesta y protección de historiales no recuperables — Pendiente commit.
 - 2026-08-29 — Empleos company — Publicación adaptada al DTO real, detalle separado por rol, eliminación 204, actualización de habilidades e identificación por `companyProfileId` — `npm run type-check` correcto — Pendiente commit.
+- 2026-08-29 — Postulantes company — Selección de vacante real, listado por `jobId`, estados `Pending/Accepted/Rejected`, campos reales y retiro de selección ficticia — Pendiente validación final y commit.

@@ -1,6 +1,14 @@
 import http from '@/app/shared/services/base.service';
 import type { CreateApplicationRequest } from '../model/application.request';
 import type { ApplicationResponse } from '../model/application.response';
+import { ApplicationStatus } from '../enums/application-status.enum';
+
+interface JobApplicationApiResponse {
+    id: string;
+    candidateId: string;
+    status: ApplicationStatus;
+    createdAt: string;
+}
 
 /** Cliente del contrato real de Recruitment de backend-v2/clean. */
 export class RecruitmentService {
@@ -20,23 +28,26 @@ export class RecruitmentService {
     }
 
     /** La empresa debe consultar por vacante, como define GET /job/{jobId}. */
-    async getApplicationsByJob(jobId: string): Promise<ApplicationResponse[]> {
-        const { data } = await http.get<ApplicationResponse[]>(`${this.endpoint}/job/${jobId}`);
-        return data ?? [];
-    }
-
-    /** No existe un listado global de postulaciones para la organización. */
-    async getApplications(): Promise<ApplicationResponse[]> {
-        throw new Error('Selecciona una vacante: el backend actual solo lista postulaciones por empleo.');
+    async getApplicationsByJob(jobId: string, jobTitle: string): Promise<ApplicationResponse[]> {
+        const { data } = await http.get<JobApplicationApiResponse[]>(`${this.endpoint}/job/${jobId}`);
+        if (!Array.isArray(data)) return [];
+        return data.map((application) => ({
+            id: application.id,
+            jobId,
+            jobTitle,
+            candidateId: application.candidateId,
+            applicant: {
+                id: application.candidateId,
+                fullName: `Perfil ${application.candidateId.slice(0, 8)}`,
+            },
+            status: application.status,
+            appliedAt: application.createdAt,
+        }));
     }
 
     async approve(id: string): Promise<void> { await http.post(`${this.endpoint}/${id}/approve`); }
     async reject(id: string): Promise<void> { await http.post(`${this.endpoint}/${id}/reject`); }
 
-    /** La rama clean no publica una acción de selección final. */
-    async select(_id?: string): Promise<void> {
-        throw new Error('El backend actual no expone la acción de seleccionar postulante.');
-    }
 }
 
 export const recruitmentService = new RecruitmentService();

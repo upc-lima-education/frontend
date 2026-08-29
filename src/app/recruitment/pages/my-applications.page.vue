@@ -27,17 +27,17 @@ const sortBy = ref('recent');
 
 const tabs = computed(() => [
   { id: 'all' as TabStatus, label: 'Todas', count: applications.value.length },
-  { id: 'sent' as TabStatus, label: 'Enviadas', count: applications.value.filter(a => a.status === ApplicationStatus.Applied).length },
-  { id: 'review' as TabStatus, label: 'En revisión', count: applications.value.filter(a => a.status === ApplicationStatus.Approved).length },
-  { id: 'selected' as TabStatus, label: 'Seleccionado', count: applications.value.filter(a => a.status === ApplicationStatus.Selected).length },
+  { id: 'sent' as TabStatus, label: 'Enviadas', count: applications.value.filter(a => a.status === ApplicationStatus.Pending).length },
+  { id: 'review' as TabStatus, label: 'Aceptadas', count: applications.value.filter(a => a.status === ApplicationStatus.Accepted).length },
+  { id: 'selected' as TabStatus, label: 'Seleccionado', count: 0 },
   { id: 'rejected' as TabStatus, label: 'No seleccionada', count: applications.value.filter(a => a.status === ApplicationStatus.Rejected).length },
 ]);
 
 const filteredApplications = computed(() => {
   const filtered = applications.value.filter((app) => {
-    if (activeTab.value === 'sent') return app.status === ApplicationStatus.Applied;
-    if (activeTab.value === 'review') return app.status === ApplicationStatus.Approved;
-    if (activeTab.value === 'selected') return app.status === ApplicationStatus.Selected;
+    if (activeTab.value === 'sent') return app.status === ApplicationStatus.Pending;
+    if (activeTab.value === 'review') return app.status === ApplicationStatus.Accepted;
+    if (activeTab.value === 'selected') return false;
     if (activeTab.value === 'rejected') return app.status === ApplicationStatus.Rejected;
     return true;
   });
@@ -50,15 +50,13 @@ const filteredApplications = computed(() => {
 });
 
 function statusLabel(status: ApplicationStatus): string {
-  if (status === ApplicationStatus.Applied) return 'Enviada';
-  if (status === ApplicationStatus.Approved) return 'En revisión';
-  if (status === ApplicationStatus.Selected) return 'Seleccionado';
+  if (status === ApplicationStatus.Pending) return 'Enviada';
+  if (status === ApplicationStatus.Accepted) return 'Aceptada';
   return 'No seleccionada';
 }
 
 function statusPillClass(status: ApplicationStatus): string {
-  if (status === ApplicationStatus.Selected) return 'pill--success';
-  if (status === ApplicationStatus.Approved) return 'pill--warning';
+  if (status === ApplicationStatus.Accepted) return 'pill--success';
   if (status === ApplicationStatus.Rejected) return 'pill--danger';
   return 'pill--info';
 }

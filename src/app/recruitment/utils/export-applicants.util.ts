@@ -9,13 +9,9 @@ import type { ApplicationResponse } from '../model/application.response';
  */
 
 const HEADERS = [
-    'Nombre',
-    'Puesto / Perfil',
+    'ID de candidato',
     'Oferta',
     'Estado',
-    'Teléfono',
-    'Correo',
-    'Ubicación',
     'Fecha de postulación',
 ] as const;
 
@@ -33,13 +29,9 @@ function formatDate(iso: string): string {
 
 function toRow(app: ApplicationResponse): string {
     return [
-        app.applicant.fullName,
-        app.applicant.headline,
+        app.candidateId,
         app.jobTitle,
         APPLICATION_STATUS_LABEL[app.status],
-        app.applicant.phone,
-        app.applicant.email,
-        app.applicant.location,
         formatDate(app.appliedAt),
     ].map(csvCell).join(',');
 }
