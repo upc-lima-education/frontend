@@ -1,57 +1,72 @@
-import { ref } from 'vue';
-import { useAuthenticationStore } from '@/app/auth/services/authentication.store';
+import { computed, ref } from 'vue';
+import { AuthenticationService } from '@/app/auth/services/authentication.service';
+
+type RecoveryStep = 'email' | 'code' | 'password' | 'complete';
 
 export function useForgotPassword() {
-    const authStore = useAuthenticationStore();
-
+    const service = new AuthenticationService();
+    const step = ref<RecoveryStep>('email');
     const email = ref('');
-    const isEmailValid = ref(true);
+    const code = ref('');
+    const newPassword = ref('');
+    const confirmPassword = ref('');
     const loading = ref(false);
-    const successMessage = ref('');
     const serverError = ref('');
 
-    async function onSubmit() {
-        isEmailValid.value = true;
-        serverError.value = '';
-        successMessage.value = '';
+    const passwordValid = computed(() => newPassword.value.length >= 8
+        && /[A-Z]/.test(newPassword.value)
+        && /[a-z]/.test(newPassword.value)
+        && /[0-9]/.test(newPassword.value));
 
-        if (email.value === '') {
-            isEmailValid.value = false;
-            return;
-        }
-
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(email.value)) {
-            isEmailValid.value = false;
-            return;
-        }
-
+    async function execute(action: () => Promise<void>) {
         loading.value = true;
-
+        serverError.value = '';
         try {
-            const success = await authStore.requestPasswordReset(email.value);
-
-            if (success) {
-                successMessage.value =
-                    'Se ha enviado un correo de recuperación. Revisa tu bandeja de entrada.';
-                email.value = '';
-            } else {
-                serverError.value = 'Error al procesar la solicitud. Intenta nuevamente.';
-            }
-        } catch (err) {
-            console.error('Password reset error:', err);
-            serverError.value = 'Error de conexión con el servidor';
+            await action();
+        } catch (error: any) {
+            console.error('Password recovery failed:', error);
+            serverError.value = error?.response?.data?.message || error?.message || 'No se pudo completar la solicitud.';
         } finally {
             loading.value = false;
         }
     }
 
-    return {
-        email,
-        isEmailValid,
-        loading,
-        successMessage,
-        serverError,
-        onSubmit,
-    };
+    async function requestCode() {
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.value)) {
+            serverError.value = 'Ingresa un correo electrónico válido.';
+            return;
+        }
+        await execute(async () => {
+            if (!await service.requestPasswordReset(email.value)) throw new Error('El servidor no confirmó el envío del código.');
+            step.value = 'code';
+        });
+    }
+
+    async function verifyCode() {
+        if (!code.value.trim()) {
+            serverError.value = 'Ingresa el código recibido.';
+            return;
+        }
+        await execute(async () => {
+            if (!await service.verifyPasswordResetCode(code.value.trim())) throw new Error('El código no es válido o expiró.');
+            step.value = 'password';
+        });
+    }
+
+    async function submitNewPassword() {
+        if (!passwordValid.value) {
+            serverError.value = 'Usa al menos 8 caracteres, mayúscula, minúscula y número.';
+            return;
+        }
+        if (newPassword.value !== confirmPassword.value) {
+            serverError.value = 'Las contraseñas no coinciden.';
+            return;
+        }
+        await execute(async () => {
+            await service.resetPassword(code.value.trim(), newPassword.value);
+            step.value = 'complete';
+        });
+    }
+
+    return { step, email, code, newPassword, confirmPassword, loading, serverError, passwordValid, requestCode, verifyCode, submitNewPassword };
 }

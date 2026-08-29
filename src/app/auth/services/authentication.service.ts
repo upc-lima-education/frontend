@@ -4,7 +4,6 @@ import { SignUpRequest } from "../model/sign-up/sign-up.request";
 import { SignInRequest } from "../model/sign-in/sign-in.request";
 import { SignInResponse } from "../model/sign-in/sign-in.response";
 import { UserResponse } from "../model/user.response";
-import { PasswordResetResponse } from "../model/password/password-reset.response";
 
 export class AuthenticationService {
     private endpoint = "/auth";
@@ -79,18 +78,28 @@ export class AuthenticationService {
 
     /**
      * Request password reset
-     * POST /api/v1/auth/forgot-password
+     * POST /api/v1/password/forgot
      */
-    async requestPasswordReset(email: string): Promise<PasswordResetResponse> {
-        console.log('🔄 AuthService: Password reset request for:', email);
-        
-        const response = await http.post(`${this.endpoint}/forgot-password`, { email });
-        console.log('📦 AuthService: Password reset response:', response.data);
-        
-        return new PasswordResetResponse(
-            response.data.message || 'Password reset email sent',
-            email
-        );
+    async requestPasswordReset(email: string): Promise<boolean> {
+        const { data } = await http.post<boolean>('/password/forgot', { email });
+        return data === true;
+    }
+
+    async verifyPasswordResetCode(code: string): Promise<boolean> {
+        const { data } = await http.post<boolean>('/password/verify', { code });
+        return data === true;
+    }
+
+    async resetPassword(code: string, newPassword: string): Promise<void> {
+        await http.post('/password/reset', { code, newPassword });
+    }
+
+    async changePassword(currentPassword: string, newPassword: string): Promise<void> {
+        await http.post('/password/change', { currentPassword, newPassword });
+    }
+
+    async setPassword(currentPassword: string, newPassword: string): Promise<void> {
+        await http.post('/password/set', { currentPassword, newPassword });
     }
 
     /**

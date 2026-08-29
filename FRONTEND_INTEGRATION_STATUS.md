@@ -61,11 +61,11 @@ Este documento registra el estado real de la comunicación entre el frontend de 
 
 ## Contraseñas
 
-- [ ] Cambiar recuperación de `/auth/forgot-password` a `POST /api/v1/password/forgot`.
-- [ ] Adecuar verificación a `POST /api/v1/password/verify`.
-- [ ] Adecuar restablecimiento a `POST /api/v1/password/reset`.
-- [ ] Adecuar cambio autenticado a `POST /api/v1/password/change`.
-- [ ] Adecuar creación de contraseña a `POST /api/v1/password/set`.
+- [x] La recuperación usa `POST /api/v1/password/forgot` y valida la respuesta booleana.
+- [x] El código se verifica con `POST /api/v1/password/verify`.
+- [x] La nueva contraseña se establece con `POST /api/v1/password/reset` y maneja `204 No Content`.
+- [x] El servicio autenticado dispone de `POST /api/v1/password/change` con `currentPassword` y `newPassword`.
+- [!] El servicio dispone de `POST /api/v1/password/set`; falta una vista que determine cuándo debe usarse y el backend actualmente recibe `ChangePasswordRequest` también para esta operación.
 
 ## Perfiles compartidos
 
@@ -203,3 +203,4 @@ Agregar aquí cada cambio confirmado con el formato:
 - 2026-08-29 — Perfiles — Rutas y métodos reales para candidate/company, formularios multipart, foto, validación RUC, mapeo de respuesta y protección de historiales no recuperables — Pendiente commit.
 - 2026-08-29 — Empleos company — Publicación adaptada al DTO real, detalle separado por rol, eliminación 204, actualización de habilidades e identificación por `companyProfileId` — `npm run type-check` correcto — Pendiente commit.
 - 2026-08-29 — Postulantes company — Selección de vacante real, listado por `jobId`, estados `Pending/Accepted/Rejected`, campos reales y retiro de selección ficticia — Pendiente validación final y commit.
+- 2026-08-29 — Contraseñas — Recuperación completa por correo, verificación de código y restablecimiento usando `/password/*`; métodos autenticados alineados — Pendiente validación final y commit.

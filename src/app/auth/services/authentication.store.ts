@@ -143,8 +143,7 @@ export const useAuthenticationStore = defineStore('authentication', () => {
      */
     async function requestPasswordReset(email: string): Promise<boolean> {
         try {
-            await authenticationService.requestPasswordReset(email);
-            return true;
+            return await authenticationService.requestPasswordReset(email);
         } catch (error) {
             console.error('Password reset request failed:', error);
             return false;
