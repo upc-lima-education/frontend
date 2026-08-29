@@ -1,10 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
 import {
-  Briefcase,
   Search,
-  CheckCircle2,
-  Clock,
   XCircle,
   ChevronDown,
   ArrowRight,
@@ -18,12 +15,13 @@ import type { ApplicationResponse } from '../model/application.response';
 import { ApplicationStatus } from '../enums/application-status.enum';
 import { ROUTE_CONSTANTS } from '@/app/shared/router/route-constants';
 
-type TabStatus = 'all' | 'sent' | 'review' | 'interview' | 'selected' | 'rejected';
+type TabStatus = 'all' | 'sent' | 'review' | 'selected' | 'rejected';
 
 const auth = useAuthenticationStore();
 const applications = ref<ApplicationResponse[]>([]);
 const loading = ref(true);
 const error = ref('');
+const historyUnavailable = ref(false);
 const activeTab = ref<TabStatus>('all');
 const sortBy = ref('recent');
 
@@ -31,18 +29,23 @@ const tabs = computed(() => [
   { id: 'all' as TabStatus, label: 'Todas', count: applications.value.length },
   { id: 'sent' as TabStatus, label: 'Enviadas', count: applications.value.filter(a => a.status === ApplicationStatus.Applied).length },
   { id: 'review' as TabStatus, label: 'En revisión', count: applications.value.filter(a => a.status === ApplicationStatus.Approved).length },
-  { id: 'interview' as TabStatus, label: 'Entrevista', count: 0 },
   { id: 'selected' as TabStatus, label: 'Seleccionado', count: applications.value.filter(a => a.status === ApplicationStatus.Selected).length },
   { id: 'rejected' as TabStatus, label: 'No seleccionada', count: applications.value.filter(a => a.status === ApplicationStatus.Rejected).length },
 ]);
 
 const filteredApplications = computed(() => {
-  return applications.value.filter((app) => {
+  const filtered = applications.value.filter((app) => {
     if (activeTab.value === 'sent') return app.status === ApplicationStatus.Applied;
     if (activeTab.value === 'review') return app.status === ApplicationStatus.Approved;
     if (activeTab.value === 'selected') return app.status === ApplicationStatus.Selected;
     if (activeTab.value === 'rejected') return app.status === ApplicationStatus.Rejected;
     return true;
+  });
+
+  return filtered.sort((first, second) => {
+    const firstDate = new Date(first.appliedAt).getTime();
+    const secondDate = new Date(second.appliedAt).getTime();
+    return sortBy.value === 'oldest' ? firstDate - secondDate : secondDate - firstDate;
   });
 });
 
@@ -67,13 +70,16 @@ function formatDate(value: string): string {
 async function loadApplications() {
   loading.value = true;
   error.value = '';
+  historyUnavailable.value = false;
   try {
     const list = await recruitmentService.getCandidateApplications(auth.currentUserId);
     applications.value = Array.isArray(list) ? list : [];
   } catch (err) {
     console.error('Error loading applications:', err);
     applications.value = [];
-    error.value = err instanceof Error ? err.message : 'No se pudieron cargar tus postulaciones.';
+    const message = err instanceof Error ? err.message : 'No se pudieron cargar tus postulaciones.';
+    historyUnavailable.value = message.includes('no expone el historial');
+    if (!historyUnavailable.value) error.value = message;
   } finally {
     loading.value = false;
   }
@@ -152,7 +158,7 @@ onMounted(loadApplications);
                   {{ statusLabel(app.status) }}
                 </span>
               </div>
-              <p class="app-company-name">{{ app.applicant.fullName || 'Empresa Empleadora' }}</p>
+              <p class="app-company-name">Postulación registrada</p>
 
               <div class="app-meta">
                 <span class="meta-item">
@@ -188,9 +194,13 @@ onMounted(loadApplications);
             </div>
           </div>
 
-          <h2 class="empty-title">Aún no has enviado postulaciones</h2>
+          <h2 class="empty-title">
+            {{ historyUnavailable ? 'Tu historial de postulaciones aún no está disponible' : 'Aún no has enviado postulaciones' }}
+          </h2>
           <p class="empty-desc">
-            Encuentra un empleo que te interese y postúlate. Aquí podrás seguir todo el proceso.
+            {{ historyUnavailable
+              ? 'Puedes postular a empleos, pero la API actual todavía no publica un listado de tus postulaciones.'
+              : 'Encuentra un empleo que te interese y postúlate. Aquí podrás seguir todo el proceso.' }}
           </p>
 
           <RouterLink :to="ROUTE_CONSTANTS.JOB_SEARCH" class="btn-explore-jobs">
@@ -202,7 +212,7 @@ onMounted(loadApplications);
   </div>
 </template>
 
-<style scoped>
+<style>
 .applications-page {
   min-height: calc(100vh - 70px);
   width: 100%;
@@ -602,5 +612,100 @@ onMounted(loadApplications);
   border: none;
   border-radius: 8px;
   cursor: pointer;
+}
+
+/* Candidate application dashboard: full-width process workspace, no fictitious records. */
+.applications-page {
+  min-height: calc(100vh - 72px);
+  padding: 38px 0 56px;
+}
+
+.applications-container {
+  max-width: 1500px;
+  gap: 22px;
+}
+
+.page-head { padding: 4px 0 2px; }
+.page-title { font-size: clamp(26px, 2.2vw, 32px); }
+.page-subtitle { font-size: 15px; }
+
+.tabs-toolbar { gap: 22px; }
+.tabs-list { gap: 4px; }
+
+.tab-btn {
+  min-height: 48px;
+  padding: 0 16px;
+  font-weight: 600;
+}
+
+.tab-btn.is-active {
+  font-weight: 700;
+  background: linear-gradient(180deg, #f5f6ff 0%, #f9faff 100%);
+  border-radius: 10px 10px 0 0;
+}
+
+.sort-select-wrap select {
+  min-height: 48px;
+  min-width: 170px;
+  padding: 0 38px 0 16px;
+  border: 1px solid #dfe3f0;
+  border-radius: 12px;
+  background: #fff;
+}
+
+.applications-body { min-height: 440px; }
+
+.empty-state-card {
+  min-height: 420px;
+  padding: 72px 24px 82px;
+  background: linear-gradient(180deg, rgba(255,255,255,.72), #fff 65%);
+  border: 1px solid #e8ebf5;
+  border-radius: 18px;
+  box-shadow: 0 14px 35px rgba(24, 42, 110, .04);
+  margin-top: 0;
+}
+
+.empty-illus-circle {
+  width: 116px;
+  height: 116px;
+  margin-bottom: 24px;
+}
+
+.empty-title { font-size: 20px; }
+.empty-desc { max-width: 510px; }
+
+.btn-explore-jobs,
+.btn-view-offer,
+.btn-retry {
+  min-height: 46px;
+}
+
+.app-card { border-radius: 16px; }
+
+.sort-select-wrap select:focus-visible,
+.tab-btn:focus-visible,
+.btn-explore-jobs:focus-visible,
+.btn-view-offer:focus-visible,
+.btn-retry:focus-visible {
+  outline: 3px solid rgba(185, 239, 74, .7);
+  outline-offset: 3px;
+}
+
+@media (max-width: 720px) {
+  .applications-page { padding: 24px 0 38px; }
+  .applications-container { gap: 16px; }
+  .tabs-toolbar { align-items: stretch; flex-direction: column; gap: 10px; }
+  .tabs-list { width: 100%; overflow-x: auto; }
+  .tab-btn { padding: 0 12px; font-size: 13px; }
+  .sort-select-wrap, .sort-select-wrap select { width: 100%; }
+  .empty-state-card { min-height: 380px; padding: 52px 20px; }
+  .app-card { align-items: flex-start; flex-wrap: wrap; padding: 18px; }
+  .app-title-row { align-items: flex-start; flex-direction: column; gap: 8px; }
+  .btn-view-offer { width: 100%; justify-content: center; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spinner { animation: none; }
+  .tab-btn, .btn-explore-jobs, .app-card, .btn-view-offer { transition: none; }
 }
 </style>
