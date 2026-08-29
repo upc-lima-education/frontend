@@ -1,0 +1,200 @@
+# Estado de integración frontend–backend
+
+Última actualización: 28 de agosto de 2026
+
+Este documento registra el estado real de la comunicación entre el frontend de Llanqui y `backend-v2` en la rama `clean`. No es un plan de trabajo ni modifica el contrato del backend.
+
+## Reglas de integración
+
+- Solo se modifica el proyecto `frontend`.
+- `backend-v2` no se modifica.
+- No se utiliza mock data para reemplazar información que debería venir de la API.
+- El frontend se adapta únicamente a los endpoints, métodos HTTP y DTO existentes.
+- Candidato y company tienen navegación y capacidades diferentes.
+- Una funcionalidad sin endpoint equivalente debe mostrar un estado informativo real y no simular resultados.
+- Cada corrección debe actualizar este documento y registrar su validación.
+
+## Significado de los estados
+
+- `[x] Funciona`: contrato y consumo compatibles.
+- `[ ] Pendiente frontend`: existe soporte en backend y el frontend debe adecuarse.
+- `[-] No disponible`: backend no ofrece el flujo; el frontend debe deshabilitarlo o explicarlo.
+- `[!] Verificar`: integración aparentemente compatible, pero falta una prueba local completa.
+
+## Acceso y separación por usuario
+
+### Candidato
+
+- [x] Ruta exclusiva `/job-search` protegida con rol `employee`.
+- [x] Ruta exclusiva `/my-applications` protegida con rol `employee`.
+- [x] Ruta exclusiva `/message/e` protegida con rol `employee`.
+- [x] La vista de empleo oculta acciones administrativas y permite postular.
+- [x] El rol se mapea desde `profileType = Candidate` hacia `employee`.
+
+### Company
+
+- [x] Ruta exclusiva `/job-publish` protegida con rol `organization`.
+- [x] Ruta exclusiva `/applications` protegida con rol `organization`.
+- [x] Ruta exclusiva `/message/c` protegida con rol `organization`.
+- [x] La vista de empleo muestra acciones administrativas y oculta la postulación.
+- [x] El rol se mapea desde `profileType = Company` hacia `organization`.
+
+### Vistas compartidas
+
+- [x] `/home` es compartida y adapta sus acciones al rol.
+- [x] `/news` es compartida.
+- [x] `/settings` es compartida y cambia secciones según el rol.
+- [x] `/job/:id` es compartida, con acciones diferentes para candidato y company.
+- [x] El mapeo autoritativo reconoce `Candidate` y `Company`; las rutas no autorizadas regresan a `/home`.
+
+## Autenticación y sesión
+
+- [x] `POST /api/v1/auth/sign-up` consume `email` y `password`.
+- [x] `POST /api/v1/auth/sign-in` consume `email` y `password`.
+- [x] `GET /api/v1/auth/me` se utiliza para restaurar la sesión.
+- [x] El frontend consume `profileType` y conserva compatibilidad con `userType`.
+- [x] Se reconocen `Candidate`, `Company`, `employee` y `organization` sin depender de capitalización.
+- [x] El logout es local y ya no llama a `POST /auth/sign-out`.
+- [x] `GET /auth/me` acepta la respuesta directa de `UserData` y también el formato anidado usado por sign-in/sign-up.
+- [ ] Implementar renovación con `POST /api/v1/auth/refresh` o retirar supuestos de sesión no soportados.
+- [ ] Eliminar o dejar fuera de uso `GET /auth/users/{id}` y `GET /auth/users/{id}/role`; no existen.
+
+## Contraseñas
+
+- [ ] Cambiar recuperación de `/auth/forgot-password` a `POST /api/v1/password/forgot`.
+- [ ] Adecuar verificación a `POST /api/v1/password/verify`.
+- [ ] Adecuar restablecimiento a `POST /api/v1/password/reset`.
+- [ ] Adecuar cambio autenticado a `POST /api/v1/password/change`.
+- [ ] Adecuar creación de contraseña a `POST /api/v1/password/set`.
+
+## Perfiles compartidos
+
+- [!] `GET /api/v1/profile/{id}` existe; confirmar si cada vista conserva correctamente el `profileId` en lugar del `userId`.
+- [ ] Crear candidato con `POST /api/v1/profile/candidate` y `multipart/form-data`.
+- [ ] Crear company con `POST /api/v1/profile/company` y `multipart/form-data`.
+- [ ] Actualizar candidato con `PUT /api/v1/profile/candidate`, sin `userId` en la URL.
+- [ ] Actualizar company con `PUT /api/v1/profile/company`, sin `userId` en la URL.
+- [ ] Subir foto con `PATCH /api/v1/profile/upload-photo`.
+- [ ] Verificar company mediante `POST /api/v1/profile/{profileId}/verify`.
+- [ ] Validar RUC mediante `POST /api/v1/profile/ruc/{ruc}/validate`.
+- [ ] Sustituir el CRUD ficticio de idiomas por `PATCH /api/v1/profile/language` con la lista completa.
+- [ ] Sustituir el CRUD ficticio de educación por `PATCH /api/v1/profile/education` con la lista completa.
+- [ ] Sustituir el CRUD ficticio de experiencia por `PATCH /api/v1/profile/experience` con la lista completa.
+- [-] Certificaciones no tienen endpoint en el contrato actual; deben ocultarse o conservarse solo localmente como borrador no persistido, indicándolo claramente.
+- [-] `/profile/{userId}/bootstrap` no existe; la completitud debe calcularse con `ProfileResponse` real.
+
+## Flujo de candidato
+
+### Inicio y exploración de empleos
+
+- [x] `GET /api/v1/job` alimenta empleos reales en Inicio y Explorar empleos.
+- [x] `GET /api/v1/job/{id}` alimenta el detalle real.
+- [x] El listado adapta la respuesta resumida sin inventar empleos.
+- [!] El recomendador usa un servicio externo; validar disponibilidad y correspondencia por `source_url`.
+- [ ] Conservar un estado vacío cuando el recomendador no responda, usando empleos reales como alternativa si existen.
+
+### Postulación
+
+- [x] `POST /api/v1/recruitment/applications/send` usa `multipart/form-data`.
+- [x] Se envían `jobId` y archivo `cv`.
+- [-] No existe endpoint para listar las postulaciones del candidato autenticado.
+- [-] `GET /applications/{id}` descarga el CV; no representa el historial del candidato.
+- [x] `/my-applications` informa la limitación sin mostrar registros ficticios.
+
+### Mensajes del candidato
+
+- [-] No existe endpoint para listar todas las conversaciones del candidato.
+- [-] `GET /conversation/{id}` no devuelve el historial de mensajes.
+- [x] La vista informa que la bandeja no está disponible con el contrato actual.
+- [!] `POST /conversation/send-message` puede utilizarse cuando ya se conoce un `conversationId` válido.
+
+### Currículum
+
+- [ ] Crear CV estructurado con `POST /api/v1/cv/structured`.
+- [ ] Subir CV con `POST /api/v1/cv/uploaded` y `multipart/form-data`.
+- [ ] Consultar CV estructurado con `GET /api/v1/cv/{id}/structured`.
+- [ ] Descargar archivo con `GET /api/v1/cv/{cvId}/file`.
+- [ ] Eliminar CV con `DELETE /api/v1/cv/{id}`.
+- [ ] Adecuar generación asistida a `POST /api/v1/cv` y su respuesta `202 Accepted`.
+- [-] Los endpoints `/status`, `/preview` y `/download` usados actualmente no existen.
+
+## Flujo de company
+
+### Publicación y administración de empleos
+
+- [ ] Adecuar creación a `CreateInternalJobRequest`.
+- [ ] Enviar `workHours`, `educationLevel`, `location` y `payment` con la estructura del backend.
+- [ ] No enviar `companyId`; el backend obtiene la company desde la sesión.
+- [!] `PUT /api/v1/job/{id}` existe; validar el DTO de edición antes de habilitar la vista.
+- [!] `DELETE /api/v1/job/{id}` existe; adaptar la respuesta `204 No Content`.
+- [!] `PATCH /api/v1/job/{id}/schedule` existe, pero no está conectado a una vista activa.
+- [ ] Cambiar habilidades a `PATCH /api/v1/job/{id}/skill` enviando `skills: string[]`.
+- [-] `GET /job/{id}/skills` y `DELETE /job/{jobId}/skill/{skillId}` no existen.
+- [!] `PATCH /api/v1/job/{id}/claim` existe y todavía no tiene acción frontend.
+- [-] La sincronización del scraper no debe ejecutarse desde el frontend del usuario.
+
+### Gestión de postulantes
+
+- [ ] La company debe seleccionar primero una vacante propia.
+- [ ] Cargar postulaciones mediante `GET /api/v1/recruitment/applications/job/{jobId}`.
+- [ ] Adaptar la respuesta real: `id`, `candidateId`, `status` y `createdAt`.
+- [ ] No asumir que la respuesta incluye nombre, título de empleo, fotografía, ubicación o mensajes.
+- [x] Aprobar utiliza `POST /api/v1/recruitment/applications/{id}/approve`.
+- [x] Rechazar utiliza `POST /api/v1/recruitment/applications/{id}/reject`.
+- [-] La acción “Seleccionar” no tiene endpoint y debe retirarse o deshabilitarse.
+- [ ] Las notificaciones deben usar el `profileId` real del candidato, no un objeto `applicant` inexistente.
+
+### Mensajes de company
+
+- [ ] Obtener primero el `companyProfileId` real.
+- [ ] Consultar empleos con `GET /api/v1/job/company/{companyId}` usando el ID de perfil, no el ID de usuario.
+- [x] Listar conversaciones por vacante con `GET /api/v1/conversation/job/{jobId}`.
+- [x] Crear conversación con `POST /api/v1/conversation` cuando se conocen la vacante y usuarios.
+- [x] Enviar contenido con `POST /api/v1/conversation/send-message`.
+- [-] El backend no expone mensajes históricos dentro de la conversación.
+
+### Pagos y promoción
+
+- [x] La base correcta de Payments es `/api/payments` sin `/v1`.
+- [x] Crear orden usa `POST /api/payments/create`.
+- [ ] Capturar orden debe usar `POST /api/payments/capture/{orderId}`.
+- [-] `GET /api/payments/balance` no existe; no mostrar un saldo obtenido de esa ruta.
+
+## Novedades y notificaciones
+
+- [x] Feed: `GET /api/v1/news/feed/{profileId}`.
+- [x] Detalle: `GET /api/v1/news/{id}`.
+- [x] Crear: `POST /api/v1/news`.
+- [x] Eliminar: `DELETE /api/v1/news/{id}/{profileId}`.
+- [-] Reacciones o “me gusta” no tienen endpoint.
+- [ ] Revisar si búsqueda y publicaciones por empleo/perfil deben exponerse en alguna vista real.
+- [x] Notificaciones propias: `GET /api/v1/notifications`.
+- [!] Envío: `POST /api/v1/notifications/send`; validar permisos y `profileId` antes de activarlo para company.
+- [ ] Reemplazar los contadores estáticos del navbar por la respuesta real de notificaciones.
+
+## Endpoints existentes todavía sin vista conectada
+
+- [ ] `GET /api/v1/skill`.
+- [ ] `POST /api/v1/news/search`.
+- [ ] `GET /api/v1/news/job/{jobId}/profile/{profileId}`.
+- [ ] `GET /api/v1/news/profile/{profileId}/own/{ownId}`.
+- [ ] `POST /api/v1/conversation/{id}/users`.
+- [ ] `DELETE /api/v1/conversation/{id}/users`.
+- [ ] `POST /api/v1/auth/refresh`.
+
+## Registro de validaciones
+
+- [x] 28/08/2026 — Inventario estático de controladores de `backend-v2/clean`.
+- [x] 28/08/2026 — Cruce de servicios, vistas y rutas del frontend.
+- [x] 28/08/2026 — `npm run type-check` completado correctamente.
+- [ ] Prueba local completa de candidato.
+- [ ] Prueba local completa de company.
+- [ ] Verificación de requests y responses en Network/Swagger después de cada corrección.
+
+## Historial de correcciones frontend
+
+Agregar aquí cada cambio confirmado con el formato:
+
+`AAAA-MM-DD — Área — Cambio realizado — Validación ejecutada — Commit`
+
+- 2026-08-28 — Autenticación — Mapeo real de `profileType`, soporte de respuesta directa de `/auth/me`, logout local y redirección a `/home` — Pendiente commit.

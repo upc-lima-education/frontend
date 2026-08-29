@@ -4,7 +4,7 @@ import { SignUpRequest } from "../model/sign-up/sign-up.request";
 import { SignInRequest } from "../model/sign-in/sign-in.request";
 import { SignInResponse } from "../model/sign-in/sign-in.response";
 import { UserResponse } from "../model/user.response";
-import { PasswordResetRequest, PasswordResetResponse } from "../model/password/password-reset.response";
+import { PasswordResetResponse } from "../model/password/password-reset.response";
 
 export class AuthenticationService {
     private endpoint = "/auth";
@@ -12,12 +12,21 @@ export class AuthenticationService {
     /**
      * Mapea el objeto crudo de usuario del backend a UserResponse.
      * Centraliza el orden de argumentos (antes estaba corrido y dejaba
-     * userType siempre en 'employee') y normaliza el rol: el backend usa
-     * 'candidate'/'organization' (a veces capitalizado) -> 'employee'/'organization'.
+     * El backend clean devuelve ProfileType.Candidate/ProfileType.Company.
+     * Durante el registro profileType puede ser null hasta crear el perfil; en
+     * ese caso se conserva el rol elegido y persistido por el frontend.
      */
     private mapUser(u: any): UserResponse {
+        const backendProfileType = String(u?.profileType ?? u?.userType ?? '').toLowerCase();
+        const storedUserType = localStorage.getItem('userType');
         const userType: 'employee' | 'organization' =
-            String(u?.userType).toLowerCase() === 'organization' ? 'organization' : 'employee';
+            backendProfileType === 'company' || backendProfileType === 'organization'
+                ? 'organization'
+                : backendProfileType === 'candidate' || backendProfileType === 'employee'
+                    ? 'employee'
+                    : storedUserType === 'organization'
+                        ? 'organization'
+                        : 'employee';
         return new UserResponse(
             u.id,
             u.email,
@@ -119,19 +128,7 @@ export class AuthenticationService {
         });
         console.log('📦 AuthService: Current user response:', response.data);
 
-        return this.mapUser(response.data.user);
-    }
-
-    /**
-     * Sign out on the backend, invalidating the session
-     * POST /api/v1/auth/sign-out
-     */
-    async signOut(token: string): Promise<void> {
-        await http.post(`${this.endpoint}/sign-out`, {}, {
-            headers: {
-                Authorization: `Bearer ${token}`
-            }
-        });
+        return this.mapUser(response.data?.user ?? response.data);
     }
 
     /**

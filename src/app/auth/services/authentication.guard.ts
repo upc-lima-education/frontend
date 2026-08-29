@@ -37,8 +37,8 @@ export const authenticationGuard = (
 
         if (userType && allowedRoles.includes(userType)) return next();
 
-        // Rol no autorizado para esta ruta: lo enviamos a su inicio.
-        return next(ROUTE_CONSTANTS.NEWS_PAGE);
+        // Rol no autorizado para esta ruta: lo enviamos al inicio compartido.
+        return next(ROUTE_CONSTANTS.HOME_PAGE);
     };
 
     if (isPublicRoute) {

@@ -67,8 +67,8 @@ export const useAuthenticationStore = defineStore('authentication', () => {
                 console.warn('No se pudo refrescar el usuario desde /me tras el sign-in:', meError);
             }
 
-            // Redirect to news page
-            await router.push(ROUTE_CONSTANTS.NEWS_PAGE);
+            // Inicio compartido; sus acciones se adaptan al rol autoritativo.
+            await router.push(ROUTE_CONSTANTS.HOME_PAGE);
             return true;
         } catch (error) {
             console.error('Sign in failed:', error);
@@ -95,9 +95,8 @@ export const useAuthenticationStore = defineStore('authentication', () => {
             localStorage.setItem('refreshToken', signUpResponse.refreshToken);
             localStorage.setItem('expiresIn', signUpResponse.expiresIn.toString());
             
-            // Redirect to news page after signup
-            console.log('🔄 Redirigiendo a noticias...');
-            await router.push(ROUTE_CONSTANTS.NEWS_PAGE);
+            console.log('🔄 Redirigiendo al inicio...');
+            await router.push(ROUTE_CONSTANTS.HOME_PAGE);
             return true;
         } catch (error) {
             console.error('❌ Sign up failed:', error);
@@ -109,16 +108,8 @@ export const useAuthenticationStore = defineStore('authentication', () => {
     async function signOut(): Promise<void> {
         console.log('🚪 Iniciando logout...');
 
-        // Invalidar la sesión en el backend (best-effort: no debe bloquear
-        // el logout local si el backend falla o el token ya expiró).
-        const token = accessToken.value || localStorage.getItem('accessToken');
-        if (token) {
-            try {
-                await authenticationService.signOut(token);
-            } catch (error) {
-                console.warn('No se pudo invalidar la sesión en el backend:', error);
-            }
-        }
+        // backend-v2/clean no expone /auth/sign-out. La sesión JWT se cierra
+        // eliminando credenciales y estado exclusivamente en el cliente.
 
         // Limpiar estado del store primero
         signedIn.value = false;

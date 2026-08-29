@@ -63,7 +63,7 @@ export function useGoogleCallback() {
                     authStore.setUserType(pendingRole);
                     sessionStorage.removeItem(OAUTH_SIGNUP_ROLE_KEY);
                 }
-                await router.push(ROUTE_CONSTANTS.NEWS_PAGE);
+                await router.push(ROUTE_CONSTANTS.HOME_PAGE);
             } else {
                 error.value = 'No se pudieron obtener los datos del usuario';
                 setTimeout(() => router.push(ROUTE_CONSTANTS.SIGN_IN_PAGE), 2000);
