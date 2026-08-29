@@ -90,11 +90,6 @@ export const useAuthenticationStore = defineStore('authentication', () => {
             accessToken.value = signUpResponse.accessToken;
             refreshToken.value = signUpResponse.refreshToken;
             
-            // Set user type from request if not already set
-            if (!userType.value && signUpRequest.userType) {
-                setUserType(signUpRequest.userType);
-            }
-            
             // Persist tokens
             localStorage.setItem('accessToken', signUpResponse.accessToken);
             localStorage.setItem('refreshToken', signUpResponse.refreshToken);

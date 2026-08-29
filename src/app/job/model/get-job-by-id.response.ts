@@ -31,6 +31,10 @@ export class GetJobByIdResponse {
     originPage: string;
     /** URL de la publicación original cuando el empleo viene de una fuente externa. */
     sourceUrl: string;
+    /** Nombre de empresa incluido por el endpoint resumido GET /job. */
+    companyName?: string;
+    /** Imagen de empresa incluida por el endpoint resumido GET /job. */
+    companyImage?: string;
 
     constructor(
         //Id

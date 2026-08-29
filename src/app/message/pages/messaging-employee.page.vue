@@ -26,56 +26,6 @@ const userId = ref('');
 const inputMessage = ref('');
 const searchQuery = ref('');
 
-// Mock sample demo conversations if backend is empty
-const defaultDemoConversations: ConversationResponse[] = [
-  {
-    id: 'conv-1',
-    title: 'Empresa ABC',
-    subtitle: 'Atención al Cliente / Capacitación Pagada',
-    lastMessage: 'Hola Mariana, revisamos tu perfil y nos gustaría invitarte a una entrevista.',
-    lastMessageTime: '10:30 a.m.',
-    unreadCount: 1,
-    companyLogo: { initials: 'abc', bg: '#0F172A', color: '#FFFFFF' },
-  } as unknown as ConversationResponse,
-  {
-    id: 'conv-2',
-    title: 'TechCorp Solutions',
-    subtitle: 'Asistente Administrativo',
-    lastMessage: 'Gracias por tu interés, ¿Tienes disponibilidad para empezar la próxima semana?',
-    lastMessageTime: 'Ayer',
-    unreadCount: 0,
-    companyLogo: { initials: 'tc', bg: '#4338CA', color: '#FFFFFF' },
-  } as unknown as ConversationResponse,
-  {
-    id: 'conv-3',
-    title: 'Distribuidora Progreso',
-    subtitle: 'Operario de Almacén',
-    lastMessage: 'Te invitamos a una entrevista técnica este jueves a las 3:00 p.m.',
-    lastMessageTime: '2 días',
-    unreadCount: 0,
-    companyLogo: { initials: 'dp', bg: '#EA580C', color: '#FFFFFF' },
-  } as unknown as ConversationResponse,
-];
-
-const defaultDemoMessages: Record<string, MessageResponse[]> = {
-  'conv-1': [
-    {
-      id: 'm-1',
-      userId: 'company-abc',
-      conversationId: 'conv-1',
-      content: 'Hola Mariana, revisamos tu perfil y nos gustaría invitarte a una entrevista.',
-      sentAt: new Date(Date.now() - 1000 * 60 * 30),
-    },
-    {
-      id: 'm-2',
-      userId: 'user-me',
-      conversationId: 'conv-1',
-      content: '¡Hola! Muchas gracias, estaré atenta a los detalles.',
-      sentAt: new Date(Date.now() - 1000 * 60 * 15),
-    },
-  ],
-};
-
 const quickReplies = [
   'Estoy disponible',
   '¿Qué horario sería?',
@@ -84,7 +34,7 @@ const quickReplies = [
 
 const filteredConversations = computed(() => {
   const query = searchQuery.value.trim().toLowerCase();
-  const list = conversations.value.length > 0 ? conversations.value : defaultDemoConversations;
+  const list = conversations.value;
   if (!query) return list;
   return list.filter((c) =>
     c.title.toLowerCase().includes(query) ||
@@ -94,12 +44,7 @@ const filteredConversations = computed(() => {
 
 function selectConversation(conv: ConversationResponse) {
   currentConversation.value = conv;
-  const demoList = defaultDemoMessages[conv.id];
-  if (demoList && demoList.length > 0) {
-    messages.value = [...demoList];
-  } else {
-    loadConversationDetails(conv.id);
-  }
+  void loadConversationDetails(conv.id);
 }
 
 async function loadConversationDetails(convId: string) {
@@ -112,26 +57,17 @@ async function loadConversationDetails(convId: string) {
   }
 }
 
-function handleSend(text?: string) {
+async function handleSend(text?: string) {
   const content = (text || inputMessage.value).trim();
   if (!content || !currentConversation.value) return;
 
-  const newMsg: MessageResponse = {
-    id: `msg-${Date.now()}`,
-    conversationId: currentConversation.value.id,
-    userId: userId.value || 'user-me',
-    content,
-    sentAt: new Date(),
-  };
-
-  messages.value.push(newMsg);
-  inputMessage.value = '';
-
-  // Attempt to send to backend service in background
-  if (currentConversation.value.id.length > 10) {
-    messageService.sendMessage(currentConversation.value.id, userId.value, content).catch((e) => {
-      console.warn('Backend message save skipped or simulated:', e);
-    });
+  try {
+    const sent = await messageService.sendMessage(currentConversation.value.id, userId.value, content);
+    messages.value.push(sent);
+    inputMessage.value = '';
+  } catch (err) {
+    console.error('Error enviando mensaje:', err);
+    error.value = 'No se pudo enviar el mensaje.';
   }
 }
 
@@ -145,7 +81,7 @@ function formatTime(sentAtVal: Date | string): string {
 }
 
 onMounted(async () => {
-  userId.value = authStore.currentUserId || 'user-me';
+  userId.value = authStore.currentUserId;
   loading.value = true;
   error.value = '';
   try {
@@ -153,14 +89,11 @@ onMounted(async () => {
     if (list && list.length > 0) {
       conversations.value = list;
       if (list[0]) selectConversation(list[0]);
-    } else {
-      conversations.value = defaultDemoConversations;
-      if (defaultDemoConversations[0]) selectConversation(defaultDemoConversations[0]);
     }
   } catch (err) {
     console.error('Error loading conversations:', err);
-    conversations.value = defaultDemoConversations;
-    if (defaultDemoConversations[0]) selectConversation(defaultDemoConversations[0]);
+    conversations.value = [];
+    error.value = 'Tu bandeja aún no está disponible con el contrato actual del backend.';
   } finally {
     loading.value = false;
   }
@@ -262,14 +195,14 @@ onMounted(async () => {
               v-for="msg in messages"
               :key="msg.id"
               class="message-row"
-              :class="{ 'is-mine': msg.userId === userId || msg.userId === 'user-me' }"
+              :class="{ 'is-mine': msg.userId === userId }"
             >
               <div class="message-bubble">
                 <p class="message-text">{{ msg.content }}</p>
                 <div class="message-meta">
                   <span class="message-time">{{ formatTime(msg.sentAt) }}</span>
                   <CheckCheck
-                    v-if="msg.userId === userId || msg.userId === 'user-me'"
+                    v-if="msg.userId === userId"
                     :size="14"
                     class="read-check"
                   />

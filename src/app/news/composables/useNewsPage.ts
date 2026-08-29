@@ -17,7 +17,10 @@ export function useNewsPage() {
         loading.value = true;
         error.value = '';
         try {
-            const response = await newsService.getAllNews();
+            const profileResponse = await profileService.getProfileByUserId(auth.currentUserId);
+            const profileId = profileResponse.data?.id ?? profileResponse.data?.data?.id;
+            if (!profileId) throw new Error('No se encontró el perfil para cargar novedades.');
+            const response = await newsService.getAllNews(profileId);
             newsData.value = response;
         } catch (err) {
             console.error('Error fetching news data:', err);
@@ -47,7 +50,7 @@ export function useNewsPage() {
         error.value = '';
         try {
             const profileResponse = await profileService.getProfileByUserId(auth.currentUserId);
-            const profileId = profileResponse.data?.id;
+            const profileId = profileResponse.data?.id ?? profileResponse.data?.data?.id;
             if (!profileId) throw new Error('No se encontró el perfil del usuario.');
 
             await newsService.postNews(new NewsRequest(profileId, trimmed, 'General'));

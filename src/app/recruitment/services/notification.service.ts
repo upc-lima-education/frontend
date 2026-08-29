@@ -1,33 +1,15 @@
-import type {
-    SendNotificationRequest,
-    NotificationResponse,
-} from '../model/notification.model';
-
-// MOCK DATA — pedido explícito (2026-07-01): mientras tanto Notifications no
-// pega al backend real. Endpoints reales documentados para revertir esto
-// cuando se decida reconectar:
-//   GET  /api/v1/notifications
-//   POST /api/v1/notifications/send
-let mockCounter = 0;
+import http from '@/app/shared/services/base.service';
+import type { SendNotificationRequest, NotificationResponse } from '../model/notification.model';
 
 export class NotificationService {
-    /** GET /notifications — lista de notificaciones del usuario actual. */
     async getNotifications(): Promise<NotificationResponse[]> {
-        return [];
+        const { data } = await http.get<NotificationResponse[]>('/notifications');
+        return data ?? [];
     }
 
-    /** POST /notifications/send — envía una notificación (WhatsApp/email/in-app). */
     async send(request: SendNotificationRequest): Promise<NotificationResponse> {
-        console.log('🔕 [MOCK] Notificación simulada (no enviada de verdad):', request);
-        return {
-            id: `mock-notif-${++mockCounter}`,
-            userId: request.userId,
-            message: request.message || '',
-            type: request.type,
-            status: 'Sent',
-            createdAt: new Date().toISOString(),
-            sentAt: new Date().toISOString(),
-        };
+        const { data } = await http.post<NotificationResponse>('/notifications/send', request);
+        return data;
     }
 }
 

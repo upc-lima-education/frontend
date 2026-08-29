@@ -74,7 +74,9 @@ const {
           <div v-if="password" class="password-requirements">
             <span class="req" :class="{ 'req-met': password.length >= 8 }">8+ caracteres</span>
             <span class="req" :class="{ 'req-met': /[A-Z]/.test(password) }">1 mayúscula</span>
+            <span class="req" :class="{ 'req-met': /[a-z]/.test(password) }">1 minúscula</span>
             <span class="req" :class="{ 'req-met': /[0-9]/.test(password) }">1 número</span>
+            <span class="req" :class="{ 'req-met': /[^a-zA-Z0-9]/.test(password) }">1 símbolo</span>
           </div>
         </div>
 

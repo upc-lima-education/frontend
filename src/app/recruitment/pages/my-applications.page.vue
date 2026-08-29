@@ -73,6 +73,7 @@ async function loadApplications() {
   } catch (err) {
     console.error('Error loading applications:', err);
     applications.value = [];
+    error.value = err instanceof Error ? err.message : 'No se pudieron cargar tus postulaciones.';
   } finally {
     loading.value = false;
   }

@@ -11,25 +11,22 @@ export enum NotificationType {
     NewJobPublished = 'NewJobPublished',
 }
 
+export enum NotificationChannel {
+    Email = 'Email',
+    WhatsApp = 'WhatsApp',
+}
+
 /**
  * Cuerpo para enviar/disparar una notificación.
  * POST /api/v1/notifications/send
  */
 export interface SendNotificationRequest {
-    /** Id del usuario destinatario (el candidato). */
-    userId: string;
-    /** Número internacional para WhatsApp. */
-    phoneNumber?: string;
+    /** Id del perfil destinatario (el contrato no acepta userId). */
+    profileId: string;
     type: NotificationType;
-    /** Título corto del aviso (editable por el reclutador). */
-    title?: string;
-    /** Cuerpo del mensaje (editable por el reclutador). */
-    message?: string;
-    /** Datos para armar la plantilla en el backend. */
-    candidateName?: string;
-    jobTitle?: string;
-    companyName?: string;
-    url?: string;
+    channels: NotificationChannel[];
+    subject?: string;
+    message: string;
 }
 
 /** Una notificación tal como la devuelve GET /api/v1/notifications. */

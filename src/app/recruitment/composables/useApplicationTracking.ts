@@ -6,13 +6,12 @@ import {
     APPLICATION_PIPELINE,
 } from '../enums/application-status.enum';
 import type { ApplicationResponse } from '../model/application.response';
-import { NotificationType } from '../model/notification.model';
+import { NotificationChannel, NotificationType } from '../model/notification.model';
 
 /**
  * Estado y acciones del tablero de seguimiento de postulaciones (organización).
- * El backend no expone un GET para listar postulaciones todavía, así que el
- * tablero se puebla con datos mock (ver `recruitment.service.ts`). `unavailable`
- * se conserva para el caso en que la carga falle.
+ * El contrato actual solo permite listar por vacante; no se simulan candidatos
+ * cuando la información todavía no puede recuperarse desde el backend.
  */
 
 export function useApplicationTracking() {
@@ -132,14 +131,11 @@ export function useApplicationTracking() {
         errorMessage.value = '';
         try {
             await notificationService.send({
-                userId: application.applicant.id,
-                phoneNumber: application.applicant.phone,
+                profileId: application.applicant.id,
                 type: params.type,
-                title: params.title,
-                message: params.message,
-                candidateName: application.applicant.fullName,
-                jobTitle: application.jobTitle,
-                companyName: params.companyName,
+                channels: [NotificationChannel.Email],
+                subject: params.title,
+                message: params.message || `Actualización de tu postulación a ${application.jobTitle}.`,
             });
             return true;
         } catch (err) {

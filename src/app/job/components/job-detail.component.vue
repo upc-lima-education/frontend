@@ -96,6 +96,7 @@ function DeleteDialog() {
 const applyJobDialogRef = ref<InstanceType<typeof DialogComponent>>();
 const applying = ref(false);
 const saved = ref(false);
+const applicationCv = ref<File | null>(null);
 
 function toggleSaved() {
     saved.value = !saved.value;
@@ -103,16 +104,19 @@ function toggleSaved() {
 
 async function ApplyToJob() {
     if (applying.value) return;
+    if (props.job.externalURL) {
+        window.open(props.job.externalURL, '_blank', 'noopener,noreferrer');
+        return;
+    }
+    if (!applicationCv.value) {
+        alert('Adjunta tu CV en formato PDF para enviar la postulación.');
+        return;
+    }
     applying.value = true;
     try {
-        const u = auth.currentUser;
-        const candidateName = [u?.firstName, u?.lastName].filter(Boolean).join(' ') || u?.email || 'Candidato';
         await recruitmentService.createApplication({
             jobId: props.job.id,
-            candidateId: auth.currentUserId,
-            candidateName,
-            jobTitle: props.job.title,
-            companyName: props.companyName,
+            cv: applicationCv.value,
         });
         alert("¡Postulación enviada con éxito!");
     } catch (error) {
@@ -170,7 +174,7 @@ async function ApplyToJob() {
             <div v-else class="upload-apply-content">
                 <p>Por favor, confirma tus datos e incluye tu Curriculum Vitae (CV) en formato PDF para enviar tu postulación a la empresa:</p>
                 <div class="file-upload-field">
-                    <input type="file" id="apply-cv" accept=".pdf">
+                    <input type="file" id="apply-cv" accept="application/pdf,.pdf" @change="applicationCv = (($event.target as HTMLInputElement).files?.[0] ?? null)">
                 </div>
             </div>
         </DialogComponent>

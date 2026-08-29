@@ -11,6 +11,39 @@ import type { DeleteJobRequest } from "../model/delete-job.request";
 export class JobService {
     endpoint = '/job';
 
+    /** Mapea la respuesta resumida real de GET /api/v1/job. */
+    private mapJobListItem(data: any): GetJobByIdResponse {
+        const job = new GetJobByIdResponse(
+            data.id,
+            '',
+            data.title || '',
+            '',
+            data.jobType || '',
+            [],
+            '',
+            data.ubigeo || '',
+            '',
+            undefined as any,
+            undefined as any,
+            undefined as any,
+            undefined as any,
+            undefined as any,
+            undefined as any,
+            undefined as any,
+            undefined as any,
+            data.closesAt ? new Date(data.closesAt) : undefined as any,
+            data.jobStatus || '',
+            data.views,
+            undefined as any,
+            '',
+            data.originPage || '',
+            data.sourceUrl || '',
+        );
+        job.companyName = data.companyName || undefined;
+        job.companyImage = data.companyImage || undefined;
+        return job;
+    }
+
     private mapJobDetail(data: any): GetJobByIdResponse {
         return new GetJobByIdResponse(
             data.id,
@@ -67,7 +100,7 @@ export class JobService {
     async listJobs(): Promise<GetJobByIdResponse[]> {
         const response = await http.get(this.endpoint);
         const items = Array.isArray(response.data) ? response.data : (response.data?.items ?? []);
-        return items.map((item: any) => this.mapJobDetail(item));
+        return items.map((item: any) => this.mapJobListItem(item));
     }
 
     /**
@@ -77,7 +110,7 @@ export class JobService {
     async getJobsByCompany(companyId: string): Promise<GetJobByIdResponse[]> {
         const response = await http.get(`${this.endpoint}/company/${companyId}`);
         const items = Array.isArray(response.data) ? response.data : (response.data?.items ?? []);
-        return items.map((item: any) => this.mapJobDetail(item));
+        return items.map((item: any) => this.mapJobListItem(item));
     }
 
     async updateJob(id: string, request: UpdateJobRequest): Promise<UpdateJobResponse> {

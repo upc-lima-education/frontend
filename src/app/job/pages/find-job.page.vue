@@ -43,98 +43,16 @@ const isRecommendationActive = ref(false);
 const recommendedJobs = ref<GetJobByIdResponse[]>([]);
 const savedJobIds = ref<Set<string>>(new Set());
 
-// Default sample fallback jobs
-const mockSampleJobs: GetJobByIdResponse[] = [
-  {
-    id: 'sample-1',
-    title: 'Atención al Cliente / Capacitación Pagada',
-    description: 'Buscamos personas con entusiasmo para atención al cliente y soporte.',
-    companyId: 'comp-1',
-    jobType: 'InPerson',
-    minSalary: 1500,
-    maxSalary: 1800,
-    currency: 'PEN',
-    address: 'Santa Anita, Lima',
-    ubigeo: '150137',
-    status: 'Active',
-    skills: ['Atención al cliente', 'Comunicación', 'Resolución'],
-    originPage: 'Empresa ABC',
-  } as unknown as GetJobByIdResponse,
-  {
-    id: 'sample-2',
-    title: 'Operario de Almacén',
-    description: 'Recepción, despacho e inventario de mercadería en almacén central.',
-    companyId: 'comp-2',
-    jobType: 'InPerson',
-    minSalary: 1400,
-    maxSalary: 1600,
-    currency: 'PEN',
-    address: 'Ate, Lima',
-    ubigeo: '150103',
-    status: 'Active',
-    skills: ['Inventarios', 'Carga y descarga', 'Logística'],
-    originPage: 'Distribuidora Progreso',
-  } as unknown as GetJobByIdResponse,
-  {
-    id: 'sample-3',
-    title: 'Asistente Administrativo',
-    description: 'Gestión documental, facturación y soporte general a operaciones.',
-    companyId: 'comp-3',
-    jobType: 'Hybrid',
-    minSalary: 1600,
-    maxSalary: 2000,
-    currency: 'PEN',
-    address: 'Lima, Lima',
-    ubigeo: '150101',
-    status: 'Active',
-    skills: ['Excel', 'Facturación', 'Gestión documental'],
-    originPage: 'TechCorp Solutions',
-  } as unknown as GetJobByIdResponse,
-  {
-    id: 'sample-4',
-    title: 'Cajero / Atención en Tienda',
-    description: 'Cobro en caja, cuadre y reposición de productos en tienda.',
-    companyId: 'comp-4',
-    jobType: 'InPerson',
-    minSalary: 1300,
-    maxSalary: 1550,
-    currency: 'PEN',
-    address: 'San Miguel, Lima',
-    ubigeo: '150136',
-    status: 'Active',
-    skills: ['Caja', 'POS', 'Atención al público'],
-    originPage: 'Retail Express',
-  } as unknown as GetJobByIdResponse,
-  {
-    id: 'sample-5',
-    title: 'Desarrollador Web Junior',
-    description: 'Desarrollo de interfaces de usuario y componentes frontend con Vue / React.',
-    companyId: 'comp-5',
-    jobType: 'Remote',
-    minSalary: 2200,
-    maxSalary: 3000,
-    currency: 'PEN',
-    address: 'Remoto, Lima',
-    ubigeo: '150101',
-    status: 'Active',
-    skills: ['JavaScript', 'Vue.js', 'CSS3', 'Git'],
-    originPage: 'Innova Software',
-  } as unknown as GetJobByIdResponse,
-];
-
 async function loadJobs() {
   loading.value = true;
   error.value = '';
   try {
     const list = await jobService.listJobs();
-    if (list && list.length > 0) {
-      jobs.value = list;
-    } else {
-      jobs.value = mockSampleJobs;
-    }
+    jobs.value = Array.isArray(list) ? list : [];
   } catch (err) {
     console.error('Error loading jobs:', err);
-    jobs.value = mockSampleJobs;
+    jobs.value = [];
+    error.value = 'No se pudieron cargar las vacantes desde el backend.';
   } finally {
     loading.value = false;
   }

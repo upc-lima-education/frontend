@@ -21,7 +21,15 @@ export function useSignUpUnified() {
     const roleError = ref(false);
     const areAllFieldsFilled = ref(true);
     const doPasswordsMatch = ref(true);
-    const isPasswordValid = ref(true);
+    const isPasswordValid = computed(() => {
+        const value = password.value;
+        return value.length >= 8
+            && value.length <= 128
+            && /[a-z]/.test(value)
+            && /[A-Z]/.test(value)
+            && /\d/.test(value)
+            && /[^a-zA-Z0-9]/.test(value);
+    });
 
     const isEmailValid = computed(() => {
         const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -67,13 +75,11 @@ export function useSignUpUnified() {
         serverError.value = '';
         areAllFieldsFilled.value = true;
         doPasswordsMatch.value = true;
-        isPasswordValid.value = true;
     }
 
     async function onSignUp() {
         areAllFieldsFilled.value = true;
         doPasswordsMatch.value = true;
-        isPasswordValid.value = true;
         serverError.value = '';
         roleError.value = false;
 
@@ -90,19 +96,12 @@ export function useSignUpUnified() {
         loading.value = true;
 
         try {
-            const request = new SignUpRequest(
-                email.value,
-                password.value,
-                role.value === 'employee' ? 'Empleado' : undefined,
-                role.value === 'employee' ? 'Usuario' : undefined,
-                role.value === 'organization' ? 'Organización' : undefined,
-                role.value
-            );
+            const request = new SignUpRequest(email.value, password.value);
 
             const success = await authStore.signUp(request);
 
             if (!success) {
-                serverError.value = 'Error al registrarse. Intenta nuevamente.';
+                serverError.value = 'No se pudo crear la cuenta. Verifica que el correo no esté registrado e inténtalo nuevamente.';
             }
         } catch (error) {
             console.error('Sign up error:', error);
