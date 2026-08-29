@@ -29,7 +29,11 @@ const userId = ref("");
  * sus propios jobs y se juntan las conversaciones de cada uno.
  */
 async function getConversations(): Promise<ConversationResponse[]> {
-    const jobs = await jobService.getJobsByCompany(authStore.currentUserId);
+    const companyProfileId = localStorage.getItem('profileId');
+    if (!companyProfileId) {
+        throw new Error('No se encontró el perfil de la empresa. Completa o vuelve a cargar tu perfil.');
+    }
+    const jobs = await jobService.getJobsByCompany(companyProfileId);
     const conversationsByJob = await Promise.all(
         jobs.map(job => messageService.getConversationsByJob(job.id).catch(() => []))
     );

@@ -124,16 +124,16 @@ Este documento registra el estado real de la comunicación entre el frontend de 
 
 ### Publicación y administración de empleos
 
-- [ ] Adecuar creación a `CreateInternalJobRequest`.
-- [ ] Enviar `workHours`, `educationLevel`, `location` y `payment` con la estructura del backend.
-- [ ] No enviar `companyId`; el backend obtiene la company desde la sesión.
+- [x] La creación usa `CreateInternalJobRequest`.
+- [x] Se envían `workHours`, `educationLevel`, `location` y `payment` con la estructura del backend.
+- [x] No se envía `companyId`; el backend obtiene la company desde la sesión.
 - [!] `PUT /api/v1/job/{id}` existe; validar el DTO de edición antes de habilitar la vista.
-- [!] `DELETE /api/v1/job/{id}` existe; adaptar la respuesta `204 No Content`.
+- [x] `DELETE /api/v1/job/{id}` maneja correctamente la respuesta `204 No Content`.
 - [!] `PATCH /api/v1/job/{id}/schedule` existe, pero no está conectado a una vista activa.
-- [ ] Cambiar habilidades a `PATCH /api/v1/job/{id}/skill` enviando `skills: string[]`.
+- [x] Las habilidades usan `PATCH /api/v1/job/{id}/skill` enviando `skills: string[]`.
 - [-] `GET /job/{id}/skills` y `DELETE /job/{jobId}/skill/{skillId}` no existen.
 - [!] `PATCH /api/v1/job/{id}/claim` existe y todavía no tiene acción frontend.
-- [-] La sincronización del scraper no debe ejecutarse desde el frontend del usuario.
+- [x] La sincronización del scraper fue retirada del servicio frontend; solo corresponde al proceso de scraping.
 
 ### Gestión de postulantes
 
@@ -148,8 +148,8 @@ Este documento registra el estado real de la comunicación entre el frontend de 
 
 ### Mensajes de company
 
-- [ ] Obtener primero el `companyProfileId` real.
-- [ ] Consultar empleos con `GET /api/v1/job/company/{companyId}` usando el ID de perfil, no el ID de usuario.
+- [x] Las vistas de mensajes y promoción obtienen primero el `companyProfileId` real almacenado al cargar el perfil.
+- [x] Consultan empleos con `GET /api/v1/job/company/{companyId}` usando el ID de perfil, no el ID de usuario.
 - [x] Listar conversaciones por vacante con `GET /api/v1/conversation/job/{jobId}`.
 - [x] Crear conversación con `POST /api/v1/conversation` cuando se conocen la vacante y usuarios.
 - [x] Enviar contenido con `POST /api/v1/conversation/send-message`.
@@ -201,3 +201,4 @@ Agregar aquí cada cambio confirmado con el formato:
 
 - 2026-08-28 — Autenticación — Mapeo real de `profileType`, soporte de respuesta directa de `/auth/me`, logout local y redirección a `/home` — Pendiente commit.
 - 2026-08-29 — Perfiles — Rutas y métodos reales para candidate/company, formularios multipart, foto, validación RUC, mapeo de respuesta y protección de historiales no recuperables — Pendiente commit.
+- 2026-08-29 — Empleos company — Publicación adaptada al DTO real, detalle separado por rol, eliminación 204, actualización de habilidades e identificación por `companyProfileId` — `npm run type-check` correcto — Pendiente commit.

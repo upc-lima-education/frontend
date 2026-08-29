@@ -1,35 +1,33 @@
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref, watch } from 'vue';
-import { useAuthenticationStore } from '@/app/auth/services/authentication.store';
+import { computed, reactive, ref, watch } from 'vue';
 import { JobService } from '../services/job.service';
-import { CreateJobRequest } from '../model/create-job.request';
+import type { CreateJobRequest } from '../model/create-job.request';
 import { Currency } from '../enums/currency.enum';
 import { Experience } from '../enums/experience.enum';
-import { JobStatus } from '../enums/job-status.enum';
 import { SalaryPeriod } from '../enums/salary-period';
 import { enumToOptions } from '../utils/enum-to-options.util';
 import { JobType } from '../enums/job-type.enum';
 import { CompensationType } from '../enums/compensation-type.enum';
+import { WorkHours } from '../enums/work-hours.enum';
+import { EducationLevel } from '../enums/education-level.enum';
 import ubigeoData from '@/app/shared/data/ubigeo.json';
 import ButtonClueComponent from '@/app/shared/components/button-clue.component.vue';
 import { ArrowLeft, ArrowRight, Save, Plus, X } from 'lucide-vue-next';
 
 const jobService = new JobService();
-const authStore = useAuthenticationStore();
-//Auto computed company data
-const companyId = ref('');
-
-async function getCompanyId() {
-    companyId.value = authStore.currentUserId || '';
-}
+const submitting = ref(false);
+const submitError = ref('');
+const submitSuccess = ref(false);
 
 const form = reactive({
     //Details
     title: '',
     description: '',
     jobType: JobType.InPerson,
+    workHours: WorkHours.FullTime,
     skills: '',
     experience: Experience.NoExperienceNeeded,
+    educationLevel: EducationLevel.Unspecified,
     //Location
     address: '',
     //Payment
@@ -41,12 +39,8 @@ const form = reactive({
     //Traceability
     opensAt: '',
     closesAt: '',
-    jobStatus: JobStatus.Active
+    applyUrl: '',
 });
-
-//Auto computed location data
-const latitude = ref(0);
-const longitude = ref(0);
 
 const ubigeo = computed(() => {
     const match = ubigeoData.find(u =>
@@ -93,6 +87,8 @@ const currencyOptions = enumToOptions(Currency, 'job.data.currency');
 const salaryPeriodOptions = enumToOptions(SalaryPeriod, 'job.data.salaryPeriod');
 const jobTypeOptions = enumToOptions(JobType, 'job.data.type');
 const compensationTypeOptions = enumToOptions(CompensationType, 'job.data.compensationType');
+const workHoursOptions = enumToOptions(WorkHours, 'job.data.workHours');
+const educationLevelOptions = enumToOptions(EducationLevel, 'job.data.educationLevel');
 
 //Skill requirements as bubbles
 const skillBubbles = ref<Set<string>>(new Set());
@@ -148,54 +144,58 @@ const currentStepTitle = computed(() => {
 
 
 async function submit() {
+    if (submitting.value) return;
+    submitError.value = '';
+    submitSuccess.value = false;
+    submitting.value = true;
     try {
-        const currentDate = new Date();
         const opensAt = new Date(form.opensAt);
         const closesAt = new Date(form.closesAt);
-        const jobStatus = (currentDate < opensAt)
-            ? JobStatus.Scheduled.toString()
-            : JobStatus.Active.toString();
         const skills = getSkillsFromSkillBubbles();
         if (skills.length <= 0) return;
-        const request = new CreateJobRequest(
-            //Id
-            companyId.value,
-            //Details
-            form.title,
-            form.description,
-            JobType[form.jobType],
+        if (Number.isNaN(opensAt.getTime()) || Number.isNaN(closesAt.getTime()) || closesAt <= opensAt) {
+            submitError.value = 'La fecha de cierre debe ser posterior a la fecha de apertura.';
+            return;
+        }
+
+        const request: CreateJobRequest = {
+            title: form.title.trim(),
+            description: form.description.trim(),
+            jobType: JobType[form.jobType],
+            workHours: WorkHours[form.workHours],
             skills,
-            Experience[form.experience],
-            //Location
-            ubigeo.value,
-            form.address,
-            Number(latitude.value), //To be developed
-            Number(longitude.value), //To be developed
-            //Payment
-            Number(form.minSalary),
-            Number(form.maxSalary),
-            Currency[form.currency],
-            SalaryPeriod[form.salaryPeriod],
-            CompensationType[form.compensationType],
-            //Traceability
-            opensAt,
-            closesAt,
-            jobStatus
-        );
+            experience: Experience[form.experience],
+            educationLevel: EducationLevel[form.educationLevel],
+            location: {
+                ubigeo: ubigeo.value || undefined,
+                address: form.address.trim() || undefined,
+            },
+            payment: {
+                minSalary: Number(form.minSalary),
+                maxSalary: Number(form.maxSalary),
+                currency: Currency[form.currency],
+                salaryPeriod: SalaryPeriod[form.salaryPeriod],
+                compensationType: CompensationType[form.compensationType],
+            },
+            opensAt: opensAt.toISOString(),
+            closesAt: closesAt.toISOString(),
+            applyUrl: form.applyUrl.trim() || undefined,
+        };
         await jobService.createJob(request);
-        alert("Oferta de empleo publicada con éxito");
+        submitSuccess.value = true;
     } catch (e: any) {
-        console.log("An error ocurred: ", e);
+        console.error('Error publishing job:', e);
+        submitError.value = e?.response?.data?.message || e?.response?.data?.detail || 'No se pudo publicar la oferta.';
+    } finally {
+        submitting.value = false;
     }
 }
-
-onMounted(() => {
-    getCompanyId();
-});
 </script>
 
 <template>
-    <div class="publish-wizard-card" v-if="companyId != ''">
+    <div class="publish-wizard-card">
+        <p v-if="submitError" class="submit-message submit-message--error" role="alert">{{ submitError }}</p>
+        <p v-if="submitSuccess" class="submit-message submit-message--success" role="status">Oferta publicada correctamente.</p>
         <!-- Horizontal visual stepper -->
         <div class="wizard-stepper">
             <div 
@@ -247,6 +247,17 @@ onMounted(() => {
                 </div>
                 <div class="input-container">
                     <div class="label-row">
+                        <label for="workHours">Jornada</label>
+                        <ButtonClueComponent text="Indica la dedicación horaria requerida para esta vacante." />
+                    </div>
+                    <select id="workHours" v-model="form.workHours">
+                        <option v-for="o in workHoursOptions" :key="o.value" :value="o.value">
+                            {{ WorkHours[o.value] === 'FullTime' ? 'Tiempo completo' : WorkHours[o.value] === 'PartTime' ? 'Medio tiempo' : 'Por horas' }}
+                        </option>
+                    </select>
+                </div>
+                <div class="input-container">
+                    <div class="label-row">
                         <label for="description">{{ $t('job.data.description') }}</label>
                         <ButtonClueComponent text="Mín: 20 caracteres. Máx: 500 caracteres" />
                     </div>
@@ -263,6 +274,18 @@ onMounted(() => {
                     <select id="experience" v-model="form.experience">
                         <option v-for="o in experienceOptions" :key="o.value" :value="o.value">
                             {{ $t(o.labelKey) }}
+                        </option>
+                    </select>
+                </div>
+
+                <div class="input-container">
+                    <div class="label-row">
+                        <label for="educationLevel">Nivel educativo</label>
+                        <ButtonClueComponent text="Nivel mínimo esperado para la vacante." />
+                    </div>
+                    <select id="educationLevel" v-model="form.educationLevel">
+                        <option v-for="o in educationLevelOptions" :key="o.value" :value="o.value">
+                            {{ EducationLevel[o.value] === 'Unspecified' ? 'No especificado' : EducationLevel[o.value] }}
                         </option>
                     </select>
                 </div>
@@ -395,6 +418,13 @@ onMounted(() => {
                     </div>
                     <input id="closesAt" type="datetime-local" v-model="form.closesAt" />
                 </div>
+                <div class="input-container">
+                    <div class="label-row">
+                        <label for="applyUrl">Enlace externo de postulación (opcional)</label>
+                        <ButtonClueComponent text="Déjalo vacío para recibir postulaciones con CV dentro de Llanqui." />
+                    </div>
+                    <input id="applyUrl" type="url" v-model="form.applyUrl" placeholder="https://empresa.com/postular" />
+                </div>
             </section>
         </main>
 
@@ -428,16 +458,12 @@ onMounted(() => {
                 type="button" 
                 class="btn-nav btn-nav--submit" 
                 @click="submit()" 
-                :disabled="!form.opensAt || !form.closesAt"
+                :disabled="!form.opensAt || !form.closesAt || submitting"
             >
                 <Save :size="16" />
-                <span>Publicar oferta</span>
+                <span>{{ submitting ? 'Publicando...' : 'Publicar oferta' }}</span>
             </button>
         </footer>
-    </div>
-    <div v-else class="error-panel">
-        <h1>Error al cargar la página</h1>
-        <span>Inténtelo de nuevo más tarde.</span>
     </div>
 </template>
 
@@ -455,6 +481,26 @@ onMounted(() => {
     max-width: 760px;
     margin: 0 auto;
     box-sizing: border-box;
+}
+
+.submit-message {
+    margin: 0;
+    padding: 12px 14px;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.submit-message--error {
+    color: var(--color-state-error-dark);
+    background: rgba(210, 38, 38, .08);
+    border: 1px solid rgba(210, 38, 38, .2);
+}
+
+.submit-message--success {
+    color: var(--color-state-success-dark);
+    background: rgba(59, 156, 32, .08);
+    border: 1px solid rgba(59, 156, 32, .2);
 }
 
 /* Stepper Graphic */

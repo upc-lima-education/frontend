@@ -1,21 +1,22 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { useRoute } from 'vue-router';
 import { GetJobByIdResponse } from '../model/get-job-by-id.response';
 import { JobService } from '../services/job.service';
 import JobDetailComponent from '../components/job-detail.component.vue';
+import { useAuthenticationStore } from '@/app/auth/services/authentication.store';
 
 const route = useRoute();
 const jobService = new JobService();
+const auth = useAuthenticationStore();
 
 const job = ref<GetJobByIdResponse>();
 const loading = ref(false);
 const error = ref('');
 
-// El backend no incluye nombre/logo de la empresa en la entidad Job;
-// se muestran valores por defecto hasta que exista un endpoint enriquecido.
-const companyName = 'Empresa';
-const companyImage = '';
+const companyName = computed(() => job.value?.companyName || 'Empresa');
+const companyImage = computed(() => job.value?.companyImage || '');
+const isCompany = computed(() => auth.currentUserType === 'organization');
 
 onMounted(async () => {
     loading.value = true;
@@ -39,7 +40,7 @@ onMounted(async () => {
             :job="job"
             :company-name="companyName"
             :company-image="companyImage"
-            :is-company="false"/>
+            :is-company="isCompany"/>
         </div>
         <div v-else-if="loading" class="job-skeleton" aria-hidden="true">
             <div class="job-skeleton-banner"></div>

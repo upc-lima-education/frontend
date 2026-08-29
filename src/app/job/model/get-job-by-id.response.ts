@@ -6,9 +6,11 @@ export class GetJobByIdResponse {
     title: string;
     description: string;
     jobType: string;
+    workHours?: string;
     //Requirements
     skills: string[];
     experience: string;
+    educationLevel?: string;
     //Location
     ubigeo: string;
     address: string;

@@ -5,9 +5,14 @@ import { ubigeoService } from '@/app/shared/services/ubigeo.service';
 import DialogComponent from '@/app/shared/components/dialog.component.vue';
 import { recruitmentService } from '@/app/recruitment/services/recruitment.service';
 import { useAuthenticationStore } from '@/app/auth/services/authentication.store';
+import { JobService } from '../services/job.service';
+import { useRouter } from 'vue-router';
+import { ROUTE_CONSTANTS } from '@/app/shared/router/route-constants';
 import { MapPin, Briefcase, Calendar, Clock, DollarSign, Award, Trash2, CheckSquare, Star, ArrowLeft, Bookmark, ExternalLink, Sparkles } from 'lucide-vue-next';
 
 const auth = useAuthenticationStore();
+const router = useRouter();
+const jobService = new JobService();
 
 const props = defineProps<{
     job: GetJobByIdResponse,
@@ -88,8 +93,19 @@ const formattedDescription = computed(() => formatDescription(props.job.descript
 
 //Delete job behaviour
 const deleteDialogRef = ref<InstanceType<typeof DialogComponent>>();
-function DeleteDialog() {
-    alert("Anuncio eliminado exitosamente");
+const deleting = ref(false);
+async function DeleteDialog() {
+    if (deleting.value) return;
+    deleting.value = true;
+    try {
+        await jobService.deleteJob({ id: props.job.id });
+        await router.push(ROUTE_CONSTANTS.HOME_PAGE);
+    } catch (error) {
+        console.error('Error deleting job:', error);
+        alert('No se pudo eliminar el anuncio. Verifica que pertenezca a tu empresa.');
+    } finally {
+        deleting.value = false;
+    }
 }
 
 //Apply to job behaviour

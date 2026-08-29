@@ -43,7 +43,11 @@ const cancelMessage = ref(false);
 async function loadJobs() {
   loadingJobs.value = true;
   try {
-    const companyJobs = await jobService.getJobsByCompany(authStore.currentUserId);
+    const companyProfileId = localStorage.getItem('profileId');
+    if (!companyProfileId) {
+      throw new Error('No se encontró el perfil de la empresa.');
+    }
+    const companyJobs = await jobService.getJobsByCompany(companyProfileId);
     jobs.value = companyJobs.map((job) => ({
       id: job.id,
       title: job.title,

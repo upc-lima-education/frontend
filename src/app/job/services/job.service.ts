@@ -1,6 +1,5 @@
 import http from "@/app/shared/services/base.service";
 import { GetJobByIdResponse } from "../model/get-job-by-id.response";
-import { CreateJobResponse } from "../model/create-job.response";
 import { UpdateJobResponse } from "../model/update-job.response";
 import { DeleteJobResponse } from "../model/delete-job.response";
 import type { CreateJobRequest } from "../model/create-job.request";
@@ -45,47 +44,44 @@ export class JobService {
     }
 
     private mapJobDetail(data: any): GetJobByIdResponse {
-        return new GetJobByIdResponse(
+        const location = data.location ?? {};
+        const payment = data.payment ?? {};
+        const job = new GetJobByIdResponse(
             data.id,
-            data.companyId,
+            data.company?.id || data.companyId || '',
             data.title,
             data.description,
             data.jobType,
-            data.skills,
+            data.skills ?? [],
             data.experience,
-            data.ubigeo,
-            data.address,
+            location.ubigeo || data.ubigeo || '',
+            location.address || data.address || '',
             data.latitude,
             data.longitude,
-            data.minSalary,
-            data.maxSalary,
-            data.currency,
-            data.salaryPeriod,
-            data.compensationType,
+            payment.minSalary ?? data.minSalary,
+            payment.maxSalary ?? data.maxSalary,
+            payment.currency || data.currency,
+            payment.salaryPeriod || data.salaryPeriod,
+            payment.compensationType || data.compensationType,
             new Date(data.opensAt),
             new Date(data.closesAt),
             data.jobStatus,
             data.views,
-            new Date(data.creationDate),
+            new Date(data.creationDate || data.opensAt),
             data.applyUrl,
             data.originPage || 'Llanqui',
             data.sourceUrl || ''
         );
+        job.workHours = data.workHours;
+        job.educationLevel = data.educationLevel;
+        job.companyName = data.company?.companyName || data.companyName;
+        job.companyImage = data.company?.profilePicture || data.companyImage;
+        return job;
     }
 
-    async createJob(request: CreateJobRequest): Promise<CreateJobResponse> {
+    async createJob(request: CreateJobRequest): Promise<GetJobByIdResponse> {
         const response = await http.post(this.endpoint, request);
-        return new CreateJobResponse(
-            response.data.id,
-            response.data.companyId,
-            response.data.title,
-            response.data.description,
-            response.data.address,
-            response.data.minSalary,
-            response.data.maxSalary,
-            response.data.jobStatus,
-            new Date(response.data.creationDate)
-        );
+        return this.mapJobDetail(response.data);
     }
 
     async getJobById(request: GetJobByIdRequest): Promise<GetJobByIdResponse> {
@@ -129,16 +125,8 @@ export class JobService {
     }
 
     async deleteJob(request: DeleteJobRequest): Promise<DeleteJobResponse> {
-        const response = await http.delete(`${this.endpoint}/${request.id}`);
-        return new DeleteJobResponse(response.data.message ?? response.data.response);
-    }
-
-    /**
-     * Trigger a backend job sync
-     * POST /api/v1/job/sync
-     */
-    async syncJobs(): Promise<void> {
-        await http.post(`${this.endpoint}/sync`);
+        await http.delete(`${this.endpoint}/${request.id}`);
+        return new DeleteJobResponse('Oferta eliminada');
     }
 
     /**
@@ -149,28 +137,8 @@ export class JobService {
         await http.patch(`${this.endpoint}/${id}/schedule`, schedule);
     }
 
-    /**
-     * Add a required skill to a job
-     * POST /api/v1/job/{id}/skill
-     */
-    async addJobSkill(id: string, skillId: string): Promise<void> {
-        await http.post(`${this.endpoint}/${id}/skill`, { skillId });
-    }
-
-    /**
-     * List a job's required skills
-     * GET /api/v1/job/{id}/skills
-     */
-    async getJobSkills(id: string): Promise<any[]> {
-        const response = await http.get(`${this.endpoint}/${id}/skills`);
-        return Array.isArray(response.data) ? response.data : (response.data?.items ?? []);
-    }
-
-    /**
-     * Remove a skill from a job
-     * DELETE /api/v1/job/{jobId}/skill/{skillId}
-     */
-    async removeJobSkill(jobId: string, skillId: string): Promise<void> {
-        await http.delete(`${this.endpoint}/${jobId}/skill/${skillId}`);
+    /** Reemplaza la lista completa, como exige PATCH /job/{id}/skill. */
+    async updateJobSkills(id: string, skills: string[]): Promise<void> {
+        await http.patch(`${this.endpoint}/${id}/skill`, { skills });
     }
 }
