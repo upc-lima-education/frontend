@@ -16,6 +16,10 @@ type ProfileSnapshot = {
     district?: string;
     sector?: string;
     companyName?: string;
+    isComplete?: boolean;
+    skills?: string[];
+    candidate?: { firstName?: string; lastName?: string } | null;
+    company?: { companyName?: string; sector?: string; isVerified?: boolean } | null;
 };
 
 export function useHomePage() {
@@ -143,9 +147,23 @@ export function useHomePage() {
             if (profileResult.status === 'fulfilled' && profileResult.value) {
                 const response = profileResult.value as { data?: { data?: ProfileSnapshot } | ProfileSnapshot };
                 const payload = response.data;
-                profile.value = payload && typeof payload === 'object' && 'data' in payload
+                const rawProfile = payload && typeof payload === 'object' && 'data' in payload
                     ? payload.data || null
                     : (payload as ProfileSnapshot | undefined) || null;
+                if (rawProfile) {
+                    profile.value = {
+                        ...rawProfile,
+                        keywords: rawProfile.skills || [],
+                        sector: rawProfile.company?.sector,
+                        companyName: rawProfile.company?.companyName,
+                        isVerified: rawProfile.company?.isVerified || false,
+                    };
+                    if (authStore.user) {
+                        authStore.user.firstName = rawProfile.candidate?.firstName;
+                        authStore.user.lastName = rawProfile.candidate?.lastName;
+                        authStore.user.companyName = rawProfile.company?.companyName;
+                    }
+                }
             }
 
             if (recommendationsResult.status === 'fulfilled' && Array.isArray(recommendationsResult.value)) {

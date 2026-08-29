@@ -1,6 +1,6 @@
 # Estado de integración frontend–backend
 
-Última actualización: 28 de agosto de 2026
+Última actualización: 29 de agosto de 2026
 
 Este documento registra el estado real de la comunicación entre el frontend de Llanqui y `backend-v2` en la rama `clean`. No es un plan de trabajo ni modifica el contrato del backend.
 
@@ -70,18 +70,20 @@ Este documento registra el estado real de la comunicación entre el frontend de 
 ## Perfiles compartidos
 
 - [!] `GET /api/v1/profile/{id}` existe; confirmar si cada vista conserva correctamente el `profileId` en lugar del `userId`.
-- [ ] Crear candidato con `POST /api/v1/profile/candidate` y `multipart/form-data`.
-- [ ] Crear company con `POST /api/v1/profile/company` y `multipart/form-data`.
-- [ ] Actualizar candidato con `PUT /api/v1/profile/candidate`, sin `userId` en la URL.
-- [ ] Actualizar company con `PUT /api/v1/profile/company`, sin `userId` en la URL.
-- [ ] Subir foto con `PATCH /api/v1/profile/upload-photo`.
-- [ ] Verificar company mediante `POST /api/v1/profile/{profileId}/verify`.
-- [ ] Validar RUC mediante `POST /api/v1/profile/ruc/{ruc}/validate`.
+- [x] Crear candidato con `POST /api/v1/profile/candidate` y `multipart/form-data`.
+- [x] Crear company con `POST /api/v1/profile/company` y `multipart/form-data`.
+- [x] Actualizar candidato con `PUT /api/v1/profile/candidate`, sin `userId` en la URL.
+- [x] Actualizar company con `PUT /api/v1/profile/company`, sin `userId` en la URL.
+- [x] Subir foto con `PATCH /api/v1/profile/upload-photo`; en perfiles nuevos se incluye en el formulario de creación.
+- [x] Verificar company mediante `POST /api/v1/profile/{profileId}/verify`, usando el `profileId` conservado.
+- [x] Validar RUC mediante `POST /api/v1/profile/ruc/{ruc}/validate`.
 - [ ] Sustituir el CRUD ficticio de idiomas por `PATCH /api/v1/profile/language` con la lista completa.
 - [ ] Sustituir el CRUD ficticio de educación por `PATCH /api/v1/profile/education` con la lista completa.
 - [ ] Sustituir el CRUD ficticio de experiencia por `PATCH /api/v1/profile/experience` con la lista completa.
 - [-] Certificaciones no tienen endpoint en el contrato actual; deben ocultarse o conservarse solo localmente como borrador no persistido, indicándolo claramente.
 - [-] `/profile/{userId}/bootstrap` no existe; la completitud debe calcularse con `ProfileResponse` real.
+- [x] La UI bloquea edición de experiencia, educación, idiomas y certificaciones para evitar reemplazar datos que la API no permite recuperar.
+- [x] La respuesta real se lee desde los objetos `candidate` y `company`, y las habilidades desde `skills`.
 
 ## Flujo de candidato
 
@@ -198,3 +200,4 @@ Agregar aquí cada cambio confirmado con el formato:
 `AAAA-MM-DD — Área — Cambio realizado — Validación ejecutada — Commit`
 
 - 2026-08-28 — Autenticación — Mapeo real de `profileType`, soporte de respuesta directa de `/auth/me`, logout local y redirección a `/home` — Pendiente commit.
+- 2026-08-29 — Perfiles — Rutas y métodos reales para candidate/company, formularios multipart, foto, validación RUC, mapeo de respuesta y protección de historiales no recuperables — Pendiente commit.

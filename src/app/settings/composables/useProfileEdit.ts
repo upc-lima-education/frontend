@@ -25,6 +25,9 @@ export function useProfileEdit() {
     const isNewProfile = ref(false);
 
     const isEmployee = computed(() => authStore.currentUserType !== 'organization');
+    // El backend permite reemplazar estas listas, pero ProfileResponse no las
+    // devuelve. Se mantienen deshabilitadas para no sobrescribir datos previos.
+    const historyPersistenceAvailable = false;
 
     const profilePictureFile = ref<File | null>(null);
     const profilePicturePreview = ref('');
@@ -171,19 +174,21 @@ export function useProfileEdit() {
             
             const response = await profileService.getProfileByUserId(authStore.currentUserId);
             const d = response.data?.data || response.data;
+            const candidate = d.candidate || {};
+            const company = d.company || {};
 
             profilePicturePreview.value = d.profilePicture || '';
 
             if (isEmployee.value) {
-                firstName.value = d.firstName || '';
-                lastName.value = d.lastName || '';
+                firstName.value = candidate.firstName || '';
+                lastName.value = candidate.lastName || '';
                 personType.value = d.personType || 'natural';
                 identificationType.value = d.identificationType || 'dni';
                 dni.value = d.identification || d.dni || d.nationalId || '';
                 district.value = d.district || '';
                 profession.value = d.profession || d.jobTitle || '';
                 bio.value = (d.description || d.bio || '').slice(0, BIO_MAX);
-                keywords.value = d.keywords || [];
+                keywords.value = d.skills || [];
 
                 workExperienceSection.items.value = d.workExperiences || [];
                 educationSection.items.value = d.educations || [];
@@ -206,10 +211,10 @@ export function useProfileEdit() {
                     dniOwnerName.value = `${firstName.value} ${lastName.value}`;
                 }
             } else {
-                companyName.value = d.companyName || '';
-                ruc.value = d.ruc || '';
+                companyName.value = company.companyName || '';
+                ruc.value = company.ruc || '';
                 website.value = d.website || '';
-                industry.value = d.industry || d.sector || '';
+                industry.value = company.sector || '';
                 companySize.value = d.companySize || '';
                 mainLocation.value = d.mainLocation || d.district || '';
                 companyDescription.value = (d.description || '').slice(0, BIO_MAX);
@@ -273,7 +278,7 @@ export function useProfileEdit() {
      * la razón social; la verificación autoritativa ocurre en
      * POST /profile/{userId}/verify al guardar.
      */
-    function verifyRuc() {
+    async function verifyRuc() {
         if (!ruc.value || ruc.value.length < 11) {
             rucError.value = 'El RUC debe tener 11 dígitos.';
             return;
@@ -281,12 +286,23 @@ export function useProfileEdit() {
         rucError.value = '';
         rucCompanyName.value = '';
 
-        if (isValidRUC(ruc.value)) {
-            rucVerified.value = true;
-            rucCompanyName.value = 'Formato de RUC válido';
-        } else {
+        if (!isValidRUC(ruc.value)) {
             rucVerified.value = false;
             rucError.value = 'El RUC ingresado no es válido.';
+            return;
+        }
+
+        isValidatingRuc.value = true;
+        try {
+            rucVerified.value = await profileService.validateRuc(ruc.value);
+            rucCompanyName.value = rucVerified.value ? 'RUC validado' : '';
+            if (!rucVerified.value) rucError.value = 'El RUC no pudo ser validado.';
+        } catch (err) {
+            console.error('Error validating RUC:', err);
+            rucVerified.value = false;
+            rucError.value = 'No se pudo validar el RUC en este momento.';
+        } finally {
+            isValidatingRuc.value = false;
         }
     }
 
@@ -326,14 +342,12 @@ export function useProfileEdit() {
         success.value = false;
 
         try {
-            let picturePath = profilePicturePreview.value;
-
-            if (profilePictureFile.value) {
+            if (!isNewProfile.value && profilePictureFile.value) {
                 const uploadResponse = await profileService.uploadProfilePhoto(
                     authStore.currentUserId,
                     profilePictureFile.value
                 );
-                picturePath = uploadResponse.data.url;
+                profilePicturePreview.value = uploadResponse.data.profilePicture || profilePicturePreview.value;
             }
 
             // Create y Update son requests distintos en el backend real (no
@@ -346,35 +360,35 @@ export function useProfileEdit() {
             if (isNewProfile.value) {
                 console.log('🔄 Creating new profile on backend...');
                 if (isEmployee.value) {
-                    // POST /profile/employee
-                    await profileService.createEmployeeProfile({
-                        userId: authStore.currentUserId,
+                    // POST /profile/candidate (multipart/form-data)
+                    const createResponse = await profileService.createEmployeeProfile({
                         firstName: firstName.value,
                         lastName: lastName.value,
                         dni: dni.value,
                         description: bio.value,
                         ubigeo: districtNameToUbigeo(district.value),
-                        profilePicture: picturePath,
                         skills: keywords.value,
-                    } as any);
+                        profilePicture: profilePictureFile.value || undefined,
+                    });
+                    if (createResponse.data?.id) localStorage.setItem('profileId', createResponse.data.id);
                 } else {
-                    // POST /profile/organization
-                    await profileService.createOrganizationProfile({
-                        userId: authStore.currentUserId,
+                    // POST /profile/company (multipart/form-data)
+                    const createResponse = await profileService.createOrganizationProfile({
                         companyName: companyName.value,
                         sector: industry.value,
                         ruc: ruc.value,
                         description: companyDescription.value,
                         ubigeo: districtNameToUbigeo(mainLocation.value),
-                        profilePicture: picturePath,
                         skills: [],
-                    } as any);
+                        profilePicture: profilePictureFile.value || undefined,
+                    });
+                    if (createResponse.data?.id) localStorage.setItem('profileId', createResponse.data.id);
                 }
                 isNewProfile.value = false;
             } else {
                 console.log('🔄 Updating existing profile on backend...');
                 if (isEmployee.value) {
-                    // PUT /profile/{userId}/candidate — no lleva userId ni
+                    // PUT /profile/candidate — no lleva userId ni
                     // profilePicture (esa tiene su propio endpoint de upload).
                     await profileService.updateCandidateProfile(authStore.currentUserId, {
                         firstName: firstName.value,
@@ -385,18 +399,20 @@ export function useProfileEdit() {
                         skills: keywords.value,
                     });
                 } else {
-                    // PUT /profile/{userId}/company — solo companyName, sector,
-                    // ruc, description; no acepta ubigeo/profilePicture/userId.
+                    // PUT /profile/company — el contrato no permite cambiar RUC.
                     await profileService.updateCompanyProfile(authStore.currentUserId, {
                         companyName: companyName.value,
                         sector: industry.value,
-                        ruc: ruc.value,
                         description: companyDescription.value,
+                        ubigeo: districtNameToUbigeo(mainLocation.value),
                     });
                 }
             }
 
-            // Sync user data back to AuthStore so the display names update immediately!
+            // Refrescar profileType autoritativo después de crear/actualizar.
+            await authStore.loadCurrentUser();
+
+            // /auth/me no incluye nombres; conservarlos en memoria para la UI.
             if (authStore.user) {
                 if (isEmployee.value) {
                     authStore.user.firstName = firstName.value;
@@ -405,9 +421,6 @@ export function useProfileEdit() {
                     authStore.user.companyName = companyName.value;
                 }
             }
-
-            // Reload user from server to ensure perfect sync
-            await authStore.loadCurrentUser();
 
             success.value = true;
             profilePictureFile.value = null;
@@ -449,6 +462,7 @@ export function useProfileEdit() {
         success,
         error,
         isEmployee,
+        historyPersistenceAvailable,
         isNewProfile,
         profilePictureFile,
         profilePicturePreview,

@@ -1,9 +1,35 @@
 import http from "@/app/shared/services/base.service";
-import { SignUpUserEmployeeResponse } from "../model/employee-profile.response";
-import { SignUpUserOrganizationResponse } from "../model/organization-profile.response";
-import { SignUpUserEmployeeRequest } from "../model/employee-profile.request";
-import { SignUpUserOrganizationRequest } from "../model/organization-profile.request";
 import type { WorkExperience, Education, Certification, LanguageEntry } from "../model/profile-history.model";
+
+export interface CreateCandidateProfilePayload {
+    description?: string;
+    ubigeo?: string;
+    phoneNumber?: string;
+    skills?: string[];
+    firstName: string;
+    lastName: string;
+    dni?: string;
+    profilePicture?: File;
+}
+
+export interface CreateCompanyProfilePayload {
+    description?: string;
+    ubigeo?: string;
+    phoneNumber?: string;
+    skills?: string[];
+    companyName: string;
+    sector?: string;
+    ruc: string;
+    profilePicture?: File;
+}
+
+function appendOptional(formData: FormData, key: string, value?: string): void {
+    if (value?.trim()) formData.append(key, value.trim());
+}
+
+function appendSkills(formData: FormData, skills: string[] = []): void {
+    skills.filter(Boolean).forEach((skill) => formData.append('Skills', skill));
+}
 
 /**
  * Servicio para manejar operaciones relacionadas con perfiles de usuario
@@ -17,8 +43,10 @@ export class ProfileService {
      * GET /api/v1/profile/{userId}
      */
     async getProfileByUserId(userId: string) {
-        console.log('🔄 ProfileService: Getting profile for user:', userId);
-        const response = await http.get(`${this.endpoint}/${userId}`);
+        const profileId = localStorage.getItem('profileId') || userId;
+        console.log('🔄 ProfileService: Getting profile:', profileId);
+        const response = await http.get(`${this.endpoint}/${profileId}`);
+        if (response.data?.id) localStorage.setItem('profileId', response.data.id);
         console.log('📦 ProfileService: Profile response:', response.data);
         return response;
     }
@@ -38,9 +66,19 @@ export class ProfileService {
      * Crear perfil de empleado/persona natural
      * POST /api/v1/profile/employee
      */
-    async createEmployeeProfile(profileData: SignUpUserEmployeeRequest) {
+    async createEmployeeProfile(profileData: CreateCandidateProfilePayload) {
         console.log('🔄 ProfileService: Creating employee profile:', profileData);
-        const response = await http.post(`${this.endpoint}/employee`, profileData);
+        const formData = new FormData();
+        appendOptional(formData, 'Description', profileData.description);
+        appendOptional(formData, 'Ubigeo', profileData.ubigeo);
+        appendOptional(formData, 'PhoneNumber', profileData.phoneNumber);
+        appendSkills(formData, profileData.skills);
+        formData.append('FirstName', profileData.firstName);
+        formData.append('LastName', profileData.lastName);
+        appendOptional(formData, 'Dni', profileData.dni);
+        if (profileData.profilePicture) formData.append('ProfilePicture', profileData.profilePicture);
+
+        const response = await http.post(`${this.endpoint}/candidate`, formData);
         console.log('📦 ProfileService: Employee profile created:', response.data);
         return response;
     }
@@ -49,9 +87,19 @@ export class ProfileService {
      * Crear perfil de organización/empresa
      * POST /api/v1/profile/organization
      */
-    async createOrganizationProfile(profileData: SignUpUserOrganizationRequest) {
+    async createOrganizationProfile(profileData: CreateCompanyProfilePayload) {
         console.log('🔄 ProfileService: Creating organization profile:', profileData);
-        const response = await http.post(`${this.endpoint}/organization`, profileData);
+        const formData = new FormData();
+        appendOptional(formData, 'Description', profileData.description);
+        appendOptional(formData, 'Ubigeo', profileData.ubigeo);
+        appendOptional(formData, 'PhoneNumber', profileData.phoneNumber);
+        appendSkills(formData, profileData.skills);
+        formData.append('CompanyName', profileData.companyName);
+        appendOptional(formData, 'Sector', profileData.sector);
+        formData.append('Ruc', profileData.ruc);
+        if (profileData.profilePicture) formData.append('ProfilePicture', profileData.profilePicture);
+
+        const response = await http.post(`${this.endpoint}/company`, formData);
         console.log('📦 ProfileService: Organization profile created:', response.data);
         return response;
     }
@@ -60,9 +108,9 @@ export class ProfileService {
      * Actualizar perfil de candidato (empleado/persona natural)
      * PUT /api/v1/profile/{userId}/candidate
      */
-    async updateCandidateProfile(userId: string, profileData: any) {
-        console.log('🔄 ProfileService: Updating candidate profile for user:', userId, profileData);
-        const response = await http.put(`${this.endpoint}/${userId}/candidate`, profileData);
+    async updateCandidateProfile(_userId: string, profileData: any) {
+        console.log('🔄 ProfileService: Updating candidate profile:', profileData);
+        const response = await http.put(`${this.endpoint}/candidate`, profileData);
         console.log('📦 ProfileService: Candidate update response:', response.data);
         return response;
     }
@@ -71,9 +119,9 @@ export class ProfileService {
      * Actualizar perfil de empresa/organización
      * PUT /api/v1/profile/{userId}/company
      */
-    async updateCompanyProfile(userId: string, profileData: any) {
-        console.log('🔄 ProfileService: Updating company profile for user:', userId, profileData);
-        const response = await http.put(`${this.endpoint}/${userId}/company`, profileData);
+    async updateCompanyProfile(_userId: string, profileData: any) {
+        console.log('🔄 ProfileService: Updating company profile:', profileData);
+        const response = await http.put(`${this.endpoint}/company`, profileData);
         console.log('📦 ProfileService: Company update response:', response.data);
         return response;
     }
@@ -82,15 +130,11 @@ export class ProfileService {
      * Subir foto de perfil
      * POST /api/v1/profile/{userId}/upload-photo
      */
-    async uploadProfilePhoto(userId: string, file: File) {
-        console.log('🔄 ProfileService: Uploading profile photo for user:', userId);
+    async uploadProfilePhoto(_userId: string, file: File) {
+        console.log('🔄 ProfileService: Uploading profile photo');
         const formData = new FormData();
         formData.append('file', file);
-        const response = await http.post(`${this.endpoint}/${userId}/upload-photo`, formData, {
-            headers: {
-                'Content-Type': 'multipart/form-data'
-            }
-        });
+        const response = await http.patch(`${this.endpoint}/upload-photo`, formData);
         console.log('📦 ProfileService: Profile photo uploaded:', response.data);
         return response;
     }
@@ -99,11 +143,17 @@ export class ProfileService {
      * Verificar identidad del perfil (DNI/RUC autoritativo en backend)
      * POST /api/v1/profile/{userId}/verify
      */
-    async verifyProfile(userId: string, payload: Record<string, any> = {}) {
-        console.log('🔄 ProfileService: Verifying profile for user:', userId);
-        const response = await http.post(`${this.endpoint}/${userId}/verify`, payload);
+    async verifyProfile(userId: string, _payload: Record<string, any> = {}) {
+        const profileId = localStorage.getItem('profileId') || userId;
+        console.log('🔄 ProfileService: Verifying profile:', profileId);
+        const response = await http.post(`${this.endpoint}/${profileId}/verify`);
         console.log('📦 ProfileService: Verify response:', response.data);
         return response;
+    }
+
+    async validateRuc(ruc: string): Promise<boolean> {
+        const { data } = await http.post<boolean>(`${this.endpoint}/ruc/${encodeURIComponent(ruc)}/validate`);
+        return data;
     }
 
     // Experiencia laboral, educación, certificaciones e idiomas alimentan al

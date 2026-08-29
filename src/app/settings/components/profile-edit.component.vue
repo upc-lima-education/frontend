@@ -38,6 +38,7 @@ const {
   success,
   error,
   isEmployee,
+  historyPersistenceAvailable,
   isNewProfile,
   firstName,
   lastName,
@@ -789,8 +790,13 @@ const isRucInputValid = computed(() => ruc.value && ruc.value.length === 11 && /
             </div>
           </div>
 
-          <!-- CV DATA: Experiencia laboral, educación, certificaciones e idiomas -->
-          <template v-if="isEmployee">
+          <div v-if="isEmployee && !historyPersistenceAvailable" class="history-contract-notice" role="status">
+            <strong>Experiencia, educación e idiomas temporalmente no editables</strong>
+            <p>La API actual permite reemplazar estas listas, pero no permite recuperar su contenido. La edición está desactivada para proteger información existente.</p>
+          </div>
+
+          <!-- CV DATA: se habilita cuando la API pueda devolver las colecciones actuales. -->
+          <template v-if="isEmployee && historyPersistenceAvailable">
             <!-- WORK EXPERIENCE -->
             <div class="glass-card">
               <h3 class="card-section-title">
@@ -1090,6 +1096,27 @@ const isRucInputValid = computed(() => ruc.value && ruc.value.length === 11 && /
   margin: 0;
   font-size: 12px;
   color: var(--color-text-secondary);
+}
+
+.history-contract-notice {
+  padding: 18px 20px;
+  border: 1px solid var(--color-border);
+  border-radius: 14px;
+  background: var(--color-surface);
+}
+
+.history-contract-notice strong {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--color-text-primary);
+  font-size: 14px;
+}
+
+.history-contract-notice p {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: 13px;
+  line-height: 1.5;
 }
 
 .text-margin-top {

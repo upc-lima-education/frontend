@@ -124,6 +124,7 @@ export const useAuthenticationStore = defineStore('authentication', () => {
         localStorage.removeItem('refreshToken');
         localStorage.removeItem('expiresIn');
         localStorage.removeItem('userType');
+        localStorage.removeItem('profileId');
         
         console.log(' Sesión cerrada. LocalStorage limpiado.');
         

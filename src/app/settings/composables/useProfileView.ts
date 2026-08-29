@@ -4,8 +4,13 @@ import { profileService } from '@/app/profile/services/profile.service';
 
 /** API profile payload shape (subset used by the view). */
 export type ProfileViewData = {
+    id?: string;
     profilePicture?: string;
     description?: string;
+    skills?: string[];
+    isComplete?: boolean;
+    candidate?: { firstName?: string; lastName?: string } | null;
+    company?: { companyName?: string; sector?: string; ruc?: string; isVerified?: boolean } | null;
     isVerified?: boolean;
     keywords?: string[];
     district?: string;
@@ -40,14 +45,28 @@ export function useProfileView() {
     });
 
     const isVerified = computed(() => {
-        return profile.value?.isVerified || false;
+        return profile.value?.company?.isVerified || false;
     });
 
     onMounted(async () => {
         try {
             if (authStore.currentUserId) {
                 const response = await profileService.getProfileByUserId(authStore.currentUserId);
-                profile.value = (response.data?.data || response.data) as ProfileViewData;
+                const raw = (response.data?.data || response.data) as ProfileViewData;
+                profile.value = {
+                    ...raw,
+                    keywords: raw.skills || [],
+                    companyName: raw.company?.companyName,
+                    sector: raw.company?.sector,
+                    ruc: raw.company?.ruc,
+                    isVerified: raw.company?.isVerified || false,
+                    isRucVerified: raw.company?.isVerified || false,
+                };
+                if (authStore.user && profile.value) {
+                    authStore.user.firstName = profile.value.candidate?.firstName;
+                    authStore.user.lastName = profile.value.candidate?.lastName;
+                    authStore.user.companyName = profile.value.company?.companyName;
+                }
             }
         } catch (error) {
             console.error('Error loading profile:', error);
