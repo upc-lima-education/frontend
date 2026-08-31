@@ -9,17 +9,23 @@ export function useNewsPage() {
     const newsService = new NewsService();
     const auth = useAuthenticationStore();
     const newsData = ref<NewsResponse[]>([]);
+    const activeScope = ref<'feed' | 'own'>('feed');
     const loading = ref(false);
     const posting = ref(false);
     const error = ref('');
+
+    async function getProfileId(): Promise<string> {
+        const profileResponse = await profileService.getCurrentProfile();
+        const profileId = profileResponse.data?.id ?? profileResponse.data?.data?.id;
+        if (!profileId) throw new Error('No se encontró el perfil para cargar novedades.');
+        return profileId;
+    }
 
     async function fetchNewsData() {
         loading.value = true;
         error.value = '';
         try {
-            const profileResponse = await profileService.getProfileByUserId(auth.currentUserId);
-            const profileId = profileResponse.data?.id ?? profileResponse.data?.data?.id;
-            if (!profileId) throw new Error('No se encontró el perfil para cargar novedades.');
+            const profileId = await getProfileId();
             const response = await newsService.getAllNews(profileId);
             newsData.value = response;
         } catch (err) {
@@ -41,12 +47,11 @@ export function useNewsPage() {
         posting.value = true;
         error.value = '';
         try {
-            const profileResponse = await profileService.getProfileByUserId(auth.currentUserId);
-            const profileId = profileResponse.data?.id ?? profileResponse.data?.data?.id;
-            if (!profileId) throw new Error('No se encontró el perfil del usuario.');
+            const profileId = await getProfileId();
 
             await newsService.postNews(new NewsRequest(profileId, trimmed, 'General'));
-            await fetchNewsData();
+            if (activeScope.value === 'own') await showOwnPosts();
+            else await fetchNewsData();
             return true;
         } catch (err) {
             console.error('Error creating post:', err);
@@ -57,16 +62,55 @@ export function useNewsPage() {
         }
     }
 
+    async function searchNews(query: string): Promise<void> {
+        const trimmed = query.trim();
+        if (!trimmed) return activeScope.value === 'own' ? showOwnPosts() : fetchNewsData();
+        loading.value = true;
+        error.value = '';
+        try {
+            newsData.value = await newsService.searchNews(trimmed);
+        } catch (err) {
+            console.error('Error searching news:', err);
+            error.value = 'No se pudieron buscar las novedades.';
+        } finally {
+            loading.value = false;
+        }
+    }
+
+    async function showFeed(): Promise<void> {
+        activeScope.value = 'feed';
+        await fetchNewsData();
+    }
+
+    async function showOwnPosts(): Promise<void> {
+        loading.value = true;
+        error.value = '';
+        activeScope.value = 'own';
+        try {
+            const profileId = await getProfileId();
+            newsData.value = await newsService.getOwnNews(profileId, profileId);
+        } catch (err) {
+            console.error('Error fetching own news:', err);
+            error.value = 'No se pudieron cargar tus publicaciones.';
+        } finally {
+            loading.value = false;
+        }
+    }
+
     onMounted(() => {
         void fetchNewsData();
     });
 
     return {
         newsData,
+        activeScope,
         loading,
         posting,
         error,
         fetchNewsData,
+        showFeed,
+        showOwnPosts,
         createPost,
+        searchNews,
     };
 }

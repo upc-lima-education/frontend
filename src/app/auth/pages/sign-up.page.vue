@@ -19,7 +19,7 @@ import SignUpUnifiedComponent from '../components/sign-up/sign-up-unified.compon
     justify-content: center;
     padding: clamp(24px, 6vh, 60px) 1rem;
     overflow: hidden;
-    background: linear-gradient(150deg, #0C1145 0%, #1E2BAA 55%, #16217A 100%);
+    background: linear-gradient(150deg, #111B66 0%, var(--color-primary) 55%, #17237E 100%);
 }
 
 .auth-stage::before {

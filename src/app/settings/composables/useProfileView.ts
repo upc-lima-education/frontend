@@ -1,6 +1,6 @@
 import { computed, onMounted, ref } from 'vue';
 import { useAuthenticationStore } from '@/app/auth/services/authentication.store';
-import { profileService } from '@/app/profile/services/profile.service';
+import { ProfileIdUnavailableError, profileService } from '@/app/profile/services/profile.service';
 
 /** API profile payload shape (subset used by the view). */
 export type ProfileViewData = {
@@ -51,7 +51,7 @@ export function useProfileView() {
     onMounted(async () => {
         try {
             if (authStore.currentUserId) {
-                const response = await profileService.getProfileByUserId(authStore.currentUserId);
+                const response = await profileService.getCurrentProfile();
                 const raw = (response.data?.data || response.data) as ProfileViewData;
                 profile.value = {
                     ...raw,
@@ -68,8 +68,10 @@ export function useProfileView() {
                     authStore.user.companyName = profile.value.company?.companyName;
                 }
             }
-        } catch (error) {
-            console.error('Error loading profile:', error);
+        } catch (error: any) {
+            if (!(error instanceof ProfileIdUnavailableError) && error?.response?.status !== 404) {
+                console.error('Error loading profile:', error);
+            }
         } finally {
             loading.value = false;
         }

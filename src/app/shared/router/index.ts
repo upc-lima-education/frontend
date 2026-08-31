@@ -32,7 +32,7 @@ const router = createRouter({
     { path: '/auth/callback', name: 'auth-callback', component: GoogleCallbackPage },
 
     { path: ROUTE_CONSTANTS.HOME_PAGE, name: 'home', component: HomePage },
-    { path: ROUTE_CONSTANTS.NEWS_PAGE, name: 'news', component: NewsPage },
+    { path: ROUTE_CONSTANTS.NEWS_PAGE, name: 'news', component: NewsPage, meta: { roles: ['employee'] } },
     { path: ROUTE_CONSTANTS.PROFILE_PAGE, redirect: ROUTE_CONSTANTS.SETTINGS_PAGE },
     { path: ROUTE_CONSTANTS.SETTINGS_PAGE, name: 'settings', component: SettingsPage },
 

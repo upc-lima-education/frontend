@@ -32,7 +32,9 @@ export class JobService {
             data.closesAt ? new Date(data.closesAt) : undefined as any,
             data.jobStatus || '',
             data.views,
-            undefined as any,
+            data.creationDate || data.createdAt || data.opensAt
+                ? new Date(data.creationDate || data.createdAt || data.opensAt)
+                : undefined as any,
             '',
             data.originPage || '',
             data.sourceUrl || '',

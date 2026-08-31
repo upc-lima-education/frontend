@@ -82,6 +82,10 @@ export function useCvGenerator() {
     async function checkStatus() {
         if (!cvId.value) return;
         try {
+            // El generador AI crea contenido estructurado en segundo plano.
+            // Cuando esté listo, el backend actual requiere transformarlo a PDF
+            // antes de que GET /file pueda entregarlo.
+            await cvService.transformToPdf(cvId.value);
             const blob = await cvService.getFile(cvId.value);
             revokePreview();
             previewUrl.value = URL.createObjectURL(blob);

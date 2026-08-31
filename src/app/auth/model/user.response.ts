@@ -9,6 +9,8 @@ export class UserResponse {
     picture?: string;
     locale?: string;
     createdAt?: string;
+    /** Identificador del perfil resuelto por la sesión del backend. */
+    profileId?: string;
 
     constructor(
         id: string,
@@ -20,7 +22,8 @@ export class UserResponse {
         userType?: 'employee' | 'organization',
         picture?: string,
         locale?: string,
-        createdAt?: string
+        createdAt?: string,
+        profileId?: string,
     ) {
         this.id = id;
         this.email = email;
@@ -32,5 +35,6 @@ export class UserResponse {
         this.picture = picture;
         this.locale = locale;
         this.createdAt = createdAt;
+        this.profileId = profileId;
     }
 }

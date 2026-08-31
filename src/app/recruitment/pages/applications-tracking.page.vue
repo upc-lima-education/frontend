@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted } from 'vue';
+import { onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { Inbox, Download } from 'lucide-vue-next';
 import { ROUTE_CONSTANTS } from '@/app/shared/router/route-constants';
@@ -11,6 +11,9 @@ import { useApplicationTracking } from '../composables/useApplicationTracking';
 import { exportApplicantsToExcel } from '../utils/export-applicants.util';
 import ApplicantCard from '../components/applicant-card.component.vue';
 import ApplicantDetailDrawer from '../components/applicant-detail-drawer.component.vue';
+import { recruitmentService } from '../services/recruitment.service';
+import { messageService } from '@/app/message/services/message.service';
+import { profileService } from '@/app/profile/services/profile.service';
 
 const router = useRouter();
 const auth = useAuthenticationStore();
@@ -19,6 +22,10 @@ const {
     selectedJobId, selectedApplication, jobOptions, columns, shortlisted,
     load, openApplicant, closeApplicant, approve, reject, notify,
 } = useApplicationTracking();
+
+const messagePending = ref(false);
+const cvDownloading = ref(false);
+const operationError = ref('');
 
 onMounted(load);
 
@@ -35,9 +42,49 @@ function companyName(): string | undefined {
     return auth.currentUser?.companyName || undefined;
 }
 
-function goToChat(_application: ApplicationResponse): void {
-    closeApplicant();
-    router.push(ROUTE_CONSTANTS.MESSAGE_COMPANY);
+async function goToChat(application: ApplicationResponse): Promise<void> {
+    if (!auth.currentUserId) {
+        operationError.value = 'No se pudo identificar la sesión de la empresa. Vuelve a iniciar sesión e inténtalo otra vez.';
+        return;
+    }
+
+    messagePending.value = true;
+    operationError.value = '';
+    try {
+        const profileResponse = await profileService.getProfileById(application.candidateId);
+        const profile = profileResponse.data?.data ?? profileResponse.data;
+        const candidateUserId = profile?.userId;
+        if (!candidateUserId) {
+            throw new Error('El perfil del candidato no expone un identificador de usuario para iniciar la conversación.');
+        }
+
+        const jobConversations = await messageService.getConversationsByJob(application.jobId, application.jobTitle);
+        const existing = jobConversations.find((conversation) =>
+            conversation.participantIds.includes(auth.currentUserId)
+            && conversation.participantIds.includes(candidateUserId),
+        );
+        const conversation = existing ?? await messageService.createConversation(application.jobId, [auth.currentUserId, candidateUserId]);
+        closeApplicant();
+        await router.push({ path: ROUTE_CONSTANTS.MESSAGE_COMPANY, query: { conversation: conversation.id } });
+    } catch (cause) {
+        console.error('No se pudo preparar la conversación:', cause);
+        operationError.value = 'No se pudo iniciar la conversación. Verifica que el perfil del candidato y la vacante sigan disponibles.';
+    } finally {
+        messagePending.value = false;
+    }
+}
+
+async function downloadCv(application: ApplicationResponse): Promise<void> {
+    cvDownloading.value = true;
+    operationError.value = '';
+    try {
+        await recruitmentService.downloadApplicationCv(application.id);
+    } catch (cause) {
+        console.error('No se pudo descargar el CV:', cause);
+        operationError.value = 'No se pudo descargar el CV. Comprueba que la postulación siga disponible e inténtalo nuevamente.';
+    } finally {
+        cvDownloading.value = false;
+    }
 }
 
 async function onNotify(payload: {
@@ -89,7 +136,7 @@ function exportShortlist(): void {
             </div>
         </header>
 
-        <p v-if="errorMessage" class="error-strip">{{ errorMessage }}</p>
+        <p v-if="errorMessage || operationError" class="error-strip">{{ operationError || errorMessage }}</p>
 
         <div v-if="loading" class="state-loading">
             <div class="spinner"></div>
@@ -132,10 +179,13 @@ function exportShortlist(): void {
             v-if="selectedApplication"
             :application="selectedApplication"
             :action-pending="actionPending"
+            :message-pending="messagePending"
+            :cv-downloading="cvDownloading"
             @close="closeApplicant"
             @approve="approve"
             @reject="reject"
             @message="goToChat"
+            @download-cv="downloadCv"
             @notify="onNotify"
         />
     </div>

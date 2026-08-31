@@ -121,7 +121,8 @@ export function useHomePage() {
     function modalityLabel(jobType?: string): string {
         if (jobType === 'Remote') return 'Remoto';
         if (jobType === 'Hybrid') return 'Híbrido';
-        return 'Presencial';
+        if (jobType === 'InPerson' || jobType === 'Presential') return 'Presencial';
+        return jobType || 'Modalidad no especificada';
     }
 
     async function loadDashboard() {
@@ -137,7 +138,7 @@ export function useHomePage() {
                 : jobService.listJobs();
             const [jobsResult, profileResult, recommendationsResult, notificationsResult] = await Promise.allSettled([
                 jobsPromise,
-                userId ? profileService.getProfileByUserId(userId) : Promise.resolve(null),
+                userId ? profileService.getCurrentProfile() : Promise.resolve(null),
                 isOrganization.value ? Promise.resolve([]) : recommendationService.getGeneralRecommendations([], 4),
                 userId ? notificationService.getNotifications() : Promise.resolve([]),
             ]);

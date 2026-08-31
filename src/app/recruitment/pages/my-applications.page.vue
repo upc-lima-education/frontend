@@ -9,19 +9,16 @@ import {
   Building2,
   Calendar,
 } from 'lucide-vue-next';
-import { useAuthenticationStore } from '@/app/auth/services/authentication.store';
 import { recruitmentService } from '../services/recruitment.service';
-import type { ApplicationResponse } from '../model/application.response';
+import type { CandidateApplicationResponse } from '../model/application.response';
 import { ApplicationStatus } from '../enums/application-status.enum';
 import { ROUTE_CONSTANTS } from '@/app/shared/router/route-constants';
 
-type TabStatus = 'all' | 'sent' | 'review' | 'selected' | 'rejected';
+type TabStatus = 'all' | 'sent' | 'review' | 'rejected';
 
-const auth = useAuthenticationStore();
-const applications = ref<ApplicationResponse[]>([]);
+const applications = ref<CandidateApplicationResponse[]>([]);
 const loading = ref(true);
 const error = ref('');
-const historyUnavailable = ref(false);
 const activeTab = ref<TabStatus>('all');
 const sortBy = ref('recent');
 
@@ -29,7 +26,6 @@ const tabs = computed(() => [
   { id: 'all' as TabStatus, label: 'Todas', count: applications.value.length },
   { id: 'sent' as TabStatus, label: 'Enviadas', count: applications.value.filter(a => a.status === ApplicationStatus.Pending).length },
   { id: 'review' as TabStatus, label: 'Aceptadas', count: applications.value.filter(a => a.status === ApplicationStatus.Accepted).length },
-  { id: 'selected' as TabStatus, label: 'Seleccionado', count: 0 },
   { id: 'rejected' as TabStatus, label: 'No seleccionada', count: applications.value.filter(a => a.status === ApplicationStatus.Rejected).length },
 ]);
 
@@ -37,7 +33,6 @@ const filteredApplications = computed(() => {
   const filtered = applications.value.filter((app) => {
     if (activeTab.value === 'sent') return app.status === ApplicationStatus.Pending;
     if (activeTab.value === 'review') return app.status === ApplicationStatus.Accepted;
-    if (activeTab.value === 'selected') return false;
     if (activeTab.value === 'rejected') return app.status === ApplicationStatus.Rejected;
     return true;
   });
@@ -68,16 +63,13 @@ function formatDate(value: string): string {
 async function loadApplications() {
   loading.value = true;
   error.value = '';
-  historyUnavailable.value = false;
   try {
-    const list = await recruitmentService.getCandidateApplications(auth.currentUserId);
+    const list = await recruitmentService.getCandidateApplications();
     applications.value = Array.isArray(list) ? list : [];
   } catch (err) {
     console.error('Error loading applications:', err);
     applications.value = [];
-    const message = err instanceof Error ? err.message : 'No se pudieron cargar tus postulaciones.';
-    historyUnavailable.value = message.includes('no expone el historial');
-    if (!historyUnavailable.value) error.value = message;
+    error.value = err instanceof Error ? err.message : 'No se pudieron cargar tus postulaciones.';
   } finally {
     loading.value = false;
   }
@@ -156,7 +148,7 @@ onMounted(loadApplications);
                   {{ statusLabel(app.status) }}
                 </span>
               </div>
-              <p class="app-company-name">Postulación registrada</p>
+              <p class="app-company-name">{{ app.companyName || 'Empresa no disponible' }}</p>
 
               <div class="app-meta">
                 <span class="meta-item">
@@ -193,12 +185,10 @@ onMounted(loadApplications);
           </div>
 
           <h2 class="empty-title">
-            {{ historyUnavailable ? 'Tu historial de postulaciones aún no está disponible' : 'Aún no has enviado postulaciones' }}
+            Aún no has enviado postulaciones
           </h2>
           <p class="empty-desc">
-            {{ historyUnavailable
-              ? 'Puedes postular a empleos, pero la API actual todavía no publica un listado de tus postulaciones.'
-              : 'Encuentra un empleo que te interese y postúlate. Aquí podrás seguir todo el proceso.' }}
+            Encuentra un empleo que te interese y postúlate. Aquí podrás seguir todo el proceso.
           </p>
 
           <RouterLink :to="ROUTE_CONSTANTS.JOB_SEARCH" class="btn-explore-jobs">
@@ -281,13 +271,13 @@ onMounted(loadApplications);
 }
 
 .tab-btn:hover {
-  color: #1E2BAA;
+  color: var(--color-primary);
 }
 
 .tab-btn.is-active {
-  color: #1E2BAA;
+  color: var(--color-primary);
   font-weight: 600;
-  border-bottom-color: #1E2BAA;
+  border-bottom-color: var(--color-primary);
 }
 
 .tab-count {
@@ -359,7 +349,7 @@ onMounted(loadApplications);
 .clip-bar {
   width: 20px;
   height: 6px;
-  background: #1E2BAA;
+  background: var(--color-primary);
   border-radius: 3px 3px 0 0;
   z-index: 2;
 }
@@ -395,7 +385,7 @@ onMounted(loadApplications);
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  background: #1E2BAA;
+  background: var(--color-primary);
   color: #ffffff;
   display: flex;
   align-items: center;
@@ -423,9 +413,9 @@ onMounted(loadApplications);
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  height: 42px;
+  min-height: 46px;
   padding: 0 26px;
-  background: #1E2BAA;
+  background: var(--color-primary);
   color: #ffffff !important;
   border-radius: var(--radius-button);
   font-size: 14px;
@@ -470,7 +460,7 @@ onMounted(loadApplications);
   height: 48px;
   border-radius: 12px;
   background: #EEF2FF;
-  color: #1E2BAA;
+  color: var(--color-primary);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -529,7 +519,7 @@ onMounted(loadApplications);
 
 .pill--info {
   background: #EEF2FF;
-  color: #1E2BAA;
+  color: var(--color-primary);
 }
 
 .pill--warning {
@@ -551,7 +541,7 @@ onMounted(loadApplications);
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  height: 36px;
+  min-height: 46px;
   padding: 0 16px;
   border-radius: var(--radius-button);
   border: 1px solid var(--color-border);
@@ -564,8 +554,8 @@ onMounted(loadApplications);
 }
 
 .btn-view-offer:hover {
-  border-color: #1E2BAA;
-  color: #1E2BAA;
+  border-color: var(--color-primary);
+  color: var(--color-primary);
   background: #EEF2FF;
 }
 
@@ -587,7 +577,7 @@ onMounted(loadApplications);
   width: 32px;
   height: 32px;
   border: 3px solid var(--color-border);
-  border-top-color: #1E2BAA;
+  border-top-color: var(--color-primary);
   border-radius: 50%;
   animation: spin 0.7s linear infinite;
 }
@@ -605,7 +595,7 @@ onMounted(loadApplications);
   align-items: center;
   gap: 6px;
   padding: 8px 16px;
-  background: #1E2BAA;
+  background: var(--color-primary);
   color: #fff;
   border: none;
   border-radius: 8px;

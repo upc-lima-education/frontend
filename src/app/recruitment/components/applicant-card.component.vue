@@ -1,18 +1,10 @@
 <script setup lang="ts">
 import { computed } from 'vue';
-import { MapPin, Clock } from 'lucide-vue-next';
+import { Clock } from 'lucide-vue-next';
 import type { ApplicationResponse } from '../model/application.response';
 
 const props = defineProps<{ application: ApplicationResponse; active?: boolean }>();
 defineEmits<{ (e: 'open', application: ApplicationResponse): void }>();
-
-const initials = computed(() => {
-    const parts = props.application.applicant.fullName.trim().split(/\s+/).filter(Boolean);
-    if (parts.length === 0) return '?';
-    const first = parts[0]?.[0] ?? '';
-    const second = parts.length > 1 ? (parts[1]?.[0] ?? '') : (parts[0]?.[1] ?? '');
-    return (first + second).toUpperCase() || '?';
-});
 
 const appliedLabel = computed(() => {
     const days = Math.floor((Date.now() - new Date(props.application.appliedAt).getTime()) / 86_400_000);
@@ -20,6 +12,19 @@ const appliedLabel = computed(() => {
     if (days === 1) return 'Ayer';
     return `Hace ${days} días`;
 });
+
+const applicantName = computed(() => {
+    const { firstName, lastName } = props.application.applicant;
+    return `${firstName ?? ''} ${lastName ?? ''}`.trim() || 'Candidato sin nombre público';
+});
+
+const initials = computed(() => applicantName.value
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0])
+    .join('')
+    .toUpperCase() || 'C');
 </script>
 
 <template>
@@ -30,32 +35,24 @@ const appliedLabel = computed(() => {
         @click="$emit('open', application)"
     >
         <div class="card-top">
-            <img
-                v-if="application.applicant.pictureUrl"
-                :src="application.applicant.pictureUrl"
-                :alt="application.applicant.fullName"
-                class="avatar"
-            />
-            <span v-else class="avatar avatar--placeholder">{{ initials }}</span>
+            <img v-if="application.applicant.profilePicture" :src="application.applicant.profilePicture" class="avatar" alt="" />
+            <span v-else class="avatar avatar--placeholder" aria-hidden="true">{{ initials }}</span>
 
             <div class="who">
-                <span class="name">{{ application.applicant.fullName }}</span>
-                <span v-if="application.applicant.headline" class="headline">
-                    {{ application.applicant.headline }}
-                </span>
+                <span class="name">{{ applicantName }}</span>
+                <span class="reference">Referencia: {{ application.applicant.reference }}</span>
             </div>
         </div>
 
         <p class="job-ref">{{ application.jobTitle }}</p>
 
         <div class="meta-row">
-            <span v-if="application.applicant.location" class="meta">
-                <MapPin :size="13" :stroke-width="1.5" />
-                <span>{{ application.applicant.location }}</span>
-            </span>
             <span class="meta">
                 <Clock :size="13" :stroke-width="1.5" />
                 <span>{{ appliedLabel }}</span>
+            </span>
+            <span v-if="application.applicant.skills?.length" class="skill-count">
+                {{ application.applicant.skills.length }} habilidad{{ application.applicant.skills.length === 1 ? '' : 'es' }}
             </span>
         </div>
     </button>
@@ -127,7 +124,7 @@ const appliedLabel = computed(() => {
     text-overflow: ellipsis;
 }
 
-.headline {
+.reference {
     font-size: var(--fs-caption);
     color: var(--color-text-secondary);
     white-space: nowrap;
@@ -154,5 +151,14 @@ const appliedLabel = computed(() => {
     gap: 4px;
     font-size: 11px;
     color: var(--color-text-muted);
+}
+
+.skill-count {
+    max-width: 100%;
+    overflow: hidden;
+    color: var(--color-text-secondary);
+    font-size: 11px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 </style>

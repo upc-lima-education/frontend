@@ -1,12 +1,12 @@
 button {
-    min-height: 46px;
     text-align: center;
-    font-weight: bold;
-    border: none;
+    font-weight: var(--fw-semibold);
+    border: 1px solid transparent;
     border-radius: var(--radius-button);
-    padding: 10px 20px;
+    padding: 10px 16px;
     cursor: pointer;
-    background-color: var(--gray-02);
+    background-color: transparent;
+    color: var(--color-text-primary);
     transition: background-color 150ms ease, color 150ms ease, border-color 150ms ease,
                 transform 100ms ease-out, box-shadow 150ms ease;
 }
@@ -16,7 +16,7 @@ button:active:not(:disabled) {
 }
 
 button:disabled {
-    background-color: var(--gray-05);
+    opacity: .55;
     cursor: not-allowed;
 }
 
@@ -51,31 +51,37 @@ button:disabled {
 }
 
 .btn-primary {
+    min-height: 46px;
     background-color: var(--main-color);
     color: white;
 }
 
 .btn-secondary {
+    min-height: 46px;
     background-color: var(--secondary-color);
     color: white;
 }
 
 .btn-success {
+    min-height: 46px;
     background-color: var(--green-color);
     color: white;
 }
 
 .btn-warning{
+    min-height: 46px;
     background-color: var(--yellow-color);
     color: white;
 }
 
 .btn-danger {
+    min-height: 46px;
     background-color: var(--red-color);
     color: white;
 }
 
 .btn-info {
+    min-height: 46px;
     background-color: var(--gray-05);
     color: white;
 }

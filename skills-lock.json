@@ -25,6 +25,12 @@
       "skillPath": "skills/emil-design-eng/SKILL.md",
       "computedHash": "ac3fc5b4e206488ffc408a2806f829bb2e5eaf518fded09be34790685c2b3a0d"
     },
+    "frontend-design": {
+      "source": "anthropics/skills",
+      "sourceType": "github",
+      "skillPath": "skills/frontend-design/SKILL.md",
+      "computedHash": "93f53fd1c0352d3d7ec17b8f73d7351bf76f4821e55d123c9d2abc2c53ba48e4"
+    },
     "full-output-enforcement": {
       "source": "Leonxlnx/taste-skill",
       "sourceType": "github",
@@ -65,7 +71,7 @@
       "source": "pbakaus/impeccable",
       "sourceType": "github",
       "skillPath": ".agents/skills/impeccable/SKILL.md",
-      "computedHash": "ff24732ed5dfe28d4415db0c86c0ef4406893b551cf837529e01ec1d1fefcb32"
+      "computedHash": "2b39464847582f77bfaec9d041df4f75b462d83f3ece255af61446348c215ab6"
     },
     "industrial-brutalist-ui": {
       "source": "Leonxlnx/taste-skill",

@@ -4,8 +4,7 @@ import { ChevronLeft, ChevronRight } from 'lucide-vue-next';
 
 const props = defineProps({
     id: { type: String, required: true },
-    userImage: { type: String, default: '' },
-    userName: { type: String, required: true },
+    title: { type: String, required: true },
     content: { type: String, required: true },
     publishedAt: { type: Date, required: true },
     images: { type: Array as () => string[], default: () => [] }
@@ -37,13 +36,9 @@ const prevImage = () => {
     <article class="post-card">
         <!-- Header -->
         <header class="post-header">
-            <div class="user-info">
-                <img v-if="userImage" class="avatar" :src="userImage" alt="User avatar" />
-                <img v-else class="avatar" src="../../shared/assets/icons/UsuarioPredeterminado.svg" alt="User avatar" />
-                <div class="user-meta">
-                    <h2 class="username">{{ userName }}</h2>
-                    <p class="user-headline">Profesional en Llanqui • {{ formattedDate }}</p>
-                </div>
+            <div class="post-meta">
+                <h2 class="post-title">{{ title }}</h2>
+                <p class="published-date">Publicado el {{ formattedDate }}</p>
             </div>
         </header>
 
@@ -111,34 +106,20 @@ const prevImage = () => {
     margin-bottom: 12px;
 }
 
-.user-info {
-    display: flex;
-    align-items: center;
-    gap: var(--space-1);
-}
-
-.avatar {
-    width: 48px;
-    height: 48px;
-    border-radius: 50%;
-    object-fit: cover;
-    border: 1px solid var(--color-border);
-}
-
-.user-meta {
+.post-meta {
     display: flex;
     flex-direction: column;
     gap: 2px;
 }
 
-.username {
+.post-title {
     margin: 0;
     font-size: var(--fs-body-sm);
     font-weight: var(--fw-semibold);
     color: var(--color-text-primary);
 }
 
-.user-headline {
+.published-date {
     margin: 0;
     font-size: var(--fs-caption);
     color: var(--color-text-muted);

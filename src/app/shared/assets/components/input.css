@@ -23,10 +23,10 @@ label {
 
 textarea{
   resize: none;
-  height: 250px;
+  min-height: 112px;
 }
 
-input:not([type="file"]), textarea, select {
+input:not([type="file"]):not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]), textarea, select {
   border: 1px solid var(--gray-03);
   border-radius: var(--radius-input);
   min-height: 48px;
@@ -38,7 +38,7 @@ input:not([type="file"]), textarea, select {
   transition: border-color 150ms ease, box-shadow 150ms ease, background-color 150ms ease;
 }
 
-input:focus:not([type="file"]), textarea:focus, select:focus {
+input:focus:not([type="file"]):not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]), textarea:focus, select:focus {
   outline: 2px solid var(--main-color-00);
   border-color: var(--main-color-01);
   color: var(--main-color-07);

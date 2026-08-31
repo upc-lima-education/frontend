@@ -36,7 +36,8 @@ export class AuthenticationService {
             userType,
             u.picture || undefined,
             u.locale || 'es',
-            u.createdAt
+            u.createdAt,
+            u.profileId || undefined,
         );
     }
 

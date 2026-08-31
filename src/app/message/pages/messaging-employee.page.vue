@@ -6,10 +6,6 @@ import { ConversationResponse } from '../model/conversation.response';
 import { MessageResponse } from '../model/message.response';
 import {
   Search,
-  Edit3,
-  MoreVertical,
-  Smile,
-  Paperclip,
   Send,
   CheckCheck,
   MessageSquare,
@@ -25,12 +21,6 @@ const error = ref('');
 const userId = ref('');
 const inputMessage = ref('');
 const searchQuery = ref('');
-
-const quickReplies = [
-  'Estoy disponible',
-  '¿Qué horario sería?',
-  'Gracias, confirmaré',
-];
 
 const filteredConversations = computed(() => {
   const query = searchQuery.value.trim().toLowerCase();
@@ -61,10 +51,16 @@ async function handleSend(text?: string) {
   const content = (text || inputMessage.value).trim();
   if (!content || !currentConversation.value) return;
 
-  try {
-    const sent = await messageService.sendMessage(currentConversation.value.id, userId.value, content);
-    messages.value.push(sent);
+    try {
+    await messageService.sendMessage(currentConversation.value.id, content);
     inputMessage.value = '';
+    const detail = await messageService.getConversationById(currentConversation.value.id, currentConversation.value.title);
+    const updated = { ...detail.conversation, title: currentConversation.value.title, subtitle: currentConversation.value.subtitle };
+    currentConversation.value = updated;
+    conversations.value = conversations.value.map((conversation) =>
+      conversation.id === updated.id ? updated : conversation,
+    );
+    messages.value = detail.messages;
   } catch (err) {
     console.error('Error enviando mensaje:', err);
     error.value = 'No se pudo enviar el mensaje.';
@@ -76,8 +72,23 @@ function formatTime(sentAtVal: Date | string): string {
     const d = typeof sentAtVal === 'string' ? new Date(sentAtVal) : sentAtVal;
     return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   } catch {
-    return '10:45 a.m.';
+    return '';
   }
+}
+
+function conversationInitials(conversation: ConversationResponse): string {
+  return conversation.title
+    .trim()
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((part) => part[0])
+    .join('')
+    .toUpperCase() || 'LL';
+}
+
+function lastMessageTime(conversation: ConversationResponse): string {
+  const value = (conversation as ConversationResponse & { lastMessageTime?: Date | string }).lastMessageTime;
+  return value ? formatTime(value) : '';
 }
 
 onMounted(async () => {
@@ -85,7 +96,7 @@ onMounted(async () => {
   loading.value = true;
   error.value = '';
   try {
-    const list = await messageService.getConversationsForEmployee(userId.value);
+    const list = await messageService.getConversationsForEmployee();
     if (list && list.length > 0) {
       conversations.value = list;
       if (list[0]) selectConversation(list[0]);
@@ -93,7 +104,7 @@ onMounted(async () => {
   } catch (err) {
     console.error('Error loading conversations:', err);
     conversations.value = [];
-    error.value = 'Tu bandeja aún no está disponible con el contrato actual del backend.';
+    error.value = 'No se pudieron cargar tus conversaciones. Inténtalo nuevamente.';
   } finally {
     loading.value = false;
   }
@@ -102,15 +113,17 @@ onMounted(async () => {
 
 <template>
   <div class="messaging-page">
-    <div class="messaging-container">
+    <section v-if="!loading && conversations.length === 0" class="messaging-unavailable" aria-labelledby="messages-unavailable-title">
+      <MessageSquare :size="36" aria-hidden="true" />
+      <h1 id="messages-unavailable-title">Aún no tienes conversaciones</h1>
+      <p>Cuando una empresa inicie una conversación sobre una postulación, aparecerá en esta bandeja.</p>
+    </section>
+    <div v-else class="messaging-container">
       <!-- LEFT PANEL: Conversaciones -->
       <aside class="conversations-sidebar">
         <header class="conv-header">
           <div class="conv-header-top">
             <h2 class="conv-title">Conversaciones</h2>
-            <button type="button" class="icon-btn-ghost" title="Nuevo mensaje">
-              <Edit3 :size="18" />
-            </button>
           </div>
           <div class="conv-search-wrap">
             <Search :size="15" class="search-icon" />
@@ -132,20 +145,14 @@ onMounted(async () => {
             @click="selectConversation(conv)"
           >
             <!-- Logo Box -->
-            <div
-              class="conv-logo-box"
-              :style="{
-                backgroundColor: (conv as any).companyLogo?.bg || '#0F172A',
-                color: (conv as any).companyLogo?.color || '#FFFFFF',
-              }"
-            >
-              {{ (conv as any).companyLogo?.initials || conv.title.slice(0, 2).toLowerCase() }}
+            <div class="conv-logo-box">
+              {{ conversationInitials(conv) }}
             </div>
 
             <div class="conv-main-info">
               <div class="conv-row-top">
                 <strong class="conv-name">{{ conv.title }}</strong>
-                <span class="conv-time">{{ (conv as any).lastMessageTime || 'Hoy' }}</span>
+                <span v-if="lastMessageTime(conv)" class="conv-time">{{ lastMessageTime(conv) }}</span>
               </div>
               <p class="conv-preview">{{ (conv as any).lastMessage || conv.subtitle }}</p>
             </div>
@@ -154,11 +161,6 @@ onMounted(async () => {
           </div>
         </div>
 
-        <footer class="conv-footer">
-          <button type="button" class="btn-all-convs">
-            Ver todas las conversaciones
-          </button>
-        </footer>
       </aside>
 
       <!-- RIGHT PANEL: Active Chat -->
@@ -167,14 +169,8 @@ onMounted(async () => {
           <!-- Chat Header -->
           <header class="chat-header">
             <div class="chat-header-info">
-              <div
-                class="chat-header-logo"
-                :style="{
-                  backgroundColor: (currentConversation as any).companyLogo?.bg || '#0F172A',
-                  color: (currentConversation as any).companyLogo?.color || '#FFFFFF',
-                }"
-              >
-                {{ (currentConversation as any).companyLogo?.initials || currentConversation.title.slice(0, 2).toLowerCase() }}
+              <div class="chat-header-logo">
+                {{ conversationInitials(currentConversation) }}
               </div>
               <div>
                 <h3 class="chat-title">{{ currentConversation.title }}</h3>
@@ -182,11 +178,6 @@ onMounted(async () => {
               </div>
             </div>
 
-            <div class="chat-header-actions">
-              <button type="button" class="icon-btn-ghost" title="Opciones">
-                <MoreVertical :size="20" />
-              </button>
-            </div>
           </header>
 
           <!-- Messages Scroll Area -->
@@ -211,19 +202,6 @@ onMounted(async () => {
             </div>
           </div>
 
-          <!-- Quick Reply Suggestion Chips -->
-          <div class="quick-replies-bar">
-            <button
-              v-for="reply in quickReplies"
-              :key="reply"
-              type="button"
-              class="quick-reply-chip"
-              @click="handleSend(reply)"
-            >
-              {{ reply }}
-            </button>
-          </div>
-
           <!-- Chat Input Bar -->
           <footer class="chat-input-bar">
             <form class="chat-input-form" @submit.prevent="() => handleSend()">
@@ -235,12 +213,6 @@ onMounted(async () => {
               />
 
               <div class="chat-input-actions">
-                <button type="button" class="icon-btn-ghost" title="Emojis">
-                  <Smile :size="20" />
-                </button>
-                <button type="button" class="icon-btn-ghost" title="Adjuntar">
-                  <Paperclip :size="20" />
-                </button>
                 <button
                   type="submit"
                   class="btn-send-msg"
@@ -255,8 +227,8 @@ onMounted(async () => {
 
         <div v-else class="empty-chat-placeholder">
           <MessageSquare :size="48" class="empty-chat-icon" />
-          <h3>Tus Conversaciones</h3>
-          <p>Selecciona una conversación del panel izquierdo para comenzar a chatear.</p>
+          <h3>Selecciona una conversación</h3>
+          <p>Elige una conversación para ver su historial.</p>
         </div>
       </main>
     </div>
@@ -285,6 +257,39 @@ onMounted(async () => {
   overflow: hidden;
   box-shadow: var(--shadow-card);
 }
+
+.messaging-unavailable {
+  width: min(620px, calc(100% - (var(--page-gutter) * 2)));
+  min-height: 320px;
+  margin: var(--space-4) auto;
+  padding: var(--space-5) var(--space-3);
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 12px;
+  text-align: center;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card-lg);
+  box-shadow: var(--shadow-card);
+}
+
+.messaging-unavailable > svg {
+  color: var(--color-primary);
+  padding: 12px;
+  width: 64px;
+  height: 64px;
+  background: var(--color-lavender);
+  border-radius: 50%;
+}
+
+.messaging-unavailable h1,
+.messaging-unavailable p {
+  margin: 0;
+}
+
+.messaging-unavailable h1 { font-size: var(--fs-subtitle); }
+.messaging-unavailable p { max-width: 48ch; color: var(--color-text-secondary); }
 
 /* ============================================================
    LEFT PANEL: CONVERSATIONS
@@ -380,6 +385,8 @@ onMounted(async () => {
   font-size: 15px;
   font-weight: 700;
   flex-shrink: 0;
+  background: var(--color-primary);
+  color: #ffffff;
 }
 
 .conv-main-info {
@@ -443,7 +450,7 @@ onMounted(async () => {
 .btn-all-convs {
   background: transparent;
   border: none;
-  color: #1E2BAA;
+  color: var(--color-primary);
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
@@ -541,7 +548,7 @@ onMounted(async () => {
 
 /* Outgoing */
 .message-row.is-mine .message-bubble {
-  background: #1E2BAA;
+  background: var(--color-primary);
   color: #ffffff;
   border-bottom-right-radius: 4px;
   box-shadow: 0 2px 8px rgba(30, 43, 170, 0.2);
@@ -588,16 +595,16 @@ onMounted(async () => {
   border-radius: 999px;
   font-size: 12px;
   font-weight: 600;
-  color: #1E2BAA;
+  color: var(--color-primary);
   cursor: pointer;
   white-space: nowrap;
   transition: all 150ms ease;
 }
 
 .quick-reply-chip:hover {
-  background: #1E2BAA;
+  background: var(--color-primary);
   color: #ffffff;
-  border-color: #1E2BAA;
+  border-color: var(--color-primary);
 }
 
 /* Chat Input Bar */
@@ -648,14 +655,14 @@ onMounted(async () => {
 
 .icon-btn-ghost:hover {
   background: rgba(0, 0, 0, 0.06);
-  color: #1E2BAA;
+  color: var(--color-primary);
 }
 
 .btn-send-msg {
   width: 38px;
   height: 38px;
   border: none;
-  background: #1E2BAA;
+  background: var(--color-primary);
   color: #ffffff;
   border-radius: 50%;
   display: flex;
@@ -691,7 +698,7 @@ onMounted(async () => {
 }
 
 .empty-chat-icon {
-  color: #1E2BAA;
+  color: var(--color-primary);
 }
 
 /* ============================================================

@@ -1,7 +1,7 @@
 import { computed, reactive, ref, type Ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useAuthenticationStore } from '@/app/auth/services/authentication.store';
-import { profileService } from '@/app/profile/services/profile.service';
+import { ProfileIdUnavailableError, profileService } from '@/app/profile/services/profile.service';
 import { isValidDNI, isValidRUC } from '@/app/profile/utils/identification-validation';
 import { districtNameToUbigeo } from '@/app/profile/utils/district-ubigeo.util';
 import {
@@ -11,7 +11,12 @@ import {
     INDUSTRY_OPTIONS,
     COMPANY_SIZE_OPTIONS,
 } from '@/app/profile/model/profile-edit.options';
-import type { WorkExperience, Education, Certification, LanguageEntry } from '@/app/profile/model/profile-history.model';
+import {
+    normalizeLanguageCode,
+    type Education,
+    type LanguageEntry,
+    type WorkExperience,
+} from '@/app/profile/model/profile-history.model';
 
 export function useProfileEdit() {
     const authStore = useAuthenticationStore();
@@ -25,25 +30,46 @@ export function useProfileEdit() {
     const isNewProfile = ref(false);
 
     const isEmployee = computed(() => authStore.currentUserType !== 'organization');
-    // El backend permite reemplazar estas listas, pero ProfileResponse no las
-    // devuelve. Se mantienen deshabilitadas para no sobrescribir datos previos.
-    const historyPersistenceAvailable = false;
+    /**
+     * Solo se habilita después de confirmar que GET /profile devolvió las tres
+     * colecciones. Así una API antigua nunca puede vaciar información existente.
+     */
+    const historyPersistenceAvailable = ref(false);
 
     const profilePictureFile = ref<File | null>(null);
     const profilePicturePreview = ref('');
 
-    // Experiencia laboral / educación / certificaciones / idiomas se guardan
-    // entrada por entrada contra su propio endpoint CRUD (no forman parte del
-    // payload de handleSaveProfile). Las 4 secciones comparten exactamente el
-    // mismo patrón add/edit/delete, así que lo factorizamos una sola vez.
-    function useHistorySection<T extends { id?: string }>(
+    let historyItemSequence = 0;
+
+    function createHistoryItemId(section: string): string {
+        historyItemSequence += 1;
+        // Esta clave solo identifica la fila en Vue. El backend no expone IDs
+        // por elemento y nunca se envía dentro de los PATCH.
+        return `${section}-${historyItemSequence}`;
+    }
+
+    function getApiMessage(err: any, fallback: string): string {
+        const payload = err?.response?.data;
+        const message = payload?.message ?? payload?.detail ?? payload;
+        if (Array.isArray(message)) return message.join(', ');
+        return typeof message === 'string' && message.trim() ? message : fallback;
+    }
+
+    function announceHistorySaved() {
+        success.value = true;
+        window.setTimeout(() => {
+            success.value = false;
+        }, 3000);
+    }
+
+    /**
+     * El contrato reemplaza la colección completa, por eso cada operación
+     * prepara una copia y solo actualiza la UI luego de un PATCH exitoso.
+     */
+    function usePersistedHistorySection<T extends { id?: string }>(
+        section: string,
         emptyDraft: () => T,
-        api: {
-            create: (userId: string, payload: Omit<T, 'id'>) => Promise<T>;
-            update: (userId: string, id: string, payload: Omit<T, 'id'>) => Promise<T>;
-            remove: (userId: string, id: string) => Promise<void>;
-        },
-        errorMessage: string
+        persist: (items: T[]) => Promise<void>,
     ) {
         const items = ref<T[]>([]) as Ref<T[]>;
         const draft = reactive(emptyDraft()) as T;
@@ -59,75 +85,87 @@ export function useProfileEdit() {
             editingId.value = entry.id ?? null;
         }
 
-        async function save() {
-            const { id, ...payload } = draft as any;
+        async function save(): Promise<boolean> {
+            if (loading.value || !historyPersistenceAvailable.value) return false;
+
+            const entry = {
+                ...(draft as object),
+                id: editingId.value ?? createHistoryItemId(section),
+            } as T;
+            const nextItems = editingId.value
+                ? items.value.map((item) => item.id === editingId.value ? entry : item)
+                : [...items.value, entry];
+
+            loading.value = true;
+            error.value = '';
             try {
-                if (editingId.value) {
-                    const updated = await api.update(authStore.currentUserId, editingId.value, payload);
-                    const idx = items.value.findIndex((i) => i.id === editingId.value);
-                    if (idx !== -1) items.value[idx] = updated;
-                } else {
-                    const created = await api.create(authStore.currentUserId, payload);
-                    items.value.push(created);
-                }
+                await persist(nextItems);
+                items.value = nextItems;
                 resetDraft();
+                announceHistorySaved();
+                return true;
             } catch (err) {
-                console.error(errorMessage, err);
-                error.value = errorMessage;
+                error.value = getApiMessage(err, 'No se pudo guardar esta sección del perfil. Inténtalo nuevamente.');
+                return false;
+            } finally {
+                loading.value = false;
             }
         }
 
-        async function remove(id: string) {
+        async function remove(id: string): Promise<boolean> {
+            if (loading.value || !historyPersistenceAvailable.value) return false;
+
+            const nextItems = items.value.filter((item) => item.id !== id);
+            loading.value = true;
+            error.value = '';
             try {
-                await api.remove(authStore.currentUserId, id);
-                items.value = items.value.filter((i) => i.id !== id);
+                await persist(nextItems);
+                items.value = nextItems;
+                if (editingId.value === id) resetDraft();
+                announceHistorySaved();
+                return true;
             } catch (err) {
-                console.error(errorMessage, err);
-                error.value = errorMessage;
+                error.value = getApiMessage(err, 'No se pudo eliminar este registro. Inténtalo nuevamente.');
+                return false;
+            } finally {
+                loading.value = false;
             }
         }
 
         return { items, draft, editingId, resetDraft, startEdit, save, remove };
     }
 
-    const workExperienceSection = useHistorySection<WorkExperience>(
-        () => ({ role: '', organization: '', startDate: '', endDate: null, description: '', location: '' }),
-        {
-            create: profileService.addWorkExperience.bind(profileService),
-            update: profileService.updateWorkExperience.bind(profileService),
-            remove: profileService.deleteWorkExperience.bind(profileService),
-        },
-        'No se pudo guardar la experiencia laboral.'
+    const workExperienceSection = usePersistedHistorySection<WorkExperience>(
+        'experience',
+        () => ({ role: '', organization: '', startDate: '', endDate: null, description: '' }),
+        (items) => profileService.updateCandidateWorkExperiences(items.map((item) => ({
+            company: item.organization.trim(),
+            position: item.role.trim(),
+            description: item.description?.trim() || '',
+            startDate: item.startDate,
+            endDate: item.endDate || null,
+        }))),
     );
 
-    const educationSection = useHistorySection<Education>(
-        () => ({ institution: '', degree: '', startDate: null, endDate: null }),
-        {
-            create: profileService.addEducation.bind(profileService),
-            update: profileService.updateEducation.bind(profileService),
-            remove: profileService.deleteEducation.bind(profileService),
-        },
-        'No se pudo guardar la educación.'
+    const educationSection = usePersistedHistorySection<Education>(
+        'education',
+        () => ({ institution: '', degree: '', fieldOfStudy: '', startDate: '', endDate: null }),
+        (items) => profileService.updateCandidateEducations(items.map((item) => ({
+            institution: item.institution.trim(),
+            degree: item.degree.trim(),
+            fieldOfStudy: item.fieldOfStudy?.trim() || null,
+            startDate: item.startDate || '',
+            endDate: item.endDate || null,
+        }))),
     );
 
-    const certificationSection = useHistorySection<Certification>(
-        () => ({ name: '', issuingOrganization: '', issueDate: null }),
-        {
-            create: profileService.addCertification.bind(profileService),
-            update: profileService.updateCertification.bind(profileService),
-            remove: profileService.deleteCertification.bind(profileService),
-        },
-        'No se pudo guardar la certificación.'
-    );
-
-    const languageSection = useHistorySection<LanguageEntry>(
-        () => ({ name: '', level: 'Básico' }),
-        {
-            create: profileService.addLanguage.bind(profileService),
-            update: profileService.updateLanguage.bind(profileService),
-            remove: profileService.deleteLanguage.bind(profileService),
-        },
-        'No se pudo guardar el idioma.'
+    const languageSection = usePersistedHistorySection<LanguageEntry>(
+        'language',
+        () => ({ name: '', level: 'A1' }),
+        (items) => profileService.updateCandidateLanguages(items.map((item) => ({
+            code: normalizeLanguageCode(item.name),
+            level: item.level,
+        }))),
     );
 
     // Employee refs
@@ -166,13 +204,59 @@ export function useProfileEdit() {
     const bioLength = computed(() => bio.value.length);
     const companyDescLength = computed(() => companyDescription.value.length);
 
+    function mapWorkExperiences(values: unknown[]): WorkExperience[] {
+        return values.map((value: any) => ({
+            id: createHistoryItemId('experience'),
+            role: value.position ?? '',
+            organization: value.company ?? '',
+            description: value.description ?? '',
+            startDate: value.startDate ?? '',
+            endDate: value.endDate ?? null,
+        }));
+    }
+
+    function mapEducations(values: unknown[]): Education[] {
+        return values.map((value: any) => ({
+            id: createHistoryItemId('education'),
+            institution: value.institution ?? '',
+            degree: value.degree ?? '',
+            fieldOfStudy: value.fieldOfStudy ?? '',
+            startDate: value.startDate ?? '',
+            endDate: value.endDate ?? null,
+        }));
+    }
+
+    function mapLanguages(values: unknown[]): LanguageEntry[] {
+        return values.map((value: any) => ({
+            id: createHistoryItemId('language'),
+            name: normalizeLanguageCode(value.code ?? ''),
+            level: value.level ?? 'A1',
+        }));
+    }
+
+    function hydrateCandidateHistory(profile: any): boolean {
+        const hasHistoryContract = Array.isArray(profile?.workExperiences)
+            && Array.isArray(profile?.educations)
+            && Array.isArray(profile?.languages);
+        historyPersistenceAvailable.value = hasHistoryContract;
+
+        if (hasHistoryContract) {
+            workExperienceSection.items.value = mapWorkExperiences(profile.workExperiences);
+            educationSection.items.value = mapEducations(profile.educations);
+            languageSection.items.value = mapLanguages(profile.languages);
+        }
+
+        return hasHistoryContract;
+    }
+
     async function loadProfileData() {
         try {
             loading.value = true;
             error.value = '';
             isNewProfile.value = false;
+            historyPersistenceAvailable.value = false;
             
-            const response = await profileService.getProfileByUserId(authStore.currentUserId);
+            const response = await profileService.getCurrentProfile();
             const d = response.data?.data || response.data;
             const candidate = d.candidate || {};
             const company = d.company || {};
@@ -190,10 +274,7 @@ export function useProfileEdit() {
                 bio.value = (d.description || d.bio || '').slice(0, BIO_MAX);
                 keywords.value = d.skills || [];
 
-                workExperienceSection.items.value = d.workExperiences || [];
-                educationSection.items.value = d.educations || [];
-                certificationSection.items.value = d.certifications || [];
-                languageSection.items.value = d.languages || [];
+                hydrateCandidateHistory(d);
 
                 // If personType is juridica, load company/ruc details on employee profile
                 if (personType.value === 'juridica') {
@@ -226,11 +307,12 @@ export function useProfileEdit() {
                 }
             }
         } catch (err: any) {
-            console.error('Error loading profile:', err);
-            // If API returns 404, mark as a new profile to be created
-            if (err?.response?.status === 404) {
+            // Sin profileId local no existe una lectura segura por userId: el
+            // backend no expone esa búsqueda. La pantalla conserva el flujo
+            // de creación y evita disparar un GET inválido.
+            if (err instanceof ProfileIdUnavailableError || err?.response?.status === 404) {
                 isNewProfile.value = true;
-                console.log('🔄 Profile not found. Preparing new profile creation on save.');
+                console.info('ℹ️ El usuario aún no tiene un perfil. Se creará al guardar.');
                 // Autopopulate from current logged in user basic data
                 if (isEmployee.value) {
                     firstName.value = authStore.currentUser?.firstName || '';
@@ -242,6 +324,7 @@ export function useProfileEdit() {
                     companyName.value = authStore.currentUser?.companyName || '';
                 }
             } else {
+                console.error('Error loading profile:', err);
                 error.value = 'Error al cargar los datos del perfil';
             }
         } finally {
@@ -252,8 +335,8 @@ export function useProfileEdit() {
     /**
      * Validación local de formato/checksum (el backend no expone
      * /profile/validate-dni). No confirma el registro en RENIEC ni obtiene
-     * el nombre del titular; la verificación autoritativa ocurre en
-     * POST /profile/{userId}/verify al guardar.
+     * el nombre del titular. El backend actual no expone una verificación
+     * autoritativa de DNI para candidatos.
      */
     function verifyDni() {
         if (!dni.value || dni.value.length < 8) {
@@ -275,8 +358,8 @@ export function useProfileEdit() {
     /**
      * Validación local de formato/checksum (el backend no expone
      * /profile/validate-ruc). No confirma el registro en SUNAT ni obtiene
-     * la razón social; la verificación autoritativa ocurre en
-     * POST /profile/{userId}/verify al guardar.
+     * la razón social. La validación de formato se complementa con
+     * POST /profile/ruc/{ruc}/validate.
      */
     async function verifyRuc() {
         if (!ruc.value || ruc.value.length < 11) {
@@ -371,6 +454,7 @@ export function useProfileEdit() {
                         profilePicture: profilePictureFile.value || undefined,
                     });
                     if (createResponse.data?.id) localStorage.setItem('profileId', createResponse.data.id);
+                    hydrateCandidateHistory(createResponse.data);
                 } else {
                     // POST /profile/company (multipart/form-data)
                     const createResponse = await profileService.createOrganizationProfile({
@@ -502,7 +586,7 @@ export function useProfileEdit() {
         rucError,
         rucCompanyName,
 
-        // Experiencia laboral / educación / certificaciones / idiomas
+        // Historial persistido de candidato
         workExperiences: workExperienceSection.items,
         workExperienceDraft: workExperienceSection.draft,
         editingWorkExperienceId: workExperienceSection.editingId,
@@ -518,14 +602,6 @@ export function useProfileEdit() {
         editEducation: educationSection.startEdit,
         cancelEducationEdit: educationSection.resetDraft,
         deleteEducation: educationSection.remove,
-
-        certifications: certificationSection.items,
-        certificationDraft: certificationSection.draft,
-        editingCertificationId: certificationSection.editingId,
-        saveCertification: certificationSection.save,
-        editCertification: certificationSection.startEdit,
-        cancelCertificationEdit: certificationSection.resetDraft,
-        deleteCertification: certificationSection.remove,
 
         languages: languageSection.items,
         languageDraft: languageSection.draft,

@@ -101,29 +101,30 @@ export function useApplicationTracking() {
         if (selectedApplication.value?.id === id) selectedApplication.value.status = status;
     }
 
-    async function approve(application: ApplicationResponse): Promise<void> {
+    async function approve(application: ApplicationResponse, channels: NotificationChannel[]): Promise<void> {
         await runDecision(application, ApplicationStatus.Accepted, () =>
-            recruitmentService.approve(application.id),
+            recruitmentService.approve(application.id, channels),
         );
     }
 
-    async function reject(application: ApplicationResponse): Promise<void> {
+    async function reject(application: ApplicationResponse, channels: NotificationChannel[], message?: string): Promise<void> {
         await runDecision(application, ApplicationStatus.Rejected, () =>
-            recruitmentService.reject(application.id),
+            recruitmentService.reject(application.id, channels, message),
         );
     }
 
     async function runDecision(
         application: ApplicationResponse,
         nextStatus: ApplicationStatus,
-        call: () => Promise<unknown>,
+        call: () => Promise<{ status: ApplicationStatus }>,
     ): Promise<void> {
         const previous = application.status;
         actionPending.value = true;
         errorMessage.value = '';
         patchStatus(application.id, nextStatus); // optimista
         try {
-            await call();
+            const response = await call();
+            patchStatus(application.id, response.status);
         } catch (err) {
             console.error('Error actualizando la postulación:', err);
             await loadSelectedJob().catch(() => patchStatus(application.id, previous));

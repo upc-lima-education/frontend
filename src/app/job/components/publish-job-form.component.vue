@@ -12,7 +12,8 @@ import { WorkHours } from '../enums/work-hours.enum';
 import { EducationLevel } from '../enums/education-level.enum';
 import ubigeoData from '@/app/shared/data/ubigeo.json';
 import ButtonClueComponent from '@/app/shared/components/button-clue.component.vue';
-import { ArrowLeft, ArrowRight, Save, Plus, X } from 'lucide-vue-next';
+import SkillPickerComponent from '@/app/shared/components/skill-picker.component.vue';
+import { ArrowLeft, ArrowRight, Save } from 'lucide-vue-next';
 
 const jobService = new JobService();
 const submitting = ref(false);
@@ -90,17 +91,13 @@ const compensationTypeOptions = enumToOptions(CompensationType, 'job.data.compen
 const workHoursOptions = enumToOptions(WorkHours, 'job.data.workHours');
 const educationLevelOptions = enumToOptions(EducationLevel, 'job.data.educationLevel');
 
-//Skill requirements as bubbles
+// El backend persiste habilidades como string[], por eso se conserva este Set
+// interno y se expone un array editable al selector reutilizable.
 const skillBubbles = ref<Set<string>>(new Set());
-function addSkillBubble(skill: string) {
-    if (skill && !skillBubbles.value.has(skill)) {
-        skillBubbles.value.add(skill.trim());
-        form.skills = "";
-    }
-}
-function removeSkillBubble(skill: string) {
-    skillBubbles.value.delete(skill);
-}
+const selectedSkills = computed<string[]>({
+    get: () => Array.from(skillBubbles.value),
+    set: (skills) => { skillBubbles.value = new Set(skills.map((skill) => skill.trim()).filter(Boolean)); },
+});
 function getSkillsFromSkillBubbles(): string[] {
     return Array.from(skillBubbles.value);
 }
@@ -290,27 +287,13 @@ async function submit() {
                     </select>
                 </div>
 
-                <div class="input-container">
-                    <div class="label-row">
-                        <label for="skill">{{ $t('job.data.skills') }}</label>
-                        <ButtonClueComponent text="Habilidades que desea de la persona. Para agregar una, escriba en el campo y presione 'Añadir'" />
-                    </div>
-                    <div class="input-add-container">
-                        <input id="skill" v-model="form.skills" placeholder="Ej. JavaScript" @keypress.enter.prevent="addSkillBubble(form.skills)" />
-                        <button type="button" class="btn-add-skill" @click="addSkillBubble(form.skills)">
-                            <Plus :size="16" />
-                            <span>{{ $t('common.add') }}</span>
-                        </button>
-                    </div>
-                </div>
-
-                <div class="skill-bubbles-title" v-if="skillBubbles.size > 0">Habilidades añadidas (Haz clic para eliminar):</div>
-                <div class="skill-bubble-container">
-                    <article v-for="bubble in skillBubbles" :key="bubble" @click="removeSkillBubble(bubble)" class="skill-bubble">
-                        <span>{{ bubble }}</span>
-                        <X :size="12" class="bubble-remove-icon" />
-                    </article>
-                </div>
+                <SkillPickerComponent
+                    v-model="selectedSkills"
+                    id="job-skills"
+                    :label="$t('job.data.skills')"
+                    hint="Elige del catálogo real de Llanqui o añade una habilidad específica para esta vacante."
+                    placeholder="Ej. JavaScript"
+                />
             </section>
 
             <section v-if="currentStep === 3" class="step-panel animate-fade-in">

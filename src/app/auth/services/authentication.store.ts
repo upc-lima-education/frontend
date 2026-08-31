@@ -34,6 +34,18 @@ export const useAuthenticationStore = defineStore('authentication', () => {
     const currentUserType = computed(() => userType.value);
     const currentAccessToken = computed(() => accessToken.value);
 
+    /**
+     * `auth/me`, sign-in y refresh resuelven el profileId real en clean.
+     * Guardarlo aquí evita que cada vista intente deducirlo a partir del userId.
+     */
+    function syncProfileId(authenticatedUser: UserResponse | null): void {
+        if (authenticatedUser?.profileId) {
+            localStorage.setItem('profileId', authenticatedUser.profileId);
+        } else {
+            localStorage.removeItem('profileId');
+        }
+    }
+
     // Actions
     async function signIn(signInRequest: SignInRequest): Promise<boolean> {
         try {
@@ -50,6 +62,7 @@ export const useAuthenticationStore = defineStore('authentication', () => {
             if (signInResponse.user?.userType) {
                 setUserType(signInResponse.user.userType);
             }
+            syncProfileId(signInResponse.user);
 
             // Persist tokens
             localStorage.setItem('accessToken', signInResponse.accessToken);
@@ -63,6 +76,7 @@ export const useAuthenticationStore = defineStore('authentication', () => {
                 const me = await authenticationService.getCurrentUser(signInResponse.accessToken);
                 user.value = me;
                 if (me?.userType) setUserType(me.userType);
+                syncProfileId(me);
             } catch (meError) {
                 console.warn('No se pudo refrescar el usuario desde /me tras el sign-in:', meError);
             }
@@ -89,6 +103,7 @@ export const useAuthenticationStore = defineStore('authentication', () => {
             user.value = signUpResponse.user;
             accessToken.value = signUpResponse.accessToken;
             refreshToken.value = signUpResponse.refreshToken;
+            syncProfileId(signUpResponse.user);
             
             // Persist tokens
             localStorage.setItem('accessToken', signUpResponse.accessToken);
@@ -170,6 +185,7 @@ export const useAuthenticationStore = defineStore('authentication', () => {
             if (user.value?.userType) {
                 setUserType(user.value.userType);
             }
+            syncProfileId(user.value);
             
             console.log('✅ Usuario cargado:', user.value?.email);
             return true;
@@ -193,6 +209,7 @@ export const useAuthenticationStore = defineStore('authentication', () => {
             localStorage.setItem('refreshToken', response.refreshToken);
             localStorage.setItem('expiresIn', response.expiresIn.toString());
             if (response.user?.userType) setUserType(response.user.userType);
+            syncProfileId(response.user);
             return response.accessToken;
         } catch (error) {
             console.error('No se pudo renovar la sesión:', error);
@@ -215,6 +232,7 @@ export const useAuthenticationStore = defineStore('authentication', () => {
             localStorage.setItem('refreshToken', response.refreshToken);
             localStorage.setItem('expiresIn', response.expiresIn.toString());
             if (response.user?.userType) setUserType(response.user.userType);
+            syncProfileId(response.user);
             return true;
         } catch (error) {
             console.error('Falló la autenticación con Google:', error);

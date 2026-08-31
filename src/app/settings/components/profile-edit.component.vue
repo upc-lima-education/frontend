@@ -22,11 +22,17 @@ import {
   CreditCard,
   Building,
   GraduationCap,
-  Award,
   Languages,
   Pencil,
   Trash2
 } from 'lucide-vue-next';
+import SkillPickerComponent from '@/app/shared/components/skill-picker.component.vue';
+import {
+  BACKEND_LANGUAGE_CODES,
+  isBackendLanguageCode,
+  LANGUAGE_LEVELS,
+  normalizeLanguageCode,
+} from '@/app/profile/model/profile-history.model';
 
 const {
   BIO_MAX,
@@ -49,7 +55,6 @@ const {
   profession,
   bio,
   keywords,
-  newKeyword,
   companyName,
   ruc,
   website,
@@ -72,8 +77,6 @@ const {
   verifyRuc,
   loadProfileData,
   handleFileUpload,
-  addKeyword,
-  removeKeyword,
   handleSaveProfile,
   onBioInput,
   onCompanyDescInput,
@@ -91,13 +94,6 @@ const {
   editEducation,
   cancelEducationEdit,
   deleteEducation,
-  certifications,
-  certificationDraft,
-  editingCertificationId,
-  saveCertification,
-  editCertification,
-  cancelCertificationEdit,
-  deleteCertification,
   languages,
   languageDraft,
   editingLanguageId,
@@ -107,7 +103,17 @@ const {
   deleteLanguage,
 } = useProfileEdit();
 
-const LANGUAGE_LEVEL_OPTIONS = ['Básico', 'Intermedio', 'Avanzado', 'Nativo'];
+const LANGUAGE_LEVEL_OPTIONS = LANGUAGE_LEVELS;
+const spanishLanguageNames = new Intl.DisplayNames(['es'], { type: 'language' });
+
+function formatLanguageCode(code: string) {
+  const normalized = normalizeLanguageCode(code);
+  try {
+    return spanishLanguageNames.of(normalized.toLowerCase()) || normalized;
+  } catch {
+    return normalized;
+  }
+}
 
 interface FieldError {
   field: string;
@@ -118,8 +124,6 @@ function fieldHasError(errors: FieldError[], field: string) {
   return errors.some((e) => e.field === field);
 }
 
-const todayStr = new Date().toISOString().slice(0, 10);
-
 // WORK EXPERIENCE
 const workExperienceAttempted = ref(false);
 
@@ -128,6 +132,7 @@ function getWorkExperienceErrors(): FieldError[] {
   if (!workExperienceDraft.role.trim()) errs.push({ field: 'role', message: 'Ingresa el cargo.' });
   if (!workExperienceDraft.organization.trim()) errs.push({ field: 'organization', message: 'Ingresa la empresa.' });
   if (!workExperienceDraft.startDate) errs.push({ field: 'startDate', message: 'Ingresa la fecha de inicio.' });
+  if (!workExperienceDraft.description?.trim()) errs.push({ field: 'description', message: 'Ingresa una descripción de tu experiencia.' });
   if (workExperienceDraft.endDate !== null) {
     if (!workExperienceDraft.endDate) {
       errs.push({ field: 'endDate', message: 'Ingresa la fecha de fin o marca "Trabajo actual".' });
@@ -144,11 +149,10 @@ function isWorkExperienceValid() {
   return getWorkExperienceErrors().length === 0;
 }
 
-function attemptSaveWorkExperience() {
+async function attemptSaveWorkExperience() {
   workExperienceAttempted.value = true;
   if (isWorkExperienceValid()) {
-    saveWorkExperience();
-    workExperienceAttempted.value = false;
+    if (await saveWorkExperience()) workExperienceAttempted.value = false;
   }
 }
 
@@ -169,6 +173,7 @@ function getEducationErrors(): FieldError[] {
   const errs: FieldError[] = [];
   if (!educationDraft.institution.trim()) errs.push({ field: 'institution', message: 'Ingresa la institución.' });
   if (!educationDraft.degree.trim()) errs.push({ field: 'degree', message: 'Ingresa el grado o carrera.' });
+  if (!educationDraft.startDate) errs.push({ field: 'startDate', message: 'Ingresa la fecha de inicio.' });
   if (educationDraft.startDate && educationDraft.endDate && educationDraft.endDate < educationDraft.startDate) {
     errs.push({ field: 'endDate', message: 'La fecha de fin no puede ser anterior a la fecha de inicio.' });
   }
@@ -181,11 +186,10 @@ function isEducationValid() {
   return getEducationErrors().length === 0;
 }
 
-function attemptSaveEducation() {
+async function attemptSaveEducation() {
   educationAttempted.value = true;
   if (isEducationValid()) {
-    saveEducation();
-    educationAttempted.value = false;
+    if (await saveEducation()) educationAttempted.value = false;
   }
 }
 
@@ -199,48 +203,16 @@ function cancelEducationEditReset() {
   cancelEducationEdit();
 }
 
-// CERTIFICATIONS
-const certificationAttempted = ref(false);
-
-function getCertificationErrors(): FieldError[] {
-  const errs: FieldError[] = [];
-  if (!certificationDraft.name.trim()) errs.push({ field: 'name', message: 'Ingresa el nombre de la certificación.' });
-  if (certificationDraft.issueDate && certificationDraft.issueDate > todayStr) {
-    errs.push({ field: 'issueDate', message: 'La fecha de emisión no puede ser futura.' });
-  }
-  return errs;
-}
-
-const certificationErrors = computed(() => (certificationAttempted.value ? getCertificationErrors() : []));
-
-function isCertificationValid() {
-  return getCertificationErrors().length === 0;
-}
-
-function attemptSaveCertification() {
-  certificationAttempted.value = true;
-  if (isCertificationValid()) {
-    saveCertification();
-    certificationAttempted.value = false;
-  }
-}
-
-function startCertificationEdit(cert: typeof certificationDraft) {
-  certificationAttempted.value = false;
-  editCertification(cert);
-}
-
-function cancelCertificationEditReset() {
-  certificationAttempted.value = false;
-  cancelCertificationEdit();
-}
-
 // LANGUAGES
 const languageAttempted = ref(false);
 
 function getLanguageErrors(): FieldError[] {
   const errs: FieldError[] = [];
-  if (!languageDraft.name.trim()) errs.push({ field: 'name', message: 'Ingresa el idioma.' });
+  if (!languageDraft.name.trim()) {
+    errs.push({ field: 'name', message: 'Selecciona un idioma.' });
+  } else if (!isBackendLanguageCode(languageDraft.name)) {
+    errs.push({ field: 'name', message: 'Selecciona un código de idioma admitido por la API.' });
+  }
   if (!languageDraft.level) errs.push({ field: 'level', message: 'Selecciona el nivel.' });
   return errs;
 }
@@ -251,11 +223,11 @@ function isLanguageValid() {
   return getLanguageErrors().length === 0;
 }
 
-function attemptSaveLanguage() {
+async function attemptSaveLanguage() {
   languageAttempted.value = true;
+  languageDraft.name = normalizeLanguageCode(languageDraft.name);
   if (isLanguageValid()) {
-    saveLanguage();
-    languageAttempted.value = false;
+    if (await saveLanguage()) languageAttempted.value = false;
   }
 }
 
@@ -395,7 +367,7 @@ const isRucInputValid = computed(() => ruc.value && ruc.value.length === 11 && /
               <div class="completeness-bar-wrap">
                 <div 
                   class="completeness-bar-fill" 
-                  :style="{ width: completenessPercent + '%', backgroundColor: completenessColor }"
+                  :style="{ transform: `scaleX(${completenessPercent / 100})`, backgroundColor: completenessColor }"
                 ></div>
               </div>
               <span class="completeness-number" :style="{ color: completenessColor }">{{ completenessPercent }}%</span>
@@ -666,31 +638,13 @@ const isRucInputValid = computed(() => ruc.value && ruc.value.length === 11 && /
                 </div>
               </div>
 
-              <!-- KEYWORDS TAG BUILDER -->
-              <div class="field keywords-builder">
-                <label>Habilidades / Palabras Clave</label>
-                <div class="keyword-input-row">
-                  <input 
-                    v-model="newKeyword" 
-                    type="text" 
-                    placeholder="Escribe una habilidad (ej: Vue.js) y presiona Enter o +" 
-                    @keydown.enter.prevent="addKeyword" 
-                  />
-                  <button type="button" class="btn-add-tag" @click="addKeyword">
-                    <Plus :size="16" />
-                  </button>
-                </div>
-                
-                <div class="tags-container" v-if="keywords && keywords.length > 0">
-                  <span v-for="(kw, idx) in keywords" :key="kw" class="interactive-tag">
-                    <span>{{ kw }}</span>
-                    <button type="button" class="btn-remove-tag" @click="removeKeyword(idx)">
-                      <X :size="10" />
-                    </button>
-                  </span>
-                </div>
-                <p v-else class="keywords-empty-hint">Añade palabras clave para que la IA Llanqui las incluya en la optimización de tu CV.</p>
-              </div>
+              <SkillPickerComponent
+                v-model="keywords"
+                id="candidate-skills"
+                label="Habilidades"
+                hint="Selecciona una habilidad del catálogo real o añade una que describa tu experiencia."
+                placeholder="Ej. atención al cliente"
+              />
             </template>
 
             <template v-else>
@@ -706,7 +660,7 @@ const isRucInputValid = computed(() => ruc.value && ruc.value.length === 11 && /
                     id="org-name"
                     v-model="companyName"
                     type="text"
-                    placeholder="Ej. Tech Solutions SAC"
+                    placeholder="Ej. Nombre legal de la empresa"
                     :disabled="rucVerified"
                   />
                 </div>
@@ -790,13 +744,17 @@ const isRucInputValid = computed(() => ruc.value && ruc.value.length === 11 && /
             </div>
           </div>
 
-          <div v-if="isEmployee && !historyPersistenceAvailable" class="history-contract-notice" role="status">
-            <strong>Experiencia, educación e idiomas temporalmente no editables</strong>
-            <p>La API actual permite reemplazar estas listas, pero no permite recuperar su contenido. La edición está desactivada para proteger información existente.</p>
+          <div v-if="isEmployee && isNewProfile" class="history-contract-notice" role="status">
+            <strong>Guarda primero tu perfil básico</strong>
+            <p>Cuando tu perfil esté creado podrás registrar experiencia, educación e idiomas con información sincronizada.</p>
           </div>
 
-          <!-- CV DATA: se habilita cuando la API pueda devolver las colecciones actuales. -->
-          <template v-if="isEmployee && historyPersistenceAvailable">
+          <div v-else-if="isEmployee && !historyPersistenceAvailable" class="history-contract-notice" role="status">
+            <strong>No pudimos cargar tu trayectoria profesional</strong>
+            <p>Actualiza la API y vuelve a cargar la página antes de editar estas secciones. Así evitamos reemplazar información existente.</p>
+          </div>
+
+          <template v-if="isEmployee && historyPersistenceAvailable && !isNewProfile">
             <!-- WORK EXPERIENCE -->
             <div class="glass-card">
               <h3 class="card-section-title">
@@ -808,13 +766,13 @@ const isRucInputValid = computed(() => ruc.value && ruc.value.length === 11 && /
                 <div class="history-item" v-for="exp in workExperiences" :key="exp.id">
                   <div class="history-item-main">
                     <strong>{{ exp.role }}</strong>
-                    <span class="history-item-sub">{{ exp.organization }}<template v-if="exp.location"> · {{ exp.location }}</template></span>
+                    <span class="history-item-sub">{{ exp.organization }}</span>
                     <span class="history-item-dates">{{ exp.startDate }} — {{ exp.endDate || 'Actualidad' }}</span>
                     <p v-if="exp.description" class="history-item-desc">{{ exp.description }}</p>
                   </div>
                   <div class="history-item-actions">
-                    <button type="button" class="icon-btn" @click="startWorkExperienceEdit(exp)"><Pencil :size="14" /></button>
-                    <button type="button" class="icon-btn danger" @click="deleteWorkExperience(exp.id!)"><Trash2 :size="14" /></button>
+                    <button type="button" class="icon-btn" :disabled="loading" aria-label="Editar experiencia" @click="startWorkExperienceEdit(exp)"><Pencil :size="14" /></button>
+                    <button type="button" class="icon-btn danger" :disabled="loading" aria-label="Eliminar experiencia" @click="deleteWorkExperience(exp.id!)"><Trash2 :size="14" /></button>
                   </div>
                 </div>
               </div>
@@ -854,13 +812,9 @@ const isRucInputValid = computed(() => ruc.value && ruc.value.length === 11 && /
                     </label>
                   </div>
                 </div>
-                <div class="field">
-                  <label for="we-location">Ubicación</label>
-                  <input id="we-location" v-model="workExperienceDraft.location" placeholder="Ej. Lima" />
-                </div>
-                <div class="field">
+                <div class="field" :class="{ 'field-invalid': fieldHasError(workExperienceErrors, 'description') }">
                   <label for="we-desc">Descripción</label>
-                  <textarea id="we-desc" v-model="workExperienceDraft.description" rows="3" />
+                  <textarea id="we-desc" v-model="workExperienceDraft.description" rows="3" maxlength="2000" />
                 </div>
 
                 <ul v-if="workExperienceErrors.length" class="form-errors-list">
@@ -868,11 +822,11 @@ const isRucInputValid = computed(() => ruc.value && ruc.value.length === 11 && /
                 </ul>
 
                 <div class="history-form-actions">
-                  <button type="button" class="btn-history-save" @click="attemptSaveWorkExperience">
+                  <button type="button" class="btn-history-save" :disabled="loading" @click="attemptSaveWorkExperience">
                     <Plus :size="14" />
                     <span>{{ editingWorkExperienceId ? 'Actualizar' : 'Agregar' }}</span>
                   </button>
-                  <button v-if="editingWorkExperienceId" type="button" class="btn-history-cancel" @click="cancelWorkExperienceEditReset">
+                  <button v-if="editingWorkExperienceId" type="button" class="btn-history-cancel" :disabled="loading" @click="cancelWorkExperienceEditReset">
                     Cancelar
                   </button>
                 </div>
@@ -891,13 +845,14 @@ const isRucInputValid = computed(() => ruc.value && ruc.value.length === 11 && /
                   <div class="history-item-main">
                     <strong>{{ edu.degree }}</strong>
                     <span class="history-item-sub">{{ edu.institution }}</span>
+                    <span v-if="edu.fieldOfStudy" class="history-item-desc">{{ edu.fieldOfStudy }}</span>
                     <span class="history-item-dates" v-if="edu.startDate || edu.endDate">
                       {{ edu.startDate || '—' }} — {{ edu.endDate || 'En curso' }}
                     </span>
                   </div>
                   <div class="history-item-actions">
-                    <button type="button" class="icon-btn" @click="startEducationEdit(edu)"><Pencil :size="14" /></button>
-                    <button type="button" class="icon-btn danger" @click="deleteEducation(edu.id!)"><Trash2 :size="14" /></button>
+                    <button type="button" class="icon-btn" :disabled="loading" aria-label="Editar educación" @click="startEducationEdit(edu)"><Pencil :size="14" /></button>
+                    <button type="button" class="icon-btn danger" :disabled="loading" aria-label="Eliminar educación" @click="deleteEducation(edu.id!)"><Trash2 :size="14" /></button>
                   </div>
                 </div>
               </div>
@@ -914,8 +869,12 @@ const isRucInputValid = computed(() => ruc.value && ruc.value.length === 11 && /
                     <input id="ed-degree" v-model="educationDraft.degree" placeholder="Ej. Ingeniería de Software" maxlength="150" />
                   </div>
                 </div>
+                <div class="field">
+                  <label for="ed-field">Área de estudio <span class="optional-label">Opcional</span></label>
+                  <input id="ed-field" v-model="educationDraft.fieldOfStudy" placeholder="Ej. Sistemas" maxlength="64" />
+                </div>
                 <div class="grid-2">
-                  <div class="field">
+                  <div class="field" :class="{ 'field-invalid': fieldHasError(educationErrors, 'startDate') }">
                     <label for="ed-start">Fecha de inicio</label>
                     <input id="ed-start" v-model="educationDraft.startDate" type="date" />
                   </div>
@@ -943,65 +902,11 @@ const isRucInputValid = computed(() => ruc.value && ruc.value.length === 11 && /
                 </ul>
 
                 <div class="history-form-actions">
-                  <button type="button" class="btn-history-save" @click="attemptSaveEducation">
+                  <button type="button" class="btn-history-save" :disabled="loading" @click="attemptSaveEducation">
                     <Plus :size="14" />
                     <span>{{ editingEducationId ? 'Actualizar' : 'Agregar' }}</span>
                   </button>
-                  <button v-if="editingEducationId" type="button" class="btn-history-cancel" @click="cancelEducationEditReset">
-                    Cancelar
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            <!-- CERTIFICATIONS -->
-            <div class="glass-card">
-              <h3 class="card-section-title">
-                <Award :size="18" class="title-icon" />
-                <span>Certificaciones</span>
-              </h3>
-
-              <div class="history-list" v-if="certifications.length">
-                <div class="history-item" v-for="cert in certifications" :key="cert.id">
-                  <div class="history-item-main">
-                    <strong>{{ cert.name }}</strong>
-                    <span class="history-item-sub" v-if="cert.issuingOrganization">{{ cert.issuingOrganization }}</span>
-                    <span class="history-item-dates" v-if="cert.issueDate">{{ cert.issueDate }}</span>
-                  </div>
-                  <div class="history-item-actions">
-                    <button type="button" class="icon-btn" @click="startCertificationEdit(cert)"><Pencil :size="14" /></button>
-                    <button type="button" class="icon-btn danger" @click="deleteCertification(cert.id!)"><Trash2 :size="14" /></button>
-                  </div>
-                </div>
-              </div>
-              <p v-else class="keywords-empty-hint">Aún no agregaste certificaciones.</p>
-
-              <div class="history-form">
-                <div class="grid-2">
-                  <div class="field" :class="{ 'field-invalid': fieldHasError(certificationErrors, 'name') }">
-                    <label for="cert-name">Nombre</label>
-                    <input id="cert-name" v-model="certificationDraft.name" placeholder="Ej. AWS Certified Developer" maxlength="200" />
-                  </div>
-                  <div class="field">
-                    <label for="cert-org">Emitido por</label>
-                    <input id="cert-org" v-model="certificationDraft.issuingOrganization" placeholder="Ej. Amazon" />
-                  </div>
-                </div>
-                <div class="field" :class="{ 'field-invalid': fieldHasError(certificationErrors, 'issueDate') }">
-                  <label for="cert-date">Fecha de emisión</label>
-                  <input id="cert-date" v-model="certificationDraft.issueDate" type="date" />
-                </div>
-
-                <ul v-if="certificationErrors.length" class="form-errors-list">
-                  <li v-for="err in certificationErrors" :key="err.field">{{ err.message }}</li>
-                </ul>
-
-                <div class="history-form-actions">
-                  <button type="button" class="btn-history-save" @click="attemptSaveCertification">
-                    <Plus :size="14" />
-                    <span>{{ editingCertificationId ? 'Actualizar' : 'Agregar' }}</span>
-                  </button>
-                  <button v-if="editingCertificationId" type="button" class="btn-history-cancel" @click="cancelCertificationEditReset">
+                  <button v-if="editingEducationId" type="button" class="btn-history-cancel" :disabled="loading" @click="cancelEducationEditReset">
                     Cancelar
                   </button>
                 </div>
@@ -1018,12 +923,12 @@ const isRucInputValid = computed(() => ruc.value && ruc.value.length === 11 && /
               <div class="history-list" v-if="languages.length">
                 <div class="history-item" v-for="lang in languages" :key="lang.id">
                   <div class="history-item-main">
-                    <strong>{{ lang.name }}</strong>
+                    <strong>{{ formatLanguageCode(lang.name) }}</strong>
                     <span class="history-item-sub">{{ lang.level }}</span>
                   </div>
                   <div class="history-item-actions">
-                    <button type="button" class="icon-btn" @click="startLanguageEdit(lang)"><Pencil :size="14" /></button>
-                    <button type="button" class="icon-btn danger" @click="deleteLanguage(lang.id!)"><Trash2 :size="14" /></button>
+                    <button type="button" class="icon-btn" :disabled="loading" aria-label="Editar idioma" @click="startLanguageEdit(lang)"><Pencil :size="14" /></button>
+                    <button type="button" class="icon-btn danger" :disabled="loading" aria-label="Eliminar idioma" @click="deleteLanguage(lang.id!)"><Trash2 :size="14" /></button>
                   </div>
                 </div>
               </div>
@@ -1033,7 +938,11 @@ const isRucInputValid = computed(() => ruc.value && ruc.value.length === 11 && /
                 <div class="grid-2">
                   <div class="field" :class="{ 'field-invalid': fieldHasError(languageErrors, 'name') }">
                     <label for="lang-name">Idioma</label>
-                    <input id="lang-name" v-model="languageDraft.name" placeholder="Ej. Inglés" maxlength="50" />
+                    <input id="lang-name" v-model="languageDraft.name" list="backend-language-codes" placeholder="Ej. Es" maxlength="2" autocapitalize="none" />
+                    <datalist id="backend-language-codes">
+                      <option v-for="code in BACKEND_LANGUAGE_CODES" :key="code" :value="code" :label="formatLanguageCode(code)" />
+                    </datalist>
+                    <p class="field-hint">Selecciona el código del idioma, por ejemplo <strong>Es</strong> o <strong>En</strong>.</p>
                   </div>
                   <div class="field" :class="{ 'field-invalid': fieldHasError(languageErrors, 'level') }">
                     <label for="lang-level">Nivel</label>
@@ -1050,11 +959,11 @@ const isRucInputValid = computed(() => ruc.value && ruc.value.length === 11 && /
                 </ul>
 
                 <div class="history-form-actions">
-                  <button type="button" class="btn-history-save" @click="attemptSaveLanguage">
+                  <button type="button" class="btn-history-save" :disabled="loading" @click="attemptSaveLanguage">
                     <Plus :size="14" />
                     <span>{{ editingLanguageId ? 'Actualizar' : 'Agregar' }}</span>
                   </button>
-                  <button v-if="editingLanguageId" type="button" class="btn-history-cancel" @click="cancelLanguageEditReset">
+                  <button v-if="editingLanguageId" type="button" class="btn-history-cancel" :disabled="loading" @click="cancelLanguageEditReset">
                     Cancelar
                   </button>
                 </div>
@@ -1321,7 +1230,8 @@ const isRucInputValid = computed(() => ruc.value && ruc.value.length === 11 && /
 .completeness-bar-fill {
   height: 100%;
   border-radius: 99px;
-  transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  transform-origin: left center;
+  transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .completeness-number {
@@ -1619,7 +1529,7 @@ const isRucInputValid = computed(() => ruc.value && ruc.value.length === 11 && /
   margin: 6px 0 0 0;
 }
 
-/* CV data sections: work experience / education / certifications / languages */
+/* Secciones persistidas de experiencia, educación e idiomas. */
 .history-list {
   display: flex;
   flex-direction: column;
@@ -1702,6 +1612,18 @@ const isRucInputValid = computed(() => ruc.value && ruc.value.length === 11 && /
   padding-top: 14px;
 }
 
+.optional-label,
+.field-hint {
+  color: var(--color-text-secondary);
+  font-size: 12px;
+  font-weight: var(--fw-regular);
+}
+
+.field-hint {
+  margin: 6px 0 0;
+  line-height: 1.45;
+}
+
 .field-invalid input,
 .field-invalid select,
 .field-invalid textarea {
@@ -1747,6 +1669,7 @@ const isRucInputValid = computed(() => ruc.value && ruc.value.length === 11 && /
   display: flex;
   gap: 10px;
   margin-top: 4px;
+  flex-wrap: wrap;
 }
 
 .btn-history-save {
@@ -1757,7 +1680,8 @@ const isRucInputValid = computed(() => ruc.value && ruc.value.length === 11 && /
   color: #fff;
   border: none;
   border-radius: var(--radius-button);
-  padding: 9px 16px;
+  min-height: 46px;
+  padding: 10px 16px;
   font-size: 13px;
   font-weight: var(--fw-semibold);
   cursor: pointer;
@@ -1779,7 +1703,8 @@ const isRucInputValid = computed(() => ruc.value && ruc.value.length === 11 && /
   border: 1px solid var(--color-border);
   color: var(--color-text-secondary);
   border-radius: var(--radius-button);
-  padding: 9px 16px;
+  min-height: 46px;
+  padding: 10px 16px;
   font-size: 13px;
   font-weight: var(--fw-semibold);
   cursor: pointer;
@@ -1788,6 +1713,12 @@ const isRucInputValid = computed(() => ruc.value && ruc.value.length === 11 && /
 
 .btn-history-cancel:hover {
   background: var(--color-bg);
+}
+
+.btn-history-cancel:disabled,
+.icon-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
 }
 
 /* Action button row */

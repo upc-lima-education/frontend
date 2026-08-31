@@ -77,36 +77,39 @@ function locationFor(job: GetJobByIdResponse): string {
     const loc = ubigeoService.getLocation(job.ubigeo);
     if (loc) return `${loc.district}, ${loc.department}`;
   }
-  return 'Lima, Perú';
+  return 'Ubicación no especificada';
 }
 
-function companyNameFor(job: GetJobByIdResponse, index: number): string {
+function companyNameFor(job: GetJobByIdResponse): string {
+  if (job.companyName?.trim()) return job.companyName;
   if (job.originPage && job.originPage !== 'Llanqui' && !job.originPage.startsWith('http')) {
     return job.originPage;
   }
-  const defaults = ['Empresa ABC', 'Distribuidora Progreso', 'TechCorp Solutions', 'Retail Express', 'Innova Software'];
-  return defaults[index % defaults.length] ?? 'Empresa ABC';
+  return 'Empresa no especificada';
 }
 
-function companyLogoFor(job: GetJobByIdResponse, index: number): { initials: string; bg: string; color: string } {
-  const presets = [
-    { initials: 'abc', bg: '#0F172A', color: '#FFFFFF' },
-    { initials: 'dp', bg: '#EA580C', color: '#FFFFFF' },
-    { initials: 'tc', bg: '#4338CA', color: '#FFFFFF' },
-    { initials: 're', bg: '#0284C7', color: '#FFFFFF' },
-    { initials: 'is', bg: '#16A34A', color: '#FFFFFF' },
-  ];
-  return presets[index % presets.length] ?? { initials: 'abc', bg: '#0F172A', color: '#FFFFFF' };
+function companyInitialsFor(job: GetJobByIdResponse): string {
+  const label = companyNameFor(job) === 'Empresa no especificada' ? job.title : companyNameFor(job);
+  const initials = label
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((word) => word[0])
+    .join('')
+    .toUpperCase();
+  return initials || 'LL';
 }
 
 function modalityLabel(jobType?: string): string {
   if (jobType === 'Remote') return 'Remoto';
   if (jobType === 'Hybrid') return 'Híbrido';
-  return 'Presencial';
+  if (jobType === 'InPerson' || jobType === 'Presential') return 'Presencial';
+  return jobType || 'Modalidad no especificada';
 }
 
 function salaryRangeLabel(job: GetJobByIdResponse): string {
-  if (!job.minSalary && !job.maxSalary) return 'S/ 1,500 - 1,800';
+  if (!job.minSalary && !job.maxSalary) return 'Salario no especificado';
   const currency = job.currency === 'PEN' ? 'S/' : (job.currency || 'S/');
   if (job.minSalary && job.maxSalary && job.minSalary !== job.maxSalary) {
     return `${currency} ${job.minSalary.toLocaleString()} - ${job.maxSalary.toLocaleString()}`;
@@ -114,10 +117,28 @@ function salaryRangeLabel(job: GetJobByIdResponse): string {
   return `${currency} ${(job.minSalary || job.maxSalary)?.toLocaleString()}`;
 }
 
-function publishDateLabel(index: number): string {
-  if (index === 0 || index === 1) return 'Publicado hoy';
-  if (index === 2) return 'Publicado ayer';
-  return `Hace ${index} días`;
+function publishDateLabel(creationDate?: Date | string): string {
+  if (!creationDate) return 'Fecha no especificada';
+
+  const date = new Date(creationDate);
+  if (Number.isNaN(date.getTime())) return 'Fecha no especificada';
+
+  const elapsedDays = Math.floor((Date.now() - date.getTime()) / 86_400_000);
+  if (elapsedDays <= 0) return 'Publicado hoy';
+  if (elapsedDays === 1) return 'Publicado ayer';
+  if (elapsedDays < 7) return `Hace ${elapsedDays} días`;
+  return `Publicado el ${new Intl.DateTimeFormat('es-PE', { day: 'numeric', month: 'short' }).format(date)}`;
+}
+
+function isRecent(job: GetJobByIdResponse): boolean {
+  if (!job.creationDate) return false;
+  const date = new Date(job.creationDate);
+  if (Number.isNaN(date.getTime())) return false;
+  return Date.now() - date.getTime() <= 7 * 86_400_000;
+}
+
+function recommendationScore(job: GetJobByIdResponse): number | undefined {
+  return (job as GetJobByIdResponse & { similarityScore?: number }).similarityScore;
 }
 
 function toggleSaveJob(id: string) {
@@ -193,21 +214,41 @@ const filteredJobs = computed(() => {
       if (jobCeiling < appliedSalary.value) return false;
     }
     if (appliedModality.value && job.jobType !== appliedModality.value) return false;
+    if (experienceFilter.value && job.experience) {
+      const experience = job.experience.toLowerCase();
+      const filters: Record<string, string[]> = {
+        none: ['sin experiencia', 'no experience'],
+        '3m': ['3 meses', '3 months'],
+        '6m': ['6 meses', '6 months'],
+        '1y': ['1 año', '1 aÃ±o', '1 year'],
+      };
+      const acceptedLabels = filters[experienceFilter.value] ?? [];
+      if (acceptedLabels.length && !acceptedLabels.some((label) => experience.includes(label))) return false;
+    }
     return true;
   });
 });
 
-const totalJobsCount = computed(() => {
-  return filteredJobs.value.length > 0 ? filteredJobs.value.length : 6390;
+const sortedJobs = computed(() => {
+  const list = [...filteredJobs.value];
+  if (sortBy.value === 'salary-high') {
+    return list.sort((a, b) => (b.maxSalary || b.minSalary || 0) - (a.maxSalary || a.minSalary || 0));
+  }
+  if (sortBy.value === 'relevance') {
+    return list.sort((a, b) => (recommendationScore(b) || 0) - (recommendationScore(a) || 0));
+  }
+  return list.sort((a, b) => new Date(b.creationDate || 0).getTime() - new Date(a.creationDate || 0).getTime());
 });
+
+const totalJobsCount = computed(() => sortedJobs.value.length);
 
 const currentPage = ref(1);
 const pageSize = 10;
-const totalPages = computed(() => Math.max(1, Math.ceil(filteredJobs.value.length / pageSize)));
+const totalPages = computed(() => Math.max(1, Math.ceil(sortedJobs.value.length / pageSize)));
 
 const paginatedJobs = computed(() => {
   const start = (currentPage.value - 1) * pageSize;
-  return filteredJobs.value.slice(start, start + pageSize);
+  return sortedJobs.value.slice(start, start + pageSize);
 });
 
 function goToPage(page: number) {
@@ -379,32 +420,31 @@ onMounted(loadJobs);
           <p>Buscando las mejores oportunidades laborales...</p>
         </div>
 
-        <div v-else-if="filteredJobs.length > 0" class="cards-stack">
+        <div v-else-if="sortedJobs.length > 0" class="cards-stack">
           <article
             v-for="(job, index) in paginatedJobs"
             :key="job.id"
             class="job-row-card"
           >
             <!-- Company Logo -->
-            <div
-              class="company-logo-avatar"
-              :style="{
-                backgroundColor: companyLogoFor(job, index).bg,
-                color: companyLogoFor(job, index).color,
-              }"
-            >
-              {{ companyLogoFor(job, index).initials }}
+            <div class="company-logo-avatar">
+              <img
+                v-if="job.companyImage"
+                :src="job.companyImage"
+                :alt="`Logo de ${companyNameFor(job)}`"
+              />
+              <span v-else aria-hidden="true">{{ companyInitialsFor(job) }}</span>
             </div>
 
             <!-- Job Main Info -->
             <div class="job-info-block">
               <div class="job-badge-tags">
-                <span v-if="index === 0 || index === 1" class="badge-pill badge-pill--lime">Nuevo</span>
-                <span v-if="index === 0 || index === 2" class="badge-pill badge-pill--blue">★ Para ti</span>
+                <span v-if="isRecent(job)" class="badge-pill badge-pill--lime">Nueva</span>
+                <span v-if="recommendationScore(job)" class="badge-pill badge-pill--blue">Recomendada para ti</span>
               </div>
 
               <h2 class="job-title-text">{{ job.title }}</h2>
-              <p class="job-company-text">{{ companyNameFor(job, index) }}</p>
+              <p class="job-company-text">{{ companyNameFor(job) }}</p>
 
               <div class="job-details-meta">
                 <span class="meta-item">
@@ -419,14 +459,14 @@ onMounted(loadJobs);
                   <DollarSign :size="14" class="meta-icon" />
                   <span>{{ salaryRangeLabel(job) }}</span>
                 </span>
-                <span class="contract-pill">Tiempo completo</span>
+                <span v-if="job.workHours" class="contract-pill">{{ job.workHours }}</span>
               </div>
             </div>
 
             <!-- Right Controls: Date, Favorite, Ver empleo -->
             <div class="job-row-actions">
               <div class="job-row-top-actions">
-                <span class="publish-date-text">{{ publishDateLabel(index) }}</span>
+                <span class="publish-date-text">{{ publishDateLabel(job.creationDate) }}</span>
                 <button
                   type="button"
                   class="favorite-icon-btn"
@@ -569,7 +609,7 @@ onMounted(loadJobs);
   display: flex;
   align-items: center;
   gap: 10px;
-  height: 44px;
+  min-height: 48px;
   padding: 0 14px;
   background: var(--color-bg);
   border: 1px solid var(--color-border);
@@ -579,8 +619,8 @@ onMounted(loadJobs);
 
 .input-inner:focus-within {
   background: var(--color-surface);
-  border-color: #1E2BAA;
-  box-shadow: 0 0 0 3px rgba(30, 43, 170, 0.12);
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 14%, transparent);
 }
 
 .input-icon {
@@ -603,9 +643,9 @@ onMounted(loadJobs);
 }
 
 .btn-search-main {
-  height: 44px;
+  min-height: 48px;
   padding: 0 26px;
-  background: #1E2BAA;
+  background: var(--color-primary);
   color: #ffffff;
   border: none;
   border-radius: var(--radius-button);
@@ -691,7 +731,7 @@ onMounted(loadJobs);
 }
 
 .select-pill-wrap select:focus {
-  border-color: #1E2BAA;
+  border-color: var(--color-primary);
 }
 
 .select-caret {
@@ -783,8 +823,8 @@ onMounted(loadJobs);
 }
 
 .arrow-btn:hover:not(:disabled) {
-  border-color: #1E2BAA;
-  color: #1E2BAA;
+  border-color: var(--color-primary);
+  color: var(--color-primary);
 }
 
 .arrow-btn:disabled {
@@ -830,6 +870,15 @@ onMounted(loadJobs);
   font-size: 18px;
   font-weight: 700;
   flex-shrink: 0;
+  overflow: hidden;
+  background: var(--color-primary);
+  color: #ffffff;
+}
+
+.company-logo-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .job-info-block {
@@ -862,7 +911,7 @@ onMounted(loadJobs);
 
 .badge-pill--blue {
   background: #EEF2FF;
-  color: #1E2BAA;
+  color: var(--color-primary);
   border: 1px solid #D0DBFF;
 }
 
@@ -961,10 +1010,10 @@ onMounted(loadJobs);
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  height: 38px;
+  min-height: 46px;
   padding: 0 22px;
   border-radius: var(--radius-button);
-  background: #1E2BAA;
+  background: var(--color-primary);
   color: #ffffff !important;
   font-size: 13px;
   font-weight: 600;
@@ -996,7 +1045,7 @@ onMounted(loadJobs);
   width: 36px;
   height: 36px;
   border: 3px solid var(--color-border);
-  border-top-color: #1E2BAA;
+  border-top-color: var(--color-primary);
   border-radius: 50%;
   animation: spin 0.7s linear infinite;
 }
@@ -1010,7 +1059,7 @@ onMounted(loadJobs);
   height: 64px;
   border-radius: 50%;
   background: #EEF2FF;
-  color: #1E2BAA;
+  color: var(--color-primary);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1032,9 +1081,9 @@ onMounted(loadJobs);
 
 .btn-clear-large {
   margin-top: 8px;
-  height: 40px;
+  min-height: 46px;
   padding: 0 20px;
-  background: #1E2BAA;
+  background: var(--color-primary);
   color: #fff;
   border: none;
   border-radius: 8px;
@@ -1069,8 +1118,8 @@ onMounted(loadJobs);
 }
 
 .page-nav-btn:hover:not(:disabled) {
-  border-color: #1E2BAA;
-  color: #1E2BAA;
+  border-color: var(--color-primary);
+  color: var(--color-primary);
 }
 
 .page-nav-btn:disabled {
@@ -1102,7 +1151,7 @@ onMounted(loadJobs);
 }
 
 .page-num-btn.is-active {
-  background: #1E2BAA;
+  background: var(--color-primary);
   color: #ffffff;
 }
 

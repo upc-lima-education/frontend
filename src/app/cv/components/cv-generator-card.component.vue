@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch, onBeforeUnmount } from 'vue';
+import { ref, watch, onBeforeUnmount, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import {
   Download,
@@ -12,9 +12,13 @@ import {
   Copy,
   Check,
   Eye,
-  CreditCard
+  CreditCard,
+  Trash2,
+  RefreshCw
 } from 'lucide-vue-next';
 import { useCvGenerator } from '@/app/cv/composables/useCvGenerator';
+import { cvService } from '@/app/cv/services/cv.service';
+import type { CvSummaryResponse } from '@/app/cv/model/cv.model';
 
 const router = useRouter();
 const { state, errorMessage, isCreditError, previewUrl, generate, download, reset } = useCvGenerator();
@@ -25,6 +29,10 @@ function goToPayments() {
 const prompt = ref('');
 const isCopied = ref(false);
 const activePreset = ref(-1);
+const savedCvs = ref<CvSummaryResponse[]>([]);
+const savedCvsLoading = ref(false);
+const savedCvsError = ref('');
+const savedCvActionId = ref<string | null>(null);
 
 const promptPresets = [
   { label: 'Frontend', text: 'Optimizar para desarrollador frontend con Vue.js y CSS moderno.' },
@@ -70,7 +78,72 @@ watch(state, (newState) => {
       stepInterval = null;
     }
   }
+
+  if (newState === 'ready') void loadSavedCvs();
 });
+
+async function loadSavedCvs() {
+  savedCvsLoading.value = true;
+  savedCvsError.value = '';
+  try {
+    savedCvs.value = await cvService.getMine();
+  } catch (error) {
+    console.error('Error loading saved CVs:', error);
+    savedCvsError.value = 'No se pudo cargar tu biblioteca de CV.';
+  } finally {
+    savedCvsLoading.value = false;
+  }
+}
+
+function formatSavedCvDate(value: string): string {
+  const date = new Date(value);
+  return Number.isNaN(date.getTime())
+    ? ''
+    : date.toLocaleDateString('es-PE', { day: 'numeric', month: 'short', year: 'numeric' });
+}
+
+function downloadBlob(blob: Blob, filename: string): void {
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement('a');
+  anchor.href = url;
+  anchor.download = filename;
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+  URL.revokeObjectURL(url);
+}
+
+async function downloadSavedCv(cv: CvSummaryResponse): Promise<void> {
+  savedCvActionId.value = cv.id;
+  savedCvsError.value = '';
+  try {
+    if (!cv.hasFileContent) await cvService.transformToPdf(cv.id);
+    const file = await cvService.getFile(cv.id);
+    downloadBlob(file, `${cv.title || 'curriculum'}.pdf`);
+    await loadSavedCvs();
+  } catch (error) {
+    console.error('Error downloading saved CV:', error);
+    savedCvsError.value = 'No se pudo preparar este CV para descargar.';
+  } finally {
+    savedCvActionId.value = null;
+  }
+}
+
+async function deleteSavedCv(cv: CvSummaryResponse): Promise<void> {
+  savedCvActionId.value = cv.id;
+  savedCvsError.value = '';
+  try {
+    await cvService.delete(cv.id);
+    savedCvs.value = savedCvs.value.filter((item) => item.id !== cv.id);
+  } catch (error) {
+    console.error('Error deleting saved CV:', error);
+    savedCvsError.value = 'No se pudo eliminar este CV.';
+  } finally {
+    savedCvActionId.value = null;
+  }
+}
+
+onMounted(() => { void loadSavedCvs(); });
 
 onBeforeUnmount(() => {
   if (stepInterval) clearInterval(stepInterval);
@@ -102,7 +175,6 @@ async function copyPreviewLink() {
         <span class="credits-badge">
           <Sparkle :size="10" />
           <span>La generación puede consumir créditos según la configuración de tu cuenta.</span>
-          <span v-else>Consume 1 crédito</span>
         </span>
       </div>
       <h3 class="cv-title">{{ $t('cv.title') }}</h3>
@@ -150,6 +222,40 @@ async function copyPreviewLink() {
         <Sparkles :size="16" />
         <span>{{ $t('cv.generate') }}</span>
       </button>
+
+      <section class="cv-library" aria-labelledby="cv-library-title">
+        <div class="library-head">
+          <div>
+            <h4 id="cv-library-title">Mis CV</h4>
+            <p>Documentos guardados en tu cuenta.</p>
+          </div>
+          <button type="button" class="library-refresh" :disabled="savedCvsLoading" aria-label="Actualizar mis CV" @click="loadSavedCvs">
+            <RefreshCw :size="14" :class="{ rotating: savedCvsLoading }" />
+          </button>
+        </div>
+        <p v-if="savedCvsError" class="library-error" role="alert">{{ savedCvsError }}</p>
+        <p v-else-if="savedCvsLoading" class="library-note">Cargando CV guardados…</p>
+        <p v-else-if="!savedCvs.length" class="library-note">Todavía no tienes CV guardados.</p>
+        <ul v-else class="cv-library-list">
+          <li v-for="cv in savedCvs" :key="cv.id">
+            <div class="saved-cv-info">
+              <FileText :size="16" aria-hidden="true" />
+              <div>
+                <strong>{{ cv.title }}</strong>
+                <span>{{ cv.isCurrent ? 'CV principal · ' : '' }}Actualizado {{ formatSavedCvDate(cv.updatedAt) }}</span>
+              </div>
+            </div>
+            <div class="saved-cv-actions">
+              <button type="button" :disabled="savedCvActionId === cv.id" @click="downloadSavedCv(cv)">
+                <Download :size="14" /><span>{{ savedCvActionId === cv.id ? 'Procesando…' : 'Descargar' }}</span>
+              </button>
+              <button type="button" class="delete-cv" :disabled="savedCvActionId === cv.id" :aria-label="`Eliminar ${cv.title}`" @click="deleteSavedCv(cv)">
+                <Trash2 :size="14" />
+              </button>
+            </div>
+          </li>
+        </ul>
+      </section>
     </div>
 
     <!-- State: GENERATING -->
@@ -180,7 +286,7 @@ async function copyPreviewLink() {
       <div class="status-overall">
         <h4 class="cv-status-text">{{ $t('cv.generating') }}</h4>
         <div class="progress-bar-wrap">
-          <div class="progress-bar-fill" :style="{ width: ((currentStep + 1) * 25) + '%' }"></div>
+          <div class="progress-bar-fill" :style="{ '--progress': (currentStep + 1) * 0.25 }"></div>
         </div>
       </div>
     </div>
@@ -599,10 +705,13 @@ async function copyPreviewLink() {
 }
 
 .progress-bar-fill {
+  width: 100%;
   height: 100%;
   background: var(--color-accent);
   border-radius: 99px;
-  transition: width 0.4s ease;
+  transform: scaleX(var(--progress));
+  transform-origin: left center;
+  transition: transform 0.4s ease;
 }
 
 /* Ready State */
@@ -851,6 +960,126 @@ async function copyPreviewLink() {
   background: var(--color-primary-dark) !important;
 }
 
+.cv-library {
+  display: grid;
+  gap: 10px;
+  margin-top: 4px;
+  padding-top: var(--space-2);
+  border-top: 1px solid var(--color-border);
+}
+
+.library-head,
+.saved-cv-info,
+.saved-cv-actions,
+.cv-library-list li {
+  display: flex;
+  align-items: center;
+}
+
+.library-head {
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.library-head h4,
+.library-head p,
+.library-note,
+.library-error {
+  margin: 0;
+}
+
+.library-head h4 {
+  color: var(--color-text-primary);
+  font-size: 13px;
+  font-weight: var(--fw-bold);
+}
+
+.library-head p,
+.library-note,
+.library-error {
+  color: var(--color-text-secondary);
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.library-error { color: var(--color-state-error-dark); }
+
+.library-refresh,
+.saved-cv-actions button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 34px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: var(--color-surface);
+  color: var(--color-primary);
+  font: inherit;
+  font-size: 11px;
+  font-weight: var(--fw-semibold);
+  cursor: pointer;
+}
+
+.library-refresh { width: 34px; }
+
+.cv-library-list {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.cv-library-list li {
+  justify-content: space-between;
+  gap: 10px;
+  min-width: 0;
+  padding: 10px;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  background: var(--color-bg);
+}
+
+.saved-cv-info {
+  min-width: 0;
+  gap: 8px;
+  color: var(--color-primary);
+}
+
+.saved-cv-info > div {
+  display: grid;
+  min-width: 0;
+  gap: 2px;
+}
+
+.saved-cv-info strong,
+.saved-cv-info span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.saved-cv-info strong {
+  color: var(--color-text-primary);
+  font-size: 12px;
+}
+
+.saved-cv-info span {
+  color: var(--color-text-muted);
+  font-size: 10px;
+}
+
+.saved-cv-actions { flex: 0 0 auto; gap: 6px; }
+.saved-cv-actions button { gap: 5px; padding: 0 9px; }
+.saved-cv-actions .delete-cv { width: 34px; padding: 0; color: var(--color-state-error-dark); }
+.saved-cv-actions button:disabled,
+.library-refresh:disabled { opacity: .58; cursor: wait; }
+.library-refresh:focus-visible,
+.saved-cv-actions button:focus-visible { outline: 3px solid rgba(185, 239, 74, .75); outline-offset: 2px; }
+.rotating { animation: rotate 800ms linear infinite; }
+
+@keyframes rotate { to { transform: rotate(360deg); } }
+
 .animate-fade-in {
   animation: fadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
@@ -862,5 +1091,15 @@ async function copyPreviewLink() {
 
 .text-success {
   color: var(--color-state-success);
+}
+
+@media (max-width: 480px) {
+  .cv-library-list li { align-items: flex-start; flex-direction: column; }
+  .saved-cv-actions { width: 100%; }
+  .saved-cv-actions button:first-child { flex: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rotating { animation: none; }
 }
 </style>

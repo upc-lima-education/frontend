@@ -22,7 +22,6 @@ const links = computed<NavLink[]>(() => {
     if (isOrganization.value) {
         return [
             home,
-            { to: ROUTE_CONSTANTS.NEWS_PAGE, label: 'Novedades' },
             { to: ROUTE_CONSTANTS.RECRUITMENT_APPLICATIONS, label: 'Postulaciones' },
             { to: ROUTE_CONSTANTS.MESSAGE_COMPANY, label: 'Mensajes' },
             profile,
@@ -234,7 +233,7 @@ async function handleLogout() {
     background: var(--color-surface);
     border-bottom: 1px solid var(--color-border);
     font-family: var(--font-family);
-    box-shadow: 0 1px 4px rgba(30, 43, 170, 0.03);
+    box-shadow: 0 1px 12px rgba(21, 32, 59, 0.045);
 }
 
 .navbar-inner {
@@ -346,7 +345,7 @@ async function handleLogout() {
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    height: 40px;
+    min-height: 46px;
     padding: 0 18px;
     border-radius: var(--radius-button);
     background: var(--color-primary);
@@ -355,7 +354,7 @@ async function handleLogout() {
     font-weight: 600;
     text-decoration: none;
     transition: background-color 150ms ease, transform 100ms ease;
-    box-shadow: 0 2px 8px rgba(30, 43, 170, 0.18);
+    box-shadow: 0 6px 14px color-mix(in srgb, var(--color-primary) 20%, transparent);
 }
 
 .nav-cta span,
@@ -374,8 +373,8 @@ async function handleLogout() {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 40px;
-    height: 40px;
+    width: 44px;
+    height: 44px;
     border: 1px solid var(--color-border);
     border-radius: 50%;
     background: var(--color-surface);
@@ -422,6 +421,7 @@ async function handleLogout() {
     background: var(--color-surface);
     color: var(--color-text-primary);
     cursor: pointer;
+    min-height: 44px;
     transition: border-color 150ms ease, background-color 150ms ease;
 }
 
@@ -575,6 +575,7 @@ async function handleLogout() {
     display: flex;
     align-items: center;
     justify-content: space-between;
+    min-height: 48px;
     padding: 12px 14px;
     border-radius: 8px;
     color: var(--color-text-secondary);

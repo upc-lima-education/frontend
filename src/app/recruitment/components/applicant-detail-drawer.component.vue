@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
 import {
-    X, MapPin, Mail, Phone, Briefcase, Check, Ban, UserCheck,
+    X, Check, Ban,
     MessageSquare, Send, FileText,
 } from 'lucide-vue-next';
 import {
@@ -10,28 +10,36 @@ import {
     APPLICATION_STATUS_LABEL,
 } from '../enums/application-status.enum';
 import type { ApplicationResponse } from '../model/application.response';
-import { NotificationType } from '../model/notification.model';
+import { NotificationChannel, NotificationType } from '../model/notification.model';
 
 const props = defineProps<{
     application: ApplicationResponse;
     actionPending?: boolean;
+    messagePending?: boolean;
+    cvDownloading?: boolean;
 }>();
 
 const emit = defineEmits<{
     (e: 'close'): void;
-    (e: 'approve', application: ApplicationResponse): void;
-    (e: 'reject', application: ApplicationResponse): void;
+    (e: 'approve', application: ApplicationResponse, channels: NotificationChannel[]): void;
+    (e: 'reject', application: ApplicationResponse, channels: NotificationChannel[]): void;
     (e: 'message', application: ApplicationResponse): void;
+    (e: 'download-cv', application: ApplicationResponse): void;
     (e: 'notify', payload: { application: ApplicationResponse; type: NotificationType; title: string; message: string }): void;
 }>();
 
-const initials = computed(() => {
-    const parts = props.application.applicant.fullName.trim().split(/\s+/).filter(Boolean);
-    if (parts.length === 0) return '?';
-    const first = parts[0]?.[0] ?? '';
-    const second = parts.length > 1 ? (parts[1]?.[0] ?? '') : (parts[0]?.[1] ?? '');
-    return (first + second).toUpperCase() || '?';
+const applicantName = computed(() => {
+    const { firstName, lastName } = props.application.applicant;
+    return `${firstName ?? ''} ${lastName ?? ''}`.trim() || 'Candidato sin nombre público';
 });
+
+const initials = computed(() => applicantName.value
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0])
+    .join('')
+    .toUpperCase() || 'C');
 
 /** Pasos visibles del proceso (descartado se muestra aparte). */
 const steps = computed(() =>
@@ -51,7 +59,6 @@ function stepState(step: ApplicationStatus): 'done' | 'current' | 'todo' {
 // ---- Notificación del proceso ----
 const NOTIFY_OPTIONS: { type: NotificationType; label: string }[] = [
     { type: NotificationType.ApplicationAccepted, label: 'Postulación aprobada' },
-    { type: NotificationType.CandidateSelected, label: 'Seleccionado para el puesto' },
     { type: NotificationType.ApplicationRejected, label: 'No continúa en el proceso' },
 ];
 
@@ -69,23 +76,17 @@ const message = ref('');
 
 /** Plantilla (título + mensaje) sugerida para cada tipo. Editable luego. */
 function templateFor(type: NotificationType): { title: string; message: string } {
-    const name = props.application.applicant.fullName.split(/\s+/)[0] || props.application.applicant.fullName;
     const job = props.application.jobTitle;
     switch (type) {
-        case NotificationType.CandidateSelected:
-            return {
-                title: '¡Has sido seleccionado(a)!',
-                message: `Hola ${name}, ¡felicitaciones! Has sido seleccionado(a) para el puesto de ${job}. Pronto te contactaremos con los siguientes pasos.`,
-            };
         case NotificationType.ApplicationRejected:
             return {
                 title: 'Resultado de tu postulación',
-                message: `Hola ${name}, gracias por postular al puesto de ${job}. En esta ocasión continuamos con otros candidatos. Te deseamos mucho éxito.`,
+                message: `Gracias por postular al puesto de ${job}. En esta ocasión continuamos con otros candidatos. Te deseamos mucho éxito.`,
             };
         default:
             return {
                 title: 'Tu postulación avanzó',
-                message: `Hola ${name}, tu postulación al puesto de ${job} fue aprobada y avanzas a la siguiente etapa. Te contactaremos para coordinar.`,
+                message: `Tu postulación al puesto de ${job} fue aprobada y avanzas a la siguiente etapa. Te contactaremos para coordinar.`,
             };
     }
 }
@@ -106,7 +107,18 @@ watch(
 // Al cambiar el tipo manualmente: rellena título y mensaje sugeridos.
 watch(notifyType, () => applyTemplate());
 
-const hasPhone = computed(() => Boolean(props.application.applicant.phone));
+const decisionChannels = ref<NotificationChannel[]>([]);
+const canDecide = computed(() => props.application.status === ApplicationStatus.Pending);
+
+function approveApplication(): void {
+    if (!canDecide.value) return;
+    emit('approve', props.application, [...decisionChannels.value]);
+}
+
+function rejectApplication(): void {
+    if (!canDecide.value) return;
+    emit('reject', props.application, [...decisionChannels.value]);
+}
 
 /** Vista previa del modo automático (mensaje armado por tipo). */
 const preview = computed(() => templateFor(notifyType.value));
@@ -143,38 +155,20 @@ function emitNotify(): void {
             <div class="drawer-body">
                 <!-- Identidad -->
                 <section class="who-block">
-                    <img
-                        v-if="application.applicant.pictureUrl"
-                        :src="application.applicant.pictureUrl"
-                        :alt="application.applicant.fullName"
-                        class="avatar"
-                    />
-                    <span v-else class="avatar avatar--placeholder">{{ initials }}</span>
+                    <img v-if="application.applicant.profilePicture" :src="application.applicant.profilePicture" class="avatar" alt="" />
+                    <span v-else class="avatar avatar--placeholder" aria-hidden="true">{{ initials }}</span>
                     <div class="who-text">
-                        <h3 class="who-name">{{ application.applicant.fullName }}</h3>
-                        <p v-if="application.applicant.headline" class="who-headline">
-                            <Briefcase :size="14" :stroke-width="1.5" />
-                            <span>{{ application.applicant.headline }}</span>
-                        </p>
+                        <h3 class="who-name">{{ applicantName }}</h3>
+                        <p class="who-reference">Referencia: {{ application.applicant.reference }}</p>
                         <p class="who-job">Postuló a: <strong>{{ application.jobTitle }}</strong></p>
                     </div>
                 </section>
 
-                <!-- Contacto -->
-                <ul class="contact-list">
-                    <li v-if="application.applicant.location">
-                        <MapPin :size="16" :stroke-width="1.5" />
-                        <span>{{ application.applicant.location }}</span>
-                    </li>
-                    <li v-if="application.applicant.email">
-                        <Mail :size="16" :stroke-width="1.5" />
-                        <span>{{ application.applicant.email }}</span>
-                    </li>
-                    <li v-if="application.applicant.phone">
-                        <Phone :size="16" :stroke-width="1.5" />
-                        <span>{{ application.applicant.phone }}</span>
-                    </li>
+                <ul v-if="application.applicant.phoneNumber || application.applicant.skills?.length" class="contact-list" aria-label="Datos disponibles del candidato">
+                    <li v-if="application.applicant.phoneNumber"><span>Teléfono</span><strong>{{ application.applicant.phoneNumber }}</strong></li>
+                    <li v-if="application.applicant.skills?.length"><span>Habilidades</span><strong>{{ application.applicant.skills.join(', ') }}</strong></li>
                 </ul>
+                <p v-else class="contact-contract-note">Este candidato aún no tiene datos de contacto ni habilidades públicas en su perfil. Puedes descargar su CV enviado o iniciar una conversación.</p>
 
                 <div v-if="application.message" class="message-quote">
                     <span class="quote-label">Mensaje del postulante</span>
@@ -185,6 +179,10 @@ function emitNotify(): void {
                     <FileText :size="16" :stroke-width="1.5" />
                     <span>Ver CV adjunto</span>
                 </a>
+                <button v-else type="button" class="cv-link" :disabled="cvDownloading" @click="$emit('download-cv', application)">
+                    <FileText :size="16" :stroke-width="1.5" />
+                    <span>{{ cvDownloading ? 'Descargando CV…' : 'Descargar CV enviado' }}</span>
+                </button>
 
                 <!-- Timeline del proceso -->
                 <section class="timeline-block">
@@ -206,35 +204,47 @@ function emitNotify(): void {
                 <!-- Decisiones -->
                 <section class="actions-block">
                     <span class="block-label">Decisión</span>
+                    <fieldset class="decision-channels">
+                        <legend>Canales de aviso externo (opcionales)</legend>
+                        <p>La decisión siempre se registra. Selecciona un canal solo si deseas que el backend intente enviar un aviso.</p>
+                        <label class="channel-option">
+                            <input v-model="decisionChannels" type="checkbox" :value="NotificationChannel.Email" :disabled="actionPending || !canDecide" />
+                            <span>Correo electrónico</span>
+                        </label>
+                        <label class="channel-option">
+                            <input v-model="decisionChannels" type="checkbox" :value="NotificationChannel.WhatsApp" :disabled="actionPending || !canDecide" />
+                            <span>WhatsApp</span>
+                        </label>
+                    </fieldset>
                     <div class="decision-grid">
                         <button
                             type="button" class="btn-decision approve"
-                            :disabled="actionPending || application.status === ApplicationStatus.Accepted"
-                            @click="$emit('approve', application)"
+                            :disabled="actionPending || !canDecide"
+                            @click="approveApplication"
                         >
                             <Check :size="16" :stroke-width="1.5" />
                             <span>Aprobar</span>
                         </button>
                         <button
                             type="button" class="btn-decision reject"
-                            :disabled="actionPending || application.status === ApplicationStatus.Rejected"
-                            @click="$emit('reject', application)"
+                            :disabled="actionPending || !canDecide"
+                            @click="rejectApplication"
                         >
                             <Ban :size="16" :stroke-width="1.5" />
                             <span>Descartar</span>
                         </button>
                     </div>
-                    <p class="auto-note">Las decisiones se guardan usando el flujo disponible del backend.</p>
-                    <button type="button" class="btn-message" @click="$emit('message', application)">
+                    <p class="auto-note">Solo las postulaciones nuevas admiten una decisión. El backend confirma el estado antes de procesar los avisos.</p>
+                    <button type="button" class="btn-message" :disabled="messagePending" @click="$emit('message', application)">
                         <MessageSquare :size="16" :stroke-width="1.5" />
-                        <span>Abrir chat con el postulante</span>
+                        <span>{{ messagePending ? 'Preparando conversación…' : 'Iniciar conversación' }}</span>
                     </button>
                 </section>
 
                 <!-- Notificación manual -->
                 <section class="notify-block">
                     <span class="block-label">Reenviar notificación del proceso</span>
-                    <p class="notify-hint">Envía manualmente un aviso por WhatsApp y a la app. El sistema arma el mensaje según el tipo.</p>
+                    <p class="notify-hint">Envía un aviso adicional por correo. El backend identifica al destinatario con la referencia del perfil.</p>
 
                     <label class="field">
                         <span class="field-label">Tipo de notificación</span>
@@ -273,10 +283,6 @@ function emitNotify(): void {
                             <textarea v-model="message" class="field-input" rows="4" maxlength="600" placeholder="Escribe el mensaje para el postulante"></textarea>
                         </label>
                     </template>
-
-                    <p v-if="!hasPhone" class="no-phone-warn">
-                        Sin número registrado: solo se enviará la notificación dentro de la app.
-                    </p>
 
                     <button type="button" class="btn-send" :disabled="!canSend || actionPending" @click="emitNotify">
                         <Send :size="16" :stroke-width="1.5" />
@@ -423,6 +429,22 @@ function emitNotify(): void {
     color: var(--color-text-secondary);
 }
 
+.who-reference,
+.contact-contract-note {
+    margin: 0;
+    color: var(--color-text-secondary);
+    font-size: var(--fs-caption);
+    line-height: 1.45;
+    overflow-wrap: anywhere;
+}
+
+.contact-contract-note {
+    padding: var(--space-2);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-card);
+    background: var(--color-bg);
+}
+
 .who-job {
     margin: 2px 0 0;
     font-size: var(--fs-caption);
@@ -468,7 +490,6 @@ function emitNotify(): void {
     padding: var(--space-2);
     background: var(--color-ai-bg);
     border: 1px solid var(--color-ai-outline);
-    border-left: 3px solid var(--color-ai-border);
     border-radius: var(--radius-card);
 }
 
@@ -500,6 +521,8 @@ function emitNotify(): void {
     border: 1px solid var(--color-border);
     border-radius: var(--radius-button);
     text-decoration: none;
+    font-family: var(--font-family);
+    cursor: pointer;
     transition: border-color 150ms ease, background-color 150ms ease, transform 100ms ease-out;
 }
 
@@ -605,9 +628,59 @@ function emitNotify(): void {
 }
 
 /* Decisiones */
+.decision-channels {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px 12px;
+    margin: 0 0 12px;
+    padding: 10px 12px 12px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-card);
+    background: var(--color-bg);
+}
+
+.cv-link:disabled { opacity: .65; cursor: wait; }
+
+.decision-channels legend {
+    padding: 0 4px;
+    font-size: var(--fs-caption);
+    font-weight: var(--fw-semibold);
+    color: var(--color-text-primary);
+}
+
+.decision-channels p {
+    grid-column: 1 / -1;
+    margin: 0;
+    font-size: 11px;
+    line-height: 1.4;
+    color: var(--color-text-muted);
+}
+
+.channel-option {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    min-height: 32px;
+    font-size: var(--fs-caption);
+    color: var(--color-text-secondary);
+    cursor: pointer;
+}
+
+.channel-option input {
+    width: 16px;
+    height: 16px;
+    margin: 0;
+    accent-color: var(--color-accent);
+}
+
+.channel-option:has(input:disabled) {
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
 .decision-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(2, 1fr);
     gap: 8px;
 }
 
@@ -790,7 +863,6 @@ textarea.field-input {
     margin-bottom: 12px;
     background: var(--color-ai-bg);
     border: 1px solid var(--color-ai-outline);
-    border-left: 3px solid var(--color-ai-border);
     border-radius: var(--radius-card);
 }
 

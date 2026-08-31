@@ -3,6 +3,7 @@ import { computed, onMounted, ref } from 'vue';
 import { GetJobByIdResponse } from '../model/get-job-by-id.response';
 import { ubigeoService } from '@/app/shared/services/ubigeo.service';
 import DialogComponent from '@/app/shared/components/dialog.component.vue';
+import JobNewsComponent from '@/app/news/components/job-news.component.vue';
 import { recruitmentService } from '@/app/recruitment/services/recruitment.service';
 import { useAuthenticationStore } from '@/app/auth/services/authentication.store';
 import { JobService } from '../services/job.service';
@@ -169,6 +170,7 @@ async function ApplyToJob() {
                 <section v-if="job.skills && job.skills.length" class="info-section"><h2 class="section-title">Habilidades deseadas</h2><div class="skills-tags-list"><span v-for="skill in job.skills" :key="skill" class="skill-tag">{{ skill.trim() }}</span></div></section>
                 <section class="info-section grid-section"><div class="grid-card"><div class="grid-card-icon text-accent"><DollarSign :size="22" /></div><div class="grid-card-info"><h3 class="grid-card-title">Remuneración</h3><p class="grid-card-val">{{ formatSalary(job.minSalary, job.maxSalary, job.currency) }}</p><p class="grid-card-sub" v-if="hasSalaryInfo">{{ $t(`job.data.salaryPeriod.${job.salaryPeriod}`) }}</p></div></div><div class="grid-card"><div class="grid-card-icon text-warning"><Award :size="22" /></div><div class="grid-card-info"><h3 class="grid-card-title">Contrato y modalidad</h3><p class="grid-card-val">{{ $t(`job.data.compensationType.${job.compensationType}`) }}</p><p class="grid-card-sub">{{ $t(`job.data.type.${job.jobType || 'InPerson'}`) }}</p></div></div></section>
                 <section class="info-section" v-if="job.address || hasLocationLabel"><h2 class="section-title">Ubicación</h2><div class="location-details-box"><MapPin :size="20" class="loc-icon" /><div class="loc-text-block"><p class="loc-address">{{ job.address || 'Dirección no especificada' }}</p><p class="loc-city" v-if="hasLocationLabel">{{ district }}, {{ department }}, Perú</p></div></div></section>
+                <JobNewsComponent :job-id="job.id" />
             </main>
             <aside class="job-stats-panel">
                 <div v-if="!isCompany" class="apply-sidebar"><span class="sidebar-kicker">¿Te interesa?</span><h2>Da el siguiente paso.</h2><p>Postúlate y deja que la empresa conozca tu perfil.</p><button class="sidebar-apply" type="button" @click="applyJobDialogRef?.open()"><CheckSquare :size="17" /> {{ applying ? 'Enviando…' : 'Postularme' }}</button><span class="sidebar-note">Te tomará menos de un minuto</span></div>

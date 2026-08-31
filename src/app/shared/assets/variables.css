@@ -1,23 +1,24 @@
 :root {
     /* ============================================================
        SISTEMA VISUAL LLANQUI (Brand & Design Tokens)
-       Azul de confianza (#1E2BAA) + Lima de impulso (#C7F36B / #B9EF4A)
+       Azul de confianza (#2838D3) + Lima de impulso (#B9EF4A)
        ============================================================ */
-    --color-primary:        #1E2BAA;   /* azul de marca y acciones principales */
-    --color-primary-dark:   #16217A;   /* hover y estados activos */
-    --color-accent:         #1E2BAA;   /* botones de acción principal */
-    --color-accent-hover:   #16217A;   /* hover de botones */
-    --color-brand-blue:     #1E2BAA;
-    --color-brand-lime:     #C7F36B;   /* energia, progreso y estados positivos */
+    --color-primary:        #2838D3;   /* azul Llanqui: acciones y navegación */
+    --color-primary-dark:   #17237E;   /* hover y estados activos */
+    --color-accent:         #2838D3;
+    --color-accent-hover:   #17237E;
+    --color-brand-blue:     #2838D3;
+    --color-brand-lime:     #B9EF4A;   /* progreso y confirmación, no texto de cuerpo */
     --color-brand-lime-alt: #B9EF4A;
     --color-brand-lime-soft:#F4FCE3;
     --color-bg:             #F6F7FB;   /* fondo suave de la aplicacion */
     --color-surface:        #FFFFFF;   /* tarjetas, formularios, paneles */
-    --color-text-primary:   #1F2937;   /* titulos y texto principal */
-    --color-text-secondary: #5E6B86;   /* texto de apoyo y subtítulos */
-    --color-text-muted:     #8A94A8;   /* labels, placeholders */
-    --color-border:         #E3E7F0;   /* bordes de inputs y divisores */
+    --color-text-primary:   #15203B;   /* títulos y texto principal */
+    --color-text-secondary: #55627C;   /* texto de apoyo y subtítulos */
+    --color-text-muted:     #77829A;   /* labels, placeholders */
+    --color-border:         #E0E5F0;   /* bordes de inputs y divisores */
     --color-border-subtle:  #EEF1F6;
+    --color-surface-subtle: #FAFBFE;
     --color-lavender:       #EEF2FF;   /* acentos decorativos suaves */
     --color-dark-slate:     #1F2937;
 
@@ -32,16 +33,16 @@
     --color-state-warning-dark: #C29810;
 
     /* Componentes de IA */
-    --color-ai-border:  #1E2BAA;   /* borde de enfoque */
+    --color-ai-border:  var(--color-primary);   /* borde de enfoque */
     --color-ai-bg:      #F4F7FF;   /* fondo suave */
     --color-ai-outline: #D0DBFF;   /* contorno suave */
-    --color-ai-label:   #1E2BAA;   /* texto del label IA */
+    --color-ai-label:   var(--color-primary);   /* texto del label IA */
 
     /* ============================================================
-       TIPOGRAFIA — Poppins (Display/Headings) + Inter (Body/UI)
+       TIPOGRAFIA — Inter para todo el producto
        ============================================================ */
     --font-family:  'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    --font-display: 'Poppins', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-display: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 
     --fw-regular:  400;
     --fw-medium:   500;
@@ -60,18 +61,18 @@
        FORMA Y ESPACIADO
        ============================================================ */
     --radius-xs:     4px;
-    --radius-button: 8px;
-    --radius-input:  8px;
-    --radius-card:   16px;
+    --radius-button: 10px;
+    --radius-input:  10px;
+    --radius-card:   14px;
     --radius-card-sm:12px;
     --radius-card-lg:20px;
     --radius-pill:   999px;
     --radius-navbar: 0px;
 
     /* Sombras modernas suaves */
-    --shadow-card:     0 1px 3px rgba(30, 43, 170, 0.04), 0 4px 14px rgba(30, 43, 170, 0.04);
-    --shadow-hover:    0 4px 20px rgba(30, 43, 170, 0.08);
-    --shadow-elevated: 0 12px 32px rgba(30, 43, 170, 0.10);
+    --shadow-card:     0 8px 24px rgba(21, 32, 59, 0.045);
+    --shadow-hover:    0 14px 30px rgba(21, 32, 59, 0.10);
+    --shadow-elevated: 0 22px 48px rgba(21, 32, 59, 0.14);
 
     /* Sistema de espaciado */
     --space-1: 8px;
@@ -82,7 +83,7 @@
     --space-6: 48px;
 
     /* Layout */
-    --page-max:        1200px;
+    --page-max:        1360px;
     --page-max-narrow: 840px;
     --page-gutter:     clamp(16px, 4vw, 32px);
 

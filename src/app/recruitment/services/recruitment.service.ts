@@ -1,9 +1,34 @@
 import http from '@/app/shared/services/base.service';
 import type { CreateApplicationRequest } from '../model/application.request';
-import type { ApplicationResponse } from '../model/application.response';
+import type { ApplicationResponse, CandidateApplicationResponse } from '../model/application.response';
+import type { NotificationChannel } from '../model/notification.model';
 import { ApplicationStatus } from '../enums/application-status.enum';
 
 interface JobApplicationApiResponse {
+    id: string;
+    candidateId: string;
+    status: ApplicationStatus;
+    createdAt: string;
+    candidate?: {
+        firstName?: string | null;
+        lastName?: string | null;
+        profilePicture?: string | null;
+        phoneNumber?: string | null;
+        skills?: string[] | null;
+    } | null;
+}
+
+interface CandidateJobApplicationApiResponse {
+    id: string;
+    jobId: string;
+    jobTitle: string;
+    companyName?: string | null;
+    status: ApplicationStatus;
+    createdAt: string;
+    updatedAt: string;
+}
+
+interface JobApplicationDecisionResponse {
     id: string;
     candidateId: string;
     status: ApplicationStatus;
@@ -22,9 +47,19 @@ export class RecruitmentService {
         return data;
     }
 
-    /** El backend actual aún no ofrece GET de postulaciones del candidato autenticado. */
-    async getCandidateApplications(_candidateId?: string): Promise<ApplicationResponse[]> {
-        throw new Error('El backend actual no expone el historial de postulaciones del candidato.');
+    /** GET /applications/me: historial del candidato autenticado. */
+    async getCandidateApplications(): Promise<CandidateApplicationResponse[]> {
+        const { data } = await http.get<CandidateJobApplicationApiResponse[]>(`${this.endpoint}/me`);
+        if (!Array.isArray(data)) return [];
+        return data.map((application) => ({
+            id: application.id,
+            jobId: application.jobId,
+            jobTitle: application.jobTitle,
+            companyName: application.companyName,
+            status: application.status,
+            appliedAt: application.createdAt,
+            updatedAt: application.updatedAt,
+        }));
     }
 
     /** La empresa debe consultar por vacante, como define GET /job/{jobId}. */
@@ -38,15 +73,47 @@ export class RecruitmentService {
             candidateId: application.candidateId,
             applicant: {
                 id: application.candidateId,
-                fullName: `Perfil ${application.candidateId.slice(0, 8)}`,
+                reference: application.candidateId,
+                firstName: application.candidate?.firstName ?? undefined,
+                lastName: application.candidate?.lastName ?? undefined,
+                profilePicture: application.candidate?.profilePicture ?? undefined,
+                phoneNumber: application.candidate?.phoneNumber ?? undefined,
+                skills: application.candidate?.skills ?? [],
             },
             status: application.status,
             appliedAt: application.createdAt,
         }));
     }
 
-    async approve(id: string): Promise<void> { await http.post(`${this.endpoint}/${id}/approve`); }
-    async reject(id: string): Promise<void> { await http.post(`${this.endpoint}/${id}/reject`); }
+    /** GET /applications/{id} devuelve el archivo CV de la postulación. */
+    async downloadApplicationCv(id: string): Promise<void> {
+        const response = await http.get(`${this.endpoint}/${id}`, { responseType: 'blob' });
+        const disposition = String(response.headers['content-disposition'] ?? '');
+        const encodedName = disposition.match(/filename\*=UTF-8''([^;]+)/i)?.[1];
+        const simpleName = disposition.match(/filename="?([^";]+)"?/i)?.[1];
+        const filename = encodedName ? decodeURIComponent(encodedName) : (simpleName || `postulacion-${id}`);
+        const url = URL.createObjectURL(response.data as Blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+    }
+
+    async approve(id: string, channels: NotificationChannel[]): Promise<JobApplicationDecisionResponse> {
+        const { data } = await http.post<JobApplicationDecisionResponse>(`${this.endpoint}/${id}/approve`, { channels });
+        return data;
+    }
+
+    async reject(id: string, channels: NotificationChannel[], message?: string): Promise<JobApplicationDecisionResponse> {
+        const { data } = await http.post<JobApplicationDecisionResponse>(`${this.endpoint}/${id}/reject`, {
+            message,
+            channels,
+        });
+        return data;
+    }
 
 }
 

@@ -5,6 +5,7 @@ import NotificationSettingsComponent from '../components/notification-settings.c
 import PaymentsSettingsComponent from '../components/payments-settings.component.vue';
 import JobBoostSettingsComponent from '../components/job-boost-settings.component.vue';
 import PrivacySettingsComponent from '../components/privacy-settings.component.vue';
+import SecuritySettingsComponent from '../components/security-settings.component.vue';
 import SettingsSidebarComponent from '../components/settings-sidebar.component.vue';
 import { useSettingsPage } from '@/app/settings/composables/useSettingsPage';
 
@@ -19,6 +20,7 @@ const { activeTab, isOrganization } = useSettingsPage();
             <ProfileOverviewComponent v-if="activeTab === 'profile'" />
             <ProfileEditComponent v-else-if="activeTab === 'edit'" />
             <NotificationSettingsComponent v-else-if="activeTab === 'settings'" />
+            <SecuritySettingsComponent v-else-if="activeTab === 'security'" />
             <JobBoostSettingsComponent v-else-if="activeTab === 'payments' && isOrganization" />
             <PaymentsSettingsComponent v-else-if="activeTab === 'payments'" />
             <PrivacySettingsComponent v-else-if="activeTab === 'privacy'" />

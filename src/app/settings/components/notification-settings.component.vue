@@ -1,227 +1,38 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
-import {
-  MessageSquare,
-  Bell,
-  Save,
-  CheckCircle2,
-  AlertCircle,
-  Send,
-  ExternalLink
-} from 'lucide-vue-next';
-import { useAuthenticationStore } from '@/app/auth/services/authentication.store';
-import { profileService } from '@/app/profile/services/profile.service';
-
-const authStore = useAuthenticationStore();
-
-const whatsappEnabled = ref(false);
-const whatsappNumber = ref('');
-const loading = ref(false);
-const success = ref(false);
-const error = ref('');
-
-onMounted(async () => {
-  // Load local state as primary
-  whatsappEnabled.value = localStorage.getItem('whatsappNotificationsEnabled') === 'true';
-  whatsappNumber.value = localStorage.getItem('whatsappNumber') || '';
-
-  // Attempt to load from profile service as well
-  try {
-    if (authStore.currentUserId) {
-      const res = await profileService.getProfileByUserId(authStore.currentUserId);
-      const profile = res.data;
-      if (profile) {
-        const phone = profile.phone || profile.whatsapp || profile.whatsappNumber;
-        if (phone) {
-          whatsappNumber.value = phone;
-          whatsappEnabled.value = true;
-        }
-      }
-    }
-  } catch (err) {
-    console.error('Error loading profile phone:', err);
-  }
-});
-
-async function saveNotificationSettings() {
-  loading.value = true;
-  success.value = false;
-  error.value = '';
-
-  const cleanNumber = whatsappNumber.value.trim().replace(/\D/g, '');
-
-  if (whatsappEnabled.value && (!cleanNumber || cleanNumber.length < 9)) {
-    error.value = 'Por favor, ingresa un número de WhatsApp válido de 9 dígitos.';
-    loading.value = false;
-    return;
-  }
-
-  try {
-    // Save to localStorage
-    localStorage.setItem('whatsappNotificationsEnabled', whatsappEnabled.value ? 'true' : 'false');
-    localStorage.setItem('whatsappNumber', cleanNumber);
-
-    // Save to backend profile
-    if (authStore.currentUserId) {
-      // Fetch current profile first to avoid overwriting other fields
-      const res = await profileService.getProfileByUserId(authStore.currentUserId);
-      const currentProfile = res.data || {};
-      
-      const updatedProfile = {
-        ...currentProfile,
-        phone: whatsappEnabled.value ? cleanNumber : '',
-        whatsapp: whatsappEnabled.value ? cleanNumber : '',
-        whatsappNumber: whatsappEnabled.value ? cleanNumber : '',
-        // Make sure we carry forward important fields
-        firstName: currentProfile.firstName || authStore.currentUser?.firstName || '',
-        lastName: currentProfile.lastName || authStore.currentUser?.lastName || '',
-      };
-
-      if (authStore.currentUserType === 'organization') {
-        await profileService.updateCompanyProfile(authStore.currentUserId, updatedProfile);
-      } else {
-        await profileService.updateCandidateProfile(authStore.currentUserId, updatedProfile);
-      }
-    }
-
-    success.value = true;
-    setTimeout(() => {
-      success.value = false;
-    }, 3000);
-  } catch (err) {
-    console.error('Error saving whatsapp settings:', err);
-    error.value = 'No se pudo guardar la configuración de notificaciones.';
-  } finally {
-    loading.value = false;
-  }
-}
-
-function sendTestNotification() {
-  const cleanNumber = whatsappNumber.value.trim().replace(/\D/g, '');
-  if (!cleanNumber || cleanNumber.length < 9) {
-    error.value = 'Ingresa tu número de WhatsApp antes de realizar una prueba.';
-    return;
-  }
-
-  // Generate a WhatsApp Click to Chat link to make it actually work!
-  const message = `¡Hola! Llanqui te da la bienvenida a las notificaciones de empleo. Recibirás avisos sobre tus postulaciones aquí.`;
-  const url = `https://wa.me/51${cleanNumber}?text=${encodeURIComponent(message)}`;
-  
-  // Open WhatsApp in a new window
-  window.open(url, '_blank');
-}
+import { Bell, Info, Mail, MessageSquare } from 'lucide-vue-next';
 </script>
 
 <template>
-  <div class="notification-settings animate-fade-in">
-    <!-- Feedback toasts -->
-    <Transition name="slide-down">
-      <div v-if="success" class="toast success-toast">
-        <CheckCircle2 :size="18" />
-        <span>Configuración de notificaciones guardada</span>
-      </div>
-    </Transition>
-    <Transition name="slide-down">
-      <div v-if="error" class="toast error-toast">
-        <AlertCircle :size="18" />
-        <span>{{ error }}</span>
-      </div>
-    </Transition>
-
+  <section class="notification-settings" aria-labelledby="notification-settings-title">
     <div class="glass-card">
-      <h3 class="card-section-title">
-        <Bell :size="18" class="title-icon" />
-        <span>Configuración de Notificaciones de Empleo</span>
-      </h3>
-
-      <p class="description">
-        Recibe avisos inmediatos en tu celular cuando las empresas revisen tus postulaciones, te preseleccionen para entrevistas o te envíen mensajes en Llanqui.
-      </p>
-
-      <div class="notification-channel-box">
-        <div class="channel-header">
-          <div class="channel-info">
-            <span class="whatsapp-badge">
-              <MessageSquare :size="14" />
-              <span>WhatsApp</span>
-            </span>
-            <span class="channel-status" :class="{ enabled: whatsappEnabled }">
-              {{ whatsappEnabled ? 'Activado' : 'Desactivado' }}
-            </span>
-          </div>
-          
-          <!-- Styled Switch Toggle -->
-          <label class="switch">
-            <input type="checkbox" v-model="whatsappEnabled" />
-            <span class="slider round"></span>
-          </label>
+      <header class="settings-header">
+        <span class="settings-icon" aria-hidden="true"><Bell :size="20" /></span>
+        <div>
+          <h2 id="notification-settings-title">Avisos de la cuenta</h2>
+          <p>Consulta los avisos recibidos desde el ícono de notificaciones de la barra superior.</p>
         </div>
+      </header>
 
-        <!-- WhatsApp Input Panel -->
-        <Transition name="expand">
-          <div v-if="whatsappEnabled" class="whatsapp-config-panel">
-            <div class="field">
-              <label for="wsp-phone">Número de WhatsApp (Perú)</label>
-              <div class="input-phone-group">
-                <span class="country-prefix">+51</span>
-                <input 
-                  id="wsp-phone"
-                  v-model="whatsappNumber"
-                  type="text"
-                  placeholder="987654321"
-                  maxlength="9"
-                  class="phone-input"
-                />
-              </div>
-              <p class="field-hint">Ingresa tu número de 9 dígitos sin espacios ni guiones.</p>
-            </div>
-
-            <!-- Test button -->
-            <button 
-              type="button" 
-              class="btn-test-notification"
-              :disabled="!whatsappNumber || whatsappNumber.length < 9"
-              @click="sendTestNotification"
-            >
-              <Send :size="14" />
-              <span>Probar en WhatsApp</span>
-              <ExternalLink :size="12" />
-            </button>
-          </div>
-        </Transition>
-      </div>
-
-      <!-- Preview of WhatsApp Notification Template -->
-      <div class="template-preview-box">
-        <span class="preview-title">Previsualización de Notificaciones</span>
-        <div class="whatsapp-chat-preview">
-          <div class="whatsapp-message-bubble">
-            <span class="chat-sender">Llanqui Empleos</span>
-            <p class="chat-text">
-              <strong>¡Buenas noticias, Carlos!</strong><br />
-              La empresa <strong>Tech Solutions</strong> ha preseleccionado tu postulación para el puesto de <strong>Desarrollador Vue.js Junior</strong>.<br /><br />
-              Te contactarán pronto para agendar una entrevista.<br />
-              Revisa más detalles ingresando a tu cuenta de Llanqui.
-            </p>
-            <span class="chat-time">10:42 AM</span>
-          </div>
+      <div class="contract-notice" role="status">
+        <Info :size="20" aria-hidden="true" />
+        <div>
+          <strong>Preferencias de canal no disponibles</strong>
+          <p>El backend actual no expone una configuración de preferencias por usuario. Los avisos se generan desde el flujo que los necesita, por ejemplo cuando una empresa toma una decisión sobre una postulación.</p>
         </div>
       </div>
 
-      <!-- Save Actions -->
-      <div class="form-actions-row">
-        <button 
-          type="button" 
-          class="btn-submit" 
-          :disabled="loading" 
-          @click="saveNotificationSettings"
-        >
-          <Save :size="16" />
-          <span>{{ loading ? 'Guardando...' : 'Guardar Preferencias' }}</span>
-        </button>
-      </div>
+      <ul class="delivery-list" aria-label="Canales soportados por el backend">
+        <li>
+          <Mail :size="18" aria-hidden="true" />
+          <span><strong>Correo electrónico</strong><small>La empresa puede elegirlo al tomar una decisión sobre una postulación.</small></span>
+        </li>
+        <li>
+          <MessageSquare :size="18" aria-hidden="true" />
+          <span><strong>WhatsApp</strong><small>También puede seleccionarse por la empresa al tomar esa decisión.</small></span>
+        </li>
+      </ul>
     </div>
-  </div>
+  </section>
 </template>
 
 <style scoped>
@@ -605,5 +416,112 @@ input:checked + .slider:before {
   opacity: 0;
   max-height: 0;
   transform: translateY(-10px);
+}
+
+/* Estado real del contrato: no se simulan preferencias ni conversaciones. */
+.settings-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding-bottom: var(--space-2);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.settings-icon {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  flex: 0 0 auto;
+  border-radius: 12px;
+  color: var(--color-primary);
+  background: var(--color-lavender);
+}
+
+.settings-header h2 {
+  margin: 0;
+  color: var(--color-text-primary);
+  font-size: var(--fs-subtitle);
+}
+
+.settings-header p {
+  margin: 5px 0 0;
+  color: var(--color-text-secondary);
+  font-size: var(--fs-body-sm);
+  line-height: 1.45;
+}
+
+.contract-notice {
+  display: flex;
+  gap: 10px;
+  margin-top: var(--space-3);
+  padding: 14px;
+  border: 1px solid var(--color-ai-outline);
+  border-radius: 12px;
+  color: var(--color-text-secondary);
+  background: var(--color-ai-bg);
+}
+
+.contract-notice svg {
+  flex: 0 0 auto;
+  color: var(--color-primary);
+}
+
+.contract-notice strong {
+  display: block;
+  color: var(--color-text-primary);
+  font-size: var(--fs-body-sm);
+}
+
+.contract-notice p {
+  margin: 5px 0 0;
+  font-size: var(--fs-caption);
+  line-height: 1.5;
+}
+
+.delivery-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin: var(--space-3) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.delivery-list li {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 14px;
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  background: var(--color-bg);
+}
+
+.delivery-list li > svg {
+  flex: 0 0 auto;
+  color: var(--color-primary);
+}
+
+.delivery-list strong,
+.delivery-list small {
+  display: block;
+}
+
+.delivery-list strong {
+  color: var(--color-text-primary);
+  font-size: var(--fs-body-sm);
+}
+
+.delivery-list small {
+  margin-top: 4px;
+  color: var(--color-text-secondary);
+  font-size: var(--fs-caption);
+  line-height: 1.4;
+}
+
+@media (max-width: 560px) {
+  .delivery-list { grid-template-columns: 1fr; }
+  .settings-header { gap: 10px; }
 }
 </style>
