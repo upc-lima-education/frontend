@@ -1,0 +1,57 @@
+:root {
+  /* Hallmark · Llanqui Design System Tokens */
+  --color-primary: #2838D3;
+  --color-primary-dark: #17237E;
+  --color-brand-blue: #2838D3;
+  --color-brand-lime: #B9EF4A;
+  --color-brand-lime-soft: #F4FCE3;
+  --color-bg: #F6F7FB;
+  --color-surface: #FFFFFF;
+  --color-surface-subtle: #FAFBFE;
+  --color-lavender: #EEF2FF;
+  --color-text-primary: #15203B;
+  --color-text-secondary: #55627C;
+  --color-text-muted: #77829A;
+  --color-border: #E0E5F0;
+  --color-border-subtle: #EEF1F6;
+ 
+  --color-state-success: #3B9C20;
+  --color-state-success-dark: #307D1B;
+  --color-state-alert: #EC4E10;
+  --color-state-alert-dark: #D0420E;
+
+  --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-display: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+
+  --fw-medium: 500;
+  --fw-semibold: 600;
+  --fw-bold: 700;
+  --fw-extrabold: 800;
+
+  --fs-caption: 12px;
+  --fs-body-sm: 14px;
+  --fs-body: 16px;
+  --fs-subtitle: 20px;
+  --fs-title: 28px;
+
+  --space-1: 8px;
+  --space-2: 16px;
+  --space-3: 24px;
+  --space-4: 32px;
+  --space-5: 40px;
+  --space-6: 48px;
+
+  --radius-xs: 4px;
+  --radius-button: 10px;
+  --radius-input: 10px;
+  --radius-card-sm: 12px;
+  --radius-card: 14px;
+  --radius-card-lg: 20px;
+  --radius-pill: 999px;
+
+  --shadow-card: 0 8px 24px rgba(21, 32, 59, 0.045);
+  --shadow-hover: 0 14px 30px rgba(21, 32, 59, 0.10);
+
+  --page-max: 1360px;
+  --page-gutter: clamp(16px, 4vw, 32px);
+}

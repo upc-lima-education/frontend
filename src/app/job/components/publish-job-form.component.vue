@@ -10,7 +10,7 @@ import { JobType } from '../enums/job-type.enum';
 import { CompensationType } from '../enums/compensation-type.enum';
 import { WorkHours } from '../enums/work-hours.enum';
 import { EducationLevel } from '../enums/education-level.enum';
-import ubigeoData from '@/app/shared/data/ubigeo.json';
+import { ubigeoService } from '@/app/shared/services/ubigeo.service';
 import ButtonClueComponent from '@/app/shared/components/button-clue.component.vue';
 import SkillPickerComponent from '@/app/shared/components/skill-picker.component.vue';
 import { ArrowLeft, ArrowRight, Save } from 'lucide-vue-next';
@@ -44,17 +44,12 @@ const form = reactive({
 });
 
 const ubigeo = computed(() => {
-    const match = ubigeoData.find(u =>
-        u.sDepartamento === selectedDepartment.value &&
-        u.sProvincia === selectedProvince.value &&
-        u.sDistrito === selectedDistrict.value
-    );
-    return match ? match.sIdUbigeo : '';
+    return ubigeoService.getUbigeoCode(selectedDepartment.value, selectedProvince.value, selectedDistrict.value);
 });
 
 const selectedDepartment = ref('');
 const departments = computed(() => {
-    return [...new Set(ubigeoData.map(u => u.sDepartamento))];
+    return ubigeoService.getDepartments();
 });
 watch(selectedDepartment, () => {
     selectedProvince.value = '';
@@ -63,10 +58,7 @@ watch(selectedDepartment, () => {
 
 const selectedProvince = ref('');
 const provinces = computed(() => {
-    return ubigeoData
-        .filter(u => u.sDepartamento === selectedDepartment.value)
-        .map(u => u.sProvincia)
-        .filter((v, i, arr) => arr.indexOf(v) === i);
+    return ubigeoService.getProvinces(selectedDepartment.value);
 });
 watch(selectedProvince, () => {
     selectedDistrict.value = '';
@@ -74,12 +66,7 @@ watch(selectedProvince, () => {
 
 const selectedDistrict = ref('');
 const districts = computed(() => {
-    return ubigeoData
-        .filter(u =>
-            u.sDepartamento === selectedDepartment.value &&
-            u.sProvincia === selectedProvince.value
-        )
-        .map(u => u.sDistrito);
+    return ubigeoService.getDistricts(selectedDepartment.value, selectedProvince.value);
 });
 
 //Enums to <select> options

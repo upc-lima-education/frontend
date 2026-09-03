@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 
-defineProps({
+const props = defineProps({
     title: {
         type: String,
         required: true
@@ -17,6 +17,22 @@ defineProps({
     variant: {
         type: String as () => 'default' | 'success' | 'danger',
         default: 'default'
+    },
+    closeOnConfirm: {
+        type: Boolean,
+        default: true
+    },
+    confirmDisabled: {
+        type: Boolean,
+        default: false
+    },
+    confirmLabel: {
+        type: String,
+        default: 'Confirmar'
+    },
+    cancelLabel: {
+        type: String,
+        default: 'Cancelar'
     }
 });
 
@@ -31,8 +47,9 @@ const open = () => dialogRef.value?.showModal();
 const close = () => dialogRef.value?.close();
 
 const confirm = () => {
+    if (props.confirmDisabled) return;
     emit('confirm');
-    close();
+    if (props.closeOnConfirm) close();
 };
 
 const cancel = () => {
@@ -58,8 +75,8 @@ defineExpose({ open, close });
         </section>
 
         <footer class="dialog-footer">
-            <button class="btn cancel" @click="cancel"> Cancel </button>
-            <button class="btn confirm" :class="variant" @click="confirm"> Confirm </button>
+            <button class="btn cancel" type="button" @click="cancel">{{ cancelLabel }}</button>
+            <button class="btn confirm" type="button" :class="variant" :disabled="confirmDisabled" @click="confirm">{{ confirmLabel }}</button>
         </footer>
     </dialog>
 </template>
@@ -148,6 +165,16 @@ defineExpose({ open, close });
 
 .btn:active:not(:disabled) {
     transform: scale(0.97);
+}
+
+.btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.btn:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
 }
 
 .cancel {

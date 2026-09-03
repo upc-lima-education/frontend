@@ -71,7 +71,7 @@ const isButtonDisabled = computed(() => {
     padding: 10px 14px !important;
     border: 1px solid var(--color-border) !important;
     border-radius: 20px !important;
-    background: var(--color-bg) !important;
+    background: var(--color-surface-subtle) !important;
     color: var(--color-text-primary) !important;
     font-size: var(--fs-body-sm) !important;
     transition: var(--transition) !important;
@@ -81,8 +81,8 @@ const isButtonDisabled = computed(() => {
 .chat-input:focus {
     outline: none !important;
     border-color: var(--color-accent) !important;
-    background: #ffffff !important;
-    box-shadow: 0 0 0 3px rgba(45, 58, 199, 0.12) !important;
+    background: var(--color-surface) !important;
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-accent) 20%, transparent) !important;
 }
 
 .btn-send {

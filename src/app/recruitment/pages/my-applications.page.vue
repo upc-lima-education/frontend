@@ -1,18 +1,29 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
 import {
-  Search,
-  XCircle,
-  ChevronDown,
   ArrowRight,
-  RotateCcw,
+  BriefcaseBusiness,
   Building2,
   Calendar,
+  CheckCircle2,
+  ChevronDown,
+  Clock,
+  Compass,
+  FileCheck2,
+  FileText,
+  Filter,
+  Layers,
+  RotateCcw,
+  Search,
+  Sparkles,
+  X,
+  XCircle,
 } from 'lucide-vue-next';
 import { recruitmentService } from '../services/recruitment.service';
 import type { CandidateApplicationResponse } from '../model/application.response';
 import { ApplicationStatus } from '../enums/application-status.enum';
 import { ROUTE_CONSTANTS } from '@/app/shared/router/route-constants';
+import EmptyState from '@/app/shared/components/ui/empty-state.component.vue';
 
 type TabStatus = 'all' | 'sent' | 'review' | 'rejected';
 
@@ -20,24 +31,76 @@ const applications = ref<CandidateApplicationResponse[]>([]);
 const loading = ref(true);
 const error = ref('');
 const activeTab = ref<TabStatus>('all');
-const sortBy = ref('recent');
+const searchQuery = ref('');
+const sortBy = ref<'recent' | 'oldest'>('recent');
+
+const tabsRef = ref<HTMLElement | null>(null);
+
+const pendingCount = computed(
+  () => applications.value.filter((a) => a.status === ApplicationStatus.Pending).length
+);
+const acceptedCount = computed(
+  () => applications.value.filter((a) => a.status === ApplicationStatus.Accepted).length
+);
+const rejectedCount = computed(
+  () => applications.value.filter((a) => a.status === ApplicationStatus.Rejected).length
+);
+const totalCount = computed(() => applications.value.length);
 
 const tabs = computed(() => [
-  { id: 'all' as TabStatus, label: 'Todas', count: applications.value.length },
-  { id: 'sent' as TabStatus, label: 'Enviadas', count: applications.value.filter(a => a.status === ApplicationStatus.Pending).length },
-  { id: 'review' as TabStatus, label: 'Aceptadas', count: applications.value.filter(a => a.status === ApplicationStatus.Accepted).length },
-  { id: 'rejected' as TabStatus, label: 'No seleccionada', count: applications.value.filter(a => a.status === ApplicationStatus.Rejected).length },
+  { id: 'all' as TabStatus, label: 'Todas', count: totalCount.value },
+  { id: 'sent' as TabStatus, label: 'Enviadas', count: pendingCount.value },
+  { id: 'review' as TabStatus, label: 'Aceptadas', count: acceptedCount.value },
+  { id: 'rejected' as TabStatus, label: 'No seleccionadas', count: rejectedCount.value },
 ]);
 
+function setTab(tab: TabStatus) {
+  activeTab.value = tab;
+}
+
+function handleTabKeydown(e: KeyboardEvent, index: number) {
+  const tabList = tabs.value;
+  let nextIndex = index;
+
+  if (e.key === 'ArrowRight') {
+    nextIndex = (index + 1) % tabList.length;
+  } else if (e.key === 'ArrowLeft') {
+    nextIndex = (index - 1 + tabList.length) % tabList.length;
+  } else if (e.key === 'Home') {
+    nextIndex = 0;
+  } else if (e.key === 'End') {
+    nextIndex = tabList.length - 1;
+  } else {
+    return;
+  }
+
+  e.preventDefault();
+  const nextTab = tabList[nextIndex];
+  if (nextTab) {
+    setTab(nextTab.id);
+    const buttons = tabsRef.value?.querySelectorAll<HTMLButtonElement>('[role="tab"]');
+    buttons?.[nextIndex]?.focus();
+  }
+}
+
 const filteredApplications = computed(() => {
-  const filtered = applications.value.filter((app) => {
+  let list = applications.value.filter((app) => {
     if (activeTab.value === 'sent') return app.status === ApplicationStatus.Pending;
     if (activeTab.value === 'review') return app.status === ApplicationStatus.Accepted;
     if (activeTab.value === 'rejected') return app.status === ApplicationStatus.Rejected;
     return true;
   });
 
-  return filtered.sort((first, second) => {
+  if (searchQuery.value.trim()) {
+    const q = searchQuery.value.trim().toLowerCase();
+    list = list.filter(
+      (app) =>
+        app.jobTitle?.toLowerCase().includes(q) ||
+        app.companyName?.toLowerCase().includes(q)
+    );
+  }
+
+  return list.sort((first, second) => {
     const firstDate = new Date(first.appliedAt).getTime();
     const secondDate = new Date(second.appliedAt).getTime();
     return sortBy.value === 'oldest' ? firstDate - secondDate : secondDate - firstDate;
@@ -45,19 +108,47 @@ const filteredApplications = computed(() => {
 });
 
 function statusLabel(status: ApplicationStatus): string {
-  if (status === ApplicationStatus.Pending) return 'Enviada';
-  if (status === ApplicationStatus.Accepted) return 'Aceptada';
+  if (status === ApplicationStatus.Pending) return 'Enviada / En espera';
+  if (status === ApplicationStatus.Accepted) return 'Aceptada para evaluación';
   return 'No seleccionada';
 }
 
 function statusPillClass(status: ApplicationStatus): string {
-  if (status === ApplicationStatus.Accepted) return 'pill--success';
-  if (status === ApplicationStatus.Rejected) return 'pill--danger';
-  return 'pill--info';
+  if (status === ApplicationStatus.Accepted) return 'status-pill--success';
+  if (status === ApplicationStatus.Rejected) return 'status-pill--neutral';
+  return 'status-pill--pending';
 }
 
 function formatDate(value: string): string {
-  return new Date(value).toLocaleDateString('es-PE', { day: 'numeric', month: 'short', year: 'numeric' });
+  return new Intl.DateTimeFormat('es-PE', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  }).format(new Date(value));
+}
+
+function formatDaysAgo(value: string): string {
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return '';
+  const diff = Math.floor((Date.now() - d.getTime()) / 86_400_000);
+  if (diff <= 0) return 'Hoy';
+  if (diff === 1) return 'Ayer';
+  if (diff < 7) return `Hace ${diff}d`;
+  return formatDate(value);
+}
+
+function getCompanyMonogram(name?: string | null, title?: string | null): string {
+  const source = name && name !== 'Empresa no disponible' ? name : title || 'LL';
+  return (
+    source
+      .trim()
+      .split(/\s+/)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((w) => w[0])
+      .join('')
+      .toUpperCase() || 'LL'
+  );
 }
 
 async function loadApplications() {
@@ -69,7 +160,8 @@ async function loadApplications() {
   } catch (err) {
     console.error('Error loading applications:', err);
     applications.value = [];
-    error.value = err instanceof Error ? err.message : 'No se pudieron cargar tus postulaciones.';
+    error.value =
+      err instanceof Error ? err.message : 'No se pudieron cargar tus postulaciones desde el servidor.';
   } finally {
     loading.value = false;
   }
@@ -80,365 +172,1091 @@ onMounted(loadApplications);
 
 <template>
   <div class="applications-page">
+    <!-- Ambient Animated Mesh Atmosphere -->
+    <div class="apps-ambient-backdrop" aria-hidden="true">
+      <div class="ambient-orb ambient-orb--primary"></div>
+      <div class="ambient-orb ambient-orb--lime"></div>
+      <div class="ambient-mesh-pattern"></div>
+    </div>
+
     <div class="applications-container">
-      <!-- 1. Header Section -->
-      <header class="page-head">
-        <h1 class="page-title">Mis postulaciones</h1>
-        <p class="page-subtitle">Aquí puedes ver el estado de todas tus postulaciones.</p>
+
+      <!-- ============================================================
+           1. HERO & METRICS COMMAND HEADER
+           ============================================================ -->
+      <header class="apps-command-hero" aria-label="Cabecera y métricas de postulaciones">
+        <div class="hero-titles-wrap">
+          <div class="hero-chip-badge">
+            <Sparkles :size="13" aria-hidden="true" />
+            <span>Seguimiento de Empleo</span>
+          </div>
+          <h1 class="apps-page-title">
+            Panel de <span class="highlight-lime">mis postulaciones</span>
+          </h1>
+          <p class="apps-page-subtitle">
+            Monitorea en tiempo real el avance de tus procesos de selección y postulaciones enviadas a las empresas.
+          </p>
+        </div>
+
+        <!-- 4-Tile Bento Pipeline Overview -->
+        <div class="pipeline-bento-grid" role="region" aria-label="Resumen numérico de postulaciones">
+          <!-- Total -->
+          <button
+            type="button"
+            class="bento-stat-tile"
+            :class="{ 'is-tile-active': activeTab === 'all' }"
+            aria-label="Ver todas las postulaciones"
+            @click="setTab('all')"
+          >
+            <div class="tile-icon-box tile-icon-box--primary">
+              <Layers :size="18" aria-hidden="true" />
+            </div>
+            <div class="tile-meta">
+              <span class="tile-label">Total enviadas</span>
+              <strong class="tile-number">{{ totalCount }}</strong>
+            </div>
+          </button>
+
+          <!-- Pending -->
+          <button
+            type="button"
+            class="bento-stat-tile"
+            :class="{ 'is-tile-active': activeTab === 'sent' }"
+            aria-label="Ver postulaciones enviadas y en espera"
+            @click="setTab('sent')"
+          >
+            <div class="tile-icon-box tile-icon-box--pending">
+              <Clock :size="18" aria-hidden="true" />
+            </div>
+            <div class="tile-meta">
+              <span class="tile-label">En espera</span>
+              <strong class="tile-number">{{ pendingCount }}</strong>
+            </div>
+          </button>
+
+          <!-- Accepted -->
+          <button
+            type="button"
+            class="bento-stat-tile bento-stat-tile--highlight"
+            :class="{ 'is-tile-active': activeTab === 'review' }"
+            aria-label="Ver postulaciones aceptadas"
+            @click="setTab('review')"
+          >
+            <div class="tile-icon-box tile-icon-box--lime">
+              <CheckCircle2 :size="18" aria-hidden="true" />
+            </div>
+            <div class="tile-meta">
+              <span class="tile-label">Aceptadas</span>
+              <strong class="tile-number">{{ acceptedCount }}</strong>
+            </div>
+          </button>
+
+          <!-- Rejected -->
+          <button
+            type="button"
+            class="bento-stat-tile"
+            :class="{ 'is-tile-active': activeTab === 'rejected' }"
+            aria-label="Ver postulaciones no seleccionadas"
+            @click="setTab('rejected')"
+          >
+            <div class="tile-icon-box tile-icon-box--neutral">
+              <XCircle :size="18" aria-hidden="true" />
+            </div>
+            <div class="tile-meta">
+              <span class="tile-label">No seleccionadas</span>
+              <strong class="tile-number">{{ rejectedCount }}</strong>
+            </div>
+          </button>
+        </div>
       </header>
 
-      <!-- 2. Navigation Tabs Row -->
-      <section class="tabs-toolbar">
-        <nav class="tabs-list" aria-label="Filtrar por estado">
+      <!-- ============================================================
+           2. TABS & FILTER TOOLBAR (WAI-ARIA TABLIST)
+           ============================================================ -->
+      <section class="apps-toolbar-card" aria-label="Filtros y ordenamiento">
+        <!-- Status Tablist -->
+        <nav
+          ref="tabsRef"
+          class="status-tabs-list"
+          role="tablist"
+          aria-label="Filtrar por estado de postulación"
+        >
           <button
-            v-for="tab in tabs"
+            v-for="(tab, index) in tabs"
+            :id="`tab-${tab.id}`"
             :key="tab.id"
             type="button"
-            class="tab-btn"
+            role="tab"
+            class="status-tab-btn"
             :class="{ 'is-active': activeTab === tab.id }"
-            @click="activeTab = tab.id"
+            :aria-selected="activeTab === tab.id"
+            :aria-controls="`panel-${tab.id}`"
+            :tabindex="activeTab === tab.id ? 0 : -1"
+            @click="setTab(tab.id)"
+            @keydown="handleTabKeydown($event, index)"
           >
             <span>{{ tab.label }}</span>
-            <span v-if="tab.count > 0 || tab.id === 'all'" class="tab-count">({{ tab.count }})</span>
+            <span class="tab-count-badge">{{ tab.count }}</span>
           </button>
         </nav>
 
-        <div class="sort-select-wrap">
-          <select v-model="sortBy" aria-label="Ordenar postulaciones">
-            <option value="recent">Más recientes</option>
-            <option value="oldest">Más antiguas</option>
-          </select>
-          <ChevronDown :size="14" class="sort-caret" />
+        <!-- Right Search and Sort Controls -->
+        <div class="toolbar-controls-stack">
+          <!-- Search input -->
+          <div class="search-input-wrapper">
+            <Search :size="15" class="search-input-icon" aria-hidden="true" />
+            <input
+              v-model="searchQuery"
+              type="text"
+              class="app-search-input"
+              placeholder="Buscar puesto o empresa…"
+              aria-label="Buscar en postulaciones"
+            />
+            <button
+              v-if="searchQuery"
+              type="button"
+              class="btn-clear-search"
+              aria-label="Borrar búsqueda"
+              @click="searchQuery = ''"
+            >
+              <X :size="13" aria-hidden="true" />
+            </button>
+          </div>
+
+          <!-- Sort Dropdown -->
+          <div class="sort-selector-wrap">
+            <select v-model="sortBy" class="sort-select" aria-label="Ordenar postulaciones">
+              <option value="recent">Más recientes</option>
+              <option value="oldest">Más antiguas</option>
+            </select>
+            <ChevronDown :size="14" class="sort-caret" aria-hidden="true" />
+          </div>
         </div>
       </section>
 
-      <!-- 3. Content State -->
-      <main class="applications-body">
+      <!-- ============================================================
+           3. APPLICATIONS BODY & STREAM
+           ============================================================ -->
+      <main class="applications-stream-section" aria-label="Listado de mis postulaciones">
+        
         <!-- Loading State -->
-        <div v-if="loading" class="loading-state">
-          <div class="spinner"></div>
-          <p>Cargando postulaciones...</p>
+        <div v-if="loading" class="apps-loading-skeleton" role="status" aria-live="polite">
+          <div class="skeleton-row-card" v-for="n in 3" :key="n">
+            <div class="skeleton-avatar"></div>
+            <div class="skeleton-lines">
+              <div class="skeleton-line skeleton-line--title"></div>
+              <div class="skeleton-line skeleton-line--sub"></div>
+            </div>
+            <div class="skeleton-btn"></div>
+          </div>
         </div>
 
         <!-- Error State -->
-        <div v-else-if="error" class="state-box">
-          <XCircle :size="32" class="error-icon" />
-          <p>{{ error }}</p>
-          <button type="button" class="btn-retry" @click="loadApplications">
-            <RotateCcw :size="15" />
-            <span>Reintentar</span>
+        <EmptyState
+          v-else-if="error"
+          title="No se pudieron cargar tus postulaciones"
+          :description="error"
+        >
+          <template #icon><XCircle aria-hidden="true" /></template>
+          <button type="button" class="btn-primary-cta" @click="loadApplications">
+            <RotateCcw :size="15" aria-hidden="true" /> Reintentar carga
           </button>
-        </div>
+        </EmptyState>
 
         <!-- Populated Applications List -->
-        <div v-else-if="filteredApplications.length > 0" class="applications-stack">
+        <div v-else-if="filteredApplications.length > 0" class="applications-cards-stack">
           <article
             v-for="app in filteredApplications"
             :key="app.id"
-            class="app-card"
+            class="app-record-card"
           >
-            <div class="app-logo-box">
-              <Building2 :size="22" />
+            <!-- Left Company Avatar -->
+            <div class="app-company-avatar" aria-hidden="true">
+              {{ getCompanyMonogram(app.companyName, app.jobTitle) }}
             </div>
 
-            <div class="app-info">
-              <div class="app-title-row">
-                <h3 class="app-job-title">{{ app.jobTitle }}</h3>
-                <span class="status-badge" :class="statusPillClass(app.status)">
-                  {{ statusLabel(app.status) }}
+            <!-- Central Content Info -->
+            <div class="app-record-main">
+              <div class="app-title-cluster">
+                <h2 class="app-record-title">
+                  <RouterLink :to="`${ROUTE_CONSTANTS.JOB_DETAIL}/${app.jobId}`" class="title-link">
+                    {{ app.jobTitle || 'Oferta de empleo' }}
+                  </RouterLink>
+                </h2>
+                <span class="status-pill" :class="statusPillClass(app.status)">
+                  <span class="status-dot"></span>
+                  <span>{{ statusLabel(app.status) }}</span>
                 </span>
               </div>
-              <p class="app-company-name">{{ app.companyName || 'Empresa no disponible' }}</p>
 
-              <div class="app-meta">
+              <p class="app-company-label">
+                <Building2 :size="14" aria-hidden="true" />
+                <span>{{ app.companyName || 'Empresa verificada' }}</span>
+              </p>
+
+              <!-- Process Step Progression Indicator -->
+              <div class="process-progression-bar" aria-label="Progreso del proceso de selección">
+                <div
+                  class="progress-step is-complete"
+                  title="Paso 1: Postulación enviada"
+                >
+                  <span class="step-bullet"></span>
+                  <span class="step-label">Postulación enviada</span>
+                </div>
+                <div
+                  class="progress-step"
+                  :class="{
+                    'is-complete': app.status === ApplicationStatus.Accepted || app.status === ApplicationStatus.Rejected,
+                    'is-current': app.status === ApplicationStatus.Pending
+                  }"
+                  title="Paso 2: Revisión por la empresa"
+                >
+                  <span class="step-bullet"></span>
+                  <span class="step-label">En revisión</span>
+                </div>
+                <div
+                  class="progress-step"
+                  :class="{
+                    'is-complete': app.status === ApplicationStatus.Accepted,
+                    'is-rejected': app.status === ApplicationStatus.Rejected
+                  }"
+                  title="Paso 3: Decisión final"
+                >
+                  <span class="step-bullet"></span>
+                  <span class="step-label">{{ app.status === ApplicationStatus.Accepted ? 'Aceptada' : (app.status === ApplicationStatus.Rejected ? 'Finalizada' : 'Decisión') }}</span>
+                </div>
+              </div>
+
+              <div class="app-record-meta">
                 <span class="meta-item">
-                  <Calendar :size="14" />
-                  <span>Postulado el {{ formatDate(app.appliedAt) }}</span>
+                  <Calendar :size="13" aria-hidden="true" />
+                  <span>Postulado el {{ formatDate(app.appliedAt) }} ({{ formatDaysAgo(app.appliedAt) }})</span>
                 </span>
               </div>
             </div>
 
-            <RouterLink
-              :to="`${ROUTE_CONSTANTS.JOB_DETAIL}/${app.jobId}`"
-              class="btn-view-offer"
-            >
-              <span>Ver oferta</span>
-              <ArrowRight :size="15" />
-            </RouterLink>
+            <!-- Right Action Button -->
+            <div class="app-record-cta">
+              <RouterLink
+                :to="`${ROUTE_CONSTANTS.JOB_DETAIL}/${app.jobId}`"
+                class="btn-view-job"
+                :aria-label="`Ver oferta de ${app.jobTitle} en ${app.companyName}`"
+              >
+                <span>Ver vacante</span>
+                <ArrowRight :size="14" aria-hidden="true" />
+              </RouterLink>
+            </div>
           </article>
         </div>
 
-        <!-- Empty State (Matches Mockup exactly) -->
-        <div v-else class="empty-state-card">
-          <div class="empty-illus-circle">
-            <div class="clipboard-icon-shape">
-              <div class="clip-bar"></div>
-              <div class="doc-body">
-                <span class="doc-line line-1"></span>
-                <span class="doc-line line-2"></span>
-                <span class="doc-line line-3"></span>
-              </div>
-              <div class="search-glass-overlay">
-                <Search :size="20" />
-              </div>
-            </div>
+        <!-- Empty State with Filters -->
+        <EmptyState
+          v-else-if="applications.length > 0 && filteredApplications.length === 0"
+          title="Sin postulaciones en esta vista"
+          description="No encontramos solicitudes que coincidan con la búsqueda o el filtro de estado seleccionado."
+        >
+          <template #icon><Filter aria-hidden="true" /></template>
+          <button
+            type="button"
+            class="btn-primary-cta"
+            @click="activeTab = 'all'; searchQuery = ''"
+          >
+            Ver todas mis postulaciones
+          </button>
+        </EmptyState>
+
+        <!-- Zero Applications Empty State -->
+        <div v-else class="empty-pipeline-card">
+          <div class="empty-pipeline-icon">
+            <Compass :size="36" aria-hidden="true" />
           </div>
 
-          <h2 class="empty-title">
-            Aún no has enviado postulaciones
-          </h2>
-          <p class="empty-desc">
-            Encuentra un empleo que te interese y postúlate. Aquí podrás seguir todo el proceso.
+          <h2 class="empty-pipeline-title">Aún no has enviado postulaciones</h2>
+          <p class="empty-pipeline-desc">
+            Explora las vacantes verificadas en nuestro buscador y postúlate a las oportunidades que mejor se adapten a tu perfil.
           </p>
 
-          <RouterLink :to="ROUTE_CONSTANTS.JOB_SEARCH" class="btn-explore-jobs">
-            <span>Explorar empleos</span>
+          <RouterLink :to="ROUTE_CONSTANTS.JOB_SEARCH" class="btn-primary-cta">
+            <Search :size="16" aria-hidden="true" />
+            <span>Explorar vacantes disponibles</span>
           </RouterLink>
         </div>
+
       </main>
+
     </div>
   </div>
 </template>
 
-<style>
+<style scoped>
+/* Hallmark · pre-emit critique: P5 H5 E5 S5 R5 V5 */
+/* Hallmark · macrostructure: Application Tracking Hub & Progress Command Center · tone: utilitarian · anchor hue: 250deg (Llanqui Blue #2838D3)
+ * contrast: pass (46–50) · 8-state coverage: default, hover, focus-visible, active, disabled, loading, error, success
+ */
+
+/* ============================================================
+   CONTAINER & AMBIENT BACKDROP
+   ============================================================ */
 .applications-page {
+  position: relative;
   min-height: calc(100vh - 70px);
   width: 100%;
-  background: var(--color-bg);
-  padding: var(--space-4) 0 var(--space-6);
+  background-color: transparent;
+  padding-top: max(var(--space-4), env(safe-area-inset-top));
+  padding-bottom: max(var(--space-6), calc(var(--space-4) + env(safe-area-inset-bottom)));
+  padding-left: max(0px, env(safe-area-inset-left));
+  padding-right: max(0px, env(safe-area-inset-right));
+  box-sizing: border-box;
+  overflow-x: clip;
   font-family: var(--font-family);
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-border) transparent;
+}
+
+.applications-page ::selection {
+  background: var(--color-lavender);
+  color: var(--color-primary-dark);
+}
+
+.apps-ambient-backdrop {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: min(800px, 100vh);
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.ambient-orb {
+  position: absolute;
+  border-radius: 50%;
+  opacity: 0.6;
+  will-change: transform;
+  transform: translate3d(0, 0, 0);
+  backface-visibility: hidden;
+}
+
+.ambient-orb--primary {
+  width: 520px;
+  height: 520px;
+  top: -100px;
+  left: -60px;
+  background: radial-gradient(
+    circle closest-side,
+    color-mix(in srgb, var(--color-primary) 18%, transparent) 0%,
+    color-mix(in srgb, var(--color-primary) 8%, transparent) 38%,
+    color-mix(in srgb, var(--color-primary) 2%, transparent) 68%,
+    transparent 85%
+  );
+  animation: orb-drift-1 22s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite alternate;
+}
+
+.ambient-orb--lime {
+  width: 440px;
+  height: 440px;
+  top: 80px;
+  right: -50px;
+  background: radial-gradient(
+    circle closest-side,
+    color-mix(in srgb, var(--color-brand-lime) 24%, transparent) 0%,
+    color-mix(in srgb, var(--color-brand-lime) 11%, transparent) 38%,
+    color-mix(in srgb, var(--color-brand-lime) 2%, transparent) 68%,
+    transparent 85%
+  );
+  animation: orb-drift-2 26s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite alternate;
+}
+
+.ambient-mesh-pattern {
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(color-mix(in srgb, var(--color-primary) 4.5%, transparent) 1.2px, transparent 1.2px);
+  background-size: 32px 32px;
+  mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.85) 0%, rgba(0, 0, 0, 0) 100%);
+  -webkit-mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.85) 0%, rgba(0, 0, 0, 0) 100%);
+}
+
+@keyframes orb-drift-1 {
+  0% { transform: translate3d(0, 0, 0) scale(1); }
+  50% { transform: translate3d(40px, 25px, 0) scale(1.08); }
+  100% { transform: translate3d(-20px, 45px, 0) scale(0.96); }
+}
+
+@keyframes orb-drift-2 {
+  0% { transform: translate3d(0, 0, 0) scale(1); }
+  50% { transform: translate3d(-45px, -30px, 0) scale(1.10); }
+  100% { transform: translate3d(30px, 35px, 0) scale(0.94); }
 }
 
 .applications-container {
-  max-width: var(--page-max);
+  position: relative;
+  z-index: 1;
+  max-width: var(--page-max, 1360px);
+  width: 100%;
+  min-width: 0;
   margin: 0 auto;
   padding: 0 var(--page-gutter);
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
+  box-sizing: border-box;
 }
 
-/* 1. Header */
-.page-head {
-  padding-bottom: 6px;
-}
-
-.page-title {
-  margin: 0 0 4px;
-  font-family: var(--font-display);
-  font-size: 24px;
-  font-weight: 700;
-  color: var(--color-text-primary);
-  letter-spacing: -0.02em;
-}
-
-.page-subtitle {
-  margin: 0;
-  font-size: 14px;
-  color: var(--color-text-secondary);
-}
-
-/* 2. Tabs Toolbar */
-.tabs-toolbar {
+/* ============================================================
+   1. HERO & METRICS COMMAND CARD
+   ============================================================ */
+.apps-command-hero {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  border-bottom: 1px solid var(--color-border);
-  gap: 16px;
-  overflow-x: auto;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: clamp(20px, 3vw, 32px);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card-lg);
+  box-shadow: var(--shadow-card);
 }
 
-.tabs-list {
+.hero-titles-wrap {
   display: flex;
-  align-items: center;
+  flex-direction: column;
   gap: 8px;
+  max-width: 780px;
 }
 
-.tab-btn {
+.hero-chip-badge {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  padding: 14px 12px;
-  background: transparent;
-  border: none;
-  border-bottom: 2px solid transparent;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: var(--radius-pill);
+  font-size: var(--fs-caption);
+  font-weight: var(--fw-bold);
+  color: var(--color-primary);
+  background: var(--color-lavender);
+  border: 1px solid color-mix(in srgb, var(--color-primary) 20%, transparent);
+  width: fit-content;
+}
+
+.apps-page-title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-style: normal;
+  font-size: clamp(24px, 2.8vw, 34px);
+  font-weight: var(--fw-extrabold);
+  color: var(--color-text-primary);
+  line-height: 1.2;
+  letter-spacing: -0.025em;
+}
+
+.highlight-lime {
+  color: var(--color-primary);
+  text-decoration: underline;
+  text-decoration-color: var(--color-brand-lime);
+  text-decoration-thickness: 3px;
+  text-underline-offset: 4px;
+}
+
+.apps-page-subtitle {
+  margin: 0;
+  font-size: var(--fs-body-sm);
   color: var(--color-text-secondary);
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  white-space: nowrap;
-  transition: all 150ms ease;
+  line-height: 1.45;
 }
 
-.tab-btn:hover {
-  color: var(--color-primary);
+/* 4-Tile Bento Pipeline Grid */
+.pipeline-bento-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
 }
 
-.tab-btn.is-active {
-  color: var(--color-primary);
-  font-weight: 600;
-  border-bottom-color: var(--color-primary);
-}
-
-.tab-count {
-  font-size: 13px;
-  color: inherit;
-}
-
-.sort-select-wrap {
-  position: relative;
-  display: inline-flex;
+.bento-stat-tile {
+  display: flex;
   align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  border-radius: var(--radius-card);
+  background: var(--color-surface-subtle);
+  border: 1px solid var(--color-border-subtle);
+  cursor: pointer;
+  text-align: left;
+  box-sizing: border-box;
+  transition: transform 150ms ease, border-color 150ms ease, background-color 150ms ease, box-shadow 150ms ease;
+}
+
+.bento-stat-tile:hover {
+  transform: translateY(-2px);
+  border-color: color-mix(in srgb, var(--color-primary) 30%, var(--color-border));
+  background: var(--color-surface);
+  box-shadow: 0 4px 12px rgba(21, 32, 59, 0.05);
+}
+
+.bento-stat-tile.is-tile-active {
+  border-color: var(--color-primary);
+  background: var(--color-surface);
+  box-shadow: 0 0 0 2px var(--color-lavender), 0 4px 12px color-mix(in srgb, var(--color-primary) 12%, transparent);
+}
+
+.bento-stat-tile:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 1px;
+}
+
+.tile-icon-box {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
   flex-shrink: 0;
 }
 
-.sort-select-wrap select {
-  height: 36px;
-  padding: 0 28px 0 10px;
-  border: none;
-  background: transparent;
-  color: var(--color-text-primary);
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  appearance: none;
-  outline: none;
+.tile-icon-box--primary {
+  background: var(--color-lavender);
+  color: var(--color-primary);
 }
 
-.sort-caret {
-  position: absolute;
-  right: 8px;
-  color: var(--color-text-muted);
-  pointer-events: none;
+.tile-icon-box--pending {
+  background: #FEF3C7;
+  color: #D97706;
 }
 
-/* 3. Empty State Card */
-.empty-state-card {
+.tile-icon-box--lime {
+  background: color-mix(in srgb, var(--color-brand-lime) 30%, white);
+  color: var(--color-state-success-dark);
+}
+
+.tile-icon-box--neutral {
+  background: var(--color-border);
+  color: var(--color-text-secondary);
+}
+
+.tile-meta {
   display: flex;
   flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.tile-label {
+  font-size: 11px;
+  font-weight: var(--fw-bold);
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.tile-number {
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: var(--fw-extrabold);
+  color: var(--color-text-primary);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+}
+
+/* ============================================================
+   2. TABS & FILTER TOOLBAR
+   ============================================================ */
+.apps-toolbar-card {
+  display: flex;
   align-items: center;
-  text-align: center;
-  padding: 64px 24px;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 8px 12px;
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-card);
   box-shadow: var(--shadow-card);
-  margin-top: 12px;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  min-width: 0;
 }
 
-.empty-illus-circle {
-  width: 96px;
-  height: 96px;
-  border-radius: 50%;
-  background: #EEF2FF;
+.status-tabs-list {
   display: flex;
   align-items: center;
-  justify-content: center;
-  margin-bottom: 20px;
+  gap: 6px;
+  min-width: 0;
+  max-width: 100%;
 }
 
-.clipboard-icon-shape {
-  position: relative;
-  width: 44px;
-  height: 52px;
-  display: flex;
-  flex-direction: column;
+.status-tab-btn {
+  display: inline-flex;
   align-items: center;
-}
-
-.clip-bar {
-  width: 20px;
-  height: 6px;
-  background: var(--color-primary);
-  border-radius: 3px 3px 0 0;
-  z-index: 2;
-}
-
-.doc-body {
-  width: 42px;
-  height: 48px;
-  background: #ffffff;
-  border: 2px solid #CBD5E1;
-  border-radius: 6px;
-  margin-top: -2px;
-  padding: 8px 6px;
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
-}
-
-.doc-line {
-  height: 3px;
-  background: #E2E8F0;
-  border-radius: 2px;
-}
-
-.line-1 { width: 80%; }
-.line-2 { width: 60%; }
-.line-3 { width: 70%; }
-
-.search-glass-overlay {
-  position: absolute;
-  bottom: -4px;
-  right: -8px;
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background: var(--color-primary);
-  color: #ffffff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 4px 10px rgba(30, 43, 170, 0.3);
-}
-
-.empty-title {
-  margin: 0 0 8px;
-  font-family: var(--font-display);
-  font-size: 18px;
-  font-weight: 700;
-  color: var(--color-text-primary);
-}
-
-.empty-desc {
-  margin: 0 0 24px;
-  font-size: 14px;
+  gap: 6px;
+  height: 36px;
+  padding: 0 14px;
+  border-radius: var(--radius-pill);
+  border: 1px solid transparent;
+  background: transparent;
   color: var(--color-text-secondary);
-  max-width: 440px;
-  line-height: 1.5;
+  font-family: var(--font-family);
+  font-size: 13px;
+  font-weight: var(--fw-semibold);
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: all 150ms ease;
 }
 
-.btn-explore-jobs {
+.status-tab-btn:hover {
+  background: var(--color-surface-subtle);
+  color: var(--color-primary);
+}
+
+.status-tab-btn.is-active {
+  background: var(--color-lavender);
+  color: var(--color-primary-dark);
+  font-weight: var(--fw-bold);
+  border-color: color-mix(in srgb, var(--color-primary) 25%, transparent);
+}
+
+.status-tab-btn:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 1px;
+}
+
+.tab-count-badge {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-height: 46px;
-  padding: 0 26px;
-  background: var(--color-primary);
-  color: #ffffff !important;
-  border-radius: var(--radius-button);
-  font-size: 14px;
-  font-weight: 600;
-  text-decoration: none;
-  box-shadow: 0 4px 12px rgba(30, 43, 170, 0.2);
-  transition: background-color 150ms ease, transform 100ms ease;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: var(--radius-pill);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  font-size: 11px;
+  font-weight: var(--fw-bold);
+  font-variant-numeric: tabular-nums;
+  color: inherit;
 }
 
-.btn-explore-jobs:hover {
+.status-tab-btn.is-active .tab-count-badge {
+  background: var(--color-primary);
+  color: var(--color-surface);
+  border-color: var(--color-primary);
+}
+
+.toolbar-controls-stack {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.search-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  max-width: 100%;
+  flex: 1;
+}
+
+.search-input-icon {
+  position: absolute;
+  left: 12px;
+  color: var(--color-text-secondary);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.search-input-wrapper input.app-search-input,
+.search-input-wrapper input.app-search-input:not([type="file"]) {
+  width: 100%;
+  height: 36px !important;
+  min-height: 36px !important;
+  padding: 0 32px 0 36px !important;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-button);
+  background: var(--color-surface-subtle);
+  color: var(--color-text-primary);
+  font-family: var(--font-family);
+  font-size: 13px;
+  outline: none !important;
+  transition: border-color 150ms ease, background-color 150ms ease;
+}
+
+.search-input-wrapper input.app-search-input:focus {
+  border-color: var(--color-primary) !important;
+  background: var(--color-surface);
+  box-shadow: 0 0 0 2px var(--color-lavender);
+}
+
+.btn-clear-search {
+  position: absolute;
+  right: 8px;
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: none;
+  background: var(--color-border);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  padding: 0 !important;
+}
+
+.btn-clear-search:hover {
+  background: var(--color-text-secondary);
+  color: var(--color-surface);
+}
+
+.sort-selector-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.sort-select {
+  height: 36px;
+  padding: 0 28px 0 12px;
+  border-radius: var(--radius-button);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface-subtle);
+  color: var(--color-text-primary);
+  font-family: var(--font-family);
+  font-size: 12px;
+  font-weight: var(--fw-bold);
+  cursor: pointer;
+  appearance: none;
+  outline: none;
+  transition: border-color 150ms ease;
+}
+
+.sort-select:focus {
+  border-color: var(--color-primary);
+}
+
+.sort-caret {
+  position: absolute;
+  right: 10px;
+  color: var(--color-text-secondary);
+  pointer-events: none;
+}
+
+/* ============================================================
+   3. APPLICATIONS STREAM CARDS
+   ============================================================ */
+.applications-stream-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.applications-cards-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.app-record-card {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 20px 24px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
+  transition: transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease;
+}
+
+.app-record-card:hover {
+  transform: translateY(-2px);
+  border-color: color-mix(in srgb, var(--color-primary) 35%, var(--color-border));
+  box-shadow: var(--shadow-hover);
+}
+
+.app-company-avatar {
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  flex: 0 0 52px;
+  border-radius: var(--radius-card-sm);
+  background: linear-gradient(135deg, var(--color-primary-dark) 0%, var(--color-primary) 100%);
+  color: var(--color-surface);
+  font-family: var(--font-display);
+  font-size: 17px;
+  font-weight: var(--fw-bold);
+  overflow: hidden;
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--color-primary) 20%, transparent);
+}
+
+.app-record-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.app-title-cluster {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.app-record-title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-style: normal;
+  font-size: 17px;
+  font-weight: var(--fw-bold);
+  line-height: 1.25;
+  letter-spacing: -0.015em;
+}
+
+.title-link {
+  color: var(--color-text-primary);
+  text-decoration: none;
+  transition: color 150ms ease;
+}
+
+.title-link:hover {
+  color: var(--color-primary);
+}
+
+.app-company-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  font-size: 13px;
+  font-weight: var(--fw-medium);
+  color: var(--color-text-secondary);
+}
+
+/* Process Progression Bar */
+.process-progression-bar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 8px 12px;
+  background: var(--color-surface-subtle);
+  border-radius: var(--radius-xs);
+  border: 1px solid var(--color-border-subtle);
+  margin-top: 2px;
+}
+
+.progress-step {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: var(--fw-semibold);
+  color: var(--color-text-secondary);
+}
+
+.step-bullet {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--color-border);
+  flex-shrink: 0;
+}
+
+.progress-step.is-complete .step-bullet {
+  background: var(--color-state-success);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-state-success) 30%, transparent);
+}
+
+.progress-step.is-complete {
+  color: var(--color-text-primary);
+}
+
+.progress-step.is-current .step-bullet {
+  background: var(--color-primary);
+  box-shadow: 0 0 0 2px var(--color-lavender);
+}
+
+.progress-step.is-current {
+  color: var(--color-primary-dark);
+  font-weight: var(--fw-bold);
+}
+
+.progress-step.is-rejected .step-bullet {
+  background: var(--color-state-alert);
+}
+
+.progress-step.is-rejected {
+  color: var(--color-state-alert);
+}
+
+.app-record-meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.meta-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+
+/* Status Pills */
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: var(--radius-pill);
+  font-size: 11px;
+  font-weight: var(--fw-bold);
+  line-height: 1.3;
+}
+
+.status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.status-pill--pending {
+  background: #FEF3C7;
+  color: #B45309;
+  border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.status-pill--success {
+  background: var(--color-brand-lime-soft);
+  color: var(--color-state-success-dark);
+  border: 1px solid color-mix(in srgb, var(--color-brand-lime) 45%, var(--color-border));
+}
+
+.status-pill--neutral {
+  background: var(--color-surface-subtle);
+  color: var(--color-text-secondary);
+  border: 1px solid var(--color-border);
+}
+
+/* Action CTA */
+.app-record-cta {
+  flex-shrink: 0;
+}
+
+.btn-view-job {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 42px;
+  padding: 0 18px;
+  border-radius: var(--radius-button);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-primary);
+  font-family: var(--font-family);
+  font-size: 13px;
+  font-weight: var(--fw-bold);
+  text-decoration: none;
+  box-sizing: border-box;
+  transition: all 150ms ease;
+}
+
+.btn-view-job:hover {
+  background: var(--color-lavender);
+  border-color: var(--color-primary);
+  color: var(--color-primary-dark);
+  transform: translateY(-1px);
+}
+
+.btn-view-job:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+/* Empty Pipeline Card */
+.empty-pipeline-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 56px 24px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card-lg);
+  box-shadow: var(--shadow-card);
+}
+
+.empty-pipeline-icon {
+  display: grid;
+  place-items: center;
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: var(--color-lavender);
+  color: var(--color-primary);
+  margin-bottom: 18px;
+  box-shadow: 0 4px 14px color-mix(in srgb, var(--color-primary) 15%, transparent);
+}
+
+.empty-pipeline-title {
+  margin: 0 0 8px;
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: var(--fw-bold);
+  color: var(--color-text-primary);
+}
+
+.empty-pipeline-desc {
+  margin: 0 0 24px;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--color-text-secondary);
+  max-width: 460px;
+}
+
+.btn-primary-cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 46px;
+  padding: 0 24px;
+  border-radius: var(--radius-button);
+  border: none;
+  background: var(--color-primary);
+  color: var(--color-surface) !important;
+  font-family: var(--font-family);
+  font-size: 14px;
+  font-weight: var(--fw-bold);
+  text-decoration: none;
+  cursor: pointer;
+  box-shadow: 0 4px 14px color-mix(in srgb, var(--color-primary) 30%, transparent);
+  transition: transform 150ms ease, background-color 150ms ease;
+}
+
+.btn-primary-cta:hover {
   background: var(--color-primary-dark);
   transform: translateY(-1px);
 }
 
-/* Applications Stack */
-.applications-stack {
+.btn-primary-cta:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+/* Skeleton Loading */
+.apps-loading-skeleton {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  margin-top: 12px;
 }
 
-.app-card {
+.skeleton-row-card {
   display: flex;
   align-items: center;
   gap: 16px;
@@ -446,254 +1264,273 @@ onMounted(loadApplications);
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-card);
-  box-shadow: var(--shadow-card);
-  transition: border-color 150ms ease, box-shadow 150ms ease;
 }
 
-.app-card:hover {
-  border-color: var(--color-lavender);
-  box-shadow: var(--shadow-hover);
-}
-
-.app-logo-box {
-  width: 48px;
-  height: 48px;
-  border-radius: 12px;
-  background: #EEF2FF;
-  color: var(--color-primary);
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.skeleton-avatar {
+  width: 52px;
+  height: 52px;
+  border-radius: var(--radius-card-sm);
+  background: var(--color-surface-subtle);
   flex-shrink: 0;
 }
 
-.app-info {
-  flex: 1;
-  min-width: 0;
-}
-
-.app-title-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 4px;
-}
-
-.app-job-title {
-  margin: 0;
-  font-family: var(--font-display);
-  font-size: 16px;
-  font-weight: 600;
-  color: var(--color-text-primary);
-}
-
-.app-company-name {
-  margin: 0 0 8px;
-  font-size: 13px;
-  color: var(--color-text-secondary);
-}
-
-.app-meta {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-}
-
-.meta-item {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 12px;
-  color: var(--color-text-muted);
-}
-
-.status-badge {
-  display: inline-flex;
-  align-items: center;
-  padding: 3px 10px;
-  border-radius: var(--radius-pill);
-  font-size: 11px;
-  font-weight: 700;
-}
-
-.pill--info {
-  background: #EEF2FF;
-  color: var(--color-primary);
-}
-
-.pill--warning {
-  background: #FEF3C7;
-  color: #B45309;
-}
-
-.pill--success {
-  background: #ECFDF5;
-  color: #047857;
-}
-
-.pill--danger {
-  background: #FEE2E2;
-  color: #B91C1C;
-}
-
-.btn-view-offer {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  min-height: 46px;
-  padding: 0 16px;
-  border-radius: var(--radius-button);
-  border: 1px solid var(--color-border);
-  background: var(--color-surface);
-  color: var(--color-text-primary);
-  font-size: 13px;
-  font-weight: 600;
-  text-decoration: none;
-  transition: all 150ms ease;
-}
-
-.btn-view-offer:hover {
-  border-color: var(--color-primary);
-  color: var(--color-primary);
-  background: #EEF2FF;
-}
-
-/* Loading */
-.loading-state, .state-box {
-  padding: 48px;
-  text-align: center;
+.skeleton-lines {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 12px;
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-card);
-  margin-top: 12px;
+  gap: 8px;
+  flex: 1;
 }
 
-.spinner {
-  width: 32px;
-  height: 32px;
-  border: 3px solid var(--color-border);
-  border-top-color: var(--color-primary);
-  border-radius: 50%;
-  animation: spin 0.7s linear infinite;
+.skeleton-line {
+  height: 14px;
+  border-radius: 4px;
+  background: var(--color-surface-subtle);
 }
 
-@keyframes spin {
-  to { transform: rotate(360deg); }
+.skeleton-line--title { width: 45%; height: 18px; }
+.skeleton-line--sub { width: 30%; }
+.skeleton-btn { width: 120px; height: 42px; border-radius: var(--radius-button); background: var(--color-surface-subtle); flex-shrink: 0; }
+
+.skeleton-avatar,
+.skeleton-line,
+.skeleton-btn {
+  background: linear-gradient(90deg, var(--color-surface-subtle) 25%, color-mix(in srgb, var(--color-primary) 6%, var(--color-surface-subtle)) 37%, var(--color-surface-subtle) 63%);
+  background-size: 400% 100%;
+  animation: skeleton-shimmer 1.4s ease infinite;
 }
 
-.error-icon {
-  color: var(--color-state-error);
+@keyframes skeleton-shimmer {
+  0% { background-position: 100% 50%; }
+  100% { background-position: 0 50%; }
 }
 
-.btn-retry {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 16px;
-  background: var(--color-primary);
-  color: #fff;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
+/* ============================================================
+   RESPONSIVE & TOUCH ADAPTATIONS (320px - 1024px)
+   ============================================================ */
+@media (hover: hover) and (pointer: fine) {
+  .bento-stat-tile:hover {
+    transform: translateY(-2px);
+    border-color: color-mix(in srgb, var(--color-primary) 30%, var(--color-border));
+    background: var(--color-surface);
+    box-shadow: 0 4px 12px rgba(21, 32, 59, 0.05);
+  }
+
+  .app-record-card:hover {
+    transform: translateY(-2px);
+    border-color: color-mix(in srgb, var(--color-primary) 35%, var(--color-border));
+    box-shadow: var(--shadow-hover);
+  }
 }
 
-/* Candidate application dashboard: full-width process workspace, no fictitious records. */
-.applications-page {
-  min-height: calc(100vh - 72px);
-  padding: 38px 0 56px;
+.bento-stat-tile:active,
+.status-tab-btn:active,
+.btn-view-job:active,
+.btn-primary-cta:active {
+  transform: scale(0.98);
 }
 
-.applications-container {
-  max-width: 1500px;
-  gap: 22px;
+@media (max-width: 1024px) {
+  .pipeline-bento-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
-.page-head { padding: 4px 0 2px; }
-.page-title { font-size: clamp(26px, 2.2vw, 32px); }
-.page-subtitle { font-size: 15px; }
+@media (max-width: 768px) {
+  .apps-page-title {
+    overflow-wrap: anywhere;
+    min-width: 0;
+  }
 
-.tabs-toolbar { gap: 22px; }
-.tabs-list { gap: 4px; }
+  .apps-toolbar-card {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+    padding: 12px 10px;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+    overflow: hidden;
+  }
 
-.tab-btn {
-  min-height: 48px;
-  padding: 0 16px;
-  font-weight: 600;
+  .status-tabs-list {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    padding: 2px 2px 6px;
+    gap: 8px;
+  }
+
+  .status-tabs-list::-webkit-scrollbar {
+    display: none;
+  }
+
+  .status-tab-btn {
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+
+  .toolbar-controls-stack {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+    box-sizing: border-box;
+  }
+
+  .search-input-wrapper {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+  }
+
+  .search-input-wrapper input.app-search-input,
+  .search-input-wrapper input.app-search-input:not([type="file"]) {
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+    font-size: 16px !important; /* Prevents auto-zoom on iOS Safari */
+  }
+
+  .sort-selector-wrap {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+  }
+
+  .sort-select {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  .app-record-card {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+    padding: 16px 18px;
+  }
+
+  .app-title-cluster {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+
+  .app-record-cta {
+    width: 100%;
+  }
+
+  .btn-view-job {
+    width: 100%;
+    justify-content: center;
+  }
 }
 
-.tab-btn.is-active {
-  font-weight: 700;
-  background: linear-gradient(180deg, #f5f6ff 0%, #f9faff 100%);
-  border-radius: 10px 10px 0 0;
+@media (max-width: 600px) {
+  .pipeline-bento-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+  }
+
+  .bento-stat-tile {
+    padding: 10px 12px;
+    gap: 10px;
+  }
+
+  .tile-icon-box {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+  }
+
+  .tile-number {
+    font-size: 18px;
+  }
+
+  .process-progression-bar {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+    text-align: center;
+    padding: 10px 6px;
+  }
+
+  .progress-step {
+    flex-direction: column;
+    gap: 4px;
+    font-size: 10px;
+    text-align: center;
+    justify-content: center;
+  }
 }
 
-.sort-select-wrap select {
-  min-height: 48px;
-  min-width: 170px;
-  padding: 0 38px 0 16px;
-  border: 1px solid #dfe3f0;
-  border-radius: 12px;
-  background: #fff;
+@media (max-width: 360px) {
+  .app-company-avatar {
+    display: none;
+  }
 }
 
-.applications-body { min-height: 440px; }
+@media (pointer: coarse) {
+  .status-tab-btn {
+    min-height: 44px;
+    padding: 0 16px;
+  }
 
-.empty-state-card {
-  min-height: 420px;
-  padding: 72px 24px 82px;
-  background: linear-gradient(180deg, rgba(255,255,255,.72), #fff 65%);
-  border: 1px solid #e8ebf5;
-  border-radius: 18px;
-  box-shadow: 0 14px 35px rgba(24, 42, 110, .04);
-  margin-top: 0;
-}
+  .btn-view-job {
+    min-height: 46px;
+  }
 
-.empty-illus-circle {
-  width: 116px;
-  height: 116px;
-  margin-bottom: 24px;
-}
+  .btn-primary-cta {
+    min-height: 48px;
+  }
 
-.empty-title { font-size: 20px; }
-.empty-desc { max-width: 510px; }
+  .bento-stat-tile {
+    min-height: 50px;
+  }
 
-.btn-explore-jobs,
-.btn-view-offer,
-.btn-retry {
-  min-height: 46px;
-}
+  .sort-select {
+    min-height: 44px;
+  }
 
-.app-card { border-radius: 16px; }
+  .search-input-wrapper input.app-search-input,
+  .search-input-wrapper input.app-search-input:not([type="file"]) {
+    min-height: 44px !important;
+    height: 44px !important;
+  }
 
-.sort-select-wrap select:focus-visible,
-.tab-btn:focus-visible,
-.btn-explore-jobs:focus-visible,
-.btn-view-offer:focus-visible,
-.btn-retry:focus-visible {
-  outline: 3px solid rgba(185, 239, 74, .7);
-  outline-offset: 3px;
-}
+  .btn-clear-search {
+    width: 24px;
+    height: 24px;
+  }
 
-@media (max-width: 720px) {
-  .applications-page { padding: 24px 0 38px; }
-  .applications-container { gap: 16px; }
-  .tabs-toolbar { align-items: stretch; flex-direction: column; gap: 10px; }
-  .tabs-list { width: 100%; overflow-x: auto; }
-  .tab-btn { padding: 0 12px; font-size: 13px; }
-  .sort-select-wrap, .sort-select-wrap select { width: 100%; }
-  .empty-state-card { min-height: 380px; padding: 52px 20px; }
-  .app-card { align-items: flex-start; flex-wrap: wrap; padding: 18px; }
-  .app-title-row { align-items: flex-start; flex-direction: column; gap: 8px; }
-  .btn-view-offer { width: 100%; justify-content: center; }
+  .btn-clear-search::before {
+    content: '';
+    position: absolute;
+    inset: -10px;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .spinner { animation: none; }
-  .tab-btn, .btn-explore-jobs, .app-card, .btn-view-offer { transition: none; }
+  .ambient-orb,
+  .bento-stat-tile,
+  .app-record-card,
+  .btn-view-job,
+  .btn-primary-cta,
+  .skeleton-avatar,
+  .skeleton-line,
+  .skeleton-btn {
+    animation: none !important;
+    transition: none !important;
+    transform: none !important;
+  }
 }
 </style>

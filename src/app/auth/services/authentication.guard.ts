@@ -1,4 +1,3 @@
-
 import type { NavigationGuardNext, RouteLocationNormalized } from "vue-router";
 import { useAuthenticationStore } from "./authentication.store";
 import { ROUTE_CONSTANTS } from "@/app/shared/router/route-constants";
@@ -49,8 +48,19 @@ export const authenticationGuard = (
         return next('/sign-in');
     }
 
-    // Hay token pero la sesión no está cargada en el store: cargar usuario.
+    // Hay token pero la sesión no está cargada en el store:
     if (hasToken && !isSignedIn) {
+        const allowedRoles = to.meta?.roles as string[] | undefined;
+        const cachedUserType = localStorage.getItem('userType') as 'employee' | 'organization' | null;
+
+        // Si no hay restricción de rol o el rol en caché coincide, avanzar de inmediato
+        // y validar en segundo plano para no bloquear el First Contentful Paint.
+        if (!allowedRoles || allowedRoles.length === 0 || (cachedUserType && allowedRoles.includes(cachedUserType))) {
+            authenticationStore.loadCurrentUser().catch(() => {});
+            return proceedWithRole();
+        }
+
+        // Si la ruta requiere un rol estricto y no está en caché, esperar validación
         authenticationStore.loadCurrentUser().then(success => {
             if (success) {
                 proceedWithRole();

@@ -90,7 +90,7 @@ const navItems = computed(() => [
 }
 
 .settings-nav-item.active {
-    background: rgba(45, 58, 199, 0.08);
+    background: var(--color-lavender);
     color: var(--color-accent);
     font-weight: var(--fw-semibold);
 }

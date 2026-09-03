@@ -1,637 +1,311 @@
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import {
-  Sparkle,
-  Sparkles,
-  Award,
-  CheckCircle2,
   AlertCircle,
+  Check,
+  CheckCircle2,
   CreditCard,
   Loader2,
   RefreshCw,
-  Check
+  Sparkles,
 } from 'lucide-vue-next';
-import { paymentService } from '@/app/shared/services/payment.service';
+import {
+  paymentService,
+  type CreditPlanResponse,
+  type PaidCreditPlan,
+} from '@/app/shared/services/payment.service';
 
 const route = useRoute();
 const router = useRouter();
 
 const balance = ref<number | null>(null);
+const initialFreeCredits = ref<number | null>(null);
+const plans = ref<CreditPlanResponse[]>([]);
 const isLoadingBalance = ref(false);
+const isLoadingPlans = ref(false);
 const isProcessingPayment = ref(false);
-const paymentSuccessDetails = ref<{ credits: number; txId: string } | null>(null);
+const paymentSuccessDetails = ref<{ credits: number; txId: string | null } | null>(null);
 const paymentCancelMessage = ref(false);
 const errorMessage = ref('');
-const activePlanLoading = ref('');
+const activePlanLoading = ref<string | null>(null);
 
-const plans = [
-  {
-    name: 'Starter',
-    credits: 5,
-    price: '2.70',
-    description: 'Perfecto para postulaciones rápidas y optimizaciones puntuales.',
-    features: ['5 Créditos de IA', 'Válido por 12 meses', 'Diseños ATS optimizados', 'Soporte estándar'],
-    icon: Sparkle,
-    color: 'var(--color-text-secondary)',
-    popular: false
-  },
-  {
-    name: 'Pro',
-    credits: 15,
-    price: '6.80',
-    description: 'El plan más popular para profesionales activos en búsqueda de empleo.',
-    features: ['15 Créditos de IA', 'Sin fecha de vencimiento', 'Diseños ATS optimizados', 'Soporte prioritario', 'Acceso a nuevas plantillas'],
-    icon: Sparkles,
-    color: 'var(--color-primary)',
-    popular: true
-  },
-  {
-    name: 'Max',
-    credits: 35,
-    price: '13.60',
-    description: 'Para perfiles altamente competitivos que aplican a múltiples vacantes.',
-    features: ['35 Créditos de IA', 'Sin fecha de vencimiento', 'Prioridad de procesamiento', 'Soporte 24/7 VIP', 'Acceso a nuevas plantillas', 'Sugerencias personalizadas'],
-    icon: Award,
-    color: 'var(--color-accent)',
-    popular: false
+const freePlan = computed(() => plans.value.find((plan) => !plan.requiresPayment) ?? null);
+const paidPlans = computed(() => plans.value.filter((plan) => plan.requiresPayment));
+
+function formatPrice(price: number, currency: string): string {
+  try {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency,
+      minimumFractionDigits: 2,
+    }).format(price);
+  } catch {
+    return `${price.toFixed(2)} ${currency}`;
   }
-];
-
-function fetchBalance() {
-  errorMessage.value = 'El backend actual no ofrece una consulta de saldo. El saldo se actualizará después de una compra confirmada.';
 }
 
-async function buyPlan(planName: string) {
-  activePlanLoading.value = planName;
+async function fetchBalance(): Promise<void> {
+  isLoadingBalance.value = true;
+  try {
+    const response = await paymentService.getBalance();
+    balance.value = response.balance;
+    initialFreeCredits.value = response.initialFreeCredits;
+  } catch (error) {
+    console.error('Error loading credit balance:', error);
+    errorMessage.value = 'No se pudo consultar tu saldo de créditos. Inténtalo nuevamente.';
+  } finally {
+    isLoadingBalance.value = false;
+  }
+}
+
+async function fetchPlans(): Promise<void> {
+  isLoadingPlans.value = true;
+  try {
+    plans.value = await paymentService.getPlans();
+  } catch (error) {
+    console.error('Error loading payment plans:', error);
+    errorMessage.value = 'No se pudieron cargar los planes disponibles.';
+  } finally {
+    isLoadingPlans.value = false;
+  }
+}
+
+async function refreshPaymentData(): Promise<void> {
   errorMessage.value = '';
-  
-  // Set redirect urls
+  await Promise.all([fetchBalance(), fetchPlans()]);
+}
+
+async function buyPlan(plan: CreditPlanResponse): Promise<void> {
+  if (!plan.requiresPayment) return;
+
+  activePlanLoading.value = plan.code;
+  errorMessage.value = '';
   const currentUrl = window.location.origin + window.location.pathname;
   const returnUrl = `${currentUrl}?tab=payments&status=success`;
   const cancelUrl = `${currentUrl}?tab=payments&status=cancel`;
 
   try {
-    const res = await paymentService.createOrder({
-      creditPlan: planName as 'Starter' | 'Pro' | 'Max',
+    const response = await paymentService.createOrder({
+      creditPlan: plan.code as PaidCreditPlan,
       platform: 'Paypal',
       returnUrl,
-      cancelUrl
+      cancelUrl,
     });
-    
-    if (res.approvalUrl) {
-      // Redirect to PayPal checkout
-      window.location.href = res.approvalUrl;
-    } else {
-      errorMessage.value = 'No se pudo obtener el enlace de pago de PayPal.';
+
+    if (!response.approvalUrl) {
+      errorMessage.value = 'PayPal no devolvió un enlace de pago para esta compra.';
+      return;
     }
-  } catch (err) {
-    console.error('Error buying plan:', err);
-    errorMessage.value = 'Error al iniciar la compra del plan.';
+
+    window.location.assign(response.approvalUrl);
+  } catch (error) {
+    console.error('Error creating PayPal order:', error);
+    errorMessage.value = 'No se pudo iniciar el pago con PayPal. Verifica tu sesión e inténtalo nuevamente.';
   } finally {
-    activePlanLoading.value = '';
+    activePlanLoading.value = null;
   }
 }
 
-async function handlePaymentCallback() {
-  const status = route.query.status as string;
-  const token = route.query.token as string; // PayPal orderId
+async function handlePaymentCallback(): Promise<void> {
+  const status = route.query.status as string | undefined;
+  const token = route.query.token as string | undefined;
 
   if (status === 'success' && token) {
     isProcessingPayment.value = true;
     errorMessage.value = '';
     try {
-      const res = await paymentService.captureOrder(token);
-      if (res.success) {
-        paymentSuccessDetails.value = {
-          credits: res.creditsAdded,
-          txId: res.transactionId
-        };
-        balance.value = res.newBalance;
-      } else {
-        errorMessage.value = 'El pago fue procesado pero no pudimos acreditar los saldos. Contacta a soporte.';
+      const response = await paymentService.captureOrder(token);
+      if (!response.success) {
+        errorMessage.value = 'PayPal procesó la orden, pero no fue posible acreditar los créditos.';
+        return;
       }
-    } catch (err) {
-      console.error('Error capturing order:', err);
-      errorMessage.value = 'Error al confirmar la transacción con PayPal.';
+
+      balance.value = response.newBalance;
+      paymentSuccessDetails.value = {
+        credits: response.creditsAdded,
+        txId: response.transactionId,
+      };
+    } catch (error) {
+      console.error('Error capturing PayPal order:', error);
+      errorMessage.value = 'No se pudo confirmar la orden de PayPal. No vuelvas a pagar: actualiza esta página primero.';
     } finally {
       isProcessingPayment.value = false;
-      // Clean query parameters from URL
-      router.replace({ query: { ...route.query, status: undefined, token: undefined } });
+      await router.replace({ query: { ...route.query, status: undefined, token: undefined } });
     }
   } else if (status === 'cancel') {
     paymentCancelMessage.value = true;
-    // Clean query parameters
-    router.replace({ query: { ...route.query, status: undefined, token: undefined } });
-    setTimeout(() => {
-      paymentCancelMessage.value = false;
-    }, 4000);
+    await router.replace({ query: { ...route.query, status: undefined, token: undefined } });
   }
 }
 
-onMounted(handlePaymentCallback);
+onMounted(async () => {
+  await handlePaymentCallback();
+  await refreshPaymentData();
+});
 </script>
 
 <template>
-  <div class="payments-settings animate-fade-in">
-    <!-- Success Capture Overlay Dialog -->
-    <div v-if="isProcessingPayment" class="overlay-modal">
-      <div class="modal-content text-center">
-        <Loader2 class="spinner-loader text-primary" :size="48" />
-        <h4>Confirmando Pago en PayPal</h4>
-        <p>Estamos consolidando tu orden y acreditando tus saldos de IA. Por favor, no cierres esta ventana...</p>
-      </div>
-    </div>
-
-    <!-- Feedback alerts -->
-    <Transition name="slide-down">
-      <div v-if="paymentSuccessDetails" class="toast success-toast" @click="paymentSuccessDetails = null">
-        <CheckCircle2 :size="18" />
-        <div>
-          <span>¡Créditos acreditados! +{{ paymentSuccessDetails.credits }} créditos agregados.</span>
-          <small class="toast-sub">Transacción: {{ paymentSuccessDetails.txId }}</small>
+  <section class="payments-settings" aria-labelledby="payments-title">
+    <Teleport to="body">
+      <div v-if="isProcessingPayment" class="overlay-modal" role="status" aria-live="polite">
+        <div class="modal-content">
+          <Loader2 class="spinner-loader text-primary" :size="42" aria-hidden="true" />
+          <h2>Confirmando tu pago</h2>
+          <p>Estamos verificando la orden con PayPal y acreditando tus créditos. No cierres esta ventana.</p>
         </div>
       </div>
-    </Transition>
-    <Transition name="slide-down">
-      <div v-if="paymentCancelMessage" class="toast error-toast">
-        <AlertCircle :size="18" />
-        <span>Compra cancelada. No se realizó ningún cargo en PayPal.</span>
-      </div>
-    </Transition>
-    <Transition name="slide-down">
-      <div v-if="errorMessage" class="toast error-toast">
-        <AlertCircle :size="18" />
-        <span>{{ errorMessage }}</span>
-      </div>
-    </Transition>
 
-    <!-- Header Balance Box -->
-    <div class="glass-card balance-header-card">
-      <div class="balance-left">
-        <span class="balance-label">Créditos de IA Disponibles</span>
-        <div class="balance-row">
-          <span v-if="balance !== null" class="balance-val">{{ balance }}</span>
-          <span v-else class="balance-val">--</span>
-          <span class="balance-unit">Crédito(s)</span>
-        </div>
-        <p class="balance-hint">Cada optimización o generación de CV por Inteligencia Artificial consume 1 crédito.</p>
-      </div>
-      <button type="button" class="btn-refresh" :disabled="isLoadingBalance" @click="fetchBalance">
-        <RefreshCw :class="{ 'spinner-loader': isLoadingBalance }" :size="16" />
-        <span>Actualizar saldo</span>
-      </button>
-    </div>
-
-    <!-- Plans Section Title -->
-    <h3 class="plans-title-header">Planes de Créditos de IA</h3>
-    <p class="plans-subtitle-header">Elige el paquete que mejor se adapte a tus necesidades de postulación laboral. Los pagos se procesan de forma 100% segura mediante PayPal.</p>
-
-    <!-- Grid of Plans -->
-    <div class="plans-grid">
-      <div 
-        v-for="plan in plans" 
-        :key="plan.name" 
-        class="plan-card"
-        :class="{ 'popular-card': plan.popular }"
-      >
-        <span v-if="plan.popular" class="popular-tag">Más Recomendado</span>
-        
-        <div class="plan-header">
-          <div class="plan-icon-wrap" :style="{ color: plan.color, backgroundColor: plan.color + '10' }">
-            <component :is="plan.icon" :size="24" />
+      <Transition name="slide-down">
+        <div v-if="paymentSuccessDetails" class="toast success-toast" role="status" @click="paymentSuccessDetails = null">
+          <CheckCircle2 :size="18" aria-hidden="true" />
+          <div>
+            <strong>Créditos acreditados: +{{ paymentSuccessDetails.credits }}</strong>
+            <small v-if="paymentSuccessDetails.txId">Transacción: {{ paymentSuccessDetails.txId }}</small>
           </div>
-          <h4 class="plan-name">{{ plan.name }}</h4>
-          <p class="plan-desc">{{ plan.description }}</p>
         </div>
+      </Transition>
 
-        <div class="plan-price-row">
-          <span class="price-currency">$</span>
-          <span class="price-amount">{{ plan.price }}</span>
-          <span class="price-suffix">USD</span>
+      <Transition name="slide-down">
+        <div v-if="paymentCancelMessage" class="toast notice-toast" role="status" @click="paymentCancelMessage = false">
+          <AlertCircle :size="18" aria-hidden="true" />
+          <span>Cancelaste la compra. No se realizó ningún cargo.</span>
         </div>
-        <span class="plan-credits-sub">{{ plan.credits }} Créditos de IA</span>
+      </Transition>
 
-        <ul class="plan-features-list">
-          <li v-for="feat in plan.features" :key="feat">
-            <Check :size="14" class="text-success" />
-            <span>{{ feat }}</span>
-          </li>
-        </ul>
+      <Transition name="slide-down">
+        <div v-if="errorMessage" class="toast error-toast" role="alert" @click="errorMessage = ''">
+          <AlertCircle :size="18" aria-hidden="true" />
+          <span>{{ errorMessage }}</span>
+        </div>
+      </Transition>
+    </Teleport>
 
-        <button 
-          type="button" 
-          class="btn-buy-plan"
-          :class="{ 'btn-popular': plan.popular }"
-          :disabled="activePlanLoading !== ''"
-          @click="buyPlan(plan.name)"
-        >
-          <Loader2 v-if="activePlanLoading === plan.name" class="spinner-loader" :size="16" />
-          <CreditCard v-else :size="16" />
-          <span>{{ activePlanLoading === plan.name ? 'Conectando...' : 'Comprar con PayPal' }}</span>
-        </button>
+    <header class="payments-header">
+      <span class="heading-icon" aria-hidden="true"><Sparkles :size="21" /></span>
+      <div>
+        <p class="eyebrow">CRÉDITOS DE IA</p>
+        <h1 id="payments-title">Genera CV con el plan que necesitas</h1>
+        <p>Tu saldo, precios y paquetes se consultan directamente desde Llanqui. PayPal solo se usa para los paquetes pagados.</p>
       </div>
-    </div>
-  </div>
+    </header>
+
+    <section class="balance-card" aria-label="Saldo actual de créditos">
+      <div class="balance-copy">
+        <span>Saldo disponible</span>
+        <strong v-if="!isLoadingBalance && balance !== null">{{ balance }}</strong>
+        <strong v-else aria-live="polite">—</strong>
+        <p>Cada generación o mejora con IA consume 1 crédito.</p>
+      </div>
+      <button type="button" class="refresh-button" :disabled="isLoadingBalance || isLoadingPlans" @click="refreshPaymentData">
+        <RefreshCw :size="16" :class="{ 'spinner-loader': isLoadingBalance || isLoadingPlans }" aria-hidden="true" />
+        Actualizar
+      </button>
+    </section>
+
+    <section v-if="freePlan" class="free-plan-card" aria-labelledby="free-plan-title">
+      <div>
+        <span class="included-label">INCLUIDO</span>
+        <h2 id="free-plan-title">Plan {{ freePlan.name }}</h2>
+        <p>{{ freePlan.description }}</p>
+      </div>
+      <div class="free-credit-summary">
+        <strong>{{ freePlan.credits }}</strong>
+        <span>créditos iniciales</span>
+        <small v-if="initialFreeCredits !== null">Asignación inicial: {{ initialFreeCredits }}</small>
+      </div>
+    </section>
+
+    <section class="plans-section" aria-labelledby="paid-plans-title">
+      <div class="plans-heading">
+        <div>
+          <h2 id="paid-plans-title">Paquetes para continuar</h2>
+          <p>Compra créditos solo cuando los necesites. No son suscripciones recurrentes.</p>
+        </div>
+      </div>
+
+      <p v-if="isLoadingPlans" class="loading-copy" aria-live="polite">Cargando paquetes disponibles…</p>
+      <p v-else-if="!paidPlans.length" class="loading-copy">No hay paquetes disponibles en este momento.</p>
+
+      <div v-else class="plans-grid">
+        <article v-for="plan in paidPlans" :key="plan.code" class="plan-card">
+          <div class="plan-topline">
+            <span class="plan-code">{{ plan.name }}</span>
+          </div>
+          <p class="plan-description">{{ plan.description }}</p>
+          <div class="price-row">
+            <strong>{{ formatPrice(plan.price, plan.currency) }}</strong>
+            <span>{{ plan.currency }} · pago único</span>
+          </div>
+          <div class="credit-row">
+            <Check :size="16" aria-hidden="true" />
+            <span>{{ plan.credits }} créditos de IA</span>
+          </div>
+          <button
+            type="button"
+            class="buy-button"
+            :disabled="activePlanLoading !== null"
+            @click="buyPlan(plan)"
+          >
+            <Loader2 v-if="activePlanLoading === plan.code" class="spinner-loader" :size="17" aria-hidden="true" />
+            <CreditCard v-else :size="17" aria-hidden="true" />
+            {{ activePlanLoading === plan.code ? 'Conectando con PayPal…' : 'Comprar con PayPal' }}
+          </button>
+        </article>
+      </div>
+    </section>
+  </section>
 </template>
 
 <style scoped>
-.payments-settings {
-  width: 100%;
-}
-
-.plans-title-header {
-  font-size: 16px;
-  font-weight: var(--fw-bold);
-  color: var(--color-text-primary);
-  margin: var(--space-3) 0 4px 0;
-}
-
-.plans-subtitle-header {
-  font-size: 13px;
-  color: var(--color-text-secondary);
-  line-height: 1.4;
-  margin: 0 0 20px 0;
-  max-width: 700px;
-}
-
-/* Glass Card */
-.glass-card {
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-card);
-  padding: var(--space-3);
-  box-shadow: var(--shadow-card);
-}
-
-/* Balance Card */
-.balance-header-card {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  border-color: rgba(45, 58, 199, 0.2);
-  background: rgba(45, 58, 199, 0.03);
-}
-
-@media (max-width: 576px) {
-  .balance-header-card {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 16px;
-  }
-}
-
-.balance-left {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.balance-label {
-  font-size: 12px;
-  font-weight: var(--fw-bold);
-  color: var(--color-text-secondary);
-}
-
-.balance-row {
-  display: flex;
-  align-items: baseline;
-  gap: 8px;
-}
-
-.balance-val {
-  font-size: 32px;
-  font-weight: var(--fw-bold);
-  color: var(--color-text-primary);
-  line-height: 1;
-}
-
-.balance-unit {
-  font-size: 14px;
-  font-weight: var(--fw-bold);
-  color: var(--color-text-secondary);
-}
-
-.balance-hint {
-  font-size: 11px;
-  color: var(--color-text-muted);
-  margin: 0;
-}
-
-.btn-refresh {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  color: var(--color-text-primary);
-  padding: 10px 18px;
-  border-radius: var(--radius-button);
-  font-size: 13px;
-  font-weight: var(--fw-semibold);
-  font-family: var(--font-family);
-  cursor: pointer;
-  transition: var(--transition);
-}
-
-.btn-refresh:hover {
-  background: var(--color-bg);
-}
-
-/* Plans Grid */
-.plans-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  gap: var(--space-3);
-  align-items: stretch;
-}
-
-@media (max-width: 900px) {
-  .plans-grid {
-    grid-template-columns: 1fr;
-    max-width: 420px;
-    margin: 0 auto;
-  }
-}
-
-.plan-card {
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-card);
-  padding: var(--space-3);
-  box-shadow: var(--shadow-card);
-  display: flex;
-  flex-direction: column;
-  position: relative;
-  transition: var(--transition);
-}
-
-.plan-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 12px 24px rgba(30, 43, 170, 0.08);
-}
-
-.popular-card {
-  border: 2px solid var(--color-primary);
-  box-shadow: 0 8px 24px rgba(30, 43, 170, 0.12);
-}
-
-.popular-tag {
-  position: absolute;
-  top: -12px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: var(--color-primary);
-  color: #fff;
-  font-size: 10px;
-  font-weight: var(--fw-bold);
-  text-transform: uppercase;
-  padding: 4px 14px;
-  border-radius: 20px;
-  letter-spacing: 0.05em;
-  box-shadow: 0 4px 10px rgba(30, 43, 170, 0.25);
-}
-
-.plan-header {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-  margin-bottom: var(--space-2);
-}
-
-.plan-icon-wrap {
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: 12px;
-}
-
-.plan-name {
-  margin: 0 0 6px 0;
-  font-size: 18px;
-  font-weight: var(--fw-bold);
-  color: var(--color-text-primary);
-}
-
-.plan-desc {
-  margin: 0;
-  font-size: 12px;
-  color: var(--color-text-secondary);
-  line-height: 1.4;
-  height: 50px;
-}
-
-.plan-price-row {
-  display: flex;
-  justify-content: center;
-  align-items: baseline;
-  gap: 4px;
-  margin-bottom: 2px;
-}
-
-.price-currency {
-  font-size: 16px;
-  font-weight: var(--fw-bold);
-  color: var(--color-text-primary);
-}
-
-.price-amount {
-  font-size: 36px;
-  font-weight: var(--fw-bold);
-  color: var(--color-text-primary);
-  line-height: 1;
-}
-
-.price-suffix {
-  font-size: 12px;
-  font-weight: var(--fw-bold);
-  color: var(--color-text-secondary);
-}
-
-.plan-credits-sub {
-  display: block;
-  text-align: center;
-  font-size: 13px;
-  font-weight: var(--fw-bold);
-  color: var(--color-accent);
-  margin-bottom: var(--space-2);
-}
-
-.plan-features-list {
-  list-style: none;
-  padding: 0;
-  margin: 0 0 var(--space-3) 0;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  flex: 1;
-}
-
-.plan-features-list li {
-  display: flex;
-  gap: 10px;
-  align-items: flex-start;
-  font-size: 12px;
-  color: var(--color-text-secondary);
-  line-height: 1.3;
-}
-
-.btn-buy-plan {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  width: 100%;
-  padding: 12px;
-  background: var(--color-bg);
-  border: 1px solid var(--color-border);
-  color: var(--color-text-primary);
-  border-radius: var(--radius-button);
-  font-size: 13px;
-  font-weight: var(--fw-bold);
-  font-family: var(--font-family);
-  cursor: pointer;
-  transition: var(--transition);
-}
-
-.btn-buy-plan:hover {
-  background: var(--color-border);
-}
-
-.btn-popular {
-  background: var(--color-primary) !important;
-  color: #fff !important;
-  border: none !important;
-}
-
-.btn-popular:hover {
-  background: var(--color-primary-dark) !important;
-  box-shadow: 0 4px 12px rgba(30, 43, 170, 0.25);
-}
-
-.btn-buy-plan:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-/* Spinner Rotate Animation */
-.spinner-loader {
-  animation: spinnerRotate 0.8s infinite linear;
-}
-
-@keyframes spinnerRotate {
-  to { transform: rotate(360deg); }
-}
-
-/* Overlay Modal for capture status */
-.overlay-modal {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(15, 15, 26, 0.7);
-  z-index: 10000;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.modal-content {
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-card);
-  padding: var(--space-4) var(--space-3);
-  max-width: 400px;
-  width: 90%;
-  box-shadow: 0 20px 50px rgba(0,0,0,0.3);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 16px;
-}
-
-.modal-content h4 {
-  margin: 0;
-  font-size: 18px;
-  font-weight: var(--fw-bold);
-  color: var(--color-text-primary);
-}
-
-.modal-content p {
-  margin: 0;
-  font-size: 13px;
-  color: var(--color-text-secondary);
-  line-height: 1.45;
-  text-align: center;
-}
-
-/* Toast alerts styling */
-.toast {
-  position: fixed;
-  top: 24px;
-  right: 24px;
-  z-index: 9999;
-  display: inline-flex;
-  align-items: center;
-  gap: 12px;
-  padding: 14px 24px;
-  border-radius: 8px;
-  font-size: 14px;
-  font-weight: var(--fw-bold);
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
-  cursor: pointer;
-}
-
-.success-toast {
-  background: rgba(59, 156, 32, 0.95);
-  color: #fff;
-  border: 1px solid rgba(59, 156, 32, 0.2);
-}
-
-.toast-sub {
-  display: block;
-  font-size: 11px;
-  font-weight: var(--fw-medium);
-  opacity: 0.8;
-  margin-top: 2px;
-}
-
-.error-toast {
-  background: rgba(210, 38, 38, 0.95);
-  color: #fff;
-  border: 1px solid rgba(210, 38, 38, 0.2);
-}
-
-.text-success {
-  color: var(--color-state-success);
-}
-
-.text-primary {
-  color: var(--color-primary);
-}
-
-.animate-fade-in {
-  animation: fadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(4px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-.slide-down-enter-active,
-.slide-down-leave-active {
-  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.slide-down-enter-from,
-.slide-down-leave-to {
-  transform: translateY(-20px);
-  opacity: 0;
-}
+.payments-settings { display: grid; gap: clamp(18px, 3vw, 28px); width: 100%; }
+.payments-header { display: flex; gap: 14px; align-items: flex-start; max-width: 760px; }
+.heading-icon { display: grid; flex: 0 0 auto; place-items: center; width: 44px; height: 44px; color: var(--color-primary); background: rgba(185, 239, 74, .28); border-radius: 14px; }
+.eyebrow, .included-label, .plan-code { margin: 0 0 5px; color: var(--color-primary); font-size: 11px; font-weight: var(--fw-bold); letter-spacing: .08em; text-transform: uppercase; }
+.payments-header h1, .plans-heading h2, .free-plan-card h2 { margin: 0; color: var(--color-text-primary); font-size: clamp(22px, 4vw, 28px); font-weight: var(--fw-bold); line-height: 1.15; }
+.payments-header p:last-child, .plans-heading p, .free-plan-card p, .balance-copy p, .plan-description { margin: 7px 0 0; color: var(--color-text-secondary); font-size: 14px; line-height: 1.5; }
+.balance-card, .free-plan-card, .plan-card { border: 1px solid var(--color-border); border-radius: var(--radius-card); box-shadow: var(--shadow-card); }
+.balance-card { display: flex; justify-content: space-between; gap: 20px; align-items: center; padding: clamp(18px, 3vw, 24px); border-color: rgba(40, 56, 211, .2); background: linear-gradient(135deg, rgba(40, 56, 211, .08), rgba(185, 239, 74, .12)); }
+.balance-copy { display: grid; gap: 3px; }
+.balance-copy > span { color: var(--color-text-secondary); font-size: 13px; font-weight: var(--fw-semibold); }
+.balance-copy strong { color: var(--color-primary); font-size: clamp(34px, 6vw, 46px); font-weight: var(--fw-bold); line-height: 1; }
+.balance-copy p { font-size: 12px; }
+.refresh-button, .buy-button { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 46px; border-radius: var(--radius-button); font: inherit; font-size: 14px; font-weight: var(--fw-bold); cursor: pointer; transition: var(--transition); }
+.refresh-button { flex: 0 0 auto; padding: 0 16px; color: var(--color-primary); background: var(--color-surface); border: 1px solid rgba(40, 56, 211, .24); }
+.refresh-button:hover:not(:disabled) { border-color: var(--color-primary); background: #fff; }
+.free-plan-card { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: clamp(18px, 3vw, 24px); background: var(--color-surface); border-color: rgba(185, 239, 74, .8); }
+.free-plan-card h2 { font-size: 20px; }
+.included-label { display: inline-flex; padding: 4px 8px; border-radius: 999px; color: #355800; background: var(--color-brand-lime); }
+.free-credit-summary { display: grid; min-width: 130px; text-align: right; }
+.free-credit-summary strong { color: var(--color-primary); font-size: 32px; line-height: 1; }
+.free-credit-summary span, .free-credit-summary small { color: var(--color-text-secondary); font-size: 12px; }
+.free-credit-summary small { margin-top: 6px; }
+.plans-section { display: grid; gap: 16px; }
+.plans-heading h2 { font-size: 20px; }
+.plans-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+.plan-card { display: grid; gap: 14px; padding: 20px; background: var(--color-surface); }
+.plan-topline { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.plan-code { margin: 0; font-size: 15px; }
+.plan-description { min-height: 63px; font-size: 13px; }
+.price-row { display: grid; gap: 3px; padding-top: 4px; }
+.price-row strong { color: var(--color-text-primary); font-size: 28px; }
+.price-row span { color: var(--color-text-muted); font-size: 12px; }
+.credit-row { display: flex; gap: 8px; align-items: center; color: var(--color-text-primary); font-size: 13px; font-weight: var(--fw-semibold); }
+.credit-row svg { color: #5a8d00; }
+.buy-button { width: 100%; margin-top: auto; padding: 0 14px; color: var(--color-primary); background: var(--color-surface); border: 1px solid rgba(40, 56, 211, .3); }
+.buy-button:hover:not(:disabled) { color: #fff; background: var(--color-primary); border-color: var(--color-primary); }
+.refresh-button:disabled, .buy-button:disabled { opacity: .62; cursor: wait; }
+.refresh-button:focus-visible, .buy-button:focus-visible { outline: 3px solid rgba(185, 239, 74, .9); outline-offset: 3px; }
+.loading-copy { margin: 0; color: var(--color-text-secondary); font-size: 14px; }
+.overlay-modal { position: fixed; inset: 0; z-index: 10000; display: grid; place-items: center; padding: 20px; background: rgba(8, 14, 46, .64); }
+.modal-content { display: grid; justify-items: center; gap: 12px; max-width: 400px; padding: 28px; color: var(--color-text-primary); text-align: center; background: var(--color-surface); border-radius: var(--radius-card); box-shadow: 0 20px 60px rgba(0, 0, 0, .3); }
+.modal-content h2, .modal-content p { margin: 0; }.modal-content h2 { font-size: 19px; }.modal-content p { color: var(--color-text-secondary); font-size: 14px; line-height: 1.5; }
+.toast { position: fixed; top: max(86px, calc(70px + env(safe-area-inset-top, 0px) + 16px)); right: 24px; z-index: 99999; display: flex; gap: 12px; align-items: flex-start; max-width: min(440px, calc(100vw - 32px)); padding: 14px 18px; color: #fff; border-radius: 12px; box-shadow: 0 14px 36px rgba(21, 32, 59, 0.22); font-family: var(--font-family); font-size: 14px; line-height: 1.4; cursor: pointer; box-sizing: border-box; }
+.toast strong, .toast small { display: block; }.toast small { margin-top: 3px; opacity: .88; font-size: 11px; }.success-toast { background: #24751d; cursor: pointer; }.notice-toast { color: #4d3e00; background: #f5dc73; }.error-toast { background: #b92c38; }.text-primary { color: var(--color-primary); }
+.spinner-loader { animation: spin .85s linear infinite; }
+.slide-down-enter-active, .slide-down-leave-active { transition: opacity .2s ease, transform .2s ease; }.slide-down-enter-from, .slide-down-leave-to { opacity: 0; transform: translateY(-10px); }
+@keyframes spin { to { transform: rotate(360deg); } }
+@media (max-width: 860px) { .plans-grid { grid-template-columns: 1fr; max-width: 540px; }.plan-description { min-height: 0; } }
+@media (max-width: 560px) { .balance-card, .free-plan-card { align-items: flex-start; flex-direction: column; }.refresh-button { width: 100%; }.free-credit-summary { text-align: left; }.toast { top: max(80px, calc(70px + env(safe-area-inset-top, 0px) + 10px)); right: 16px; left: 16px; max-width: none; }.payments-header { gap: 10px; } }
+@media (prefers-reduced-motion: reduce) { .spinner-loader { animation: none; }.slide-down-enter-active, .slide-down-leave-active { transition: none; } }
 </style>

@@ -2,6 +2,7 @@ import { computed, reactive, ref, type Ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useAuthenticationStore } from '@/app/auth/services/authentication.store';
 import { ProfileIdUnavailableError, profileService } from '@/app/profile/services/profile.service';
+import { resolveBackendAssetUrl } from '@/app/shared/services/base.service';
 import { isValidDNI, isValidRUC } from '@/app/profile/utils/identification-validation';
 import { districtNameToUbigeo } from '@/app/profile/utils/district-ubigeo.util';
 import {
@@ -26,6 +27,7 @@ export function useProfileEdit() {
 
     const loading = ref(false);
     const success = ref(false);
+    const successMessage = ref('');
     const error = ref('');
     const isNewProfile = ref(false);
 
@@ -38,6 +40,7 @@ export function useProfileEdit() {
 
     const profilePictureFile = ref<File | null>(null);
     const profilePicturePreview = ref('');
+    const isSavingProfilePicture = ref(false);
 
     let historyItemSequence = 0;
 
@@ -55,11 +58,16 @@ export function useProfileEdit() {
         return typeof message === 'string' && message.trim() ? message : fallback;
     }
 
-    function announceHistorySaved() {
+    function announceSuccess(message = 'Cambios guardados con éxito en la plataforma') {
+        successMessage.value = message;
         success.value = true;
         window.setTimeout(() => {
             success.value = false;
         }, 3000);
+    }
+
+    function announceHistorySaved() {
+        announceSuccess();
     }
 
     /**
@@ -180,11 +188,11 @@ export function useProfileEdit() {
     const keywords = ref<string[]>([]);
     const newKeyword = ref('');
 
-    // Employee interactive DNI validation refs
-    const isValidatingDni = ref(false);
-    const dniVerified = ref(false);
+    // El backend actual solo persiste el DNI; no expone una verificación de
+    // identidad para candidatos. Este estado comunica validación de formato.
+    const isDniFormatValid = ref(false);
     const dniError = ref('');
-    const dniOwnerName = ref('');
+    const dniValidationMessage = ref('');
 
     // Organization refs (Also used on Employee Juridica)
     const companyName = ref('');
@@ -261,7 +269,7 @@ export function useProfileEdit() {
             const candidate = d.candidate || {};
             const company = d.company || {};
 
-            profilePicturePreview.value = d.profilePicture || '';
+            profilePicturePreview.value = resolveBackendAssetUrl(d.profilePicture, d.updatedAt);
 
             if (isEmployee.value) {
                 firstName.value = candidate.firstName || '';
@@ -280,17 +288,20 @@ export function useProfileEdit() {
                 if (personType.value === 'juridica') {
                     ruc.value = d.ruc || '';
                     companyName.value = d.companyName || '';
-                    rucVerified.value = d.isRucVerified || false;
+                    rucVerified.value = false;
                     if (ruc.value && rucVerified.value) {
                         rucCompanyName.value = companyName.value;
                     }
                 }
 
-                // If loaded Identification/DNI exists, flag as verified
-                if (dni.value && identificationType.value === 'dni') {
-                    dniVerified.value = d.isIdentificationVerified || true;
-                    dniOwnerName.value = `${firstName.value} ${lastName.value}`;
-                }
+                // GET /profile/me no devuelve un estado de verificación de DNI
+                // ni confirma identidad. Nunca se infiere ese estado en la UI.
+                isDniFormatValid.value = Boolean(
+                    dni.value && identificationType.value === 'dni' && isValidDNI(dni.value),
+                );
+                dniValidationMessage.value = isDniFormatValid.value
+                    ? 'El formato del DNI guardado es válido.'
+                    : '';
             } else {
                 companyName.value = company.companyName || '';
                 ruc.value = company.ruc || '';
@@ -300,9 +311,10 @@ export function useProfileEdit() {
                 mainLocation.value = d.mainLocation || d.district || '';
                 companyDescription.value = (d.description || '').slice(0, BIO_MAX);
 
-                // If loaded RUC exists, flag as verified
-                if (ruc.value) {
-                    rucVerified.value = true;
+                // Una empresa con RUC registrado no queda verificada por ese
+                // solo hecho. Solo se refleja el sello persistido por backend.
+                rucVerified.value = Boolean(company.isVerified);
+                if (rucVerified.value) {
                     rucCompanyName.value = companyName.value;
                 }
             }
@@ -338,19 +350,20 @@ export function useProfileEdit() {
      * el nombre del titular. El backend actual no expone una verificación
      * autoritativa de DNI para candidatos.
      */
-    function verifyDni() {
+    function validateDniFormat() {
         if (!dni.value || dni.value.length < 8) {
+            isDniFormatValid.value = false;
             dniError.value = 'El DNI debe tener al menos 8 dígitos.';
             return;
         }
         dniError.value = '';
-        dniOwnerName.value = '';
+        dniValidationMessage.value = '';
 
         if (isValidDNI(dni.value)) {
-            dniVerified.value = true;
-            dniOwnerName.value = 'Formato de DNI válido';
+            isDniFormatValid.value = true;
+            dniValidationMessage.value = 'Formato de DNI válido. Guarda los cambios para registrarlo en tu perfil.';
         } else {
-            dniVerified.value = false;
+            isDniFormatValid.value = false;
             dniError.value = 'El DNI ingresado no es válido.';
         }
     }
@@ -393,8 +406,15 @@ export function useProfileEdit() {
         const input = event.target as HTMLInputElement;
         const file = input.files?.[0];
         if (file) {
-            if (file.size > 5 * 1024 * 1024) {
-                error.value = 'La imagen no debe superar 5MB';
+            const allowedTypes = ['image/png', 'image/jpg', 'image/jpeg'];
+            if (!allowedTypes.includes(file.type.toLowerCase())) {
+                error.value = 'Selecciona una imagen PNG o JPG.';
+                input.value = '';
+                return;
+            }
+            if (file.size > 2 * 1024 * 1024) {
+                error.value = 'La imagen no debe superar 2 MB.';
+                input.value = '';
                 return;
             }
             profilePictureFile.value = file;
@@ -404,6 +424,39 @@ export function useProfileEdit() {
             };
             reader.readAsDataURL(file);
             error.value = '';
+        }
+    }
+
+    async function uploadSelectedProfilePicture(): Promise<void> {
+        if (!profilePictureFile.value) return;
+
+        const uploadResponse = await profileService.uploadProfilePhoto(
+            authStore.currentUserId,
+            profilePictureFile.value,
+        );
+        const uploaded = uploadResponse.data?.data ?? uploadResponse.data;
+        profilePicturePreview.value = resolveBackendAssetUrl(uploaded?.profilePicture, uploaded?.updatedAt)
+            || profilePicturePreview.value;
+        profilePictureFile.value = null;
+    }
+
+    async function saveProfilePicture(): Promise<void> {
+        if (isNewProfile.value) {
+            error.value = 'Primero guarda la información principal para crear tu perfil; la foto se incluirá en ese guardado.';
+            return;
+        }
+        if (!profilePictureFile.value || isSavingProfilePicture.value) return;
+
+        isSavingProfilePicture.value = true;
+        error.value = '';
+        success.value = false;
+        try {
+            await uploadSelectedProfilePicture();
+            announceSuccess('Foto de perfil guardada correctamente.');
+        } catch (err) {
+            error.value = getApiMessage(err, 'No se pudo guardar la foto. Inténtalo nuevamente.');
+        } finally {
+            isSavingProfilePicture.value = false;
         }
     }
 
@@ -425,13 +478,7 @@ export function useProfileEdit() {
         success.value = false;
 
         try {
-            if (!isNewProfile.value && profilePictureFile.value) {
-                const uploadResponse = await profileService.uploadProfilePhoto(
-                    authStore.currentUserId,
-                    profilePictureFile.value
-                );
-                profilePicturePreview.value = uploadResponse.data.profilePicture || profilePicturePreview.value;
-            }
+            if (!isNewProfile.value && profilePictureFile.value) await uploadSelectedProfilePicture();
 
             // Create y Update son requests distintos en el backend real (no
             // aceptan additionalProperties), así que cada uno arma su propio
@@ -453,8 +500,13 @@ export function useProfileEdit() {
                         skills: keywords.value,
                         profilePicture: profilePictureFile.value || undefined,
                     });
-                    if (createResponse.data?.id) localStorage.setItem('profileId', createResponse.data.id);
-                    hydrateCandidateHistory(createResponse.data);
+                    const createdProfile = createResponse.data?.data ?? createResponse.data;
+                    if (createdProfile?.id) localStorage.setItem('profileId', createdProfile.id);
+                    profilePicturePreview.value = resolveBackendAssetUrl(
+                        createdProfile?.profilePicture,
+                        createdProfile?.updatedAt,
+                    ) || profilePicturePreview.value;
+                    hydrateCandidateHistory(createdProfile);
                 } else {
                     // POST /profile/company (multipart/form-data)
                     const createResponse = await profileService.createOrganizationProfile({
@@ -466,7 +518,12 @@ export function useProfileEdit() {
                         skills: [],
                         profilePicture: profilePictureFile.value || undefined,
                     });
-                    if (createResponse.data?.id) localStorage.setItem('profileId', createResponse.data.id);
+                    const createdProfile = createResponse.data?.data ?? createResponse.data;
+                    if (createdProfile?.id) localStorage.setItem('profileId', createdProfile.id);
+                    profilePicturePreview.value = resolveBackendAssetUrl(
+                        createdProfile?.profilePicture,
+                        createdProfile?.updatedAt,
+                    ) || profilePicturePreview.value;
                 }
                 isNewProfile.value = false;
             } else {
@@ -477,7 +534,9 @@ export function useProfileEdit() {
                     await profileService.updateCandidateProfile(authStore.currentUserId, {
                         firstName: firstName.value,
                         lastName: lastName.value,
-                        dni: dni.value,
+                        // El backend valida un DNI enviado; al estar vacío debe
+                        // ser null, no una cadena vacía que incumple ^\d{8}$.
+                        dni: dni.value.trim() || null,
                         description: bio.value,
                         ubigeo: districtNameToUbigeo(district.value),
                         skills: keywords.value,
@@ -506,12 +565,8 @@ export function useProfileEdit() {
                 }
             }
 
-            success.value = true;
             profilePictureFile.value = null;
-            
-            setTimeout(() => {
-                success.value = false;
-            }, 3000);
+            announceSuccess();
         } catch (err: any) {
             console.error('Error saving profile:', err);
             const backendMessage = err?.response?.data?.message;
@@ -544,12 +599,14 @@ export function useProfileEdit() {
         COMPANY_SIZE_OPTIONS,
         loading,
         success,
+        successMessage,
         error,
         isEmployee,
         historyPersistenceAvailable,
         isNewProfile,
         profilePictureFile,
         profilePicturePreview,
+        isSavingProfilePicture,
         
         // Employee Refs
         firstName,
@@ -574,11 +631,10 @@ export function useProfileEdit() {
         bioLength,
         companyDescLength,
         
-        // Interactive DNI validation refs
-        isValidatingDni,
-        dniVerified,
+        // Validación local del formato del DNI
+        isDniFormatValid,
         dniError,
-        dniOwnerName,
+        dniValidationMessage,
         
         // Interactive RUC validation refs
         isValidatingRuc,
@@ -612,10 +668,11 @@ export function useProfileEdit() {
         deleteLanguage: languageSection.remove,
 
         // Methods
-        verifyDni,
+        validateDniFormat,
         verifyRuc,
         loadProfileData,
         handleFileUpload,
+        saveProfilePicture,
         addKeyword,
         removeKeyword,
         handleSaveProfile,

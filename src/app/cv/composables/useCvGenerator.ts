@@ -7,9 +7,9 @@ const POLL_INTERVAL_MS = 3000;
 const MAX_POLLS = 40; // ~2 minutos
 
 /**
- * Orquesta la generación asíncrona del CV: lanza la generación, hace polling
- * acotado al estado, y expone la URL de preview y la descarga. Limpia los
- * object URLs y el timer al desmontar.
+ * Cada ejecución crea una nueva versión mejorada con IA desde el perfil real
+ * del candidato. El historial solo lista esas versiones para descargarlas o
+ * eliminarlas; no modifica versiones previas desde esta interfaz.
  */
 export function useCvGenerator() {
     const state = ref<CvState>('idle');
@@ -62,16 +62,19 @@ export function useCvGenerator() {
         state.value = 'error';
     }
 
-    async function generate(_prompt?: string) {
+    async function generate(jobId?: string | null) {
         reset();
         state.value = 'generating';
         try {
-            const res = await cvService.generate();
+            const res = await cvService.generate(jobId);
             cvId.value = res.cvId;
             pollCount = 0;
             schedulePoll();
         } catch (e: any) {
-            fail(e?.response?.data?.message || 'No se pudo iniciar la generación del CV.', e?.response?.status);
+            fail(
+                e?.response?.data?.detail || e?.response?.data?.message || 'No se pudo iniciar la generación del CV.',
+                e?.response?.status,
+            );
         }
     }
 
@@ -82,9 +85,8 @@ export function useCvGenerator() {
     async function checkStatus() {
         if (!cvId.value) return;
         try {
-            // El generador AI crea contenido estructurado en segundo plano.
-            // Cuando esté listo, el backend actual requiere transformarlo a PDF
-            // antes de que GET /file pueda entregarlo.
+            // El contenido estructurado se crea de forma asíncrona. Cuando ya
+            // existe, esta llamada solo lo convierte a PDF; no invoca la IA.
             await cvService.transformToPdf(cvId.value);
             const blob = await cvService.getFile(cvId.value);
             revokePreview();
@@ -97,9 +99,12 @@ export function useCvGenerator() {
                 schedulePoll();
                 return;
             }
-            fail(pollCount >= MAX_POLLS
-                ? 'La generación está tardando demasiado. Inténtalo de nuevo.'
-                : 'No se pudo recuperar el archivo generado.');
+            fail(
+                pollCount >= MAX_POLLS
+                    ? 'La generación está tardando demasiado. Revisa que RabbitMQ y OpenRouter estén disponibles e inténtalo nuevamente.'
+                    : 'No se pudo recuperar el CV procesado.',
+                error?.response?.status,
+            );
         }
     }
 
@@ -121,5 +126,13 @@ export function useCvGenerator() {
         revokePreview();
     });
 
-    return { state, errorMessage, isCreditError, previewUrl, generate, download, reset };
+    return {
+        state,
+        errorMessage,
+        isCreditError,
+        previewUrl,
+        generate,
+        download,
+        reset,
+    };
 }

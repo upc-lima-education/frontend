@@ -1,13 +1,19 @@
 import { computed, onMounted, ref } from 'vue';
 import { useAuthenticationStore } from '@/app/auth/services/authentication.store';
 import { ProfileIdUnavailableError, profileService } from '@/app/profile/services/profile.service';
+import { resolveBackendAssetUrl } from '@/app/shared/services/base.service';
 
 /** API profile payload shape (subset used by the view). */
 export type ProfileViewData = {
     id?: string;
     profilePicture?: string;
+    updatedAt?: string;
     description?: string;
+    phoneNumber?: string;
     skills?: string[];
+    languages?: unknown[];
+    educations?: unknown[];
+    workExperiences?: unknown[];
     isComplete?: boolean;
     candidate?: { firstName?: string; lastName?: string } | null;
     company?: { companyName?: string; sector?: string; ruc?: string; isVerified?: boolean } | null;
@@ -21,15 +27,27 @@ export type ProfileViewData = {
     identification?: string;
     companyName?: string;
     isRucVerified?: boolean;
-    isIdentificationVerified?: boolean;
 };
+
+const CACHE_PROFILE_KEY = 'llanqui_cached_profile';
+
+function getCachedProfile(): ProfileViewData | null {
+    try {
+        const raw = localStorage.getItem(CACHE_PROFILE_KEY);
+        return raw ? JSON.parse(raw) : null;
+    } catch {
+        return null;
+    }
+}
 
 export function useProfileView() {
     const authStore = useAuthenticationStore();
 
+    const cached = getCachedProfile();
     const user = computed(() => authStore.currentUser);
-    const profile = ref<ProfileViewData | null>(null);
-    const loading = ref(true);
+    const profile = ref<ProfileViewData | null>(cached);
+    // If cached profile or user is already available, don't block with loading spinner
+    const loading = ref<boolean>(!cached && !authStore.currentUser);
 
     const userDisplayName = computed(() => {
         const u = user.value;
@@ -41,7 +59,8 @@ export function useProfileView() {
     });
 
     const profilePictureUrl = computed(() => {
-        return profile.value?.profilePicture || user.value?.picture;
+        return resolveBackendAssetUrl(profile.value?.profilePicture, profile.value?.updatedAt)
+            || user.value?.picture;
     });
 
     const isVerified = computed(() => {
@@ -53,7 +72,7 @@ export function useProfileView() {
             if (authStore.currentUserId) {
                 const response = await profileService.getCurrentProfile();
                 const raw = (response.data?.data || response.data) as ProfileViewData;
-                profile.value = {
+                const mappedProfile: ProfileViewData = {
                     ...raw,
                     keywords: raw.skills || [],
                     companyName: raw.company?.companyName,
@@ -62,6 +81,11 @@ export function useProfileView() {
                     isVerified: raw.company?.isVerified || false,
                     isRucVerified: raw.company?.isVerified || false,
                 };
+                profile.value = mappedProfile;
+                try {
+                    localStorage.setItem(CACHE_PROFILE_KEY, JSON.stringify(mappedProfile));
+                } catch {}
+
                 if (authStore.user && profile.value) {
                     authStore.user.firstName = profile.value.candidate?.firstName;
                     authStore.user.lastName = profile.value.candidate?.lastName;

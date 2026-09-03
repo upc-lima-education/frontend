@@ -35,7 +35,7 @@ const initials = computed(() => applicantName.value
         @click="$emit('open', application)"
     >
         <div class="card-top">
-            <img v-if="application.applicant.profilePicture" :src="application.applicant.profilePicture" class="avatar" alt="" />
+            <img v-if="application.applicant.profilePicture" :src="application.applicant.profilePicture" width="40" height="40" loading="lazy" decoding="async" class="avatar" alt="" />
             <span v-else class="avatar avatar--placeholder" aria-hidden="true">{{ initials }}</span>
 
             <div class="who">

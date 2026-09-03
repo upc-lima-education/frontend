@@ -3,7 +3,21 @@ import { authenticationInterceptor } from "@/app/auth/services/authentication.in
 
 // Default to http://localhost:5000 for local .NET development
 // Update this to match your backend URL in environment variables
-const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api/v1";
+export const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api/v1";
+
+/**
+ * The API stores local uploads as keys under backend wwwroot (for example,
+ * `profiles/<userId>/profile-picture.png`). Resolve those keys against the
+ * backend origin instead of the Vite origin.
+ */
+export function resolveBackendAssetUrl(value?: string | null, version?: string | null): string {
+    if (!value) return '';
+    if (/^(?:https?:|data:|blob:)/i.test(value)) return value;
+
+    const backendOrigin = API_BASE_URL.replace(/\/api\/v1\/?$/, '').replace(/\/$/, '');
+    const assetUrl = `${backendOrigin}/${value.replace(/^\/+/, '')}`;
+    return version ? `${assetUrl}?v=${encodeURIComponent(version)}` : assetUrl;
+}
 
 const http = axios.create({
     baseURL: API_BASE_URL,

@@ -166,7 +166,7 @@ const {
 }
 
 .verification-badge {
-    background: #4caf50;
+    background: var(--color-state-success);
     color: white;
     padding: 0.25rem 0.75rem;
     border-radius: 20px;
@@ -199,10 +199,11 @@ const {
 }
 
 .profile-details {
-    background: white;
+    background: var(--color-surface);
     border-radius: 8px;
     padding: 2rem;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    box-shadow: var(--shadow-card);
+    border: 1px solid var(--color-border);
 }
 
 .detail-section {
@@ -216,14 +217,14 @@ const {
 .detail-section h3 {
     font-size: 1.25rem;
     margin-bottom: 1.5rem;
-    color: #333;
+    color: var(--color-text-primary);
     border-bottom: 2px solid var(--color-accent);
     padding-bottom: 0.5rem;
 }
 
 .detail-item {
     padding: 0.75rem 0;
-    border-bottom: 1px solid #eee;
+    border-bottom: 1px solid var(--color-border);
 }
 
 .detail-item:last-child {
@@ -232,13 +233,13 @@ const {
 
 .detail-item label {
     font-weight: 600;
-    color: #666;
+    color: var(--color-text-secondary);
     display: block;
     margin-bottom: 0.5rem;
 }
 
 .detail-item span {
-    color: #333;
+    color: var(--color-text-primary);
 }
 
 .keywords {
@@ -257,18 +258,18 @@ const {
 }
 
 .verified-status {
-    color: #4caf50;
+    color: var(--color-state-success);
     font-weight: 600;
 }
 
 .unverified-status {
-    color: #f44336;
+    color: var(--color-state-error);
     font-weight: 600;
 }
 
 .loading {
     padding: 2rem;
     text-align: center;
-    color: #666;
+    color: var(--color-text-muted);
 }
 </style>

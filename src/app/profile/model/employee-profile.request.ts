@@ -14,7 +14,6 @@ export class SignUpUserEmployeeRequest {
     personType: PersonType; // 'natural' o 'juridica'
     identificationType: IdentificationType; // 'dni', 'passport', 'ruc'
     identification: string; // DNI, Pasaporte o RUC (número sin formato)
-    isIdentificationVerified?: boolean;
     description?: string;
     keywords?: string[];
     district?: string;
@@ -37,7 +36,6 @@ export class SignUpUserEmployeeRequest {
         ruc?: string,
         isRucVerified?: boolean,
         companyName?: string,
-        isIdentificationVerified?: boolean
     ) {
         this.firstName = firstName;
         this.lastName = lastName;
@@ -52,6 +50,5 @@ export class SignUpUserEmployeeRequest {
         this.ruc = ruc;
         this.isRucVerified = isRucVerified;
         this.companyName = companyName;
-        this.isIdentificationVerified = isIdentificationVerified;
     }
 }

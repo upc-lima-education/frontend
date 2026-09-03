@@ -27,6 +27,7 @@ import {
   Trash2
 } from 'lucide-vue-next';
 import SkillPickerComponent from '@/app/shared/components/skill-picker.component.vue';
+import { calculateProfileCompletion } from '@/app/profile/utils/profile-completion.util';
 import {
   BACKEND_LANGUAGE_CODES,
   isBackendLanguageCode,
@@ -42,10 +43,12 @@ const {
   COMPANY_SIZE_OPTIONS,
   loading,
   success,
+  successMessage,
   error,
   isEmployee,
   historyPersistenceAvailable,
   isNewProfile,
+  profilePictureFile,
   firstName,
   lastName,
   personType,
@@ -63,20 +66,21 @@ const {
   mainLocation,
   companyDescription,
   profilePicturePreview,
+  isSavingProfilePicture,
   bioLength,
   companyDescLength,
-  isValidatingDni,
-  dniVerified,
+  isDniFormatValid,
   dniError,
-  dniOwnerName,
+  dniValidationMessage,
   isValidatingRuc,
   rucVerified,
   rucError,
   rucCompanyName,
-  verifyDni,
+  validateDniFormat,
   verifyRuc,
   loadProfileData,
   handleFileUpload,
+  saveProfilePicture,
   handleSaveProfile,
   onBioInput,
   onCompanyDescInput,
@@ -256,23 +260,28 @@ function onPersonTypeChange() {
   }
 }
 
-// Interactive Realtime Completeness Score
 const completenessPercent = computed(() => {
-  let score = 0;
-  if (isEmployee.value) {
-    if (profilePicturePreview.value) score += 20;
-    if (personType.value === 'natural' ? dniVerified.value : rucVerified.value) score += 20;
-    if (firstName.value.trim() && lastName.value.trim()) score += 20;
-    if (profession.value) score += 20;
-    if (bio.value && bio.value.length >= 10) score += 20;
-  } else {
-    if (profilePicturePreview.value) score += 20;
-    if (rucVerified.value) score += 20;
-    if (companyName.value.trim()) score += 20;
-    if (industry.value && companySize.value) score += 20;
-    if (companyDescription.value && companyDescription.value.length >= 10) score += 20;
-  }
-  return score;
+  return calculateProfileCompletion({
+    // Una vista previa local no cuenta como foto completada hasta que el
+    // backend confirma PATCH /profile/upload-photo (o la creación inicial).
+    profilePicture: profilePictureFile.value ? undefined : profilePicturePreview.value || undefined,
+    description: isEmployee.value ? bio.value : companyDescription.value,
+    skills: isEmployee.value ? keywords.value : [],
+    candidate: isEmployee.value
+      ? { firstName: firstName.value, lastName: lastName.value }
+      : null,
+    company: isEmployee.value
+      ? null
+      : {
+        companyName: companyName.value,
+        sector: industry.value,
+        ruc: ruc.value,
+        isVerified: rucVerified.value,
+      },
+    languages: isEmployee.value ? languages.value : [],
+    educations: isEmployee.value ? educations.value : [],
+    workExperiences: isEmployee.value ? workExperiences.value : [],
+  }, !isEmployee.value);
 });
 
 const completenessColor = computed(() => {
@@ -296,10 +305,11 @@ const isRucInputValid = computed(() => ruc.value && ruc.value.length === 11 && /
 <template>
   <div class="profile-edit-wrapper">
     <!-- Floating status alerts -->
+    <Teleport to="body">
     <Transition name="slide-down">
       <div v-if="success" class="toast success-toast">
         <CheckCircle2 :size="18" />
-        <span>Cambios guardados con éxito en la plataforma</span>
+        <span>{{ successMessage }}</span>
       </div>
     </Transition>
     <Transition name="slide-down">
@@ -308,6 +318,7 @@ const isRucInputValid = computed(() => ruc.value && ruc.value.length === 11 && /
         <span>{{ error }}</span>
       </div>
     </Transition>
+    </Teleport>
 
     <div v-if="isNewProfile" class="new-profile-alert">
       <Sparkles :size="18" class="text-primary" />
@@ -329,10 +340,18 @@ const isRucInputValid = computed(() => ruc.value && ruc.value.length === 11 && /
             
             <!-- Avatar Interactive Editor -->
             <div class="avatar-edit-container">
-              <div class="avatar-preview-ring" @click="triggerFileInput">
+              <button
+                type="button"
+                class="avatar-preview-ring"
+                :aria-label="profilePicturePreview ? 'Cambiar foto de perfil' : 'Seleccionar foto de perfil'"
+                @click="triggerFileInput"
+              >
                 <img 
                   v-if="profilePicturePreview" 
                   :src="profilePicturePreview" 
+                  width="120"
+                  height="120"
+                  decoding="async"
                   class="avatar-img" 
                   alt="Avatar" 
                 />
@@ -343,9 +362,9 @@ const isRucInputValid = computed(() => ruc.value && ruc.value.length === 11 && /
                 <!-- Camera Hover Overlay -->
                 <div class="avatar-overlay">
                   <Camera :size="20" />
-                  <span>Subir Foto</span>
+                  <span>{{ profilePicturePreview ? 'Cambiar foto' : 'Subir foto' }}</span>
                 </div>
-              </div>
+              </button>
               <input 
                 ref="fileInputRef" 
                 type="file" 
@@ -353,7 +372,18 @@ const isRucInputValid = computed(() => ruc.value && ruc.value.length === 11 && /
                 class="hidden-file-input" 
                 @change="handleFileUpload" 
               />
-              <p class="avatar-hint">Formatos JPG/PNG hasta 5MB</p>
+              <p class="avatar-hint">Formatos JPG/PNG, máximo 2 MB</p>
+              <button
+                type="button"
+                class="photo-save-button"
+                :disabled="!profilePictureFile || isNewProfile || loading || isSavingProfilePicture"
+                @click="saveProfilePicture"
+              >
+                <UploadCloud :size="16" />
+                <span>{{ isSavingProfilePicture ? 'Guardando foto…' : 'Guardar foto' }}</span>
+              </button>
+              <p v-if="profilePictureFile && !isNewProfile" class="photo-save-status" role="status">Foto seleccionada. Guárdala para aplicarla al perfil.</p>
+              <p v-else-if="profilePictureFile && isNewProfile" class="photo-save-status" role="status">La foto se guardará al crear tu perfil con “Guardar cambios”.</p>
             </div>
 
             <!-- Profile Completeness Indicator -->
@@ -376,13 +406,14 @@ const isRucInputValid = computed(() => ruc.value && ruc.value.length === 11 && /
               <div class="completeness-tips" v-if="completenessPercent < 100">
                 <span class="tips-title">Sugerencia para mejorar:</span>
                 <ul class="tips-list">
-                  <li v-if="!profilePicturePreview">Sube una foto de perfil profesional (+20%)</li>
-                  <li v-if="isEmployee && personType === 'natural' && !dniVerified">Valida tu identidad con DNI RENIEC (+20%)</li>
-                  <li v-if="isEmployee && personType === 'juridica' && !rucVerified">Valida tu RUC corporativo con SUNAT (+20%)</li>
-                  <li v-if="!isEmployee && !rucVerified">Valida tu organización con RUC SUNAT (+20%)</li>
-                  <li v-if="isEmployee && !profession">Selecciona tu profesión o cargo (+20%)</li>
-                  <li v-if="isEmployee && (!bio || bio.length < 10)">Escribe un resumen profesional de al menos 10 caracteres (+20%)</li>
-                  <li v-if="!isEmployee && (!companyDescription || companyDescription.length < 10)">Escribe una descripción corporativa (+20%)</li>
+                  <li v-if="!profilePicturePreview || profilePictureFile">{{ profilePictureFile ? 'Guarda la foto seleccionada.' : 'Sube una foto de perfil profesional.' }}</li>
+                  <li v-if="isEmployee && (!bio || bio.length < 1)">Escribe un resumen profesional.</li>
+                  <li v-if="isEmployee && !keywords.length">Agrega al menos una habilidad.</li>
+                  <li v-if="isEmployee && !workExperiences.length">Agrega una experiencia laboral.</li>
+                  <li v-if="isEmployee && !educations.length">Agrega un estudio.</li>
+                  <li v-if="isEmployee && !languages.length">Agrega un idioma.</li>
+                  <li v-if="!isEmployee && (!companyDescription || companyDescription.length < 1)">Escribe una descripción corporativa.</li>
+                  <li v-if="!isEmployee && !industry">Selecciona el sector de tu organización.</li>
                 </ul>
               </div>
             </div>
@@ -422,7 +453,7 @@ const isRucInputValid = computed(() => ruc.value && ruc.value.length === 11 && /
                 </div>
               </div>
 
-              <!-- Verification panels depending on Natural / Juridica -->
+              <!-- DNI: formato local. La API no ofrece verificación de identidad para candidatos. -->
               <div class="verification-box text-margin-top">
                 <!-- DNI / PASSPORT FOR NATURAL PERSON -->
                 <div v-if="personType === 'natural'" class="field">
@@ -435,19 +466,17 @@ const isRucInputValid = computed(() => ruc.value && ruc.value.length === 11 && /
                       :placeholder="identificationType === 'dni' ? '12345678' : 'Pasaporte'" 
                       :maxlength="identificationType === 'dni' ? 8 : 15" 
                       class="verify-input text-bold"
-                      :disabled="dniVerified && identificationType === 'dni'"
+                      @input="isDniFormatValid = false; dniValidationMessage = ''; dniError = ''"
                     />
                     <button 
                       v-if="identificationType === 'dni'"
                       type="button" 
                       class="btn-verify" 
-                      :class="{ verified: dniVerified, loading: isValidatingDni }"
-                      :disabled="isValidatingDni || !isDniInputValid || dniVerified" 
-                      @click="verifyDni"
+                      :class="{ verified: isDniFormatValid }"
+                      :disabled="!isDniInputValid"
+                      @click="validateDniFormat"
                     >
-                      <span v-if="isValidatingDni" class="spinner-verify"></span>
-                      <span v-else-if="dniVerified">Verificado</span>
-                      <span v-else>Verificar con RENIEC</span>
+                      <span>{{ isDniFormatValid ? 'Formato válido' : 'Validar formato' }}</span>
                     </button>
                   </div>
                   
@@ -456,11 +485,14 @@ const isRucInputValid = computed(() => ruc.value && ruc.value.length === 11 && /
                       <AlertCircle :size="14" />
                       <span>{{ dniError }}</span>
                     </p>
-                    <p v-else-if="dniVerified && dniOwnerName" class="feedback-msg success-msg">
+                    <p v-else-if="isDniFormatValid && dniValidationMessage" class="feedback-msg success-msg">
                       <CheckCircle2 :size="14" />
-                      <span>Titular verificado: {{ dniOwnerName }}</span>
+                      <span>{{ dniValidationMessage }}</span>
                     </p>
                   </Transition>
+                  <p v-if="identificationType === 'dni'" class="field-help">
+                    La validación de formato no es una verificación oficial de identidad. Guarda los cambios para registrar tu DNI.
+                  </p>
                 </div>
 
                 <!-- RUC FOR JURIDICAL PERSON -->
@@ -580,7 +612,6 @@ const isRucInputValid = computed(() => ruc.value && ruc.value.length === 11 && /
                     v-model="firstName" 
                     type="text" 
                     placeholder="Tu nombre" 
-                    :disabled="dniVerified" 
                   />
                 </div>
                 <div class="field">
@@ -590,7 +621,6 @@ const isRucInputValid = computed(() => ruc.value && ruc.value.length === 11 && /
                     v-model="lastName" 
                     type="text" 
                     placeholder="Tu apellido" 
-                    :disabled="dniVerified" 
                   />
                 </div>
               </div>
@@ -733,11 +763,11 @@ const isRucInputValid = computed(() => ruc.value && ruc.value.length === 11 && /
 
             <!-- Bottom Actions Row -->
             <div class="form-actions-row">
-              <button type="submit" class="btn-submit" :disabled="loading">
+              <button type="submit" class="btn-submit" :disabled="loading || isSavingProfilePicture">
                 <Save :size="16" />
                 <span>{{ loading ? 'Guardando...' : 'Guardar Cambios' }}</span>
               </button>
-              <button type="button" class="btn-cancel" :disabled="loading" @click="loadProfileData">
+              <button type="button" class="btn-cancel" :disabled="loading || isSavingProfilePicture" @click="loadProfileData">
                 <RotateCcw :size="16" />
                 <span>Cancelar</span>
               </button>
@@ -987,8 +1017,8 @@ const isRucInputValid = computed(() => ruc.value && ruc.value.length === 11 && /
   display: flex;
   gap: 16px;
   align-items: center;
-  background: rgba(30, 43, 170, 0.05);
-  border: 1px solid rgba(30, 43, 170, 0.2);
+  background: var(--color-lavender);
+  border: 1px solid color-mix(in srgb, var(--color-primary) 22%, transparent);
   padding: 14px 20px;
   border-radius: var(--radius-card);
   margin-bottom: var(--space-2);
@@ -1039,17 +1069,18 @@ const isRucInputValid = computed(() => ruc.value && ruc.value.length === 11 && /
 /* Toast Alerts */
 .toast {
   position: fixed;
-  top: 24px;
+  top: max(86px, calc(70px + env(safe-area-inset-top, 0px) + 16px));
   right: 24px;
-  z-index: 9999;
+  z-index: 99999;
   display: inline-flex;
   align-items: center;
   gap: 12px;
   padding: 14px 24px;
-  border-radius: 8px;
+  border-radius: 12px;
   font-size: 14px;
   font-weight: var(--fw-bold);
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 14px 36px rgba(21, 32, 59, 0.22);
+  box-sizing: border-box;
 }
 
 .success-toast {
@@ -1108,7 +1139,7 @@ const isRucInputValid = computed(() => ruc.value && ruc.value.length === 11 && /
   font-weight: var(--fw-bold);
   color: var(--color-text-primary);
   margin: 0 0 16px 0;
-  border-bottom: 2px solid rgba(30, 43, 170, 0.08);
+  border-bottom: 2px solid var(--color-border-subtle);
   padding-bottom: 8px;
   width: 100%;
 }
@@ -1132,7 +1163,8 @@ const isRucInputValid = computed(() => ruc.value && ruc.value.length === 11 && /
   position: relative;
   overflow: hidden;
   border: 4px solid var(--color-surface);
-  box-shadow: 0 4px 14px rgba(30, 43, 170, 0.15);
+  padding: 0;
+  box-shadow: 0 4px 14px color-mix(in srgb, var(--color-primary) 16%, transparent);
   cursor: pointer;
   background: var(--color-bg);
   display: flex;
@@ -1143,7 +1175,13 @@ const isRucInputValid = computed(() => ruc.value && ruc.value.length === 11 && /
 
 .avatar-preview-ring:hover {
   transform: scale(1.02);
-  box-shadow: 0 6px 18px rgba(30, 43, 170, 0.22);
+  box-shadow: 0 6px 18px color-mix(in srgb, var(--color-primary) 20%, transparent);
+}
+
+.avatar-preview-ring:focus-visible,
+.photo-save-button:focus-visible {
+  outline: 3px solid rgba(185, 239, 74, .85);
+  outline-offset: 3px;
 }
 
 .avatar-img {
@@ -1187,6 +1225,43 @@ const isRucInputValid = computed(() => ruc.value && ruc.value.length === 11 && /
   font-size: 11px;
   color: var(--color-text-muted);
   margin: 10px 0 0 0;
+  text-align: center;
+}
+
+.photo-save-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  width: 100%;
+  min-height: 46px;
+  margin-top: 12px;
+  border: 1px solid var(--color-primary);
+  border-radius: var(--radius-button);
+  color: var(--color-primary);
+  background: var(--color-surface);
+  font: inherit;
+  font-size: 13px;
+  font-weight: var(--fw-bold);
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.photo-save-button:hover:not(:disabled) {
+  color: #fff;
+  background: var(--color-primary);
+}
+
+.photo-save-button:disabled {
+  opacity: .52;
+  cursor: not-allowed;
+}
+
+.photo-save-status {
+  margin: 8px 0 0;
+  color: var(--color-text-secondary);
+  font-size: 11px;
+  line-height: 1.4;
   text-align: center;
 }
 
@@ -1242,7 +1317,7 @@ const isRucInputValid = computed(() => ruc.value && ruc.value.length === 11 && /
 }
 
 .completeness-tips {
-  background: rgba(30, 43, 170, 0.04);
+  background: var(--color-surface-subtle);
   border: 1px dashed var(--color-border);
   border-radius: var(--radius-card);
   padding: 10px;
@@ -1335,7 +1410,7 @@ const isRucInputValid = computed(() => ruc.value && ruc.value.length === 11 && /
   outline: none;
   border-color: var(--color-accent);
   background: var(--color-surface);
-  box-shadow: 0 0 0 3px rgba(45, 58, 199, 0.12);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 14%, transparent);
 }
 
 .field input:disabled {
@@ -1499,9 +1574,9 @@ const isRucInputValid = computed(() => ruc.value && ruc.value.length === 11 && /
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  background: rgba(45, 58, 199, 0.06);
+  background: var(--color-lavender);
   color: var(--color-accent);
-  border: 1px solid rgba(45, 58, 199, 0.18);
+  border: 1px solid color-mix(in srgb, var(--color-primary) 20%, transparent);
   padding: 4px 10px;
   border-radius: 20px;
   font-size: 12px;

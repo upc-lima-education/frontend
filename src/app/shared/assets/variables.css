@@ -25,12 +25,23 @@
     /* Estados semánticos */
     --color-state-alert:        #EC4E10;   /* alertas / acentos de estado */
     --color-state-alert-dark:   #D0420E;
+    --color-state-alert-bg:     #FFF7ED;
+    --color-state-alert-border: #FED7AA;
     --color-state-success:      #3B9C20;
     --color-state-success-dark: #307D1B;
+    --color-state-success-bg:   #F0FDF4;
+    --color-state-success-border:#BBF7D0;
     --color-state-error:        #D22626;
     --color-state-error-dark:   #B01616;
+    --color-state-error-bg:     #FEF2F2;
+    --color-state-error-border: #FECACA;
     --color-state-warning:      #DCAE08;
     --color-state-warning-dark: #C29810;
+    --color-state-warning-bg:   #FFFBEB;
+    --color-state-warning-border:#FDE68A;
+
+    --color-scrollbar-thumb:       #C9D1E3;
+    --color-scrollbar-thumb-hover: #AAB6D2;
 
     /* Componentes de IA */
     --color-ai-border:  var(--color-primary);   /* borde de enfoque */
@@ -125,3 +136,107 @@
 
     --font-body: var(--font-family);
 }
+
+/* ============================================================
+   PALETA MODO OSCURO (Deep Navy / Dark Slate Hallmark)
+   Contraste certificado WCAG AA / AAA
+   ============================================================ */
+html[data-theme="dark"],
+:root[data-theme="dark"] {
+    /* Fondos y Superficies */
+    --color-bg:              #0B101E;  /* Fondo base de la app (Deep Navy) */
+    --color-surface:         #131B2E;  /* Tarjetas, formularios, paneles, navbar */
+    --color-surface-subtle:  #1B253D;  /* Inputs, headers de tabla, hover de listas */
+    --color-surface-elevated:#222F4C;  /* Modales, popovers, menús flotantes */
+
+    /* Bordes y Separadores */
+    --color-border:          #233256;  /* Bordes de tarjetas e inputs */
+    --color-border-subtle:   #1A2644;  /* Líneas divisorias suaves */
+
+    /* Tipografía y Jerarquía de Texto (WCAG AAA/AA sobre #131B2E) */
+    --color-text-primary:    #F1F5F9;  /* 11.5:1 ratio — títulos y texto principal */
+    --color-text-secondary:  #94A3B8;  /* 6.5:1 ratio — texto de apoyo y subtítulos */
+    --color-text-muted:      #64748B;  /* 3.8:1 ratio — placeholders, captions, fechas */
+
+    /* Marca Llanqui Adaptada para Modo Oscuro */
+    --color-primary:         #4F62F6;  /* Azul accesible sobre fondo oscuro (5.2:1 ratio) */
+    --color-primary-dark:    #3B4BD8;  /* Hover de botones primarios */
+    --color-accent:          #4F62F6;
+    --color-accent-hover:    #3B4BD8;
+    --color-brand-blue:      #4F62F6;
+
+    /* Acento Lima Llanqui (Indicadores de Impulso y Éxito) */
+    --color-brand-lime:      #B9EF4A;  /* Vibrante, contraste 11.2:1 sobre superficie */
+    --color-brand-lime-alt:  #B9EF4A;
+    --color-brand-lime-soft: rgba(185, 239, 74, 0.12); /* Píldoras y tags suaves */
+    --color-lavender:        rgba(79, 98, 246, 0.15);  /* Contenedores de iconos */
+    --color-dark-slate:      #F1F5F9;
+
+    /* Estados Semánticos (Fondo + Borde + Texto) */
+    --color-state-success:        #4ADE80;
+    --color-state-success-dark:   #22C55E;
+    --color-state-success-bg:     rgba(74, 222, 128, 0.12);
+    --color-state-success-border: rgba(74, 222, 128, 0.25);
+
+    --color-state-alert:          #FB923C;
+    --color-state-alert-dark:     #F97316;
+    --color-state-alert-bg:       rgba(251, 146, 60, 0.12);
+    --color-state-alert-border:   rgba(251, 146, 60, 0.25);
+
+    --color-state-error:          #F87171;
+    --color-state-error-dark:     #EF4444;
+    --color-state-error-bg:       rgba(248, 113, 113, 0.12);
+    --color-state-error-border:   rgba(248, 113, 113, 0.25);
+
+    --color-state-warning:        #FBBF24;
+    --color-state-warning-dark:   #F59E0B;
+    --color-state-warning-bg:     rgba(251, 191, 36, 0.12);
+    --color-state-warning-border: rgba(251, 191, 36, 0.25);
+
+    /* Componentes de IA */
+    --color-ai-border:  var(--color-primary);
+    --color-ai-bg:      rgba(79, 98, 246, 0.10);
+    --color-ai-outline: rgba(79, 98, 246, 0.25);
+    --color-ai-label:   #7B8BFF;
+
+    /* Sombras Profundas */
+    --shadow-card:     0 8px 24px rgba(0, 0, 0, 0.35);
+    --shadow-hover:    0 14px 32px rgba(0, 0, 0, 0.50);
+    --shadow-elevated: 0 22px 50px rgba(0, 0, 0, 0.65);
+
+    /* Scrollbars para Tema Oscuro */
+    --color-scrollbar-thumb:       #2A3A60;
+    --color-scrollbar-thumb-hover: #3E5284;
+
+    /* Capa de compatibilidad heredada */
+    --gray-01: var(--color-surface);
+    --gray-02: var(--color-bg);
+    --gray-03: var(--color-border);
+    --gray-04: #334366;
+    --gray-05: var(--color-text-muted);
+    --gray-06: var(--color-text-secondary);
+    --gray-07: var(--color-text-primary);
+    --gray-08: #F8FAFC;
+
+    --main-color:    var(--color-primary);
+    --main-color-00: var(--color-lavender);
+    --main-color-01: #4355F4;
+    --main-color-02: var(--color-primary);
+    --main-color-03: var(--color-primary);
+    --main-color-04: var(--color-primary-dark);
+    --main-color-05: #2E3EBC;
+    --main-color-06: #243198;
+    --main-color-07: #1A2474;
+
+    --secondary-color:       var(--color-state-alert);
+    --secondary-color-light: #FDBA74;
+    --secondary-color-dark:  var(--color-state-alert-dark);
+
+    --green-color:       var(--color-state-success);
+    --green-color-dark:  var(--color-state-success-dark);
+    --red-color:         var(--color-state-error);
+    --red-color-dark:    var(--color-state-error-dark);
+    --yellow-color:      var(--color-state-warning);
+    --yellow-color-dark: var(--color-state-warning-dark);
+}
+

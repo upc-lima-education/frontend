@@ -95,8 +95,8 @@
         "subtitle": "Create and optimize your resume tailored to recruiter standards using Llanqui artificial intelligence.",
         "promptLabel": "Optimization instructions (Optional)",
         "promptPlaceholder": "e.g.: Highlight React and agile methodologies experience, or focus on a tech lead role...",
-        "generate": "Generate CV with AI",
-        "generating": "Optimizing Resume...",
+        "generate": "Generate improved version",
+        "generating": "Generating improved version...",
         "download": "Download PDF",
         "regenerate": "Regenerate",
         "retry": "Retry"

@@ -69,6 +69,8 @@ export interface CvSummaryResponse {
 
 export interface StructuredCvResponse {
     id: string;
+    /** Marca de actualización para esperar la tarea asíncrona de IA. */
+    updatedAt: string;
     header: CvHeader;
     summary?: CvTextSection;
     experiences: CvExperienceItem[];

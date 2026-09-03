@@ -130,34 +130,35 @@ onMounted(async () => {
 
 <template>
   <div class="boost-settings animate-fade-in">
-    <!-- Capture overlay -->
-    <div v-if="isProcessing" class="overlay-modal">
-      <div class="modal-content">
-        <Loader2 class="spinner" :size="48" />
-        <h4>Procesando con PayPal</h4>
-        <p>Estamos activando el impulso de tu vacante. No cierres esta ventana…</p>
+    <!-- Capture overlay and Toasts -->
+    <Teleport to="body">
+      <div v-if="isProcessing" class="overlay-modal">
+        <div class="modal-content">
+          <Loader2 class="spinner" :size="48" />
+          <h4>Procesando con PayPal</h4>
+          <p>Estamos activando el impulso de tu vacante. No cierres esta ventana…</p>
+        </div>
       </div>
-    </div>
 
-    <!-- Toasts -->
-    <Transition name="slide-down">
-      <div v-if="successMessage" class="toast success-toast" @click="successMessage = ''">
-        <CheckCircle2 :size="18" />
-        <span>{{ successMessage }}</span>
-      </div>
-    </Transition>
-    <Transition name="slide-down">
-      <div v-if="cancelMessage" class="toast error-toast">
-        <AlertCircle :size="18" />
-        <span>Pago cancelado. No se realizó ningún cargo.</span>
-      </div>
-    </Transition>
-    <Transition name="slide-down">
-      <div v-if="errorMessage" class="toast error-toast" @click="errorMessage = ''">
-        <AlertCircle :size="18" />
-        <span>{{ errorMessage }}</span>
-      </div>
-    </Transition>
+      <Transition name="slide-down">
+        <div v-if="successMessage" class="toast success-toast" @click="successMessage = ''">
+          <CheckCircle2 :size="18" />
+          <span>{{ successMessage }}</span>
+        </div>
+      </Transition>
+      <Transition name="slide-down">
+        <div v-if="cancelMessage" class="toast error-toast" @click="cancelMessage = false">
+          <AlertCircle :size="18" />
+          <span>Pago cancelado. No se realizó ningún cargo.</span>
+        </div>
+      </Transition>
+      <Transition name="slide-down">
+        <div v-if="errorMessage" class="toast error-toast" @click="errorMessage = ''">
+          <AlertCircle :size="18" />
+          <span>{{ errorMessage }}</span>
+        </div>
+      </Transition>
+    </Teleport>
 
     <!-- Intro -->
     <div class="glass-card intro-card">
@@ -273,8 +274,8 @@ onMounted(async () => {
   display: flex;
   gap: var(--space-2);
   align-items: flex-start;
-  border-color: rgba(45, 58, 199, 0.2);
-  background: rgba(45, 58, 199, 0.03);
+  border-color: color-mix(in srgb, var(--color-primary) 22%, var(--color-border));
+  background: var(--color-surface-subtle);
 }
 
 .intro-icon {
@@ -492,7 +493,7 @@ onMounted(async () => {
 
 .boost-card.selected {
   border: 2px solid var(--color-accent);
-  box-shadow: 0 6px 16px rgba(45, 58, 199, 0.1);
+  box-shadow: 0 6px 16px color-mix(in srgb, var(--color-primary) 12%, transparent);
 }
 
 .boost-card.popular {
@@ -550,8 +551,8 @@ onMounted(async () => {
   align-items: center;
   gap: var(--space-2);
   flex-wrap: wrap;
-  border-color: rgba(45, 58, 199, 0.2);
-  background: rgba(45, 58, 199, 0.03);
+  border-color: color-mix(in srgb, var(--color-primary) 22%, var(--color-border));
+  background: var(--color-surface-subtle);
 }
 
 .summary-label {
@@ -672,19 +673,20 @@ onMounted(async () => {
 
 .toast {
   position: fixed;
-  top: 24px;
+  top: max(86px, calc(70px + env(safe-area-inset-top, 0px) + 16px));
   right: 24px;
-  z-index: 9999;
+  z-index: 99999;
   display: inline-flex;
   align-items: center;
   gap: 12px;
   padding: 14px 24px;
-  border-radius: 8px;
+  border-radius: 12px;
   font-size: var(--fs-body-sm);
   font-weight: var(--fw-bold);
   color: #fff;
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 14px 36px rgba(21, 32, 59, 0.22);
   cursor: pointer;
+  box-sizing: border-box;
 }
 
 .success-toast {

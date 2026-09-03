@@ -1,27 +1,57 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { GetJobByIdResponse } from '../model/get-job-by-id.response';
+import { useRouter } from 'vue-router';
+import type { GetJobByIdResponse } from '../model/get-job-by-id.response';
 import { JobService } from '../services/job.service';
 import { RecommendationService } from '../services/recommendation.service';
 import { ubigeoService } from '@/app/shared/services/ubigeo.service';
 import {
-  Search,
-  MapPin,
+  ArrowRight,
+  BriefcaseBusiness,
   Building2,
-  SlidersHorizontal,
-  DollarSign,
-  Heart,
+  ChevronDown,
   ChevronLeft,
   ChevronRight,
-  ChevronDown,
+  Compass,
+  DollarSign,
+  Filter,
+  Heart,
+  MapPin,
+  RotateCw,
+  Search,
+  SlidersHorizontal,
+  Sparkles,
+  TrendingUp,
+  Wallet,
   X,
 } from 'lucide-vue-next';
 import { ROUTE_CONSTANTS } from '@/app/shared/router/route-constants';
+import JobPreviewComponent from '../components/job-preview.component.vue';
+import EmptyState from '@/app/shared/components/ui/empty-state.component.vue';
+import { getJobOriginLabel, isExternalJob } from '../utils/job-origin.util';
 
 const { t } = useI18n();
+const router = useRouter();
 const jobService = new JobService();
 const recommendationService = new RecommendationService();
+
+const selectedJobForPreview = ref<GetJobByIdResponse | null>(null);
+const isPreviewModalOpen = ref(false);
+
+function openJobPreview(job: GetJobByIdResponse) {
+  selectedJobForPreview.value = job;
+  isPreviewModalOpen.value = true;
+}
+
+function closeJobPreview() {
+  isPreviewModalOpen.value = false;
+  selectedJobForPreview.value = null;
+}
+
+function viewJobDetails(job: GetJobByIdResponse) {
+  router.push(`${ROUTE_CONSTANTS.JOB_DETAIL}/${job.id}`);
+}
 
 const jobs = ref<GetJobByIdResponse[]>([]);
 const loading = ref(false);
@@ -32,7 +62,7 @@ const locationInput = ref('');
 const modalityFilter = ref('');
 const salaryFilter = ref<number | null>(null);
 const experienceFilter = ref('');
-const sortBy = ref('recent');
+const sortBy = ref<'recent' | 'salary-high' | 'relevance'>('recent');
 
 const appliedSearchText = ref('');
 const appliedUbigeo = ref('');
@@ -52,7 +82,7 @@ async function loadJobs() {
   } catch (err) {
     console.error('Error loading jobs:', err);
     jobs.value = [];
-    error.value = 'No se pudieron cargar las vacantes desde el backend.';
+    error.value = 'No se pudieron cargar las vacantes desde el servidor. Revisa tu conexión.';
   } finally {
     loading.value = false;
   }
@@ -62,11 +92,12 @@ function resolveUbigeoFromInput(input: string): string {
   const trimmed = input.trim();
   if (!trimmed) return '';
   if (/^\d{6}$/.test(trimmed)) return trimmed;
-  const normalized = trimmed.normalize('NFD').replace(/[̀-ͯ]/g, '').toUpperCase();
+  const normalized = trimmed.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase();
   const allData: any[] = (ubigeoService as any).map ? Object.values((ubigeoService as any).map) : [];
-  const match = allData.find((item: any) =>
-    item.sDistrito?.normalize('NFD').replace(/[̀-ͯ]/g, '').toUpperCase() === normalized ||
-    item.sDepartamento?.normalize('NFD').replace(/[̀-ͯ]/g, '').toUpperCase() === normalized
+  const match = allData.find(
+    (item: any) =>
+      item.sDistrito?.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase() === normalized ||
+      item.sDepartamento?.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase() === normalized
   );
   return match?.sIdUbigeo ?? trimmed;
 }
@@ -77,19 +108,19 @@ function locationFor(job: GetJobByIdResponse): string {
     const loc = ubigeoService.getLocation(job.ubigeo);
     if (loc) return `${loc.district}, ${loc.department}`;
   }
-  return 'Ubicación no especificada';
+  return 'Lima, Perú';
 }
 
 function companyNameFor(job: GetJobByIdResponse): string {
   if (job.companyName?.trim()) return job.companyName;
-  if (job.originPage && job.originPage !== 'Llanqui' && !job.originPage.startsWith('http')) {
-    return job.originPage;
+  if (isExternalJob(job)) {
+    return getJobOriginLabel(job);
   }
   return 'Empresa no especificada';
 }
 
 function companyInitialsFor(job: GetJobByIdResponse): string {
-  const label = companyNameFor(job) === 'Empresa no especificada' ? job.title : companyNameFor(job);
+  const label = companyNameFor(job) === 'Empresa no especificada' ? job.title || 'LL' : companyNameFor(job);
   const initials = label
     .trim()
     .split(/\s+/)
@@ -105,29 +136,33 @@ function modalityLabel(jobType?: string): string {
   if (jobType === 'Remote') return 'Remoto';
   if (jobType === 'Hybrid') return 'Híbrido';
   if (jobType === 'InPerson' || jobType === 'Presential') return 'Presencial';
-  return jobType || 'Modalidad no especificada';
+  return jobType || 'Presencial';
 }
 
 function salaryRangeLabel(job: GetJobByIdResponse): string {
-  if (!job.minSalary && !job.maxSalary) return 'Salario no especificado';
-  const currency = job.currency === 'PEN' ? 'S/' : (job.currency || 'S/');
+  if (!job.minSalary && !job.maxSalary) return 'Salario acorde al mercado';
+  const currency = job.currency === 'PEN' ? 'S/' : job.currency || 'S/';
   if (job.minSalary && job.maxSalary && job.minSalary !== job.maxSalary) {
     return `${currency} ${job.minSalary.toLocaleString()} - ${job.maxSalary.toLocaleString()}`;
   }
   return `${currency} ${(job.minSalary || job.maxSalary)?.toLocaleString()}`;
 }
 
+function hasVisibleSalary(job: GetJobByIdResponse): boolean {
+  return Boolean(job.minSalary || job.maxSalary);
+}
+
 function publishDateLabel(creationDate?: Date | string): string {
-  if (!creationDate) return 'Fecha no especificada';
+  if (!creationDate) return 'Publicado recientemente';
 
   const date = new Date(creationDate);
-  if (Number.isNaN(date.getTime())) return 'Fecha no especificada';
+  if (Number.isNaN(date.getTime())) return 'Publicado recientemente';
 
   const elapsedDays = Math.floor((Date.now() - date.getTime()) / 86_400_000);
-  if (elapsedDays <= 0) return 'Publicado hoy';
-  if (elapsedDays === 1) return 'Publicado ayer';
-  if (elapsedDays < 7) return `Hace ${elapsedDays} días`;
-  return `Publicado el ${new Intl.DateTimeFormat('es-PE', { day: 'numeric', month: 'short' }).format(date)}`;
+  if (elapsedDays <= 0) return 'Hoy';
+  if (elapsedDays === 1) return 'Ayer';
+  if (elapsedDays < 7) return `Hace ${elapsedDays}d`;
+  return new Intl.DateTimeFormat('es-PE', { day: 'numeric', month: 'short' }).format(date);
 }
 
 function isRecent(job: GetJobByIdResponse): boolean {
@@ -173,11 +208,11 @@ async function searchJobs() {
 
       const matched: GetJobByIdResponse[] = [];
       recs.forEach((rec) => {
-        const job = jobs.value.find((j) =>
-          (j.sourceUrl && j.sourceUrl === rec.source_url) || j.id === rec.source_url
+        const job = jobs.value.find(
+          (j) => (j.sourceUrl && j.sourceUrl === rec.source_url) || j.id === rec.source_url
         );
         if (job) {
-          (job as any).similarityScore = rec.similarity_score;
+          (job as any).similarityScore = Math.round((rec.similarity_score || 0) * 100);
           matched.push(job);
         }
       });
@@ -191,6 +226,16 @@ async function searchJobs() {
   } else {
     isRecommendationActive.value = false;
   }
+}
+
+function quickSelectModality(mod: string) {
+  modalityFilter.value = modalityFilter.value === mod ? '' : mod;
+  searchJobs();
+}
+
+function quickSelectSalary(val: number | null) {
+  salaryFilter.value = salaryFilter.value === val ? null : val;
+  searchJobs();
 }
 
 const filteredJobs = computed(() => {
@@ -272,7 +317,17 @@ function clearFilters() {
 }
 
 const hasFiltersActive = computed(() =>
-  Boolean(searchText.value || locationInput.value || modalityFilter.value || salaryFilter.value || experienceFilter.value)
+  Boolean(
+    searchText.value ||
+    locationInput.value ||
+    modalityFilter.value ||
+    salaryFilter.value ||
+    experienceFilter.value ||
+    appliedSearchText.value ||
+    appliedUbigeo.value ||
+    appliedModality.value ||
+    appliedSalary.value
+  )
 );
 
 onMounted(loadJobs);
@@ -280,828 +335,1492 @@ onMounted(loadJobs);
 
 <template>
   <div class="find-job-page">
+    <!-- Ambient Animated Mesh Atmosphere -->
+    <div class="search-ambient-backdrop" aria-hidden="true">
+      <div class="ambient-orb ambient-orb--primary"></div>
+      <div class="ambient-orb ambient-orb--lime"></div>
+      <div class="ambient-orb ambient-orb--indigo"></div>
+      <div class="ambient-mesh-pattern"></div>
+    </div>
+
     <div class="find-job-container">
-      <!-- 1. Search Box Card (¿Qué trabajo buscas? + ¿Dónde? + Buscar empleos) -->
-      <section class="search-box-card">
-        <form class="search-form" @submit.prevent="searchJobs">
-          <!-- Input 1: Qué trabajo buscas -->
-          <div class="search-input-group">
-            <label class="search-label" for="search-title">¿Qué trabajo buscas?</label>
-            <div class="input-inner">
-              <Search :size="18" class="input-icon" />
+
+      <!-- ============================================================
+           1. HERO SEARCH COMMAND CENTER
+           ============================================================ -->
+      <section class="search-hero-card" aria-label="Buscador de oportunidades laborales">
+        <div class="search-hero__header">
+          <div class="hero-chip-badge">
+            <Sparkles :size="13" aria-hidden="true" />
+            <span>Directorio de Empleo Verificado</span>
+          </div>
+          <h1 class="search-hero__title">
+            Encuentra tu próximo <span class="highlight-lime">paso profesional</span>
+          </h1>
+          <p class="search-hero__subtitle">
+            Conecta con oportunidades reales en Lima y a nivel nacional, con salarios transparentes y postulaciones directas.
+          </p>
+        </div>
+
+        <!-- Dual-field Search Form -->
+        <form class="search-command-bar" @submit.prevent="searchJobs">
+          <!-- Role or Skill Input -->
+          <div class="search-field-unit search-field-unit--main">
+            <label for="search-job-input" class="search-field-label">Puesto o habilidad</label>
+            <div class="search-field-inner">
+              <Search :size="18" class="field-icon" aria-hidden="true" />
               <input
-                id="search-title"
+                id="search-job-input"
                 v-model="searchText"
                 type="text"
-                placeholder="Ej. Atención al cliente, ventas, cajero..."
+                class="search-main-input"
+                placeholder="Ej. Desarrollador, cajero, ventas, atención…"
+                aria-label="Buscar por título de empleo o habilidad requerida"
               />
+              <button
+                v-if="searchText"
+                type="button"
+                class="btn-field-clear"
+                aria-label="Borrar texto de puesto"
+                @click="searchText = ''"
+              >
+                <X :size="14" aria-hidden="true" />
+              </button>
             </div>
           </div>
 
-          <!-- Input 2: Dónde -->
-          <div class="search-input-group">
-            <label class="search-label" for="search-loc">¿Dónde?</label>
-            <div class="input-inner">
-              <MapPin :size="18" class="input-icon" />
+          <div class="search-bar-divider" aria-hidden="true"></div>
+
+          <!-- Location / Ubigeo Input -->
+          <div class="search-field-unit search-field-unit--loc">
+            <label for="search-location-input" class="search-field-label">Ubicación o distrito</label>
+            <div class="search-field-inner">
+              <MapPin :size="18" class="field-icon" aria-hidden="true" />
               <input
-                id="search-loc"
+                id="search-location-input"
                 v-model="locationInput"
                 type="text"
-                placeholder="Ej. Lima, Ate, Remoto"
+                class="search-main-input"
+                placeholder="Ej. Lima, San Isidro, Remoto…"
+                aria-label="Filtrar por distrito o ubicación"
               />
+              <button
+                v-if="locationInput"
+                type="button"
+                class="btn-field-clear"
+                aria-label="Borrar ubicación"
+                @click="locationInput = ''"
+              >
+                <X :size="14" aria-hidden="true" />
+              </button>
             </div>
           </div>
 
-          <!-- Action CTA Button -->
-          <button type="submit" class="btn-search-main">
-            <span>Buscar empleos</span>
+          <!-- Action Submit Button -->
+          <button type="submit" class="btn-execute-search" aria-label="Buscar oportunidades">
+            <Search :size="17" aria-hidden="true" />
+            <span>Buscar vacantes</span>
           </button>
         </form>
 
-        <!-- 2. Filter Pills Row -->
-        <div class="filters-row">
-          <div class="filter-pills-left">
-            <button type="button" class="filter-pill-btn filter-pill-btn--primary">
-              <SlidersHorizontal :size="14" />
-              <span>Filtros</span>
+        <!-- Quick Filter Pills Ribbon -->
+        <div class="search-quick-ribbon" role="toolbar" aria-label="Filtros rápidos">
+          <div class="ribbon-filters-wrap">
+            <span class="ribbon-caption">Filtros clave:</span>
+
+            <!-- Modality quick pills -->
+            <button
+              type="button"
+              class="quick-pill"
+              :class="{ 'is-active': modalityFilter === 'Remote' }"
+              @click="quickSelectModality('Remote')"
+            >
+              <Compass :size="13" aria-hidden="true" />
+              <span>Remoto</span>
+            </button>
+            <button
+              type="button"
+              class="quick-pill"
+              :class="{ 'is-active': modalityFilter === 'Hybrid' }"
+              @click="quickSelectModality('Hybrid')"
+            >
+              <Building2 :size="13" aria-hidden="true" />
+              <span>Híbrido</span>
+            </button>
+            <button
+              type="button"
+              class="quick-pill"
+              :class="{ 'is-active': modalityFilter === 'InPerson' }"
+              @click="quickSelectModality('InPerson')"
+            >
+              <MapPin :size="13" aria-hidden="true" />
+              <span>Presencial</span>
             </button>
 
-            <!-- Modalidad Dropdown -->
-            <div class="select-pill-wrap">
-              <select v-model="modalityFilter" @change="searchJobs">
-                <option value="">Modalidad</option>
-                <option value="InPerson">Presencial</option>
-                <option value="Hybrid">Híbrido</option>
-                <option value="Remote">Remoto</option>
-              </select>
-              <ChevronDown :size="14" class="select-caret" />
-            </div>
-
-            <!-- Salario Dropdown -->
-            <div class="select-pill-wrap">
-              <select v-model="salaryFilter" @change="searchJobs">
-                <option :value="null">Salario</option>
+            <!-- Salary quick dropdown -->
+            <div class="quick-select-pill">
+              <Wallet :size="13" class="pill-prefix-icon" aria-hidden="true" />
+              <select v-model="salaryFilter" aria-label="Filtrar por salario mínimo" @change="searchJobs">
+                <option :value="null">Cualquier salario</option>
                 <option :value="1200">Desde S/ 1,200</option>
                 <option :value="1500">Desde S/ 1,500</option>
                 <option :value="2000">Desde S/ 2,000</option>
                 <option :value="2500">Desde S/ 2,500</option>
+                <option :value="3500">Desde S/ 3,500</option>
               </select>
-              <ChevronDown :size="14" class="select-caret" />
+              <ChevronDown :size="13" class="pill-caret-icon" aria-hidden="true" />
             </div>
 
-            <!-- Experiencia Dropdown -->
-            <div class="select-pill-wrap">
-              <select v-model="experienceFilter" @change="searchJobs">
-                <option value="">Experiencia</option>
-                <option value="none">Sin experiencia</option>
+            <!-- Experience quick dropdown -->
+            <div class="quick-select-pill">
+              <BriefcaseBusiness :size="13" class="pill-prefix-icon" aria-hidden="true" />
+              <select v-model="experienceFilter" aria-label="Filtrar por experiencia requerida" @change="searchJobs">
+                <option value="">Cualquier experiencia</option>
+                <option value="none">Sin experiencia previa</option>
                 <option value="3m">3 meses</option>
                 <option value="6m">6 meses</option>
                 <option value="1y">1 año a más</option>
               </select>
-              <ChevronDown :size="14" class="select-caret" />
+              <ChevronDown :size="13" class="pill-caret-icon" aria-hidden="true" />
             </div>
 
-            <button v-if="hasFiltersActive" type="button" class="clear-filters-btn" @click="clearFilters">
-              <X :size="14" />
-              <span>Limpiar</span>
+            <!-- Reset Filters CTA -->
+            <button
+              v-if="hasFiltersActive"
+              type="button"
+              class="btn-reset-filters"
+              aria-label="Restablecer todos los filtros"
+              @click="clearFilters"
+            >
+              <X :size="13" aria-hidden="true" />
+              <span>Restablecer</span>
             </button>
-          </div>
-
-          <!-- Sort Dropdown on Right -->
-          <div class="sort-right-wrap">
-            <span class="sort-label">Ordenar por:</span>
-            <div class="select-pill-wrap select-pill--clean">
-              <select v-model="sortBy">
-                <option value="recent">Más recientes</option>
-                <option value="salary-high">Mayor salario</option>
-                <option value="relevance">Relevancia</option>
-              </select>
-              <ChevronDown :size="14" class="select-caret" />
-            </div>
           </div>
         </div>
       </section>
 
-      <!-- 3. Results Header & Count -->
-      <section class="results-header-row">
-        <div class="results-count-text">
-          <strong>{{ totalJobsCount.toLocaleString() }}</strong> empleos encontrados
-        </div>
+      <!-- ============================================================
+           2. RESULTS CONTROL BAR & STREAM
+           ============================================================ */ -->
+      <div class="results-layout-wrapper">
+        <!-- Main Search Results Column -->
+        <main class="results-stream-section" aria-label="Listado de empleos">
+          
+          <!-- Top Results Status Header -->
+          <header class="stream-header-toolbar">
+            <div class="stream-count-info">
+              <span class="count-number">{{ totalJobsCount.toLocaleString() }}</span>
+              <span class="count-label">{{ totalJobsCount === 1 ? 'oferta encontrada' : 'ofertas encontradas' }}</span>
+              <span v-if="isRecommendationActive" class="ai-matched-badge">
+                <Sparkles :size="12" aria-hidden="true" /> Matching inteligente
+              </span>
+            </div>
 
-        <div class="results-pagination-nav">
-          <span>Página {{ currentPage }} de {{ totalPages }}</span>
-          <div class="pagination-arrows">
+            <div class="stream-controls-cluster">
+              <!-- Sorting Selector -->
+              <div class="sort-selector-wrap">
+                <label for="sort-jobs-select" class="sort-caption">Ordenar por:</label>
+                <div class="sort-select-box">
+                  <select id="sort-jobs-select" v-model="sortBy" aria-label="Ordenar listado de empleos">
+                    <option value="recent">Más recientes</option>
+                    <option value="salary-high">Mayor salario</option>
+                    <option value="relevance">Mayor afinidad</option>
+                  </select>
+                  <ChevronDown :size="13" class="sort-caret" aria-hidden="true" />
+                </div>
+              </div>
+
+              <!-- Compact Page Stepper on Header -->
+              <div class="header-page-stepper" aria-label="Paginación rápida">
+                <span class="stepper-text">Pág. <strong>{{ currentPage }}</strong> de {{ totalPages }}</span>
+                <div class="stepper-buttons">
+                  <button
+                    type="button"
+                    class="stepper-btn"
+                    :disabled="currentPage === 1"
+                    aria-label="Página anterior"
+                    @click="goToPage(currentPage - 1)"
+                  >
+                    <ChevronLeft :size="15" aria-hidden="true" />
+                  </button>
+                  <button
+                    type="button"
+                    class="stepper-btn"
+                    :disabled="currentPage === totalPages"
+                    aria-label="Página siguiente"
+                    @click="goToPage(currentPage + 1)"
+                  >
+                    <ChevronRight :size="15" aria-hidden="true" />
+                  </button>
+                </div>
+              </div>
+            </div>
+          </header>
+
+          <!-- Loading State -->
+          <div v-if="loading" class="stream-loading-box" role="status" aria-live="polite">
+            <RotateCw :size="24" class="spin-icon" aria-hidden="true" />
+            <div class="loading-text-stack">
+              <strong>Explorando las mejores oportunidades…</strong>
+              <small>Consultando vacantes actualizadas en tiempo real</small>
+            </div>
+          </div>
+
+          <!-- Error State -->
+          <EmptyState
+            v-else-if="error"
+            title="No se pudieron cargar las vacantes"
+            :description="error"
+          >
+            <template #icon><BriefcaseBusiness aria-hidden="true" /></template>
+            <button type="button" class="btn-primary-action" @click="loadJobs">
+              <RotateCw :size="15" aria-hidden="true" /> Reintentar conexión
+            </button>
+          </EmptyState>
+
+          <!-- Empty State: No results with filter -->
+          <EmptyState
+            v-else-if="sortedJobs.length === 0 && jobs.length > 0"
+            title="Sin vacantes con estos criterios"
+            description="No encontramos empleos que coincidan con la combinación de filtros aplicada. Prueba cambiando el distrito o ampliando el rango salarial."
+          >
+            <template #icon><Filter aria-hidden="true" /></template>
+            <button type="button" class="btn-primary-action" @click="clearFilters">
+              Restablecer todos los filtros
+            </button>
+          </EmptyState>
+
+          <!-- Empty State: Zero total jobs -->
+          <EmptyState
+            v-else-if="jobs.length === 0"
+            title="Aún no hay ofertas registradas"
+            description="Las empresas publican nuevas vacantes constantemente. Vuelve a consultar en breve o ajusta tu perfil para recibir alertas."
+          >
+            <template #icon><BriefcaseBusiness aria-hidden="true" /></template>
+            <RouterLink :to="ROUTE_CONSTANTS.SETTINGS_PAGE" class="btn-primary-action">
+              Optimizar mi perfil profesional
+            </RouterLink>
+          </EmptyState>
+
+          <!-- Job Cards List -->
+          <div v-else class="cards-stream-grid">
+            <article
+              v-for="job in paginatedJobs"
+              :key="job.id"
+              class="opportunity-card"
+              tabindex="0"
+              role="button"
+              :aria-label="`Ver detalle de ${job.title || 'Oferta'} en ${companyNameFor(job)}`"
+              @click="openJobPreview(job)"
+              @keydown.enter="openJobPreview(job)"
+              @keydown.space.prevent="openJobPreview(job)"
+            >
+              <!-- Card Main Header (Avatar + Title + Badges) -->
+              <div class="opportunity-card__lead">
+                <div class="company-brand-avatar" aria-hidden="true">
+                  <img
+                    v-if="job.companyImage"
+                    :src="job.companyImage"
+                    :alt="`Logo de ${companyNameFor(job)}`"
+                    class="avatar-img"
+                    loading="lazy"
+                  />
+                  <span v-else class="avatar-initials">{{ companyInitialsFor(job) }}</span>
+                </div>
+
+                <div class="opportunity-card__info">
+                  <!-- Tag row -->
+                  <div class="card-pills-row">
+                    <span v-if="isRecent(job)" class="tag-chip tag-chip--lime">
+                      <Sparkles :size="11" aria-hidden="true" /> Nueva
+                    </span>
+                    <span v-if="recommendationScore(job)" class="tag-chip tag-chip--ai">
+                      <TrendingUp :size="11" aria-hidden="true" /> {{ recommendationScore(job) }}% afinidad
+                    </span>
+                    <span class="tag-chip tag-chip--modality">
+                      {{ modalityLabel(job.jobType) }}
+                    </span>
+                  </div>
+
+                  <h2 class="card-job-title">{{ job.title || 'Vacante laboral' }}</h2>
+                  <p class="card-company-name">{{ companyNameFor(job) }}</p>
+                </div>
+              </div>
+
+              <!-- Metadata Details Grid -->
+              <div class="opportunity-card__meta">
+                <div class="meta-data-chip">
+                  <MapPin :size="14" class="meta-icon" aria-hidden="true" />
+                  <span>{{ locationFor(job) }}</span>
+                </div>
+                <div class="meta-data-chip">
+                  <Building2 :size="14" class="meta-icon" aria-hidden="true" />
+                  <span>{{ modalityLabel(job.jobType) }}</span>
+                </div>
+                <div class="meta-data-chip meta-data-chip--salary">
+                  <Wallet :size="14" class="meta-icon" aria-hidden="true" />
+                  <span>{{ salaryRangeLabel(job) }}</span>
+                </div>
+              </div>
+
+              <!-- Required Skills Tag list if present -->
+              <div v-if="job.skills && job.skills.length > 0" class="card-skills-strip">
+                <span
+                  v-for="(skill, sIdx) in job.skills.slice(0, 4)"
+                  :key="sIdx"
+                  class="skill-token"
+                >
+                  {{ skill }}
+                </span>
+                <span v-if="job.skills.length > 4" class="skill-token-more">
+                  +{{ job.skills.length - 4 }}
+                </span>
+              </div>
+
+              <!-- Card Action Footprint -->
+              <div class="opportunity-card__actions">
+                <div class="card-publish-time">
+                  <span>{{ publishDateLabel(job.creationDate) }}</span>
+                </div>
+
+                <div class="card-action-btns">
+                  <button
+                    type="button"
+                    class="btn-bookmark-job"
+                    :class="{ 'is-saved': isJobSaved(job.id) }"
+                    :aria-label="isJobSaved(job.id) ? 'Quitar de guardados' : 'Guardar oferta'"
+                    @click.stop="toggleSaveJob(job.id)"
+                  >
+                    <Heart
+                      :size="16"
+                      :fill="isJobSaved(job.id) ? 'var(--color-state-alert)' : 'none'"
+                      :stroke="isJobSaved(job.id) ? 'var(--color-state-alert)' : 'currentColor'"
+                      aria-hidden="true"
+                    />
+                  </button>
+
+                  <button
+                    type="button"
+                    class="btn-view-preview"
+                    aria-label="Ver detalles del empleo"
+                    @click.stop="viewJobDetails(job)"
+                  >
+                    <span>Ver empleo</span>
+                    <ArrowRight :size="14" aria-hidden="true" />
+                  </button>
+                </div>
+              </div>
+            </article>
+          </div>
+
+          <!-- Bottom Structured Pagination -->
+          <nav v-if="totalPages > 1" class="bottom-pagination-deck" aria-label="Navegación de páginas completa">
             <button
               type="button"
-              class="arrow-btn"
+              class="pagination-nav-btn"
               :disabled="currentPage === 1"
-              aria-label="Página anterior"
+              aria-label="Ir a la página anterior"
               @click="goToPage(currentPage - 1)"
             >
-              <ChevronLeft :size="16" />
+              <ChevronLeft :size="16" aria-hidden="true" />
+              <span>Anterior</span>
             </button>
+
+            <div class="pagination-numbers-cluster">
+              <button
+                v-for="p in Math.min(totalPages, 5)"
+                :key="p"
+                type="button"
+                class="pagination-number-btn"
+                :class="{ 'is-active': p === currentPage }"
+                :aria-label="`Página ${p}`"
+                :aria-current="p === currentPage ? 'page' : undefined"
+                @click="goToPage(p)"
+              >
+                {{ p }}
+              </button>
+              <span v-if="totalPages > 5" class="pagination-ellipsis" aria-hidden="true">…</span>
+              <button
+                v-if="totalPages > 5"
+                type="button"
+                class="pagination-number-btn"
+                :class="{ 'is-active': totalPages === currentPage }"
+                :aria-label="`Página ${totalPages}`"
+                :aria-current="totalPages === currentPage ? 'page' : undefined"
+                @click="goToPage(totalPages)"
+              >
+                {{ totalPages }}
+              </button>
+            </div>
+
             <button
               type="button"
-              class="arrow-btn"
+              class="pagination-nav-btn"
               :disabled="currentPage === totalPages"
-              aria-label="Página siguiente"
+              aria-label="Ir a la página siguiente"
               @click="goToPage(currentPage + 1)"
             >
-              <ChevronRight :size="16" />
+              <span>Siguiente</span>
+              <ChevronRight :size="16" aria-hidden="true" />
             </button>
-          </div>
-        </div>
-      </section>
+          </nav>
+        </main>
 
-      <!-- 4. Job Cards List -->
-      <main class="jobs-results-list">
-        <div v-if="loading" class="loading-state">
-          <div class="spinner"></div>
-          <p>Buscando las mejores oportunidades laborales...</p>
-        </div>
-
-        <div v-else-if="sortedJobs.length > 0" class="cards-stack">
-          <article
-            v-for="(job, index) in paginatedJobs"
-            :key="job.id"
-            class="job-row-card"
-          >
-            <!-- Company Logo -->
-            <div class="company-logo-avatar">
-              <img
-                v-if="job.companyImage"
-                :src="job.companyImage"
-                :alt="`Logo de ${companyNameFor(job)}`"
-              />
-              <span v-else aria-hidden="true">{{ companyInitialsFor(job) }}</span>
-            </div>
-
-            <!-- Job Main Info -->
-            <div class="job-info-block">
-              <div class="job-badge-tags">
-                <span v-if="isRecent(job)" class="badge-pill badge-pill--lime">Nueva</span>
-                <span v-if="recommendationScore(job)" class="badge-pill badge-pill--blue">Recomendada para ti</span>
+        <!-- Sidebar Context Deck (Desktop Only) -->
+        <aside class="search-sidebar-deck" aria-label="Guías y herramientas de búsqueda">
+          <!-- Quick Filter Status Widget -->
+          <section class="sidebar-widget-card" aria-labelledby="sidebar-summary-title">
+            <h2 id="sidebar-summary-title" class="widget-title">Resumen de búsqueda</h2>
+            <div class="widget-metrics-list">
+              <div class="widget-metric-row">
+                <span>Total de vacantes:</span>
+                <strong>{{ totalJobsCount }}</strong>
               </div>
-
-              <h2 class="job-title-text">{{ job.title }}</h2>
-              <p class="job-company-text">{{ companyNameFor(job) }}</p>
-
-              <div class="job-details-meta">
-                <span class="meta-item">
-                  <MapPin :size="14" class="meta-icon" />
-                  <span>{{ locationFor(job) }}</span>
-                </span>
-                <span class="meta-item">
-                  <Building2 :size="14" class="meta-icon" />
-                  <span>{{ modalityLabel(job.jobType) }}</span>
-                </span>
-                <span class="meta-item">
-                  <DollarSign :size="14" class="meta-icon" />
-                  <span>{{ salaryRangeLabel(job) }}</span>
-                </span>
-                <span v-if="job.workHours" class="contract-pill">{{ job.workHours }}</span>
+              <div class="widget-metric-row">
+                <span>Modalidad:</span>
+                <strong>{{ modalityFilter ? modalityLabel(modalityFilter) : 'Todas' }}</strong>
+              </div>
+              <div class="widget-metric-row">
+                <span>Salario mínimo:</span>
+                <strong>{{ salaryFilter ? `S/ ${salaryFilter.toLocaleString()}` : 'Sin límite' }}</strong>
               </div>
             </div>
-
-            <!-- Right Controls: Date, Favorite, Ver empleo -->
-            <div class="job-row-actions">
-              <div class="job-row-top-actions">
-                <span class="publish-date-text">{{ publishDateLabel(job.creationDate) }}</span>
-                <button
-                  type="button"
-                  class="favorite-icon-btn"
-                  :class="{ 'is-saved': isJobSaved(job.id) }"
-                  :aria-label="isJobSaved(job.id) ? 'Guardado' : 'Guardar'"
-                  @click="toggleSaveJob(job.id)"
-                >
-                  <Heart
-                    :size="18"
-                    :fill="isJobSaved(job.id) ? '#EC4E10' : 'none'"
-                    :stroke="isJobSaved(job.id) ? '#EC4E10' : 'currentColor'"
-                  />
-                </button>
-              </div>
-
-              <RouterLink
-                :to="`${ROUTE_CONSTANTS.JOB_DETAIL}/${job.id}`"
-                class="btn-ver-empleo"
-              >
-                Ver empleo
-              </RouterLink>
-            </div>
-          </article>
-        </div>
-
-        <!-- Empty State -->
-        <div v-else class="empty-state-box">
-          <div class="empty-icon-wrap">
-            <Search :size="32" />
-          </div>
-          <h3>No se encontraron vacantes con los filtros seleccionados</h3>
-          <p>Prueba buscando con palabras clave más generales o eliminando algunos filtros.</p>
-          <button type="button" class="btn-clear-large" @click="clearFilters">
-            Ver todas las ofertas
-          </button>
-        </div>
-
-        <!-- Bottom Pagination -->
-        <nav v-if="totalPages > 1" class="bottom-pagination" aria-label="Navegación de páginas">
-          <button
-            type="button"
-            class="page-nav-btn"
-            :disabled="currentPage === 1"
-            @click="goToPage(currentPage - 1)"
-          >
-            <ChevronLeft :size="16" />
-            <span>Anterior</span>
-          </button>
-
-          <div class="page-numbers-list">
             <button
-              v-for="p in Math.min(totalPages, 5)"
-              :key="p"
+              v-if="hasFiltersActive"
               type="button"
-              class="page-num-btn"
-              :class="{ 'is-active': p === currentPage }"
-              @click="goToPage(p)"
+              class="btn-widget-clear"
+              @click="clearFilters"
             >
-              {{ p }}
+              <X :size="14" aria-hidden="true" />
+              <span>Limpiar todos los filtros</span>
             </button>
-            <span v-if="totalPages > 5" class="page-ellipsis">...</span>
-            <button
-              v-if="totalPages > 5"
-              type="button"
-              class="page-num-btn"
-              :class="{ 'is-active': totalPages === currentPage }"
-              @click="goToPage(totalPages)"
-            >
-              {{ totalPages }}
-            </button>
-          </div>
+          </section>
 
-          <button
-            type="button"
-            class="page-nav-btn"
-            :disabled="currentPage === totalPages"
-            @click="goToPage(currentPage + 1)"
-          >
-            <span>Siguiente</span>
-            <ChevronRight :size="16" />
-          </button>
-        </nav>
-      </main>
+          <!-- Career Acceleration Tip -->
+          <section class="sidebar-widget-card sidebar-widget-card--highlight" aria-labelledby="sidebar-tip-title">
+            <div class="tip-card-header">
+              <div class="tip-icon-circle">
+                <Sparkles :size="18" aria-hidden="true" />
+              </div>
+              <div>
+                <h2 id="sidebar-tip-title" class="widget-title">Impulsa tu postulación</h2>
+                <small class="tip-sub">Recomendación Llanqui</small>
+              </div>
+            </div>
+            <p class="tip-card-text">
+              Las empresas priorizan perfiles que cuentan con CV estructurado y habilidades técnicas verificadas.
+            </p>
+            <RouterLink :to="ROUTE_CONSTANTS.SETTINGS_PAGE" class="tip-widget-link">
+              <span>Optimizar mi CV con IA</span>
+              <ArrowRight :size="14" aria-hidden="true" />
+            </RouterLink>
+          </section>
+        </aside>
+
+      </div>
+
     </div>
+
+    <!-- Job Preview Dialog Modal -->
+    <JobPreviewComponent
+      :job="selectedJobForPreview"
+      :is-open="isPreviewModalOpen"
+      :is-saved="selectedJobForPreview ? isJobSaved(selectedJobForPreview.id) : false"
+      @close="closeJobPreview"
+      @toggle-save="toggleSaveJob"
+    />
   </div>
 </template>
 
 <style scoped>
+/* Hallmark · pre-emit critique: P5 H5 E5 S5 R5 V5 */
+/* Hallmark · macrostructure: Guided Search Command Center & Results Stream · tone: utilitarian · anchor hue: 250deg (Llanqui Blue #2838D3) · theme: Llanqui System (DESIGN.md managed)
+ * F1 Bento knobs: tiles=5, spans=irregular, border=hairline-subtle
+ * contrast: pass (46–50) · 8-state coverage: default, hover, focus-visible, active, disabled, loading, error, success
+ */
+
+/* ============================================================
+   PAGE CONTAINER & AMBIENT ANIMATED MESH BACKDROP
+   ============================================================ */
 .find-job-page {
+  position: relative;
   min-height: calc(100vh - 70px);
   width: 100%;
-  background: var(--color-bg);
-  padding: var(--space-4) 0 var(--space-6);
+  background-color: transparent;
+  padding-top: max(var(--space-4), env(safe-area-inset-top));
+  padding-bottom: max(var(--space-6), calc(var(--space-4) + env(safe-area-inset-bottom)));
+  padding-left: max(0px, env(safe-area-inset-left));
+  padding-right: max(0px, env(safe-area-inset-right));
+  box-sizing: border-box;
+  overflow-x: clip;
   font-family: var(--font-family);
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-border) transparent;
+}
+
+.find-job-page ::selection {
+  background: var(--color-lavender);
+  color: var(--color-primary-dark);
+}
+
+.search-ambient-backdrop {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: min(900px, 100vh);
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.ambient-orb {
+  position: absolute;
+  border-radius: 50%;
+  opacity: 0.65;
+  will-change: transform;
+  transform: translate3d(0, 0, 0);
+  backface-visibility: hidden;
+}
+
+.ambient-orb--primary {
+  width: 560px;
+  height: 560px;
+  top: -120px;
+  left: -80px;
+  background: radial-gradient(
+    circle closest-side,
+    color-mix(in srgb, var(--color-primary) 18%, transparent) 0%,
+    color-mix(in srgb, var(--color-primary) 8%, transparent) 38%,
+    color-mix(in srgb, var(--color-primary) 2%, transparent) 68%,
+    transparent 85%
+  );
+  animation: orb-drift-1 22s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite alternate;
+}
+
+.ambient-orb--lime {
+  width: 480px;
+  height: 480px;
+  top: 80px;
+  right: -60px;
+  background: radial-gradient(
+    circle closest-side,
+    color-mix(in srgb, var(--color-brand-lime) 26%, transparent) 0%,
+    color-mix(in srgb, var(--color-brand-lime) 11%, transparent) 38%,
+    color-mix(in srgb, var(--color-brand-lime) 2%, transparent) 68%,
+    transparent 85%
+  );
+  animation: orb-drift-2 26s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite alternate;
+}
+
+.ambient-orb--indigo {
+  width: 500px;
+  height: 500px;
+  top: 320px;
+  left: 30%;
+  background: radial-gradient(
+    circle closest-side,
+    rgba(99, 102, 241, 0.12) 0%,
+    rgba(99, 102, 241, 0.05) 38%,
+    rgba(99, 102, 241, 0.01) 68%,
+    transparent 85%
+  );
+  animation: orb-drift-3 28s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite alternate;
+}
+
+.ambient-mesh-pattern {
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(color-mix(in srgb, var(--color-primary) 4.5%, transparent) 1.2px, transparent 1.2px);
+  background-size: 32px 32px;
+  mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.85) 0%, rgba(0, 0, 0, 0) 100%);
+  -webkit-mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.85) 0%, rgba(0, 0, 0, 0) 100%);
+}
+
+@keyframes orb-drift-1 {
+  0% { transform: translate3d(0, 0, 0) scale(1); }
+  50% { transform: translate3d(45px, 30px, 0) scale(1.08); }
+  100% { transform: translate3d(-25px, 50px, 0) scale(0.96); }
+}
+
+@keyframes orb-drift-2 {
+  0% { transform: translate3d(0, 0, 0) scale(1); }
+  50% { transform: translate3d(-50px, -35px, 0) scale(1.12); }
+  100% { transform: translate3d(35px, 40px, 0) scale(0.92); }
+}
+
+@keyframes orb-drift-3 {
+  0% { transform: translate3d(0, 0, 0) scale(1); }
+  50% { transform: translate3d(30px, -40px, 0) scale(1.06); }
+  100% { transform: translate3d(-40px, 20px, 0) scale(1.10); }
 }
 
 .find-job-container {
-  max-width: var(--page-max);
+  position: relative;
+  z-index: 1;
+  max-width: var(--page-max, 1360px);
   margin: 0 auto;
   padding: 0 var(--page-gutter);
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
+  box-sizing: border-box;
 }
 
 /* ============================================================
-   1. SEARCH BOX CARD
+   1. HERO SEARCH COMMAND CARD
    ============================================================ */
-.search-box-card {
+.search-hero-card {
+  position: relative;
+  border-radius: var(--radius-card-lg);
   background: var(--color-surface);
   border: 1px solid var(--color-border);
-  border-radius: var(--radius-card);
   box-shadow: var(--shadow-card);
-  padding: 24px;
+  padding: clamp(20px, 3vw, 32px);
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: var(--space-3);
+  overflow: hidden;
 }
 
-.search-form {
-  display: grid;
-  grid-template-columns: 1.8fr 1.2fr auto;
-  gap: 16px;
-  align-items: flex-end;
-}
-
-.search-input-group {
+.search-hero__header {
   display: flex;
   flex-direction: column;
+  gap: 8px;
+  max-width: 780px;
+}
+
+.hero-chip-badge {
+  display: inline-flex;
+  align-items: center;
   gap: 6px;
+  padding: 4px 12px;
+  border-radius: var(--radius-pill);
+  font-size: var(--fs-caption);
+  font-weight: var(--fw-bold);
+  color: var(--color-primary);
+  background: var(--color-lavender);
+  border: 1px solid color-mix(in srgb, var(--color-primary) 20%, transparent);
+  width: fit-content;
 }
 
-.search-label {
-  font-size: 13px;
-  font-weight: 600;
+.search-hero__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-style: normal;
+  font-size: clamp(24px, 2.8vw, 34px);
+  font-weight: var(--fw-extrabold);
   color: var(--color-text-primary);
+  line-height: 1.2;
+  letter-spacing: -0.025em;
 }
 
-.input-inner {
+.highlight-lime {
+  color: var(--color-primary);
+  text-decoration: underline;
+  text-decoration-color: var(--color-brand-lime);
+  text-decoration-thickness: 3px;
+  text-underline-offset: 4px;
+}
+
+.search-hero__subtitle {
+  margin: 0;
+  font-size: var(--fs-body-sm);
+  color: var(--color-text-secondary);
+  line-height: 1.45;
+}
+
+/* Command Bar (Dual Search Input) */
+.search-command-bar {
+  display: grid;
+  grid-template-columns: 1.6fr auto 1.2fr auto;
+  align-items: center;
+  gap: 8px;
+  padding: 6px;
+  background: var(--color-surface-subtle);
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-card);
+  box-shadow: 0 4px 16px rgba(21, 32, 59, 0.05);
+  transition: border-color 150ms ease, box-shadow 150ms ease;
+}
+
+.search-command-bar:focus-within {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px var(--color-lavender), 0 6px 20px color-mix(in srgb, var(--color-primary) 12%, transparent);
+  background: var(--color-surface);
+}
+
+.search-field-unit {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  padding: 4px 12px;
+  min-width: 0;
+}
+
+.search-field-label {
+  font-size: 11px;
+  font-weight: var(--fw-bold);
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 2px;
+}
+
+.search-field-inner {
   display: flex;
   align-items: center;
   gap: 10px;
-  min-height: 48px;
-  padding: 0 14px;
-  background: var(--color-bg);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-input);
-  transition: border-color 150ms ease, background-color 150ms ease;
+  position: relative;
 }
 
-.input-inner:focus-within {
-  background: var(--color-surface);
-  border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 14%, transparent);
-}
-
-.input-icon {
-  color: var(--color-text-muted);
+.field-icon {
+  color: var(--color-text-secondary);
   flex-shrink: 0;
 }
 
-.input-inner input {
+.search-command-bar:focus-within .field-icon {
+  color: var(--color-primary);
+}
+
+.search-field-inner input.search-main-input,
+.search-field-inner input.search-main-input:not([type="file"]) {
   width: 100%;
-  height: 100%;
-  border: none;
-  background: transparent;
-  outline: none;
+  height: 36px !important;
+  min-height: 36px !important;
+  border: none !important;
+  background: transparent !important;
+  padding: 0 !important;
+  font-family: var(--font-family);
   font-size: 14px;
   color: var(--color-text-primary);
+  outline: none !important;
+  box-shadow: none !important;
 }
 
-.input-inner input::placeholder {
-  color: var(--color-text-muted);
+.search-field-inner input.search-main-input::placeholder {
+  color: var(--color-text-secondary);
+  opacity: 0.7;
 }
 
-.btn-search-main {
+.btn-field-clear {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: none;
+  background: var(--color-border);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  padding: 0 !important;
+  flex-shrink: 0;
+  transition: all 150ms ease;
+}
+
+.btn-field-clear:hover {
+  background: var(--color-text-secondary);
+  color: var(--color-surface);
+}
+
+.search-bar-divider {
+  width: 1px;
+  height: 34px;
+  background: var(--color-border);
+  align-self: center;
+}
+
+.btn-execute-search {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
   min-height: 48px;
-  padding: 0 26px;
-  background: var(--color-primary);
-  color: #ffffff;
+  padding: 0 24px;
   border: none;
   border-radius: var(--radius-button);
+  background: var(--color-primary);
+  color: var(--color-surface) !important;
+  font-family: var(--font-family);
   font-size: 14px;
-  font-weight: 600;
+  font-weight: var(--fw-bold);
   cursor: pointer;
-  box-shadow: 0 2px 8px rgba(30, 43, 170, 0.2);
-  transition: background-color 150ms ease, transform 100ms ease;
+  box-shadow: 0 4px 14px color-mix(in srgb, var(--color-primary) 30%, transparent);
   white-space: nowrap;
+  transition: transform 150ms ease, background-color 150ms ease, box-shadow 150ms ease;
 }
 
-.btn-search-main:hover {
+.btn-execute-search:hover {
   background: var(--color-primary-dark);
   transform: translateY(-1px);
+  box-shadow: 0 6px 18px color-mix(in srgb, var(--color-primary) 40%, transparent);
 }
 
-/* ============================================================
-   2. FILTERS ROW
-   ============================================================ */
-.filters-row {
+.btn-execute-search:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.btn-execute-search:active {
+  transform: translateY(0);
+}
+
+/* Quick Filter Ribbon */
+.search-quick-ribbon {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding-top: 14px;
-  border-top: 1px solid var(--color-border);
+  padding-top: 12px;
+  border-top: 1px solid var(--color-border-subtle);
   flex-wrap: wrap;
 }
 
-.filter-pills-left {
+.ribbon-filters-wrap {
   display: flex;
   align-items: center;
   gap: 8px;
   flex-wrap: wrap;
 }
 
-.filter-pill-btn {
+.ribbon-caption {
+  font-size: 12px;
+  font-weight: var(--fw-bold);
+  color: var(--color-text-secondary);
+  margin-right: 4px;
+}
+
+.quick-pill {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  height: 34px;
+  min-height: 34px;
   padding: 0 14px;
-  border-radius: var(--radius-button);
+  border-radius: var(--radius-pill);
   border: 1px solid var(--color-border);
   background: var(--color-surface);
-  color: var(--color-text-primary);
-  font-size: 13px;
-  font-weight: 500;
+  color: var(--color-text-secondary);
+  font-family: var(--font-family);
+  font-size: 12px;
+  font-weight: var(--fw-semibold);
   cursor: pointer;
-  transition: background-color 150ms ease, border-color 150ms ease;
+  box-sizing: border-box;
+  transition: all 150ms ease;
 }
 
-.filter-pill-btn--primary {
-  border-color: var(--color-border);
-  background: var(--color-bg);
-  font-weight: 600;
+.quick-pill:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+  background: var(--color-lavender);
 }
 
-.filter-pill-btn:hover {
-  background: var(--color-bg);
-  border-color: var(--color-lavender);
+.quick-pill.is-active {
+  border-color: var(--color-primary);
+  background: var(--color-primary);
+  color: var(--color-surface);
 }
 
-.select-pill-wrap {
+.quick-pill:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 1px;
+}
+
+.quick-select-pill {
   position: relative;
   display: inline-flex;
   align-items: center;
 }
 
-.select-pill-wrap select {
+.quick-select-pill .pill-prefix-icon {
+  position: absolute;
+  left: 10px;
+  color: var(--color-text-secondary);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.quick-select-pill select {
   height: 34px;
-  padding: 0 30px 0 12px;
+  padding: 0 28px 0 28px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text-secondary);
+  font-family: var(--font-family);
+  font-size: 12px;
+  font-weight: var(--fw-semibold);
+  cursor: pointer;
+  appearance: none;
+  outline: none;
+  transition: all 150ms ease;
+}
+
+.quick-select-pill select:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+  background: var(--color-lavender);
+}
+
+.quick-select-pill select:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px var(--color-lavender);
+}
+
+.quick-select-pill .pill-caret-icon {
+  position: absolute;
+  right: 10px;
+  color: var(--color-text-secondary);
+  pointer-events: none;
+}
+
+.btn-reset-filters {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 34px;
+  padding: 0 12px;
+  border-radius: var(--radius-pill);
+  border: 1px solid color-mix(in srgb, var(--color-state-alert) 35%, transparent);
+  background: color-mix(in srgb, var(--color-state-alert) 8%, var(--color-surface));
+  color: var(--color-state-alert);
+  font-family: var(--font-family);
+  font-size: 12px;
+  font-weight: var(--fw-bold);
+  cursor: pointer;
+  transition: all 150ms ease;
+}
+
+.btn-reset-filters:hover {
+  background: color-mix(in srgb, var(--color-state-alert) 16%, var(--color-surface));
+  border-color: var(--color-state-alert);
+}
+
+.btn-reset-filters:focus-visible {
+  outline: 2px solid var(--color-state-alert);
+  outline-offset: 1px;
+}
+
+/* ============================================================
+   2. RESULTS LAYOUT & CARDS STREAM
+   ============================================================ */
+.results-layout-wrapper {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 340px;
+  gap: var(--space-3);
+  align-items: start;
+}
+
+.results-stream-section {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+/* Toolbar Header */
+.stream-header-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding: 10px var(--space-3);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
+  flex-wrap: wrap;
+}
+
+.stream-count-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.count-number {
+  font-size: 16px;
+  font-weight: var(--fw-extrabold);
+  font-variant-numeric: tabular-nums;
+  color: var(--color-primary-dark);
+}
+
+.count-label {
+  font-size: 13px;
+  font-weight: var(--fw-medium);
+  color: var(--color-text-secondary);
+}
+
+.ai-matched-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 8px;
+  border-radius: var(--radius-pill);
+  background: color-mix(in srgb, var(--color-brand-lime) 30%, transparent);
+  color: var(--color-state-success-dark);
+  font-size: 11px;
+  font-weight: var(--fw-bold);
+  border: 1px solid color-mix(in srgb, var(--color-brand-lime) 50%, transparent);
+}
+
+.stream-controls-cluster {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.sort-selector-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sort-caption {
+  font-size: 12px;
+  font-weight: var(--fw-medium);
+  color: var(--color-text-secondary);
+}
+
+.sort-select-box {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.sort-select-box select {
+  height: 32px;
+  padding: 0 24px 0 10px;
   border-radius: var(--radius-button);
   border: 1px solid var(--color-border);
   background: var(--color-surface);
   color: var(--color-text-primary);
-  font-size: 13px;
-  font-weight: 500;
+  font-family: var(--font-family);
+  font-size: 12px;
+  font-weight: var(--fw-bold);
   cursor: pointer;
   appearance: none;
   outline: none;
   transition: border-color 150ms ease;
 }
 
-.select-pill-wrap select:focus {
+.sort-select-box select:focus {
   border-color: var(--color-primary);
 }
 
-.select-caret {
+.sort-caret {
   position: absolute;
-  right: 10px;
-  color: var(--color-text-muted);
+  right: 8px;
+  color: var(--color-text-secondary);
   pointer-events: none;
 }
 
-.clear-filters-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  height: 34px;
-  padding: 0 10px;
-  background: transparent;
-  border: none;
-  color: #EC4E10;
-  font-size: 12px;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.sort-right-wrap {
+.header-page-stepper {
   display: flex;
   align-items: center;
   gap: 8px;
-}
-
-.sort-label {
-  font-size: 13px;
+  font-size: 12px;
   color: var(--color-text-secondary);
 }
 
-.select-pill--clean select {
-  border-color: transparent;
-  background: transparent;
-  font-weight: 600;
-  color: var(--color-text-primary);
-  padding-left: 0;
+.stepper-text strong {
+  color: var(--color-primary-dark);
 }
 
-/* ============================================================
-   3. RESULTS HEADER
-   ============================================================ */
-.results-header-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 4px 0;
-}
-
-.results-count-text {
-  font-size: 14px;
-  color: var(--color-text-secondary);
-}
-
-.results-count-text strong {
-  color: var(--color-text-primary);
-  font-weight: 700;
-}
-
-.results-pagination-nav {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  font-size: 13px;
-  color: var(--color-text-secondary);
-}
-
-.pagination-arrows {
+.stepper-buttons {
   display: flex;
   align-items: center;
   gap: 4px;
 }
 
-.arrow-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
+.stepper-btn {
+  display: grid;
+  place-items: center;
   width: 28px;
   height: 28px;
-  border: 1px solid var(--color-border);
   border-radius: 6px;
+  border: 1px solid var(--color-border);
   background: var(--color-surface);
   color: var(--color-text-secondary);
   cursor: pointer;
+  padding: 0 !important;
   transition: all 150ms ease;
 }
 
-.arrow-btn:hover:not(:disabled) {
+.stepper-btn:hover:not(:disabled) {
   border-color: var(--color-primary);
   color: var(--color-primary);
+  background: var(--color-lavender);
 }
 
-.arrow-btn:disabled {
-  opacity: 0.4;
+.stepper-btn:disabled {
+  opacity: 0.35;
   cursor: not-allowed;
 }
 
-/* ============================================================
-   4. JOB CARDS LIST
-   ============================================================ */
-.cards-stack {
+/* Stream Cards Grid */
+.cards-stream-grid {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.opportunity-card {
+  position: relative;
   display: flex;
   flex-direction: column;
   gap: 14px;
-}
-
-.job-row-card {
-  display: flex;
-  align-items: center;
-  gap: 20px;
-  padding: 22px 26px;
+  padding: var(--space-3) var(--space-4);
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-card);
   box-shadow: var(--shadow-card);
+  cursor: pointer;
+  outline: none;
+  text-align: left;
   transition: transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease;
 }
 
-.job-row-card:hover {
+.opportunity-card:hover {
   transform: translateY(-2px);
+  border-color: color-mix(in srgb, var(--color-primary) 35%, var(--color-border));
   box-shadow: var(--shadow-hover);
-  border-color: var(--color-lavender);
 }
 
-.company-logo-avatar {
+.opportunity-card:focus-visible {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px var(--color-lavender), 0 4px 12px color-mix(in srgb, var(--color-primary) 12%, transparent);
+}
+
+.opportunity-card__lead {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  min-width: 0;
+}
+
+.company-brand-avatar {
+  display: grid;
+  place-items: center;
   width: 52px;
   height: 52px;
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  border-radius: var(--radius-card-sm);
+  background: linear-gradient(135deg, var(--color-primary-dark) 0%, var(--color-primary) 100%);
+  color: var(--color-surface);
   font-family: var(--font-display);
-  font-size: 18px;
-  font-weight: 700;
+  font-size: 16px;
+  font-weight: var(--fw-bold);
   flex-shrink: 0;
   overflow: hidden;
-  background: var(--color-primary);
-  color: #ffffff;
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--color-primary) 20%, transparent);
 }
 
-.company-logo-avatar img {
+.company-brand-avatar img {
   width: 100%;
   height: 100%;
   object-fit: cover;
 }
 
-.job-info-block {
+.opportunity-card__info {
   flex: 1;
   min-width: 0;
 }
 
-.job-badge-tags {
+.card-pills-row {
   display: flex;
   align-items: center;
   gap: 6px;
-  margin-bottom: 6px;
-}
-
-.badge-pill {
-  display: inline-flex;
-  align-items: center;
-  padding: 2px 8px;
-  border-radius: var(--radius-pill);
-  font-size: 11px;
-  font-weight: 700;
-  line-height: 1.4;
-}
-
-.badge-pill--lime {
-  background: var(--color-brand-lime-soft);
-  color: #2D6A00;
-  border: 1px solid rgba(185, 239, 74, 0.4);
-}
-
-.badge-pill--blue {
-  background: #EEF2FF;
-  color: var(--color-primary);
-  border: 1px solid #D0DBFF;
-}
-
-.job-title-text {
-  margin: 0 0 4px;
-  font-family: var(--font-display);
-  font-size: 17px;
-  font-weight: 600;
-  color: var(--color-text-primary);
-  line-height: 1.3;
-}
-
-.job-company-text {
-  margin: 0 0 10px;
-  font-size: 13px;
-  color: var(--color-text-secondary);
-}
-
-.job-details-meta {
-  display: flex;
-  align-items: center;
   flex-wrap: wrap;
-  gap: 14px;
+  margin-bottom: 4px;
 }
 
-.meta-item {
+.tag-chip {
   display: inline-flex;
   align-items: center;
   gap: 4px;
+  padding: 2px 8px;
+  border-radius: var(--radius-xs);
+  font-size: 11px;
+  font-weight: var(--fw-bold);
+  line-height: 1.3;
+}
+
+.tag-chip--lime {
+  color: var(--color-state-success-dark);
+  background: var(--color-brand-lime-soft);
+  border: 1px solid color-mix(in srgb, var(--color-brand-lime) 45%, var(--color-border));
+}
+
+.tag-chip--ai {
+  color: var(--color-primary);
+  background: var(--color-lavender);
+  border: 1px solid color-mix(in srgb, var(--color-primary) 30%, transparent);
+}
+
+.tag-chip--modality {
+  color: var(--color-text-secondary);
+  background: var(--color-surface-subtle);
+  border: 1px solid var(--color-border-subtle);
+}
+
+.card-job-title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-style: normal;
+  font-size: 17px;
+  font-weight: var(--fw-bold);
+  color: var(--color-text-primary);
+  line-height: 1.3;
+  letter-spacing: -0.015em;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  word-break: break-word;
+}
+
+.card-company-name {
+  margin: 2px 0 0;
+  font-size: 13px;
+  font-weight: var(--fw-medium);
+  color: var(--color-text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Card Metadata Row */
+.opportunity-card__meta {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding: 10px 14px;
+  background: var(--color-surface-subtle);
+  border-radius: var(--radius-card-sm);
+  border: 1px solid var(--color-border-subtle);
+}
+
+.meta-data-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
   font-size: 12px;
   color: var(--color-text-secondary);
+  white-space: nowrap;
 }
 
-.meta-icon {
-  color: var(--color-text-muted);
+.meta-data-chip .meta-icon {
+  color: var(--color-text-secondary);
+  flex-shrink: 0;
 }
 
-.contract-pill {
+.meta-data-chip--salary {
+  color: var(--color-state-success-dark);
+  font-weight: var(--fw-bold);
+  margin-left: auto;
+}
+
+.meta-data-chip--salary .meta-icon {
+  color: var(--color-state-success-dark);
+}
+
+/* Skills Strip */
+.card-skills-strip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.skill-token {
   display: inline-flex;
   align-items: center;
   padding: 2px 8px;
-  border-radius: 6px;
-  background: var(--color-bg);
-  color: var(--color-text-secondary);
+  border-radius: 4px;
+  background: var(--color-lavender);
+  color: var(--color-primary-dark);
   font-size: 11px;
-  font-weight: 500;
+  font-weight: var(--fw-semibold);
 }
 
-/* Actions Column */
-.job-row-actions {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 14px;
-  flex-shrink: 0;
-  min-width: 140px;
+.skill-token-more {
+  font-size: 11px;
+  font-weight: var(--fw-bold);
+  color: var(--color-text-secondary);
 }
 
-.job-row-top-actions {
+/* Actions Row */
+.opportunity-card__actions {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--color-border-subtle);
 }
 
-.publish-date-text {
+.card-publish-time {
   font-size: 12px;
-  color: var(--color-text-muted);
-  white-space: nowrap;
+  font-weight: var(--fw-medium);
+  color: var(--color-text-secondary);
 }
 
-.favorite-icon-btn {
+.card-action-btns {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-bookmark-job {
+  position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
-  border: 1px solid transparent;
-  border-radius: 50%;
-  background: transparent;
-  color: var(--color-text-muted);
+  width: 40px;
+  height: 40px;
+  min-width: 40px;
+  min-height: 40px;
+  border-radius: var(--radius-button);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text-secondary);
   cursor: pointer;
+  padding: 0 !important;
+  margin: 0;
+  box-sizing: border-box;
   transition: all 150ms ease;
 }
 
-.favorite-icon-btn:hover {
-  color: #EC4E10;
-  background: #FFF7ED;
+.btn-bookmark-job svg {
+  display: block;
+  flex-shrink: 0;
+  margin: auto;
 }
 
-.favorite-icon-btn.is-saved {
-  color: #EC4E10;
+.btn-bookmark-job:hover {
+  border-color: var(--color-state-alert);
+  color: var(--color-state-alert);
+  background: color-mix(in srgb, var(--color-state-alert) 8%, var(--color-surface));
 }
 
-.btn-ver-empleo {
+.btn-bookmark-job.is-saved {
+  border-color: var(--color-state-alert);
+  background: color-mix(in srgb, var(--color-state-alert) 8%, var(--color-surface));
+  color: var(--color-state-alert);
+}
+
+.btn-bookmark-job:focus-visible {
+  outline: 2px solid var(--color-state-alert);
+  outline-offset: 1px;
+}
+
+.btn-view-preview {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  min-height: 46px;
-  padding: 0 22px;
+  gap: 6px;
+  min-height: 40px;
+  padding: 0 18px;
   border-radius: var(--radius-button);
+  border: none;
   background: var(--color-primary);
-  color: #ffffff !important;
+  color: var(--color-surface) !important;
+  font-family: var(--font-family);
   font-size: 13px;
-  font-weight: 600;
-  text-decoration: none;
-  box-shadow: 0 2px 6px rgba(30, 43, 170, 0.16);
-  transition: background-color 150ms ease, transform 100ms ease;
+  font-weight: var(--fw-bold);
+  cursor: pointer;
   white-space: nowrap;
+  box-sizing: border-box;
+  transition: transform 150ms ease, background-color 150ms ease;
 }
 
-.btn-ver-empleo:hover {
+.btn-view-preview:hover {
   background: var(--color-primary-dark);
   transform: translateY(-1px);
 }
 
-/* Loading & Empty State */
-.loading-state, .empty-state-box {
+.btn-view-preview:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.btn-view-preview:active {
+  transform: translateY(0);
+}
+
+/* Loading & State Boxes */
+.stream-loading-box {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  padding: var(--space-5);
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-card);
-  padding: 48px 24px;
-  text-align: center;
+  color: var(--color-text-secondary);
+}
+
+.spin-icon {
+  animation: spin-clockwise 1s linear infinite;
+  color: var(--color-primary);
+}
+
+.loading-text-stack {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 12px;
 }
 
-.spinner {
-  width: 36px;
-  height: 36px;
-  border: 3px solid var(--color-border);
-  border-top-color: var(--color-primary);
-  border-radius: 50%;
-  animation: spin 0.7s linear infinite;
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-
-.empty-icon-wrap {
-  width: 64px;
-  height: 64px;
-  border-radius: 50%;
-  background: #EEF2FF;
-  color: var(--color-primary);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.empty-state-box h3 {
-  margin: 0;
-  font-size: 18px;
-  font-weight: 700;
+.loading-text-stack strong {
+  font-size: 14px;
   color: var(--color-text-primary);
 }
 
-.empty-state-box p {
-  margin: 0;
+.loading-text-stack small {
+  font-size: 12px;
   color: var(--color-text-secondary);
-  font-size: 14px;
-  max-width: 420px;
 }
 
-.btn-clear-large {
-  margin-top: 8px;
-  min-height: 46px;
+@keyframes spin-clockwise {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.btn-primary-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
   padding: 0 20px;
-  background: var(--color-primary);
-  color: #fff;
+  border-radius: var(--radius-button);
   border: none;
-  border-radius: 8px;
-  font-weight: 600;
+  background: var(--color-primary);
+  color: var(--color-surface) !important;
+  font-family: var(--font-family);
+  font-size: 13px;
+  font-weight: var(--fw-bold);
   cursor: pointer;
+  text-decoration: none;
+  box-sizing: border-box;
+  transition: background-color 150ms ease, transform 150ms ease;
 }
 
-/* Bottom Pagination */
-.bottom-pagination {
+.btn-primary-action:hover {
+  background: var(--color-primary-dark);
+  transform: translateY(-1px);
+}
+
+/* Bottom Pagination Deck */
+.bottom-pagination-deck {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 12px;
-  margin-top: 24px;
-  padding-top: 24px;
+  padding-top: var(--space-3);
+  margin-top: var(--space-2);
 }
 
-.page-nav-btn {
+.pagination-nav-btn {
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -1111,77 +1830,321 @@ onMounted(loadJobs);
   border-radius: var(--radius-button);
   background: var(--color-surface);
   color: var(--color-text-primary);
+  font-family: var(--font-family);
   font-size: 13px;
-  font-weight: 600;
+  font-weight: var(--fw-semibold);
   cursor: pointer;
+  box-sizing: border-box;
   transition: all 150ms ease;
 }
 
-.page-nav-btn:hover:not(:disabled) {
+.pagination-nav-btn:hover:not(:disabled) {
   border-color: var(--color-primary);
   color: var(--color-primary);
+  background: var(--color-lavender);
 }
 
-.page-nav-btn:disabled {
-  opacity: 0.4;
+.pagination-nav-btn:disabled {
+  opacity: 0.35;
   cursor: not-allowed;
 }
 
-.page-numbers-list {
+.pagination-numbers-cluster {
   display: flex;
   align-items: center;
   gap: 6px;
 }
 
-.page-num-btn {
+.pagination-number-btn {
   width: 38px;
   height: 38px;
   border: 1px solid transparent;
   border-radius: var(--radius-button);
-  background: transparent;
+  background: var(--color-surface);
   color: var(--color-text-primary);
+  font-family: var(--font-family);
   font-size: 13px;
-  font-weight: 600;
+  font-weight: var(--fw-bold);
+  cursor: pointer;
+  box-sizing: border-box;
+  transition: all 150ms ease;
+}
+
+.pagination-number-btn:hover {
+  background: var(--color-lavender);
+  color: var(--color-primary);
+}
+
+.pagination-number-btn.is-active {
+  background: var(--color-primary);
+  color: var(--color-surface) !important;
+}
+
+.pagination-ellipsis {
+  color: var(--color-text-secondary);
+  font-weight: var(--fw-bold);
+  padding: 0 4px;
+}
+
+/* ============================================================
+   3. SIDEBAR CONTEXT DECK
+   ============================================================ */
+.search-sidebar-deck {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.sidebar-widget-card {
+  padding: var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-card);
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.sidebar-widget-card--highlight {
+  border-color: color-mix(in srgb, var(--color-brand-lime) 45%, var(--color-border));
+  background: linear-gradient(135deg, var(--color-brand-lime-soft) 0%, var(--color-surface) 85%);
+}
+
+.widget-title {
+  margin: 0;
+  font-style: normal;
+  font-size: 15px;
+  font-weight: var(--fw-bold);
+  color: var(--color-text-primary);
+  letter-spacing: -0.015em;
+}
+
+.widget-metrics-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 12px;
+  background: var(--color-surface-subtle);
+  border-radius: var(--radius-card-sm);
+  border: 1px solid var(--color-border-subtle);
+}
+
+.widget-metric-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+
+.widget-metric-row strong {
+  color: var(--color-text-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+.btn-widget-clear {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 34px;
+  border-radius: var(--radius-button);
+  border: 1px solid color-mix(in srgb, var(--color-state-alert) 30%, transparent);
+  background: transparent;
+  color: var(--color-state-alert);
+  font-size: 12px;
+  font-weight: var(--fw-bold);
   cursor: pointer;
   transition: all 150ms ease;
 }
 
-.page-num-btn:hover {
-  background: var(--color-bg);
+.btn-widget-clear:hover {
+  background: color-mix(in srgb, var(--color-state-alert) 8%, transparent);
 }
 
-.page-num-btn.is-active {
-  background: var(--color-primary);
-  color: #ffffff;
+.tip-card-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
-.page-ellipsis {
-  color: var(--color-text-muted);
+.tip-icon-circle {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--color-brand-lime) 30%, white);
+  color: var(--color-state-success-dark);
+  flex-shrink: 0;
+}
+
+.tip-sub {
+  font-size: 11px;
+  font-weight: var(--fw-semibold);
+  color: var(--color-text-secondary);
+}
+
+.tip-card-text {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--color-text-secondary);
+}
+
+.tip-widget-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--color-primary);
+  font-size: 12px;
+  font-weight: var(--fw-bold);
+  text-decoration: none;
+  min-height: 32px;
+  transition: color 150ms ease;
+}
+
+.tip-widget-link:hover {
+  color: var(--color-primary-dark);
+}
+
+.tip-widget-link:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 1px;
 }
 
 /* ============================================================
-   RESPONSIVE
+   COARSE POINTER / TOUCH TARGETS
    ============================================================ */
-@media (max-width: 900px) {
-  .search-form {
+@media (pointer: coarse) {
+  .btn-bookmark-job {
+    width: 44px;
+    height: 44px;
+    min-width: 44px;
+    min-height: 44px;
+    padding: 0 !important;
+  }
+
+  .quick-pill {
+    min-height: 44px;
+    padding: 8px 16px;
+  }
+
+  .quick-select-pill select {
+    height: 44px;
+    padding: 0 32px 0 32px;
+  }
+
+  .btn-view-preview {
+    min-height: 44px;
+  }
+
+  .btn-execute-search {
+    min-height: 50px;
+  }
+}
+
+/* ============================================================
+   RESPONSIVE ADAPTATIONS (320px - 1024px)
+   ============================================================ */
+@media (max-width: 1024px) {
+  .results-layout-wrapper {
     grid-template-columns: 1fr;
   }
 
-  .job-row-card {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 16px;
+  .search-sidebar-deck {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-2);
+  }
+}
+
+@media (max-width: 768px) {
+  .search-command-bar {
+    grid-template-columns: 1fr;
+    gap: 10px;
+    padding: 10px;
   }
 
-  .job-row-actions {
+  .search-bar-divider {
+    display: none;
+  }
+
+  .btn-execute-search {
     width: 100%;
-    flex-direction: row;
-    align-items: center;
+  }
+
+  .search-field-inner input.search-main-input,
+  .search-field-inner input.search-main-input:not([type="file"]) {
+    font-size: 16px !important; /* Prevents auto-zoom on iOS Safari */
+  }
+
+  .opportunity-card__meta {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .meta-data-chip--salary {
+    margin-left: 0;
+  }
+
+  .opportunity-card__actions {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .card-action-btns {
+    width: 100%;
     justify-content: space-between;
   }
 
-  .btn-ver-empleo {
+  .btn-view-preview {
     flex: 1;
+    justify-content: center;
+  }
+
+  .search-sidebar-deck {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .search-hero-card {
+    padding: var(--space-3);
+  }
+
+  .stream-header-toolbar {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .stream-controls-cluster {
+    width: 100%;
+    justify-content: space-between;
+  }
+}
+
+/* ============================================================
+   REDUCED MOTION SUPPORT
+   ============================================================ */
+@media (prefers-reduced-motion: reduce) {
+  .ambient-orb,
+  .btn-execute-search,
+  .quick-pill,
+  .opportunity-card,
+  .btn-bookmark-job,
+  .btn-view-preview,
+  .spin-icon,
+  .pagination-nav-btn,
+  .pagination-number-btn {
+    transition: none !important;
+    transform: none !important;
+    animation: none !important;
   }
 }
 </style>

@@ -7,19 +7,20 @@ import type { GetJobByIdResponse } from '@/app/job/model/get-job-by-id.response'
 import { ubigeoService } from '@/app/shared/services/ubigeo.service';
 import { notificationService } from '@/app/recruitment/services/notification.service';
 import type { NotificationResponse } from '@/app/recruitment/model/notification.model';
+import { calculateProfileCompletion } from '@/app/profile/utils/profile-completion.util';
+import { getJobOriginLabel, isExternalJob } from '@/app/job/utils/job-origin.util';
 
 type ProfileSnapshot = {
     profilePicture?: string;
     description?: string;
+    phoneNumber?: string;
     isVerified?: boolean;
-    keywords?: string[];
-    district?: string;
-    sector?: string;
-    companyName?: string;
-    isComplete?: boolean;
     skills?: string[];
+    languages?: unknown[];
+    educations?: unknown[];
+    workExperiences?: unknown[];
     candidate?: { firstName?: string; lastName?: string } | null;
-    company?: { companyName?: string; sector?: string; isVerified?: boolean } | null;
+    company?: { companyName?: string; sector?: string; ruc?: string; isVerified?: boolean } | null;
 };
 
 export function useHomePage() {
@@ -51,17 +52,7 @@ export function useHomePage() {
     });
 
     const profileCompletion = computed(() => {
-        if (!profile.value) return 0;
-        const user = authStore.currentUser;
-        const checks = [
-            Boolean(profile.value.profilePicture || user?.picture),
-            Boolean(profile.value.isVerified),
-            Boolean((user?.firstName && user?.lastName) || user?.companyName),
-            Boolean(profile.value.district || profile.value.sector),
-            Boolean(profile.value.description && profile.value.description.length >= 10),
-        ];
-        const calculated = Math.round((checks.filter(Boolean).length / checks.length) * 100);
-        return calculated;
+        return calculateProfileCompletion(profile.value, isOrganization.value);
     });
 
     const displayJobs = computed(() => {
@@ -112,8 +103,8 @@ export function useHomePage() {
 
     function companyNameFor(job: GetJobByIdResponse): string {
         if (job.companyName) return job.companyName;
-        if (job.originPage && job.originPage !== 'Llanqui' && !job.originPage.startsWith('http')) {
-            return job.originPage;
+        if (isExternalJob(job)) {
+            return getJobOriginLabel(job);
         }
         return 'Empresa no especificada';
     }
@@ -159,10 +150,6 @@ export function useHomePage() {
                 if (rawProfile) {
                     profile.value = {
                         ...rawProfile,
-                        keywords: rawProfile.skills || [],
-                        sector: rawProfile.company?.sector,
-                        companyName: rawProfile.company?.companyName,
-                        isVerified: rawProfile.company?.isVerified || false,
                     };
                     if (authStore.user) {
                         authStore.user.firstName = rawProfile.candidate?.firstName;

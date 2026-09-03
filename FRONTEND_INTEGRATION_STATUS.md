@@ -1,13 +1,12 @@
 # Estado de integración frontend–backend
 
-Última actualización: 31 de agosto de 2026
+Última actualización: 1 de septiembre de 2026 — créditos Free, PayPal y PDF de CV
 
 Este documento registra el estado real de la comunicación entre el frontend de Llanqui y `backend-v2` en la rama `clean`. No es un plan de trabajo ni modifica el contrato del backend.
 
 ## Reglas de integración
 
-- Solo se modifica el proyecto `frontend`.
-- `backend-v2` no se modifica.
+- Esta actualización también extiende `backend-v2` para que saldo, planes y consumo de créditos sean contratos verificables por el frontend.
 - No se utiliza mock data para reemplazar información que debería venir de la API.
 - El frontend se adapta únicamente a los endpoints, métodos HTTP y DTO existentes.
 - Candidato y company tienen navegación y capacidades diferentes.
@@ -36,6 +35,16 @@ Este documento registra el estado real de la comunicación entre el frontend de 
 - [!] **PDF de CV estructurado**: `POST /api/v1/cv/{id}/transform` ya se ejecuta desde el generador antes de `GET /api/v1/cv/{id}/file`; falta comprobar localmente que Playwright y el almacenamiento generen el PDF.
 - [!] **Eliminar CV**: `DELETE /api/v1/cv/{id}` ahora borra también el contenido estructurado y el PDF almacenado. Validar eliminación y posterior `GET /file` con un CV real.
 - [-] **Recomendaciones**: se añadieron entidades y repositorio de dominio, pero todavía no existe un controlador REST para que el frontend solicite o registre interacciones. El frontend no debe asumir disponibilidad del recomendador interno.
+
+## Créditos de IA, PayPal y archivos PDF (01/09/2026)
+
+- [x] **Plan Free**: las cuentas nuevas reciben 3 créditos iniciales. No es una compra de PayPal; es el beneficio incluido de la cuenta.
+- [x] **Consumo protegido**: `POST /api/v1/cv/ai-assist-creation` y el endpoint reservado de mejora descuentan 1 crédito antes de publicar la tarea de IA. Si RabbitMQ no acepta la tarea, el crédito se devuelve.
+- [x] **Saldo real**: `GET /api/payments/balance` devuelve `balance` e `initialFreeCredits`; el generador y Configuración > Pagos lo consumen sin calcularlo desde datos locales.
+- [x] **Catálogo real**: `GET /api/payments/plans` devuelve Free, Starter, Pro y Max con nombre, descripción, créditos y precio. La UI dejó de fijar precios o créditos distintos a los del backend.
+- [x] **PayPal**: solo Starter, Pro y Max pueden crear orden con `POST /api/payments/create`; la captura confirma y acredita créditos con `POST /api/payments/capture/{orderId}`.
+- [x] **PDF solamente**: `POST /api/v1/cv/uploaded` admite únicamente PDF de hasta 2 MB. Un DOC/DOCX histórico responde `415 PDF required` al descargar para no entregarse falsamente como PDF.
+- [!] **Migración local**: aplicar `20260901233000_AddFreeCvCredits` antes de validar cuentas nuevas. Los saldos de cuentas existentes no se alteran automáticamente.
 
 ## Acceso y separación por usuario
 
@@ -83,9 +92,10 @@ Esta auditoría distingue un endpoint consumido desde una vista de uno que solo 
 - [x] El candidato puede crear y actualizar su perfil con `POST/PUT /profile/candidate`, además de `PATCH /profile/upload-photo`.
 - [x] `GET /profile/me` carga el perfil de la sesión actual y actualiza el `profileId` local. `GET /profile/{id}` se conserva para consultas explícitas, como el perfil de un postulante desde company.
 - [x] `POST /profile/ruc/{ruc}/validate` se usa únicamente cuando corresponde validar RUC; no se presenta como verificación de DNI.
+- [-] La API no expone verificación oficial de identidad para candidatos: `CandidateProfile` guarda el DNI, pero `ProfileResponse.Candidate` no devuelve DNI ni un estado `isVerified`. La interfaz solo valida el formato antes de guardar y no muestra sellos RENIEC ni “Identidad no verificada” para el candidato.
 - [x] `GET /profile/{profileId}` devuelve `languages`, `educations` y `workExperiences`; Configuración carga las colecciones reales y cada edición reemplaza la lista completa mediante `PATCH /profile/language`, `/education` o `/experience`.
 - [-] Certificaciones no tienen endpoint y se mantienen ocultas.
-- [x] El generador y la biblioteca de CV consumen `GET /cv/me`, `POST /cv`, `POST /cv/uploaded`, `GET /cv/{id}/structured`, `POST /cv/{id}/transform`, `GET /cv/{id}/file` y `DELETE /cv/{id}` según la acción disponible.
+- [x] El generador y la biblioteca de CV consumen `POST /cv/ai-assist-creation`, `GET /cv/me`, `POST /cv/structured`, `POST /cv/uploaded`, `GET /cv/{id}/structured`, `POST /cv/{id}/transform`, `GET /cv/{id}/file` y `DELETE /cv/{id}` según la acción disponible. La generación valida el saldo real y el upload admite PDF únicamente.
 - [ ] `POST /cv/structured` está alineado en el servicio, pero aún no cuenta con formulario de creación estructurada.
 - [x] Novedades es solo de candidato: usa feed, creación y búsqueda con `GET /news/feed/{profileId}`, `POST /news` y `POST /news/search`. El título se deriva del contenido real, no de un texto fijo.
 - [ ] `GET /news/{id}` y `DELETE /news/{id}/{profileId}` están disponibles en el servicio, pero no tienen acción visible en la vista actual.
@@ -153,6 +163,7 @@ Esta auditoría distingue un endpoint consumido desde una vista de uno que solo 
 - [x] Subir foto con `PATCH /api/v1/profile/upload-photo`; en perfiles nuevos se incluye en el formulario de creación.
 - [ ] `POST /api/v1/profile/{profileId}/verify` está alineado en el servicio, pero todavía no tiene una acción visible de verificación de company.
 - [x] Validar RUC mediante `POST /api/v1/profile/ruc/{ruc}/validate`.
+- [-] No existe `POST /api/v1/profile/dni/verify` ni un campo persistido de verificación para candidato. Validar formato no equivale a verificar identidad; el frontend mantiene editable el documento y no lo cuenta como completitud.
 - [x] Se retiraron del servicio las rutas CRUD inexistentes de idiomas, educación y experiencia.
 - [x] `PATCH /api/v1/profile/language`, `/education` y `/experience` están disponibles para candidato después de cargar las colecciones reales desde `ProfileResponse`; el frontend no envía claves locales de UI ni campos fuera del DTO.
 - [-] Certificaciones no tienen endpoint en el contrato actual; deben ocultarse o conservarse solo localmente como borrador no persistido, indicándolo claramente.
@@ -187,12 +198,13 @@ Esta auditoría distingue un endpoint consumido desde una vista de uno que solo 
 ### Currículum
 
 - [!] El servicio de `POST /api/v1/cv/structured` usa el DTO estructurado actual, en lugar de `sections[]`; falta una llamada real desde una vista.
-- [x] El servicio sube CV con `POST /api/v1/cv/uploaded` y `multipart/form-data`.
+- [x] El servicio sube CV con `POST /api/v1/cv/uploaded` y `multipart/form-data`; cliente y servidor restringen el archivo a PDF de hasta 2 MB.
 - [x] El servicio consulta CV estructurado con `GET /api/v1/cv/{id}/structured`.
 - [!] La descarga ejecuta `POST /api/v1/cv/{id}/transform` antes de recuperar el archivo con `GET /api/v1/cv/{cvId}/file`; falta prueba local completa.
 - [!] El servicio elimina CV con `DELETE /api/v1/cv/{id}`; validar que el archivo PDF y el contenido asociado no queden accesibles.
-- [x] La generación asistida usa `POST /api/v1/cv`, procesa `202 Accepted` y conserva `cvId`.
-- [x] `GET /api/v1/cv/me` alimenta una biblioteca de CV del candidato; no lista documentos de company.
+- [x] Cada clic en “Generar versión mejorada” usa `POST /api/v1/cv/ai-assist-creation`, procesa `202 Accepted`, descuenta 1 crédito del saldo real y conserva el `cvId` hasta que la nueva versión esté lista.
+- [x] `GET /api/v1/cv/me` alimenta el historial de versiones del candidato; permite descargar o eliminar, nunca modificar manualmente una versión histórica.
+- [-] `POST /api/v1/cv/ai-assist-improvement` existe para un futuro editor de CV estructurado, pero no se muestra en el historial actual para preservar versiones inmutables desde la experiencia de candidato.
 - [x] Se retiró el consumo de los endpoints inexistentes `/status`, `/preview` y `/download`; mientras el proceso está pendiente se consulta el archivo de forma acotada.
 
 ## Flujo de company
@@ -233,10 +245,11 @@ Esta auditoría distingue un endpoint consumido desde una vista de uno que solo 
 ### Pagos y promoción
 
 - [x] La base correcta de Payments es `/api/payments` sin `/v1`.
+- [x] El candidato consulta `GET /api/payments/plans` y `GET /api/payments/balance`; ambos alimentan la vista sin precios, saldo ni paquetes ficticios.
 - [x] Crear orden usa `POST /api/payments/create`.
 - [x] La captura usa `POST /api/payments/capture/{orderId}` sin body ficticio.
 - [x] La creación envía `creditPlan`, `platform`, `returnUrl` y `cancelUrl` según el DTO real.
-- [x] Se retiró el consumo de `GET /api/payments/balance`; la UI explica que el saldo solo se conoce tras capturar una compra.
+- [x] El saldo se actualiza tras la captura y también se puede consultar en cualquier momento con `GET /api/payments/balance`.
 - [-] Los planes `Boost7/Boost15/Boost30` no existen; la promoción de vacantes queda deshabilitada sin simular una compra.
 
 ## Novedades y notificaciones
@@ -306,3 +319,5 @@ Agregar aquí cada cambio confirmado con el formato:
 - 2026-08-30 — Integración de endpoints restantes — Vista de seguridad para ambos roles, selector de habilidades con catálogo real, novedades propias/de vacante, descarga del CV y ciclo visible de conversación para company — `npm run type-check` correcto — Pendiente prueba local y commit.
 - 2026-08-31 — Perfil candidato — Consumo de `languages`, `educations` y `workExperiences` de `ProfileResponse`; reemplazo seguro de cada colección mediante los tres PATCH, niveles CEFR y códigos de idioma del contrato — `npm run type-check` correcto — Pendiente prueba local y commit.
 - 2026-08-31 — Sesión, perfil, mensajería, postulaciones y CV — Adaptación al `clean` b022f81: perfil propio, `profileId` de sesión, bandeja/historial, historial de postulaciones, biblioteca de CV y resumen de candidato — `npm run type-check` correcto — Pendiente prueba local y commit.
+- 2026-09-01 — CV e identidad de candidato — El botón de generación crea una nueva versión mejorada mediante `/cv/ai-assist-creation`; el historial queda para descargar/eliminar. Se retiró la promesa de verificación RENIEC local y el aviso de identidad no verificada para candidatos porque la API actual no persiste ni devuelve ese estado — Pendiente validación y commit.
+- 2026-09-01 — Créditos y PDF de CV — Plan Free de tres créditos, catálogo/saldo reales, consumo protegido antes de IA, compra solo por PayPal para Starter/Pro/Max y restricción PDF de 2 MB para CV subidos — Compilación backend y `npm run type-check` correctos — Pendiente migración y prueba local.

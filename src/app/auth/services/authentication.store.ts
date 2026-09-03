@@ -20,11 +20,30 @@ const authenticationService: AuthenticationService = new AuthenticationService()
 
 export const useAuthenticationStore = defineStore('authentication', () => {
     // State
-    const signedIn = ref(false);
-    const user = ref<UserResponse | null>(null);
-    const userType = ref<'employee' | 'organization' | null>(localStorage.getItem('userType') as 'employee' | 'organization' | null);
+    const rawUser = localStorage.getItem('user');
+    let initialUser: UserResponse | null = null;
+    try {
+        if (rawUser) initialUser = JSON.parse(rawUser);
+    } catch {}
+
     const accessToken = ref<string | null>(localStorage.getItem('accessToken'));
     const refreshToken = ref<string | null>(localStorage.getItem('refreshToken'));
+    const userType = ref<'employee' | 'organization' | null>(
+        (localStorage.getItem('userType') as 'employee' | 'organization' | null) || (initialUser?.userType as any) || null
+    );
+    const signedIn = ref<boolean>(Boolean(accessToken.value && initialUser));
+    const user = ref<UserResponse | null>(initialUser);
+
+    function setUser(newUser: UserResponse | null): void {
+        user.value = newUser;
+        if (newUser) {
+            try {
+                localStorage.setItem('user', JSON.stringify(newUser));
+            } catch {}
+        } else {
+            localStorage.removeItem('user');
+        }
+    }
 
     // Computed properties
     const isSignedIn = computed(() => signedIn.value);
@@ -53,7 +72,7 @@ export const useAuthenticationStore = defineStore('authentication', () => {
             
             // Update state
             signedIn.value = true;
-            user.value = signInResponse.user;
+            setUser(signInResponse.user);
             accessToken.value = signInResponse.accessToken;
             refreshToken.value = signInResponse.refreshToken;
 
@@ -74,7 +93,7 @@ export const useAuthenticationStore = defineStore('authentication', () => {
             // organización vs candidato. Best-effort: no rompe el login si falla.
             try {
                 const me = await authenticationService.getCurrentUser(signInResponse.accessToken);
-                user.value = me;
+                setUser(me);
                 if (me?.userType) setUserType(me.userType);
                 syncProfileId(me);
             } catch (meError) {
@@ -100,11 +119,10 @@ export const useAuthenticationStore = defineStore('authentication', () => {
             
             // Update state
             signedIn.value = true;
-            user.value = signUpResponse.user;
+            setUser(signUpResponse.user);
             accessToken.value = signUpResponse.accessToken;
             refreshToken.value = signUpResponse.refreshToken;
             syncProfileId(signUpResponse.user);
-            
             // Persist tokens
             localStorage.setItem('accessToken', signUpResponse.accessToken);
             localStorage.setItem('refreshToken', signUpResponse.refreshToken);
@@ -128,7 +146,7 @@ export const useAuthenticationStore = defineStore('authentication', () => {
 
         // Limpiar estado del store primero
         signedIn.value = false;
-        user.value = null;
+        setUser(null);
         userType.value = null;
         accessToken.value = null;
         refreshToken.value = null;
@@ -141,12 +159,12 @@ export const useAuthenticationStore = defineStore('authentication', () => {
         localStorage.removeItem('userType');
         localStorage.removeItem('profileId');
         
-        console.log(' Sesión cerrada. LocalStorage limpiado.');
+        console.log('🚪 Sesión cerrada. LocalStorage limpiado.');
         
         // Redirigir a la página de login
         try {
             await router.push('/sign-in');
-            console.log(' Redirigido a /sign-in');
+            console.log('🔄 Redirigido a /sign-in');
             console.log('✅ Redirigido a /sign-in');
         } catch (error) {
             console.error('❌ Error al redirigir:', error);
@@ -178,7 +196,8 @@ export const useAuthenticationStore = defineStore('authentication', () => {
             }
             
             console.log('🔄 Obteniendo usuario con token');
-            user.value = await authenticationService.getCurrentUser(token);
+            const currentUserData = await authenticationService.getCurrentUser(token);
+            setUser(currentUserData);
             signedIn.value = true;
 
             // Mantener el rol sincronizado con el backend (/me).
@@ -203,7 +222,7 @@ export const useAuthenticationStore = defineStore('authentication', () => {
             const response = await authenticationService.refreshSession(currentRefreshToken);
             accessToken.value = response.accessToken;
             refreshToken.value = response.refreshToken;
-            user.value = response.user;
+            setUser(response.user);
             signedIn.value = true;
             localStorage.setItem('accessToken', response.accessToken);
             localStorage.setItem('refreshToken', response.refreshToken);
@@ -226,7 +245,7 @@ export const useAuthenticationStore = defineStore('authentication', () => {
             );
             accessToken.value = response.accessToken;
             refreshToken.value = response.refreshToken;
-            user.value = response.user;
+            setUser(response.user);
             signedIn.value = true;
             localStorage.setItem('accessToken', response.accessToken);
             localStorage.setItem('refreshToken', response.refreshToken);

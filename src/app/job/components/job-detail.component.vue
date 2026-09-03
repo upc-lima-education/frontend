@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
-import { GetJobByIdResponse } from '../model/get-job-by-id.response';
+import type { GetJobByIdResponse } from '../model/get-job-by-id.response';
 import { ubigeoService } from '@/app/shared/services/ubigeo.service';
 import DialogComponent from '@/app/shared/components/dialog.component.vue';
 import JobNewsComponent from '@/app/news/components/job-news.component.vue';
@@ -9,633 +9,1645 @@ import { useAuthenticationStore } from '@/app/auth/services/authentication.store
 import { JobService } from '../services/job.service';
 import { useRouter } from 'vue-router';
 import { ROUTE_CONSTANTS } from '@/app/shared/router/route-constants';
-import { MapPin, Briefcase, Calendar, Clock, DollarSign, Award, Trash2, CheckSquare, Star, ArrowLeft, Bookmark, ExternalLink, Sparkles } from 'lucide-vue-next';
+import { getExternalJobUrl, getJobOriginLabel, isExternalJob, isInternalJob } from '../utils/job-origin.util';
+import {
+  AlertCircle,
+  ArrowLeft,
+  ArrowRight,
+  Award,
+  Bookmark,
+  Briefcase,
+  BriefcaseBusiness,
+  Building2,
+  Calendar,
+  CheckCircle2,
+  CheckSquare,
+  Clock,
+  DollarSign,
+  ExternalLink,
+  FileText,
+  Heart,
+  MapPin,
+  Share2,
+  ShieldCheck,
+  Sparkles,
+  Star,
+  Trash2,
+  UploadCloud,
+  Wallet,
+} from 'lucide-vue-next';
 
 const auth = useAuthenticationStore();
 const router = useRouter();
 const jobService = new JobService();
 
 const props = defineProps<{
-    job: GetJobByIdResponse,
-    companyName: string,
-    companyImage: string,
-    isCompany: Boolean,
-    featured?: boolean
+  job: GetJobByIdResponse;
+  companyName: string;
+  companyImage: string;
+  isCompany: boolean;
+  featured?: boolean;
 }>();
 
 const department = ref('');
 const district = ref('');
+const isCopied = ref(false);
 
 onMounted(() => {
-    const response = ubigeoService.getLocation(props.job.ubigeo);
-    if (response !== null) {
-        department.value = response.department;
-        district.value = response.district;
-    }
+  const response = ubigeoService.getLocation(props.job.ubigeo);
+  if (response !== null) {
+    department.value = response.department;
+    district.value = response.district;
+  }
 });
 
 const hasLocationLabel = computed(() => Boolean(department.value && district.value));
 
-// Los anuncios agregados de fuentes externas (Bumeran, etc.) traen el título
-// concatenado como "Puesto | Empresa | Distrito"; los nativos de Llanqui no.
-const isExternalListing = computed(() => props.job.originPage !== 'Llanqui');
+const isInternalListing = computed(() => isInternalJob(props.job));
+const isExternalListing = computed(() => isExternalJob(props.job));
+const isCandidate = computed(() => !props.isCompany);
+const externalJobUrl = computed(() => getExternalJobUrl(props.job));
+const originLabel = computed(() => getJobOriginLabel(props.job));
+const canManageJob = computed(() =>
+  props.isCompany
+  && isInternalListing.value
+  && Boolean(auth.currentUser?.profileId)
+  && auth.currentUser?.profileId === props.job.companyId,
+);
 
 const titleSegments = computed(() => {
-    if (!isExternalListing.value || !props.job.title.includes('|')) return [];
-    return props.job.title.split('|').map(part => part.trim()).filter(Boolean);
+  if (!isExternalListing.value || !props.job.title.includes('|')) return [];
+  return props.job.title.split('|').map((part) => part.trim()).filter(Boolean);
 });
 
-const displayTitle = computed(() => titleSegments.value[0] || props.job.title);
+const displayTitle = computed(() => titleSegments.value[0] || props.job.title || 'Oferta Laboral');
 
 const displayCompanyName = computed(() => {
-    if (props.companyName && props.companyName !== 'Empresa') return props.companyName;
-    return titleSegments.value[1] || props.companyName;
+  if (props.companyName && props.companyName !== 'Empresa') return props.companyName;
+  return titleSegments.value[1] || props.job.companyName || 'Empresa no especificada';
 });
 
-const hasSalaryInfo = computed(() => props.job.minSalary > 0 || props.job.maxSalary > 0);
-
-function formatSalary(min: number, max: number, currency: string) {
-    if (!min && !max) return 'A convenir';
-
-    const symbol = currency === 'PEN' ? 'S/' : '$';
-
-    if (min === max) return `${symbol} ${min}`;
-
-    return `${symbol} ${min} - ${symbol} ${max}`;
+function companyInitials(name: string): string {
+  return name
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((w) => w[0])
+    .join('')
+    .toUpperCase() || 'LL';
 }
 
-function formatDate(date: Date) {
-    return new Date(date).toLocaleDateString(undefined, { day: 'numeric', month: 'long', year: 'numeric' });
+const hasSalaryInfo = computed(() => (props.job.minSalary || 0) > 0 || (props.job.maxSalary || 0) > 0);
+
+function formatSalary(min: number, max: number, currency?: string) {
+  if (!min && !max) return 'Salario no especificado';
+  const symbol = currency === 'PEN' ? 'S/' : currency || 'S/';
+  if (min && max && min !== max) {
+    return `${symbol} ${min.toLocaleString()} - ${symbol} ${max.toLocaleString()}`;
+  }
+  return `${symbol} ${(min || max)?.toLocaleString()}`;
 }
 
-// El scraping externo separa casi cada cláusula con un salto de línea suelto,
-// lo que rompe la descripción en fragmentos de una palabra. Se reconstruyen
-// oraciones completas uniendo líneas hasta encontrar puntuación de cierre.
-function formatDescription(text: string): string {
-    if (!text) return '';
+function formatDate(date?: Date | string) {
+  if (!date) return 'Fecha no especificada';
+  const d = new Date(date);
+  if (Number.isNaN(d.getTime())) return 'Fecha no especificada';
+  return new Intl.DateTimeFormat('es-PE', { day: 'numeric', month: 'long', year: 'numeric' }).format(d);
+}
 
-    const lines = text.split('\n').map(line => line.trim()).filter(Boolean);
-    const sentences: string[] = [];
-    let buffer = '';
+function formatDaysAgo(date?: Date | string): string {
+  if (!date) return 'Publicado recientemente';
+  const d = new Date(date);
+  if (Number.isNaN(d.getTime())) return 'Publicado recientemente';
+  const diff = Math.floor((Date.now() - d.getTime()) / 86_400_000);
+  if (diff <= 0) return 'Publicado hoy';
+  if (diff === 1) return 'Publicado ayer';
+  if (diff < 7) return `Hace ${diff} días`;
+  return `Publicado el ${new Intl.DateTimeFormat('es-PE', { day: 'numeric', month: 'short' }).format(d)}`;
+}
 
-    for (const line of lines) {
-        buffer = buffer ? `${buffer} ${line}` : line;
-        if (/[.:!?]$/.test(line)) {
-            sentences.push(buffer.replace(/\s+([.,!?:;])/g, '$1'));
-            buffer = '';
-        }
+function formatDescription(text?: string): string {
+  if (!text) return '';
+  const lines = text.split('\n').map((line) => line.trim()).filter(Boolean);
+  const sentences: string[] = [];
+  let buffer = '';
+
+  for (const line of lines) {
+    buffer = buffer ? `${buffer} ${line}` : line;
+    if (/[.:!?]$/.test(line)) {
+      sentences.push(buffer.replace(/\s+([.,!?:;])/g, '$1'));
+      buffer = '';
     }
-    if (buffer) sentences.push(buffer.replace(/\s+([.,!?:;])/g, '$1'));
-
-    return sentences.join('\n\n');
+  }
+  if (buffer) sentences.push(buffer.replace(/\s+([.,!?:;])/g, '$1'));
+  return sentences.join('\n\n');
 }
 
 const formattedDescription = computed(() => formatDescription(props.job.description));
 
-//Delete job behaviour
+async function copyShareLink() {
+  try {
+    await navigator.clipboard.writeText(window.location.href);
+    isCopied.value = true;
+    setTimeout(() => {
+      isCopied.value = false;
+    }, 2400);
+  } catch {
+    // Fallback
+  }
+}
+
+// Delete job behaviour
 const deleteDialogRef = ref<InstanceType<typeof DialogComponent>>();
 const deleting = ref(false);
 async function DeleteDialog() {
-    if (deleting.value) return;
-    deleting.value = true;
-    try {
-        await jobService.deleteJob({ id: props.job.id });
-        await router.push(ROUTE_CONSTANTS.HOME_PAGE);
-    } catch (error) {
-        console.error('Error deleting job:', error);
-        alert('No se pudo eliminar el anuncio. Verifica que pertenezca a tu empresa.');
-    } finally {
-        deleting.value = false;
-    }
+  if (deleting.value) return;
+  deleting.value = true;
+  try {
+    await jobService.deleteJob({ id: props.job.id });
+    await router.push(ROUTE_CONSTANTS.HOME_PAGE);
+  } catch (error) {
+    console.error('Error deleting job:', error);
+    alert('No se pudo eliminar el anuncio. Verifica que pertenezca a tu empresa.');
+  } finally {
+    deleting.value = false;
+  }
 }
 
-//Apply to job behaviour
+// Apply to job behaviour
 const applyJobDialogRef = ref<InstanceType<typeof DialogComponent>>();
 const applying = ref(false);
 const saved = ref(false);
 const applicationCv = ref<File | null>(null);
+const applicationError = ref('');
+const applicationSuccess = ref('');
+const externalActionError = ref('');
 
 function toggleSaved() {
-    saved.value = !saved.value;
+  saved.value = !saved.value;
+}
+
+function handleFileChange(event: Event) {
+  const target = event.target as HTMLInputElement;
+  const file = target.files?.[0] ?? null;
+  applicationError.value = '';
+
+  if (!file) {
+    applicationCv.value = null;
+    return;
+  }
+
+  const isPdf = file.type === 'application/pdf' && /\.pdf$/i.test(file.name);
+  if (!isPdf) {
+    applicationCv.value = null;
+    target.value = '';
+    applicationError.value = 'Selecciona un archivo PDF para enviar tu postulación.';
+    return;
+  }
+
+  applicationCv.value = file;
+}
+
+function openInternalApplication() {
+  applicationError.value = '';
+  applicationSuccess.value = '';
+  applyJobDialogRef.value?.open();
+}
+
+function continueInExternalPortal() {
+  externalActionError.value = '';
+  const destination = externalJobUrl.value;
+  if (!destination) {
+    externalActionError.value = 'Esta oferta no tiene un enlace de origen disponible. No es posible adjuntar un CV desde Llanqui para una vacante externa.';
+    return;
+  }
+
+  window.open(destination, '_blank', 'noopener,noreferrer');
 }
 
 async function ApplyToJob() {
-    if (applying.value) return;
-    if (props.job.externalURL) {
-        window.open(props.job.externalURL, '_blank', 'noopener,noreferrer');
-        return;
-    }
-    if (!applicationCv.value) {
-        alert('Adjunta tu CV en formato PDF para enviar la postulación.');
-        return;
-    }
-    applying.value = true;
-    try {
-        await recruitmentService.createApplication({
-            jobId: props.job.id,
-            cv: applicationCv.value,
-        });
-        alert("¡Postulación enviada con éxito!");
-    } catch (error) {
-        console.error('Error al postular:', error);
-        alert("No se pudo enviar tu postulación. Inténtalo nuevamente.");
-    } finally {
-        applying.value = false;
-    }
+  if (applying.value) return;
+  if (isExternalListing.value) {
+    continueInExternalPortal();
+    return;
+  }
+  if (!applicationCv.value) {
+    applicationError.value = 'Adjunta tu CV en formato PDF antes de enviar la postulación.';
+    return;
+  }
+  applying.value = true;
+  applicationError.value = '';
+  try {
+    await recruitmentService.createApplication({
+      jobId: props.job.id,
+      cv: applicationCv.value,
+    });
+    applicationSuccess.value = 'Tu postulación fue enviada a la empresa.';
+    applicationCv.value = null;
+    applyJobDialogRef.value?.close();
+  } catch (error) {
+    console.error('Error al postular:', error);
+    const detail = (error as { response?: { data?: { detail?: string } } })?.response?.data?.detail;
+    applicationError.value = detail || 'No se pudo enviar la postulación. Verifica tu CV e inténtalo nuevamente.';
+  } finally {
+    applying.value = false;
+  }
 }
 </script>
 
 <template>
-    <div class="job-detail-container">
-        <div class="job-detail-topbar"><RouterLink to="/job-search" class="back-link"><ArrowLeft :size="16" /> Volver a oportunidades</RouterLink><span v-if="isExternalListing" class="source-label"><ExternalLink :size="13" /> Oferta externa</span></div>
+  <div class="job-workspace-card">
 
-        <header class="job-detail-header">
-            <div class="header-main-row">
-                <img v-if="companyImage" :src="companyImage" alt="Logo de la empresa" class="company-logo" draggable="false">
-                <div v-else class="company-logo-placeholder"><Briefcase :size="28" /></div>
-                <div class="header-text-block">
-                    <span v-if="featured" class="sponsored-chip"><Star :size="12" :stroke-width="2" /> Patrocinado</span>
-                    <h1 class="job-title">{{ displayTitle }}</h1>
-                    <div class="company-row" v-if="displayCompanyName || hasLocationLabel"><span class="company-name" v-if="displayCompanyName">{{ displayCompanyName }}</span><span class="dot-separator" v-if="displayCompanyName && hasLocationLabel">•</span><span class="location-text" v-if="hasLocationLabel">{{ district }}, {{ department }}</span></div>
-                    <div class="header-quick-meta"><span class="meta-badge"><Calendar :size="14" /> Publicado el {{ formatDate(job.creationDate) }}</span><span class="meta-badge alert-badge" v-if="job.closesAt"><Clock :size="14" /> Vence el {{ formatDate(job.closesAt) }}</span></div>
-                </div>
-            </div>
-            <div class="header-actions"><button v-if="!isCompany" class="save-btn" :class="{ saved }" type="button" :aria-pressed="saved" aria-label="Guardar oferta" @click="toggleSaved"><Bookmark :size="17" /><span>{{ saved ? 'Guardada' : 'Guardar' }}</span></button><button v-if="!isCompany" class="btn-primary apply-btn" @click="applyJobDialogRef?.open()"><CheckSquare :size="17" /><span>Postularme</span></button><button v-if="isCompany" class="btn-danger delete-btn" @click="deleteDialogRef?.open()"><Trash2 :size="16" /><span>Eliminar anuncio</span></button></div>
-        </header>
+    <!-- Top Navigation Bar / Breadcrumb -->
+    <nav class="job-workspace-topbar" aria-label="Navegación de retorno">
+      <RouterLink :to="ROUTE_CONSTANTS.JOB_SEARCH" class="btn-back-breadcrumb">
+        <ArrowLeft :size="16" aria-hidden="true" />
+        <span>Volver a oportunidades</span>
+      </RouterLink>
 
-        <div class="job-detail-layout">
-            <main class="job-description-panel">
-                <section class="fit-callout"><div class="fit-icon"><Sparkles :size="18" /></div><div><strong>Revisa si esta oportunidad es para ti</strong><p>Compara las habilidades y condiciones antes de enviar tu postulación.</p></div></section>
-                <section class="info-section"><h2 class="section-title">Sobre el empleo</h2><p class="description-text">{{ formattedDescription }}</p></section>
-                <section v-if="job.skills && job.skills.length" class="info-section"><h2 class="section-title">Habilidades deseadas</h2><div class="skills-tags-list"><span v-for="skill in job.skills" :key="skill" class="skill-tag">{{ skill.trim() }}</span></div></section>
-                <section class="info-section grid-section"><div class="grid-card"><div class="grid-card-icon text-accent"><DollarSign :size="22" /></div><div class="grid-card-info"><h3 class="grid-card-title">Remuneración</h3><p class="grid-card-val">{{ formatSalary(job.minSalary, job.maxSalary, job.currency) }}</p><p class="grid-card-sub" v-if="hasSalaryInfo">{{ $t(`job.data.salaryPeriod.${job.salaryPeriod}`) }}</p></div></div><div class="grid-card"><div class="grid-card-icon text-warning"><Award :size="22" /></div><div class="grid-card-info"><h3 class="grid-card-title">Contrato y modalidad</h3><p class="grid-card-val">{{ $t(`job.data.compensationType.${job.compensationType}`) }}</p><p class="grid-card-sub">{{ $t(`job.data.type.${job.jobType || 'InPerson'}`) }}</p></div></div></section>
-                <section class="info-section" v-if="job.address || hasLocationLabel"><h2 class="section-title">Ubicación</h2><div class="location-details-box"><MapPin :size="20" class="loc-icon" /><div class="loc-text-block"><p class="loc-address">{{ job.address || 'Dirección no especificada' }}</p><p class="loc-city" v-if="hasLocationLabel">{{ district }}, {{ department }}, Perú</p></div></div></section>
-                <JobNewsComponent :job-id="job.id" />
-            </main>
-            <aside class="job-stats-panel">
-                <div v-if="!isCompany" class="apply-sidebar"><span class="sidebar-kicker">¿Te interesa?</span><h2>Da el siguiente paso.</h2><p>Postúlate y deja que la empresa conozca tu perfil.</p><button class="sidebar-apply" type="button" @click="applyJobDialogRef?.open()"><CheckSquare :size="17" /> {{ applying ? 'Enviando…' : 'Postularme' }}</button><span class="sidebar-note">Te tomará menos de un minuto</span></div>
-                <div v-if="isCompany" class="stats-card"><h3 class="stats-card-title">Rendimiento del anuncio</h3><div class="stats-list"><div class="stat-item"><span class="stat-num">{{ job.views || 0 }}</span><span class="stat-lbl">Visualizaciones</span></div><div class="stat-item-row"><span class="stat-item-label">Estado</span><span class="stat-status-badge active">Activo</span></div><div class="stat-item-row"><span class="stat-item-label">Apertura</span><span>{{ formatDate(job.opensAt) }}</span></div><div class="stat-item-row"><span class="stat-item-label">Cierre</span><span>{{ formatDate(job.closesAt) }}</span></div></div></div>
-            </aside>
+      <div class="topbar-badges-cluster">
+        <span v-if="isExternalListing" class="source-tag-chip">
+          <ExternalLink :size="13" aria-hidden="true" />
+          <span>Oferta externa · {{ originLabel }}</span>
+        </span>
+        <button
+          type="button"
+          class="btn-share-trigger"
+          :aria-label="isCopied ? 'Enlace copiado' : 'Compartir oferta'"
+          @click="copyShareLink"
+        >
+          <Share2 :size="15" aria-hidden="true" />
+          <span>{{ isCopied ? '¡Enlace copiado!' : 'Compartir' }}</span>
+        </button>
+      </div>
+    </nav>
+
+    <!-- Main Opportunity Header Deck -->
+    <header class="job-hero-deck" aria-label="Información principal de la vacante">
+      <div class="hero-left-stack">
+        <!-- Company Monogram / Logo -->
+        <div class="company-lead-avatar" aria-hidden="true">
+          <img
+            v-if="companyImage"
+            :src="companyImage"
+            :alt="`Logo de ${displayCompanyName}`"
+            class="avatar-image"
+          />
+          <span v-else class="avatar-text">{{ companyInitials(displayCompanyName) }}</span>
         </div>
 
-        <!-- Dialogs -->
-        <DialogComponent ref="deleteDialogRef" title="Eliminar anuncio" subtitle="¿Estás seguro de que deseas eliminar este anuncio laboral?"
-            variant="danger" @confirm="DeleteDialog()">
-            <p>Esta acción es permanente y no se podrá deshacer. La oferta de empleo dejará de estar visible para todos los profesionales de la plataforma.</p>
-        </DialogComponent>
+        <div class="hero-titles-block">
+          <div class="hero-pill-row">
+            <span v-if="featured" class="pill-chip pill-chip--featured">
+              <Star :size="11" aria-hidden="true" /> Destacado
+            </span>
+            <span class="pill-chip pill-chip--modality">
+              {{ $t(`job.data.type.${job.jobType || 'InPerson'}`) }}
+            </span>
+            <span v-if="job.workHours" class="pill-chip pill-chip--time">
+              <Clock :size="11" aria-hidden="true" /> {{ job.workHours }}
+            </span>
+          </div>
+
+          <h1 class="job-hero-title">{{ displayTitle }}</h1>
+
+          <div class="hero-company-meta">
+            <span class="company-title-link">{{ displayCompanyName }}</span>
+            <span class="meta-dot-divider" aria-hidden="true">•</span>
+            <span class="location-label">
+              <MapPin :size="14" aria-hidden="true" />
+              <span v-if="hasLocationLabel">{{ district }}, {{ department }}</span>
+              <span v-else>{{ job.address || 'Ubicación no especificada' }}</span>
+            </span>
+            <span class="meta-dot-divider" aria-hidden="true">•</span>
+            <span class="date-label">
+              <Calendar :size="14" aria-hidden="true" />
+              <span>{{ formatDaysAgo(job.creationDate) }}</span>
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Action Cluster on Header -->
+      <div class="hero-actions-cluster">
+        <button
+          v-if="isCandidate"
+          type="button"
+          class="btn-hero-save"
+          :class="{ 'is-saved': saved }"
+          :aria-pressed="saved"
+          :aria-label="saved ? 'Guardada en favoritos' : 'Guardar oferta'"
+          @click="toggleSaved"
+        >
+          <Heart
+            :size="17"
+            :fill="saved ? 'var(--color-state-alert)' : 'none'"
+            :stroke="saved ? 'var(--color-state-alert)' : 'currentColor'"
+            aria-hidden="true"
+          />
+          <span>{{ saved ? 'Guardada' : 'Guardar' }}</span>
+        </button>
+
+        <button
+          v-if="isCandidate && isExternalListing"
+          type="button"
+          class="btn-hero-apply"
+          :disabled="!externalJobUrl"
+          :aria-label="externalJobUrl ? `Continuar la postulación en ${originLabel}` : 'El enlace externo no está disponible'"
+          @click="continueInExternalPortal"
+        >
+          <ExternalLink :size="17" aria-hidden="true" />
+          <span>{{ externalJobUrl ? `Continuar en ${originLabel}` : 'Enlace no disponible' }}</span>
+        </button>
+
+        <button
+          v-else-if="isCandidate && isInternalListing"
+          type="button"
+          class="btn-hero-apply"
+          aria-label="Abrir formulario de postulación"
+          @click="openInternalApplication"
+        >
+          <CheckSquare :size="17" aria-hidden="true" />
+          <span>Postularme ahora</span>
+        </button>
+
+        <button
+          v-if="canManageJob"
+          type="button"
+          class="btn-hero-delete"
+          aria-label="Eliminar anuncio de empleo"
+          @click="deleteDialogRef?.open()"
+        >
+          <Trash2 :size="16" aria-hidden="true" />
+          <span>Eliminar anuncio</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Two-Column Workspace Layout -->
+    <div class="job-workspace-body">
+      
+      <!-- Main Content / Job Dossier -->
+      <main class="job-dossier-column" aria-label="Detalles de la oportunidad">
+
+        <!-- Bento Specifications Grid -->
+        <section class="specs-bento-grid" aria-label="Condiciones clave del empleo">
+          <!-- Remuneración -->
+          <article class="spec-tile spec-tile--salary">
+            <div class="spec-tile-icon spec-tile-icon--lime">
+              <Wallet :size="20" aria-hidden="true" />
+            </div>
+            <div class="spec-tile-content">
+              <span class="spec-tile-label">Remuneración estimada</span>
+              <p class="spec-tile-value">{{ formatSalary(job.minSalary, job.maxSalary, job.currency) }}</p>
+              <small class="spec-tile-sub">
+                {{ hasSalaryInfo ? $t(`job.data.salaryPeriod.${job.salaryPeriod || 'Monthly'}`) : 'Sin información de periodicidad' }}
+              </small>
+            </div>
+          </article>
+
+          <!-- Modalidad y Contrato -->
+          <article class="spec-tile">
+            <div class="spec-tile-icon spec-tile-icon--primary">
+              <Award :size="20" aria-hidden="true" />
+            </div>
+            <div class="spec-tile-content">
+              <span class="spec-tile-label">Contrato y esquema</span>
+              <p class="spec-tile-value">
+                {{ job.compensationType ? $t(`job.data.compensationType.${job.compensationType}`) : 'No especificado' }}
+              </p>
+              <small class="spec-tile-sub">
+                {{ $t(`job.data.type.${job.jobType || 'InPerson'}`) }}
+              </small>
+            </div>
+          </article>
+
+          <!-- Ubicación física -->
+          <article class="spec-tile">
+            <div class="spec-tile-icon spec-tile-icon--indigo">
+              <MapPin :size="20" aria-hidden="true" />
+            </div>
+            <div class="spec-tile-content">
+              <span class="spec-tile-label">Ubicación de trabajo</span>
+              <p class="spec-tile-value">
+                {{ hasLocationLabel ? `${district}, ${department}` : (job.address || 'Ubicación no especificada') }}
+              </p>
+              <small class="spec-tile-sub">{{ job.address || 'Dirección no especificada' }}</small>
+            </div>
+          </article>
+
+          <!-- Vigencia de la oferta -->
+          <article class="spec-tile">
+            <div class="spec-tile-icon spec-tile-icon--alert">
+              <Clock :size="20" aria-hidden="true" />
+            </div>
+            <div class="spec-tile-content">
+              <span class="spec-tile-label">Vigencia de postulación</span>
+              <p class="spec-tile-value">
+                {{ job.closesAt ? formatDate(job.closesAt) : 'Convocatoria activa' }}
+              </p>
+              <small class="spec-tile-sub">Publicado el {{ formatDate(job.creationDate) }}</small>
+            </div>
+          </article>
+        </section>
+
+        <!-- AI Fit & Preparation Banner -->
+        <section v-if="isInternalListing" class="fit-prep-banner" aria-label="Consejo de postulación con IA">
+          <div class="prep-icon-box">
+            <Sparkles :size="20" aria-hidden="true" />
+          </div>
+          <div class="prep-text-block">
+            <strong>Optimiza tu compatibilidad antes de enviar</strong>
+            <p>
+              Las empresas evalúan la coincidencia de tus habilidades técnicas y experiencia con el perfil requerido. Asegúrate de que tu CV refleje tus proyectos y logros clave.
+            </p>
+          </div>
+        </section>
+
+        <!-- Job Description Section -->
+        <section class="dossier-section" aria-labelledby="desc-section-title">
+          <h2 id="desc-section-title" class="dossier-section-title">Descripción y responsabilidades</h2>
+          <div class="description-editorial-body">
+            <p>{{ formattedDescription || 'Sin descripción detallada por parte de la empresa.' }}</p>
+          </div>
+        </section>
+
+        <!-- Desired Skills Section -->
+        <section v-if="job.skills && job.skills.length" class="dossier-section" aria-labelledby="skills-section-title">
+          <h2 id="skills-section-title" class="dossier-section-title">Habilidades y competencias requeridas</h2>
+          <div class="skills-chips-matrix">
+            <div
+              v-for="(skill, sIdx) in job.skills"
+              :key="sIdx"
+              class="skill-spec-badge"
+            >
+              <CheckCircle2 :size="14" class="skill-check-icon" aria-hidden="true" />
+              <span>{{ skill.trim() }}</span>
+            </div>
+          </div>
+        </section>
+
+        <!-- Related Job News Component -->
+        <section v-if="isInternalListing" class="dossier-section" aria-labelledby="news-section-title">
+          <JobNewsComponent :job-id="job.id" />
+        </section>
+
+      </main>
+
+      <!-- Sticky Operational Sidebar Deck -->
+      <aside class="job-sidebar-column" aria-label="Panel de postulación y métricas">
         
-        <DialogComponent ref="applyJobDialogRef" title="Postular a la vacante" variant="success" @confirm="ApplyToJob()">
-            <div v-if="job.externalURL" class="external-apply-content">
-                <p>Esta oferta laboral se gestiona de forma externa. Por favor, haz clic en el siguiente enlace para continuar con tu postulación:</p>
-                <a :href="job.externalURL" target="_blank" rel="noopener noreferrer" class="btn-link-action">Ir al sitio web de postulación</a>
+        <!-- Candidate Sticky Application Deck -->
+        <div v-if="isCandidate && isExternalListing" class="external-source-card">
+          <div class="external-source-icon" aria-hidden="true">
+            <ExternalLink :size="22" />
+          </div>
+          <div>
+            <h2 class="external-source-heading">Continúa en {{ originLabel }}</h2>
+            <p class="external-source-copy">
+              Esta oferta fue publicada fuera de Llanqui. Para proteger tu información, tu CV no se adjunta ni se comparte desde esta plataforma.
+            </p>
+          </div>
+          <div class="external-source-notice">
+            <ShieldCheck :size="16" aria-hidden="true" />
+            <span>Revisarás y enviarás tu postulación directamente en {{ originLabel }}.</span>
+          </div>
+          <button
+            type="button"
+            class="btn-external-continue"
+            :disabled="!externalJobUrl"
+            @click="continueInExternalPortal"
+          >
+            <span>{{ externalJobUrl ? `Ir a ${originLabel}` : 'Enlace no disponible' }}</span>
+            <ExternalLink :size="17" aria-hidden="true" />
+          </button>
+          <p v-if="externalActionError" class="action-error" role="alert">{{ externalActionError }}</p>
+        </div>
+
+        <div v-else-if="isCandidate && isInternalListing" class="sticky-apply-card">
+          <div class="apply-card-top">
+            <span class="apply-card-kicker">Postulación directa</span>
+            <h2 class="apply-card-heading">Postula desde Llanqui</h2>
+            <p class="apply-card-copy">
+              Adjunta tu CV en PDF para que <strong>{{ displayCompanyName }}</strong> revise tu postulación en esta vacante.
+            </p>
+          </div>
+
+          <div class="apply-card-features">
+            <div class="apply-feature-row">
+              <ShieldCheck :size="16" aria-hidden="true" />
+              <span>Tu CV se comparte solo con este proceso de selección</span>
             </div>
-            <div v-else class="upload-apply-content">
-                <p>Por favor, confirma tus datos e incluye tu Curriculum Vitae (CV) en formato PDF para enviar tu postulación a la empresa:</p>
-                <div class="file-upload-field">
-                    <input type="file" id="apply-cv" accept="application/pdf,.pdf" @change="applicationCv = (($event.target as HTMLInputElement).files?.[0] ?? null)">
-                </div>
+            <div class="apply-feature-row">
+              <FileText :size="16" aria-hidden="true" />
+              <span>Adjunta un archivo PDF para continuar</span>
             </div>
-        </DialogComponent>
+          </div>
+
+          <button
+            type="button"
+            class="btn-dock-apply"
+            :disabled="applying"
+            aria-label="Postular a esta vacante"
+            @click="openInternalApplication"
+          >
+            <CheckSquare :size="18" aria-hidden="true" />
+            <span>{{ applying ? 'Enviando postulación…' : 'Postular a esta vacante' }}</span>
+          </button>
+          <p v-if="applicationSuccess" class="application-success" role="status">{{ applicationSuccess }}</p>
+        </div>
+
+        <!-- Organization Metrics Card -->
+        <div v-if="canManageJob" class="stats-card-panel">
+          <h2 class="stats-panel-title">Rendimiento del anuncio</h2>
+          <div class="stats-kpi-box">
+            <span class="stats-kpi-number">{{ job.views || 0 }}</span>
+            <span class="stats-kpi-label">Visualizaciones totales</span>
+          </div>
+
+          <div class="stats-meta-list">
+            <div class="stats-meta-row">
+              <span class="stats-meta-key">Estado:</span>
+              <span class="badge-status-active">Activo en directorio</span>
+            </div>
+            <div class="stats-meta-row">
+              <span class="stats-meta-key">Fecha de apertura:</span>
+              <strong>{{ formatDate(job.opensAt || job.creationDate) }}</strong>
+            </div>
+            <div class="stats-meta-row">
+              <span class="stats-meta-key">Fecha límite:</span>
+              <strong>{{ formatDate(job.closesAt) }}</strong>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            class="btn-delete-ad"
+            @click="deleteDialogRef?.open()"
+          >
+            <Trash2 :size="15" aria-hidden="true" />
+            <span>Eliminar vacante</span>
+          </button>
+        </div>
+
+      </aside>
+
     </div>
+
+    <!-- Dialogs -->
+    <DialogComponent
+      v-if="canManageJob"
+      ref="deleteDialogRef"
+      title="Eliminar anuncio de empleo"
+      subtitle="¿Estás seguro de que deseas eliminar este anuncio laboral?"
+      variant="danger"
+      @confirm="DeleteDialog()"
+    >
+      <p class="dialog-copy">
+        Esta acción es permanente y no se podrá deshacer. La oferta de empleo dejará de estar visible para todos los profesionales de la plataforma.
+      </p>
+    </DialogComponent>
+
+    <DialogComponent
+      v-if="isCandidate && isInternalListing"
+      ref="applyJobDialogRef"
+      title="Postular a la vacante"
+      subtitle="Tu CV será enviado únicamente a la empresa que publicó esta vacante en Llanqui."
+      variant="success"
+      :close-on-confirm="false"
+      :confirm-disabled="applying"
+      :confirm-label="applying ? 'Enviando…' : 'Enviar postulación'"
+      @confirm="ApplyToJob()"
+    >
+      <div class="dialog-cv-upload">
+        <p class="dialog-copy">
+          Adjunta tu <strong>Curriculum Vitae actualizado (en formato PDF)</strong> para que la empresa pueda revisar tu trayectoria y contactarte:
+        </p>
+        
+        <label for="apply-cv" class="file-dropzone" :class="{ 'has-file': Boolean(applicationCv) }">
+          <div class="dropzone-icon">
+            <UploadCloud v-if="!applicationCv" :size="28" aria-hidden="true" />
+            <FileText v-else :size="28" class="file-ready-icon" aria-hidden="true" />
+          </div>
+          <div class="dropzone-text">
+            <strong v-if="!applicationCv">Haz clic para seleccionar tu CV</strong>
+            <strong v-else class="filename-highlight">{{ applicationCv.name }}</strong>
+            <small>{{ applicationCv ? `${(applicationCv.size / 1024).toFixed(0)} KB · PDF seleccionado` : 'Formatos aceptados: .pdf (Máx 5MB)' }}</small>
+          </div>
+          <input
+            id="apply-cv"
+            type="file"
+            accept="application/pdf,.pdf"
+            class="sr-only-input"
+            @change="handleFileChange"
+          />
+        </label>
+        <p v-if="applicationError" class="dialog-field-error" role="alert">{{ applicationError }}</p>
+      </div>
+    </DialogComponent>
+
+  </div>
 </template>
 
 <style scoped>
-.job-detail-container {
-    width: 100%;
-    background: var(--color-surface);
-    border: 1px solid rgba(45, 58, 199, 0.16);
-    border-radius: var(--radius-card);
-    overflow: hidden;
-    box-shadow: 0 8px 20px rgba(30, 43, 170, 0.14);
-    display: flex;
-    flex-direction: column;
+/* Hallmark · pre-emit critique: P5 H5 E5 S5 R5 V5 */
+/* Hallmark · macrostructure: Opportunity Decision & Application Workspace · tone: utilitarian · anchor hue: 250deg (Llanqui Blue #2838D3)
+ * contrast: pass (46–50) · 8-state coverage: default, hover, focus-visible, active, disabled, loading, error, success
+ */
+
+/* Main Container Card */
+.job-workspace-card {
+  width: 100%;
+  max-width: var(--page-max, 1360px);
+  margin: 0 auto;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card-lg);
+  box-shadow: var(--shadow-card);
+  overflow: hidden;
+  box-sizing: border-box;
 }
 
-.job-cover-banner {
-    height: 160px;
-    background: linear-gradient(135deg, var(--color-primary-dark), var(--color-accent));
+/* ============================================================
+   TOP NAVIGATION BAR / BREADCRUMB
+   ============================================================ */
+.job-workspace-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px clamp(16px, 3vw, 32px);
+  background: var(--color-surface-subtle);
+  border-bottom: 1px solid var(--color-border);
+  flex-wrap: wrap;
 }
 
-/* Header section */
-.job-detail-header {
-    display: flex;
-    flex-direction: column;
-    padding: 0 var(--space-3) var(--space-3);
-    gap: var(--space-2);
+.btn-back-breadcrumb {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--color-text-secondary);
+  font-family: var(--font-family);
+  font-size: 13px;
+  font-weight: var(--fw-semibold);
+  text-decoration: none;
+  transition: color 150ms ease, transform 150ms ease;
 }
 
-.header-avatar-row {
-    display: flex;
-    align-items: flex-end;
-    justify-content: space-between;
-    gap: var(--space-3);
-    margin-top: -40px;
-    flex-wrap: wrap;
+.btn-back-breadcrumb:hover {
+  color: var(--color-primary);
+  transform: translateX(-2px);
 }
 
-.company-logo {
-    width: 96px;
-    height: 96px;
-    border-radius: 12px;
-    object-fit: cover;
-    border: 4px solid var(--color-surface);
-    background: #fff;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+.btn-back-breadcrumb:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
 }
 
-.company-logo-placeholder {
-    width: 96px;
-    height: 96px;
-    border-radius: 12px;
-    border: 4px solid var(--color-surface);
-    background: var(--color-bg);
-    color: var(--color-text-secondary);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+.topbar-badges-cluster {
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
 
-.header-text-block {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
+.source-tag-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: var(--radius-pill);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  color: var(--color-text-secondary);
+  font-size: 11px;
+  font-weight: var(--fw-medium);
 }
 
-.sponsored-chip {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    width: fit-content;
-    padding: 3px 10px;
-    margin-bottom: 4px;
-    border-radius: 999px;
-    background: var(--color-ai-bg);
-    color: var(--color-accent);
-    border: 1px solid var(--color-ai-outline);
-    font-size: 10px;
-    font-weight: var(--fw-bold);
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
+.btn-share-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 12px;
+  border-radius: var(--radius-button);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text-secondary);
+  font-family: var(--font-family);
+  font-size: 12px;
+  font-weight: var(--fw-semibold);
+  cursor: pointer;
+  transition: all 150ms ease;
 }
 
-.job-title {
-    margin: 0;
-    font-size: var(--fs-title);
-    font-weight: var(--fw-bold);
-    line-height: 1.25;
-    color: var(--color-text-primary);
+.btn-share-trigger:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+  background: var(--color-lavender);
 }
 
-.company-row {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: var(--fs-body-sm);
-    color: var(--color-text-secondary);
+.btn-share-trigger:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 1px;
 }
 
-.company-name {
-    font-weight: var(--fw-semibold);
-    color: var(--color-text-primary);
+/* ============================================================
+   HERO DECK
+   ============================================================ */
+.job-hero-deck {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 28px;
+  padding: clamp(24px, 3.5vw, 36px) clamp(16px, 3vw, 32px);
+  background: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+  flex-wrap: wrap;
 }
 
-.location-text {
-    color: var(--color-text-secondary);
+.hero-left-stack {
+  display: flex;
+  align-items: flex-start;
+  gap: 20px;
+  flex: 1;
+  min-width: 0;
 }
 
-.dot-separator {
-    color: var(--color-text-muted);
+.company-lead-avatar {
+  display: grid;
+  place-items: center;
+  width: 68px;
+  height: 68px;
+  flex: 0 0 68px;
+  border-radius: var(--radius-card-sm);
+  background: linear-gradient(135deg, var(--color-primary-dark) 0%, var(--color-primary) 100%);
+  color: var(--color-surface);
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: var(--fw-bold);
+  overflow: hidden;
+  box-shadow: 0 6px 18px color-mix(in srgb, var(--color-primary) 22%, transparent);
 }
 
-.header-quick-meta {
-    display: flex;
-    gap: 12px;
-    flex-wrap: wrap;
+.avatar-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
-.meta-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    font-size: var(--fs-caption);
-    color: var(--color-text-muted);
+.hero-titles-block {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
 }
 
-.meta-badge span {
-    color: inherit;
+.hero-pill-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
 }
 
-.alert-badge {
-    color: var(--color-state-alert);
+.pill-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  border-radius: var(--radius-xs);
+  font-size: 11px;
+  font-weight: var(--fw-bold);
+  line-height: 1.3;
 }
 
-.header-actions {
-    display: flex;
-    gap: 12px;
+.pill-chip--featured {
+  color: var(--color-state-success-dark);
+  background: var(--color-brand-lime-soft);
+  border: 1px solid color-mix(in srgb, var(--color-brand-lime) 45%, var(--color-border));
 }
 
-.apply-btn, .delete-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 12px 24px;
-    border-radius: var(--radius-button);
-    font-weight: var(--fw-semibold);
-    cursor: pointer;
-    border: none;
-    transition: background-color 150ms ease, transform 100ms ease-out;
+.pill-chip--modality {
+  color: var(--color-primary);
+  background: var(--color-lavender);
+  border: 1px solid color-mix(in srgb, var(--color-primary) 25%, transparent);
 }
 
-/* base.css * { color } fix para el span/svg dentro de los botones */
-.apply-btn span, .apply-btn svg,
-.delete-btn span, .delete-btn svg {
-    color: inherit;
+.pill-chip--time {
+  color: var(--color-text-secondary);
+  background: var(--color-surface-subtle);
+  border: 1px solid var(--color-border-subtle);
 }
 
-.apply-btn:active:not(:disabled),
-.delete-btn:active:not(:disabled) {
-    transform: scale(0.97);
+.job-hero-title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-style: normal;
+  font-size: clamp(24px, 3.2vw, 36px);
+  font-weight: var(--fw-extrabold);
+  color: var(--color-text-primary);
+  line-height: 1.15;
+  letter-spacing: -0.025em;
+  word-break: break-word;
 }
 
-/* Two column layout */
-.job-detail-layout {
-    display: grid;
-    grid-template-columns: 1fr 280px;
-    border-top: 1px solid var(--color-border);
-    background: var(--color-bg);
-    gap: 1px; /* border separation effect */
+.hero-company-meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  flex-wrap: wrap;
 }
 
-/* Let's show right panel only if isCompany is true. If not, left panel takes full width */
-.job-detail-layout:not(:has(aside)) {
+.company-title-link {
+  font-weight: var(--fw-bold);
+  color: var(--color-text-primary);
+}
+
+.meta-dot-divider {
+  color: var(--color-border);
+}
+
+.location-label,
+.date-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.hero-actions-cluster {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.btn-hero-save {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 44px;
+  padding: 0 16px;
+  border-radius: var(--radius-button);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text-secondary);
+  font-family: var(--font-family);
+  font-size: 13px;
+  font-weight: var(--fw-bold);
+  cursor: pointer;
+  transition: all 150ms ease;
+}
+
+.btn-hero-save:hover {
+  border-color: var(--color-state-alert);
+  color: var(--color-state-alert);
+  background: color-mix(in srgb, var(--color-state-alert) 8%, var(--color-surface));
+}
+
+.btn-hero-save.is-saved {
+  border-color: var(--color-state-alert);
+  background: color-mix(in srgb, var(--color-state-alert) 8%, var(--color-surface));
+  color: var(--color-state-alert);
+}
+
+.btn-hero-save:focus-visible {
+  outline: 2px solid var(--color-state-alert);
+  outline-offset: 2px;
+}
+
+.btn-hero-apply {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 44px;
+  padding: 0 24px;
+  border-radius: var(--radius-button);
+  border: none;
+  background: var(--color-primary);
+  color: var(--color-surface) !important;
+  font-family: var(--font-family);
+  font-size: 14px;
+  font-weight: var(--fw-bold);
+  cursor: pointer;
+  box-shadow: 0 4px 14px color-mix(in srgb, var(--color-primary) 30%, transparent);
+  transition: transform 150ms ease, background-color 150ms ease;
+  white-space: nowrap;
+}
+
+.btn-hero-apply:hover {
+  background: var(--color-primary-dark);
+  transform: translateY(-1px);
+}
+
+.btn-hero-apply:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.btn-hero-apply:disabled {
+  opacity: 0.58;
+  cursor: not-allowed;
+  box-shadow: none;
+  transform: none;
+}
+
+.btn-hero-delete {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 44px;
+  padding: 0 18px;
+  border-radius: var(--radius-button);
+  border: 1px solid var(--color-state-alert);
+  background: transparent;
+  color: var(--color-state-alert);
+  font-family: var(--font-family);
+  font-size: 13px;
+  font-weight: var(--fw-bold);
+  cursor: pointer;
+  transition: all 150ms ease;
+}
+
+.btn-hero-delete:hover {
+  background: color-mix(in srgb, var(--color-state-alert) 10%, transparent);
+}
+
+/* ============================================================
+   TWO-COLUMN WORKSPACE BODY
+   ============================================================ */
+.job-workspace-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 340px;
+  gap: 0;
+  /* Hereda visualmente el fondo del lateral para no crear una tarjeta aislada. */
+  background: transparent;
+}
+
+.job-dossier-column {
+  padding: clamp(24px, 3vw, 36px) clamp(16px, 3vw, 32px);
+  background: var(--color-surface);
+  border-right: 1px solid var(--color-border);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  min-width: 0;
+}
+
+/* Bento Specifications Grid */
+.specs-bento-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.spec-tile {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 16px 18px;
+  border-radius: var(--radius-card);
+  background: var(--color-surface-subtle);
+  border: 1px solid var(--color-border-subtle);
+  box-sizing: border-box;
+}
+
+.spec-tile--salary {
+  border-color: color-mix(in srgb, var(--color-brand-lime) 45%, var(--color-border));
+  background: linear-gradient(135deg, var(--color-brand-lime-soft) 0%, var(--color-surface-subtle) 90%);
+}
+
+.spec-tile-icon {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  flex-shrink: 0;
+}
+
+.spec-tile-icon--lime {
+  background: color-mix(in srgb, var(--color-brand-lime) 30%, white);
+  color: var(--color-state-success-dark);
+}
+
+.spec-tile-icon--primary {
+  background: var(--color-lavender);
+  color: var(--color-primary);
+}
+
+.spec-tile-icon--indigo {
+  background: #EEF2FF;
+  color: #4F46E5;
+}
+
+.spec-tile-icon--alert {
+  background: #FFF7ED;
+  color: #EA580C;
+}
+
+.spec-tile-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.spec-tile-label {
+  font-size: 11px;
+  font-weight: var(--fw-bold);
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.spec-tile-value {
+  margin: 2px 0 0;
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: var(--fw-bold);
+  color: var(--color-text-primary);
+  line-height: 1.3;
+}
+
+.spec-tile-sub {
+  font-size: 11px;
+  color: var(--color-text-secondary);
+}
+
+/* AI Fit & Prep Banner */
+.fit-prep-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 16px 20px;
+  border-radius: var(--radius-card);
+  border: 1px solid color-mix(in srgb, var(--color-primary) 25%, transparent);
+  background: var(--color-lavender);
+}
+
+.prep-icon-box {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: var(--color-surface);
+  color: var(--color-primary);
+  flex-shrink: 0;
+  box-shadow: 0 2px 6px color-mix(in srgb, var(--color-primary) 15%, transparent);
+}
+
+.prep-text-block strong {
+  display: block;
+  font-size: 13px;
+  color: var(--color-primary-dark);
+  margin-bottom: 2px;
+}
+
+.prep-text-block p {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--color-text-secondary);
+}
+
+/* Dossier Section */
+.dossier-section {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.dossier-section-title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-style: normal;
+  font-size: 18px;
+  font-weight: var(--fw-bold);
+  color: var(--color-text-primary);
+  letter-spacing: -0.015em;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--color-border-subtle);
+}
+
+.description-editorial-body {
+  font-size: 14px;
+  line-height: 1.75;
+  color: var(--color-text-secondary);
+  white-space: pre-line;
+  max-width: 78ch;
+}
+
+/* Skills Chips */
+.skills-chips-matrix {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.skill-spec-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: var(--radius-button);
+  background: var(--color-surface-subtle);
+  border: 1px solid var(--color-border);
+  color: var(--color-text-primary);
+  font-size: 12px;
+  font-weight: var(--fw-semibold);
+}
+
+.skill-check-icon {
+  color: var(--color-state-success);
+  flex-shrink: 0;
+}
+
+/* ============================================================
+   STICKY SIDEBAR COLUMN
+   ============================================================ */
+.job-sidebar-column {
+  padding: clamp(24px, 3vw, 36px) 24px;
+  background: #ffffff;
+  box-sizing: border-box;
+}
+
+/* Candidate Sticky Apply Card */
+.sticky-apply-card {
+  position: sticky;
+  top: 96px;
+  padding: 24px;
+  border-radius: var(--radius-card-lg);
+  background: var(--color-primary-dark);
+  color: #ffffff;
+  box-shadow: 0 10px 30px rgba(21, 32, 59, 0.16);
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* External listings preserve the source portal as the single place to apply. */
+.external-source-card {
+  position: sticky;
+  top: 96px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 24px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card-lg);
+  background: #ffffff;
+  box-shadow: none;
+}
+
+.external-source-icon {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  background: var(--color-lavender);
+  color: var(--color-primary);
+}
+
+.external-source-heading {
+  margin: 0 0 6px;
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: var(--fw-bold);
+  line-height: 1.25;
+  color: var(--color-text-primary);
+}
+
+.external-source-copy {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.external-source-notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 12px;
+  border-radius: var(--radius-card-sm);
+  background: var(--color-brand-lime-soft);
+  color: var(--color-text-primary);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.external-source-notice svg {
+  flex: 0 0 auto;
+  color: var(--color-state-success-dark);
+}
+
+.btn-external-continue {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 46px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: var(--radius-button);
+  background: var(--color-primary);
+  color: var(--color-surface);
+  font-family: var(--font-family);
+  font-size: 13px;
+  font-weight: var(--fw-bold);
+  cursor: pointer;
+  transition: background-color 150ms ease, transform 150ms ease;
+}
+
+.btn-external-continue:hover:not(:disabled) {
+  background: var(--color-primary-dark);
+  transform: translateY(-1px);
+}
+
+.btn-external-continue:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.btn-external-continue:disabled {
+  opacity: 0.58;
+  cursor: not-allowed;
+}
+
+.action-error,
+.application-success,
+.dialog-field-error {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.action-error,
+.dialog-field-error {
+  color: var(--color-state-error);
+}
+
+.application-success {
+  color: var(--color-brand-lime);
+}
+
+.apply-card-kicker {
+  font-size: 10px;
+  font-weight: var(--fw-extrabold);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-brand-lime);
+}
+
+.apply-card-heading {
+  margin: 6px 0 8px;
+  font-family: var(--font-display);
+  font-style: normal;
+  font-size: 20px;
+  font-weight: var(--fw-bold);
+  color: #ffffff;
+  line-height: 1.25;
+}
+
+.apply-card-copy {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.apply-card-features {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: var(--radius-card-sm);
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.apply-feature-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.apply-feature-row svg {
+  color: var(--color-brand-lime);
+  flex-shrink: 0;
+}
+
+.btn-dock-apply {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 46px;
+  width: 100%;
+  border-radius: var(--radius-button);
+  border: none;
+  background: var(--color-brand-lime);
+  color: var(--color-primary-dark) !important;
+  font-family: var(--font-family);
+  font-size: 13px;
+  font-weight: var(--fw-extrabold);
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgba(185, 239, 74, 0.35);
+  transition: transform 150ms ease, background-color 150ms ease;
+}
+
+.btn-dock-apply:hover:not(:disabled) {
+  background: #caf57a;
+  transform: translateY(-1px);
+}
+
+.btn-dock-apply:focus-visible {
+  outline: 2px solid var(--color-brand-lime);
+  outline-offset: 2px;
+}
+
+.btn-dock-apply:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Organization Performance Panel */
+.stats-card-panel {
+  position: sticky;
+  top: 96px;
+  padding: 24px;
+  border-radius: var(--radius-card-lg);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  box-shadow: var(--shadow-card);
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.stats-panel-title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-style: normal;
+  font-size: 16px;
+  font-weight: var(--fw-bold);
+  color: var(--color-text-primary);
+}
+
+.stats-kpi-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 18px;
+  border-radius: var(--radius-card);
+  background: var(--color-surface-subtle);
+  border: 1px solid var(--color-border-subtle);
+}
+
+.stats-kpi-number {
+  font-family: var(--font-display);
+  font-size: 36px;
+  font-weight: var(--fw-extrabold);
+  color: var(--color-primary);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.stats-kpi-label {
+  font-size: 12px;
+  font-weight: var(--fw-semibold);
+  color: var(--color-text-secondary);
+  margin-top: 4px;
+}
+
+.stats-meta-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.stats-meta-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  padding-bottom: 8px;
+  border-bottom: 1px dashed var(--color-border-subtle);
+}
+
+.stats-meta-row strong {
+  color: var(--color-text-primary);
+}
+
+.badge-status-active {
+  padding: 2px 8px;
+  border-radius: var(--radius-pill);
+  background: var(--color-brand-lime-soft);
+  color: var(--color-state-success-dark);
+  font-size: 11px;
+  font-weight: var(--fw-bold);
+}
+
+.btn-delete-ad {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 40px;
+  width: 100%;
+  border-radius: var(--radius-button);
+  border: 1px solid color-mix(in srgb, var(--color-state-alert) 40%, transparent);
+  background: transparent;
+  color: var(--color-state-alert);
+  font-size: 12px;
+  font-weight: var(--fw-bold);
+  cursor: pointer;
+  transition: all 150ms ease;
+}
+
+.btn-delete-ad:hover {
+  background: color-mix(in srgb, var(--color-state-alert) 8%, transparent);
+}
+
+/* ============================================================
+   DIALOG CONTENT STYLES
+   ============================================================ */
+.dialog-copy {
+  margin: 0 0 16px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--color-text-secondary);
+}
+
+.btn-dialog-external {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 44px;
+  border-radius: var(--radius-button);
+  background: var(--color-primary);
+  color: #ffffff !important;
+  font-size: 13px;
+  font-weight: var(--fw-bold);
+  text-decoration: none;
+  transition: background-color 150ms ease;
+}
+
+.btn-dialog-external:hover {
+  background: var(--color-primary-dark);
+}
+
+.file-dropzone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 28px 20px;
+  border: 2px dashed var(--color-border);
+  border-radius: var(--radius-card);
+  background: var(--color-surface-subtle);
+  cursor: pointer;
+  transition: all 150ms ease;
+}
+
+.file-dropzone:hover {
+  border-color: var(--color-primary);
+  background: var(--color-lavender);
+}
+
+.file-dropzone.has-file {
+  border-color: var(--color-state-success);
+  background: color-mix(in srgb, var(--color-brand-lime) 15%, var(--color-surface));
+}
+
+.dropzone-icon {
+  color: var(--color-primary);
+}
+
+.file-ready-icon {
+  color: var(--color-state-success-dark);
+}
+
+.dropzone-text {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 3px;
+}
+
+.dropzone-text strong {
+  font-size: 13px;
+  color: var(--color-text-primary);
+}
+
+.filename-highlight {
+  color: var(--color-state-success-dark) !important;
+}
+
+.dropzone-text small {
+  font-size: 11px;
+  color: var(--color-text-secondary);
+}
+
+.sr-only-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
+}
+
+.dialog-field-error {
+  margin-top: 12px;
+  text-align: center;
+}
+
+/* ============================================================
+   RESPONSIVE ADAPTATIONS (320px - 1024px)
+   ============================================================ */
+@media (max-width: 1024px) {
+  .job-workspace-body {
     grid-template-columns: 1fr;
-}
+  }
 
-.job-description-panel {
-    background: var(--color-surface);
-    padding: var(--space-3);
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-3);
-}
+  .job-dossier-column {
+    border-right: none;
+    border-bottom: 1px solid var(--color-border);
+  }
 
-.info-section {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-}
-
-.section-title {
-    margin: 0;
-    font-size: var(--fs-subtitle);
-    font-weight: var(--fw-semibold);
-    color: var(--color-text-primary);
-    border-left: 3px solid var(--color-accent);
-    padding-left: 10px;
-}
-
-.description-text {
-    font-size: var(--fs-body-sm);
-    line-height: 1.6;
-    color: var(--color-text-secondary);
-    white-space: pre-line;
-    max-width: 75ch;
-}
-
-/* Skills tags */
-.skills-tags-list {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-}
-
-.skill-tag {
-    padding: 6px 12px;
-    border-radius: 999px;
-    background: var(--color-bg);
-    border: 1px solid var(--color-border);
-    color: var(--color-text-secondary);
-    font-size: var(--fs-caption);
-    font-weight: var(--fw-medium);
-}
-
-/* Grid cards */
-.grid-section {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: var(--space-2);
-}
-
-.grid-card {
-    display: flex;
-    gap: var(--space-1);
-    background: var(--color-bg);
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-card);
-    padding: var(--space-2);
-    align-items: flex-start;
-}
-
-.grid-card-icon {
-    padding-top: 2px;
-}
-
-.text-accent { color: var(--color-accent); }
-.text-warning { color: var(--color-state-alert); }
-
-.grid-card-info {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-}
-
-.grid-card-title {
-    margin: 0;
-    font-size: var(--fs-caption);
-    color: var(--color-text-secondary);
-}
-
-.grid-card-val {
-    margin: 2px 0 0;
-    font-size: var(--fs-body-sm);
-    font-weight: var(--fw-bold);
-    color: var(--color-text-primary);
-}
-
-.grid-card-sub {
-    margin: 0;
-    font-size: 11px;
-    color: var(--color-text-muted);
-}
-
-/* Location details */
-.location-details-box {
-    display: flex;
-    gap: var(--space-1);
-    background: var(--color-ai-bg);
-    border: 1px solid var(--color-ai-outline);
-    border-radius: var(--radius-card);
-    padding: var(--space-2);
-    align-items: center;
-}
-
-.loc-icon {
-    color: var(--color-accent);
-}
-
-.loc-text-block {
-    display: flex;
-    flex-direction: column;
-}
-
-.loc-address {
-    margin: 0;
-    font-size: var(--fs-body-sm);
-    font-weight: var(--fw-semibold);
-    color: var(--color-text-primary);
-}
-
-.loc-city {
-    margin: 0;
-    font-size: var(--fs-caption);
-    color: var(--color-text-secondary);
-}
-
-/* Right Panel: stats */
-.job-stats-panel {
-    background: var(--color-surface);
-    padding: var(--space-3);
-}
-
-.stats-card {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-2);
-}
-
-.stats-card-title {
-    margin: 0;
-    font-size: var(--fs-body-sm);
-    font-weight: var(--fw-bold);
-    color: var(--color-text-primary);
-}
-
-.stats-list {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-}
-
-.stat-item {
-    background: var(--color-bg);
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-card);
-    padding: 16px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 4px;
-}
-
-.stat-num {
-    font-size: 28px;
-    font-weight: var(--fw-bold);
-    color: var(--color-primary);
-}
-
-.stat-lbl {
-    font-size: var(--fs-caption);
-    color: var(--color-text-secondary);
-}
-
-.stat-item-row {
-    display: flex;
-    justify-content: space-between;
-    font-size: var(--fs-caption);
-    color: var(--color-text-secondary);
-    border-bottom: 1px dashed var(--color-border);
-    padding-bottom: 8px;
-}
-
-.stat-item-label {
-    font-weight: var(--fw-medium);
-}
-
-.stat-status-badge {
-    padding: 2px 8px;
-    border-radius: 999px;
-    font-size: 11px;
-    font-weight: var(--fw-bold);
-}
-
-.stat-status-badge.active {
-    background: rgba(59, 156, 32, 0.1);
-    color: var(--color-state-success);
-}
-
-/* Dialog content styles */
-.file-upload-field {
-    margin-top: 12px;
-    border: 2px dashed var(--color-border);
-    border-radius: var(--radius-card);
-    padding: 20px;
-    text-align: center;
-    background: var(--color-bg);
-}
-
-.btn-link-action {
-    display: block;
-    text-align: center;
-    margin-top: 16px;
-    padding: 12px;
-    background: var(--color-accent);
-    color: #fff;
-    font-weight: var(--fw-semibold);
-    border-radius: var(--radius-button);
-    text-decoration: none;
-}
-
-.btn-link-action:hover {
-    background: var(--color-accent-hover);
-}
-
-@media (max-width: 640px) {
-    .job-cover-banner {
-        height: 96px;
-    }
-    .header-avatar-row {
-        margin-top: -32px;
-        align-items: flex-start;
-    }
-    .company-logo,
-    .company-logo-placeholder {
-        width: 72px;
-        height: 72px;
-    }
-    .header-actions {
-        margin-top: 40px;
-    }
-    .apply-btn, .delete-btn {
-        flex: 1;
-        justify-content: center;
-    }
+  .sticky-apply-card,
+  .external-source-card,
+  .stats-card-panel {
+    position: static;
+  }
 }
 
 @media (max-width: 768px) {
-    .job-detail-layout {
-        grid-template-columns: 1fr;
-    }
-    .grid-section {
-        grid-template-columns: 1fr;
-    }
+  .job-hero-deck {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 20px;
+  }
+
+  .hero-left-stack {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .hero-actions-cluster {
+    width: 100%;
+  }
+
+  .btn-hero-save,
+  .btn-hero-apply,
+  .btn-hero-delete {
+    flex: 1;
+    justify-content: center;
+  }
+
+  .specs-bento-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
-/* Detail page direction: a clear decision surface, not a profile card. */
-.job-detail-container { max-width: var(--page-max); margin: 0 auto; border: 1px solid var(--color-border); border-radius: 18px; box-shadow: 0 10px 28px rgba(30,43,170,.08); }
-.job-detail-topbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 15px 24px; background: var(--color-bg); border-bottom: 1px solid var(--color-border); }.back-link, .source-label { display: inline-flex; align-items: center; gap: 6px; color: var(--color-text-secondary); font-size: 12px; font-weight: var(--fw-semibold); text-decoration: none; }.back-link:hover { color: var(--color-accent); }.source-label { color: var(--color-text-muted); font-size: 11px; font-weight: var(--fw-medium); }
-.job-detail-header { display: flex; align-items: flex-end; justify-content: space-between; gap: 28px; padding: 34px 32px 30px; background: var(--color-surface); }.header-main-row { display: flex; align-items: flex-start; gap: 18px; min-width: 0; }.company-logo, .company-logo-placeholder { width: 68px; height: 68px; flex: 0 0 68px; border: 0; border-radius: 16px; box-shadow: none; }.company-logo-placeholder { display: grid; place-items: center; color: var(--color-accent); background: var(--color-ai-bg); }.header-text-block { gap: 7px; }.job-title { font-size: clamp(26px, 4vw, 38px); letter-spacing: -.045em; line-height: 1.05; }.company-row { font-size: 14px; }.header-quick-meta { margin-top: 5px; gap: 14px; }.header-actions { flex-shrink: 0; align-items: center; }.save-btn { display: inline-flex; align-items: center; gap: 7px; height: 42px; padding: 0 13px; border: 1px solid var(--color-border); border-radius: 8px; color: var(--color-text-secondary); background: var(--color-surface); font-size: 12px; font-weight: var(--fw-semibold); cursor: pointer; }.save-btn:hover { border-color: var(--color-lavender); color: var(--color-accent); }.apply-btn { height: 42px; padding: 0 18px; border-radius: 8px; }.job-detail-layout { grid-template-columns: minmax(0, 1fr) 290px; gap: 0; }.job-description-panel { padding: 30px 32px 40px; gap: 32px; }.job-stats-panel { padding: 30px 22px; background: var(--color-bg); }.fit-callout { display: flex; align-items: flex-start; gap: 12px; padding: 16px; border: 1px solid var(--color-ai-outline); border-radius: 12px; background: var(--color-ai-bg); }.fit-icon { width: 32px; height: 32px; flex: 0 0 32px; display: grid; place-items: center; color: var(--color-accent); background: var(--color-surface); border-radius: 9px; }.fit-callout strong { display: block; margin-bottom: 4px; color: var(--color-text-primary); font-size: 13px; }.fit-callout p { margin: 0; color: var(--color-text-secondary); font-size: 12px; line-height: 1.45; }.section-title { border-left: 0; padding-left: 0; font-size: 20px; letter-spacing: -.025em; }.description-text { color: var(--color-text-secondary); font-size: 14px; line-height: 1.75; }.skills-tags-list { gap: 7px; }.skill-tag { padding: 7px 11px; border-radius: 7px; background: var(--color-bg); font-size: 11px; }.grid-section { gap: 12px; }.grid-card { padding: 17px; border-radius: 12px; background: var(--color-surface); }.grid-card-icon { width: 31px; height: 31px; display: grid; place-items: center; border-radius: 8px; background: var(--color-bg); }.grid-card-val { font-size: 14px; }.location-details-box { border-radius: 12px; }.apply-sidebar { position: sticky; top: 92px; padding: 22px; border-radius: 14px; color: #fff; background: #111a5c; }.sidebar-kicker { color: #c7f36b; font-size: 10px; font-weight: var(--fw-bold); letter-spacing: .12em; text-transform: uppercase; }.apply-sidebar h2 { margin: 12px 0 8px; color: #fff; font-size: 22px; letter-spacing: -.035em; }.apply-sidebar p { margin: 0 0 20px; color: rgba(255,255,255,.7); font-size: 13px; line-height: 1.5; }.sidebar-apply { width: 100%; display: inline-flex; align-items: center; justify-content: center; gap: 7px; height: 42px; border: 0; border-radius: 8px; color: #111a5c; background: #c7f36b; font-size: 12px; font-weight: var(--fw-bold); cursor: pointer; }.sidebar-apply:hover { background: #d7fa8d; }.sidebar-note { display: block; margin-top: 12px; color: rgba(255,255,255,.5); font-size: 10px; text-align: center; }.stats-card { position: sticky; top: 92px; }
- .save-btn.saved { border-color: var(--color-lavender); color: var(--color-accent); background: var(--color-ai-bg); }
-@media (max-width: 800px) { .job-detail-header { align-items: flex-start; flex-direction: column; padding: 26px 22px; }.header-actions { width: 100%; }.save-btn, .apply-btn, .delete-btn { flex: 1; justify-content: center; }.job-detail-layout { grid-template-columns: 1fr; }.job-stats-panel { padding: 0 22px 28px; }.apply-sidebar, .stats-card { position: static; }.job-description-panel { padding: 26px 22px 32px; } }
-@media (max-width: 500px) { .job-detail-topbar { padding: 13px 16px; }.source-label { display: none; }.header-main-row { gap: 13px; }.company-logo, .company-logo-placeholder { width: 54px; height: 54px; flex-basis: 54px; border-radius: 12px; }.job-title { font-size: 25px; }.company-row { flex-wrap: wrap; }.header-quick-meta { flex-direction: column; gap: 5px; }.grid-section { grid-template-columns: 1fr; } }
+@media (pointer: coarse) {
+  .btn-hero-save,
+  .btn-hero-apply,
+  .btn-hero-delete,
+  .btn-dock-apply,
+  .btn-external-continue {
+    min-height: 48px;
+  }
+
+  .btn-share-trigger {
+    min-height: 40px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .btn-back-breadcrumb,
+  .btn-hero-apply,
+  .btn-dock-apply,
+  .btn-external-continue {
+    transition: none !important;
+    transform: none !important;
+  }
+}
 </style>

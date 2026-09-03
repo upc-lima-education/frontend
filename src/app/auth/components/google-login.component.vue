@@ -61,22 +61,23 @@ const { loading, error, buttonLabel, handleGoogleLogin } = useGoogleLogin(props 
     align-items: center;
     justify-content: center;
     gap: 0.6rem;
-    padding: 0.8rem 1rem;
-    border: 1px solid var(--color-border);
-    border-radius: 12px;
-    background: var(--color-surface);
-    color: var(--color-text-primary);
+    height: 48px;
+    padding: 0 1rem;
+    border: 1px solid #D7DEEC;
+    border-radius: 10px;
+    background: #FFFFFF;
+    color: #20283A;
     cursor: pointer;
-    font-size: 0.95rem;
+    font-family: var(--font-family);
+    font-size: 0.9rem;
     font-weight: 600;
-    transition: background-color 150ms ease, border-color 150ms ease, box-shadow 150ms ease, transform 100ms ease-out;
+    transition: background-color 150ms ease, border-color 150ms ease, transform 100ms ease-out;
 }
 
 @media (hover: hover) and (pointer: fine) {
     .google-button:hover:not(:disabled) {
-        background: var(--color-bg);
-        border-color: var(--color-text-muted);
-        box-shadow: 0 4px 12px -4px rgba(18, 41, 116, 0.15);
+        background: #F8FAFF;
+        border-color: #BAC6E0;
     }
 }
 

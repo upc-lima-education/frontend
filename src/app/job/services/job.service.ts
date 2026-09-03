@@ -35,8 +35,8 @@ export class JobService {
             data.creationDate || data.createdAt || data.opensAt
                 ? new Date(data.creationDate || data.createdAt || data.opensAt)
                 : undefined as any,
-            '',
-            data.originPage || '',
+            undefined,
+            data.originPage || 'Internal',
             data.sourceUrl || '',
         );
         job.companyName = data.companyName || undefined;
@@ -69,14 +69,15 @@ export class JobService {
             data.jobStatus,
             data.views,
             new Date(data.creationDate || data.opensAt),
-            data.applyUrl,
-            data.originPage || 'Llanqui',
+            data.applyUrl || undefined,
+            data.originPage || 'Internal',
             data.sourceUrl || ''
         );
         job.workHours = data.workHours;
         job.educationLevel = data.educationLevel;
-        job.companyName = data.company?.companyName || data.companyName;
-        job.companyImage = data.company?.profilePicture || data.companyImage;
+        // GET /job/{id} expone JobCompanyData como { id, name, imageUrl, isVerified }.
+        job.companyName = data.company?.name || data.companyName;
+        job.companyImage = data.company?.imageUrl || data.companyImage;
         return job;
     }
 

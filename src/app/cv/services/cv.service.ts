@@ -1,12 +1,25 @@
 import http from '@/app/shared/services/base.service';
-import type { CreateStructuredCvRequest, CvSummaryResponse, GenerateCvResponse, StructuredCvResponse } from '../model/cv.model';
+import type {
+    CreateStructuredCvRequest,
+    CvSummaryResponse,
+    GenerateCvResponse,
+    StructuredCvResponse,
+} from '../model/cv.model';
 
 export class CvService {
     private endpoint = '/cv';
 
-    async generate(): Promise<GenerateCvResponse> {
-        const { data } = await http.post<GenerateCvResponse>(this.endpoint);
-        return data;
+    /** POST /cv/ai-assist-creation queues an AI-generated CV from the real profile. */
+    async generate(jobId?: string | null): Promise<GenerateCvResponse> {
+        console.log('Generating CV with jobId:', jobId);
+        const { data } = await http.post<string | { cvId?: string }>(
+            `${this.endpoint}/ai-assist-creation`,
+            { jobId: jobId ?? null },
+        );
+        const cvId = typeof data === 'string' ? data : data?.cvId;
+        if (!cvId) throw new Error('El backend no devolvió el identificador del CV generado.');
+
+        return { cvId, status: 'queued' };
     }
 
     /** GET /cv/me: CVs pertenecientes al candidato autenticado. */
@@ -21,6 +34,14 @@ export class CvService {
     }
 
     async upload(title: string, isCurrent: boolean, cv: File): Promise<string> {
+        const isPdfName = cv.name.toLowerCase().endsWith('.pdf');
+        if (cv.type !== 'application/pdf' || !isPdfName) {
+            throw new Error('Solo puedes subir archivos PDF para tu CV.');
+        }
+        if (cv.size > 2 * 1024 * 1024) {
+            throw new Error('El archivo PDF no puede superar los 2 MB.');
+        }
+
         const form = new FormData();
         form.append('title', title);
         form.append('isCurrent', String(isCurrent));

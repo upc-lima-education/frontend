@@ -9,9 +9,25 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@500;600;700;800&display=swap" rel="stylesheet">
     <title>Llanqui · Conectamos talento, impulsamos oportunidades</title>
+    <script>
+      (function () {
+        try {
+          var key = 'llanqui-theme';
+          var saved = localStorage.getItem(key) || 'system';
+          var isDark = saved === 'dark' || (saved === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+          if (isDark) {
+            document.documentElement.setAttribute('data-theme', 'dark');
+            document.documentElement.style.colorScheme = 'dark';
+          } else {
+            document.documentElement.removeAttribute('data-theme');
+            document.documentElement.style.colorScheme = 'light';
+          }
+        } catch (e) {}
+      })();
+    </script>
   </head>
   <body>
     <div id="app"></div>
     <script type="module" src="/src/main.ts"></script>
-  </body>
+</body>
 </html>

@@ -1,9 +1,10 @@
-import axios from "axios";
-import { authenticationInterceptor } from "@/app/auth/services/authentication.interceptor";
+import http from '@/app/shared/services/base.service';
+
+export type PaidCreditPlan = 'Starter' | 'Pro' | 'Max';
 
 export interface CreateOrderRequest {
-    creditPlan: 'Starter' | 'Pro' | 'Max';
-    platform: 'Paypal' | 'MercadoPago' | 'IziPay' | 'Culqui';
+    creditPlan: PaidCreditPlan;
+    platform: 'Paypal';
     returnUrl: string;
     cancelUrl: string;
 }
@@ -17,32 +18,54 @@ export interface CaptureOrderResponse {
     success: boolean;
     creditsAdded: number;
     newBalance: number;
-    transactionId: string;
+    transactionId: string | null;
 }
 
-// El API_URL apunta a /api/v1 (recursos versionados), pero /payments vive
-// directamente bajo /api (sin versión). Se deriva el origen explícitamente
-// en vez de usar rutas relativas (`../payments`), que dependían de la
-// normalización de URL de axios y se rompían si VITE_API_URL cambiaba de forma.
-const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api/v1";
-const API_ROOT = API_BASE_URL.replace(/\/api\/v\d+\/?$/, "/api");
+/** Contract returned by GET /api/payments/plans. */
+export interface CreditPlanResponse {
+    code: string;
+    name: string;
+    description: string;
+    credits: number;
+    price: number;
+    currency: string;
+    requiresPayment: boolean;
+}
 
-const paymentHttp = axios.create({
-    baseURL: API_ROOT,
-    headers: { 'Content-Type': 'application/json' }
-});
-paymentHttp.interceptors.request.use(authenticationInterceptor);
+/** Contract returned by GET /api/payments/balance. */
+export interface CreditBalanceResponse {
+    balance: number;
+    initialFreeCredits: number;
+}
 
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api/v1';
+const API_ROOT = API_BASE_URL.replace(/\/api\/v\d+\/?$/, '/api');
+const PAYMENT_ENDPOINT = `${API_ROOT}/payments`;
+
+/**
+ * Payment calls deliberately reuse the shared HTTP client so the access-token
+ * refresh flow works exactly as it does for the versioned API endpoints.
+ */
 export class PaymentService {
-    private endpoint = '/payments';
+    async getPlans(): Promise<CreditPlanResponse[]> {
+        const { data } = await http.get<CreditPlanResponse[]>(`${PAYMENT_ENDPOINT}/plans`);
+        return Array.isArray(data) ? data : [];
+    }
+
+    async getBalance(): Promise<CreditBalanceResponse> {
+        const { data } = await http.get<CreditBalanceResponse>(`${PAYMENT_ENDPOINT}/balance`);
+        return data;
+    }
 
     async createOrder(request: CreateOrderRequest): Promise<CreateOrderResponse> {
-        const { data } = await paymentHttp.post(`${this.endpoint}/create`, request);
+        const { data } = await http.post<CreateOrderResponse>(`${PAYMENT_ENDPOINT}/create`, request);
         return data;
     }
 
     async captureOrder(orderId: string): Promise<CaptureOrderResponse> {
-        const { data } = await paymentHttp.post(`${this.endpoint}/capture/${encodeURIComponent(orderId)}`);
+        const { data } = await http.post<CaptureOrderResponse>(
+            `${PAYMENT_ENDPOINT}/capture/${encodeURIComponent(orderId)}`,
+        );
         return data;
     }
 }
