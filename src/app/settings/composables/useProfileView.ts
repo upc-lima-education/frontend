@@ -29,11 +29,16 @@ export type ProfileViewData = {
     isRucVerified?: boolean;
 };
 
-const CACHE_PROFILE_KEY = 'llanqui_cached_profile';
+const LEGACY_CACHE_PROFILE_KEY = 'llanqui_cached_profile';
 
-function getCachedProfile(): ProfileViewData | null {
+function getProfileCacheKey(userId: string): string {
+    return `llanqui_cached_profile:${userId}`;
+}
+
+function getCachedProfile(userId: string): ProfileViewData | null {
+    if (!userId) return null;
     try {
-        const raw = localStorage.getItem(CACHE_PROFILE_KEY);
+        const raw = localStorage.getItem(getProfileCacheKey(userId));
         return raw ? JSON.parse(raw) : null;
     } catch {
         return null;
@@ -43,7 +48,10 @@ function getCachedProfile(): ProfileViewData | null {
 export function useProfileView() {
     const authStore = useAuthenticationStore();
 
-    const cached = getCachedProfile();
+    // El caché anterior no tenía dueño y podía mostrar información de una
+    // sesión candidata dentro de una empresa. Nunca se vuelve a consumir.
+    localStorage.removeItem(LEGACY_CACHE_PROFILE_KEY);
+    const cached = getCachedProfile(authStore.currentUserId);
     const user = computed(() => authStore.currentUser);
     const profile = ref<ProfileViewData | null>(cached);
     // If cached profile or user is already available, don't block with loading spinner
@@ -83,7 +91,10 @@ export function useProfileView() {
                 };
                 profile.value = mappedProfile;
                 try {
-                    localStorage.setItem(CACHE_PROFILE_KEY, JSON.stringify(mappedProfile));
+                    localStorage.setItem(
+                        getProfileCacheKey(authStore.currentUserId),
+                        JSON.stringify(mappedProfile),
+                    );
                 } catch {}
 
                 if (authStore.user && profile.value) {

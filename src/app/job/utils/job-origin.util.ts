@@ -15,11 +15,12 @@ export function isExternalJob(job: Pick<GetJobByIdResponse, 'originPage'>): bool
 }
 
 /**
- * Las ofertas sincronizadas no tienen `applyUrl`: el contrato de Job expone
- * su URL original en `sourceUrl`. Solo se permite abrir URLs http(s).
+ * Las ofertas sincronizadas usan `sourceUrl`; una empresa puede configurar
+ * opcionalmente `applyUrl` para que la postulación continúe en su portal.
+ * Solo se abren URLs http(s).
  */
-export function getExternalJobUrl(job: Pick<GetJobByIdResponse, 'sourceUrl'>): string | null {
-    const value = job.sourceUrl?.trim();
+export function getExternalJobUrl(job: Pick<GetJobByIdResponse, 'sourceUrl' | 'applyUrl'>): string | null {
+    const value = job.applyUrl?.trim() || job.sourceUrl?.trim();
     if (!value) return null;
 
     try {

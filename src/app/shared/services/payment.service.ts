@@ -1,10 +1,12 @@
 import http from '@/app/shared/services/base.service';
 
-export type PaidCreditPlan = 'Starter' | 'Pro' | 'Max';
+export type CreditPlanCode = 'Free' | 'Starter' | 'Pro' | 'Max';
+export type PaidCreditPlan = Exclude<CreditPlanCode, 'Free'>;
+export type PaymentPlatform = 'Paypal';
 
 export interface CreateOrderRequest {
     creditPlan: PaidCreditPlan;
-    platform: 'Paypal';
+    platform: PaymentPlatform;
     returnUrl: string;
     cancelUrl: string;
 }
@@ -38,9 +40,48 @@ export interface CreditBalanceResponse {
     initialFreeCredits: number;
 }
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api/v1';
-const API_ROOT = API_BASE_URL.replace(/\/api\/v\d+\/?$/, '/api');
-const PAYMENT_ENDPOINT = `${API_ROOT}/payments`;
+const DEFAULT_API_BASE_URL = 'http://localhost:5000/api/v1';
+const API_BASE_URL = import.meta.env.VITE_API_URL || DEFAULT_API_BASE_URL;
+
+/**
+ * Payments is intentionally exposed by the backend at /api/payments (without
+ * the /api/v1 prefix used by the rest of the API). Keep this conversion in
+ * one place so local and deployed VITE_API_URL values behave consistently.
+ */
+function resolvePaymentsEndpoint(apiBaseUrl: string): string {
+    const normalizedBaseUrl = apiBaseUrl.replace(/\/+$/, '');
+    const apiRoot = normalizedBaseUrl.replace(/\/api\/v\d+$/i, '/api');
+    return `${apiRoot}/payments`;
+}
+
+export const PAYMENT_ENDPOINT = resolvePaymentsEndpoint(API_BASE_URL);
+
+const PAID_PLANS: readonly PaidCreditPlan[] = ['Starter', 'Pro', 'Max'];
+
+export function isPaidCreditPlan(value: string): value is PaidCreditPlan {
+    return PAID_PLANS.includes(value as PaidCreditPlan);
+}
+
+function assertValidCreateOrderRequest(request: CreateOrderRequest): void {
+    if (!isPaidCreditPlan(request.creditPlan)) {
+        throw new Error('Solo se pueden comprar los planes Starter, Pro o Max.');
+    }
+
+    if (request.platform !== 'Paypal') {
+        throw new Error('La plataforma de pago disponible es PayPal.');
+    }
+
+    for (const callbackUrl of [request.returnUrl, request.cancelUrl]) {
+        try {
+            const parsedUrl = new URL(callbackUrl);
+            if (!['http:', 'https:'].includes(parsedUrl.protocol)) {
+                throw new Error();
+            }
+        } catch {
+            throw new Error('Las URLs de retorno del pago no son válidas.');
+        }
+    }
+}
 
 /**
  * Payment calls deliberately reuse the shared HTTP client so the access-token
@@ -58,11 +99,16 @@ export class PaymentService {
     }
 
     async createOrder(request: CreateOrderRequest): Promise<CreateOrderResponse> {
+        assertValidCreateOrderRequest(request);
         const { data } = await http.post<CreateOrderResponse>(`${PAYMENT_ENDPOINT}/create`, request);
         return data;
     }
 
     async captureOrder(orderId: string): Promise<CaptureOrderResponse> {
+        if (!orderId.trim()) {
+            throw new Error('No se recibió el identificador de la orden de PayPal.');
+        }
+
         const { data } = await http.post<CaptureOrderResponse>(
             `${PAYMENT_ENDPOINT}/capture/${encodeURIComponent(orderId)}`,
         );

@@ -28,11 +28,12 @@ export const useAuthenticationStore = defineStore('authentication', () => {
 
     const accessToken = ref<string | null>(localStorage.getItem('accessToken'));
     const refreshToken = ref<string | null>(localStorage.getItem('refreshToken'));
-    const userType = ref<'employee' | 'organization' | null>(
-        (localStorage.getItem('userType') as 'employee' | 'organization' | null) || (initialUser?.userType as any) || null
-    );
+    // Es una copia de la última identidad confirmada por auth; nunca es una
+    // fuente para inferir el rol de otra sesión.
+    const userType = ref<'employee' | 'organization' | null>(initialUser?.userType || null);
     const signedIn = ref<boolean>(Boolean(accessToken.value && initialUser));
     const user = ref<UserResponse | null>(initialUser);
+    const sessionResolved = ref(false);
 
     function setUser(newUser: UserResponse | null): void {
         user.value = newUser;
@@ -65,6 +66,12 @@ export const useAuthenticationStore = defineStore('authentication', () => {
         }
     }
 
+    function applyAuthenticatedUser(authenticatedUser: UserResponse | null): void {
+        setUser(authenticatedUser);
+        userType.value = authenticatedUser?.userType || null;
+        syncProfileId(authenticatedUser);
+    }
+
     // Actions
     async function signIn(signInRequest: SignInRequest): Promise<boolean> {
         try {
@@ -72,33 +79,24 @@ export const useAuthenticationStore = defineStore('authentication', () => {
             
             // Update state
             signedIn.value = true;
-            setUser(signInResponse.user);
+            applyAuthenticatedUser(signInResponse.user);
             accessToken.value = signInResponse.accessToken;
             refreshToken.value = signInResponse.refreshToken;
 
-            // Persist the role so currentUserType is reliable across the app
-            // (navbar, profile, route guard) even on a fresh sign-in.
-            if (signInResponse.user?.userType) {
-                setUserType(signInResponse.user.userType);
-            }
-            syncProfileId(signInResponse.user);
 
             // Persist tokens
             localStorage.setItem('accessToken', signInResponse.accessToken);
             localStorage.setItem('refreshToken', signInResponse.refreshToken);
             localStorage.setItem('expiresIn', signInResponse.expiresIn.toString());
 
-            // Refrescar el rol AUTORITATIVO desde /me: la respuesta de sign-in no
-            // siempre incluye un userType fiable, y /me sí distingue
-            // organización vs candidato. Best-effort: no rompe el login si falla.
+            // /me confirma el perfil real antes de habilitar vistas por rol.
             try {
                 const me = await authenticationService.getCurrentUser(signInResponse.accessToken);
-                setUser(me);
-                if (me?.userType) setUserType(me.userType);
-                syncProfileId(me);
+                applyAuthenticatedUser(me);
             } catch (meError) {
                 console.warn('No se pudo refrescar el usuario desde /me tras el sign-in:', meError);
             }
+            sessionResolved.value = true;
 
             // Inicio compartido; sus acciones se adaptan al rol autoritativo.
             await router.push(ROUTE_CONSTANTS.HOME_PAGE);
@@ -119,10 +117,10 @@ export const useAuthenticationStore = defineStore('authentication', () => {
             
             // Update state
             signedIn.value = true;
-            setUser(signUpResponse.user);
+            applyAuthenticatedUser(signUpResponse.user);
             accessToken.value = signUpResponse.accessToken;
             refreshToken.value = signUpResponse.refreshToken;
-            syncProfileId(signUpResponse.user);
+            sessionResolved.value = true;
             // Persist tokens
             localStorage.setItem('accessToken', signUpResponse.accessToken);
             localStorage.setItem('refreshToken', signUpResponse.refreshToken);
@@ -133,8 +131,9 @@ export const useAuthenticationStore = defineStore('authentication', () => {
             return true;
         } catch (error) {
             console.error('❌ Sign up failed:', error);
-            // No hacer redirect aquí, dejar que el componente maneje el error
-            return false;
+            // No hacer redirect aquí. Propagar la respuesta para que la vista
+            // diferencie un correo existente (409) de un problema de red.
+            throw error;
         }
     }
 
@@ -150,12 +149,14 @@ export const useAuthenticationStore = defineStore('authentication', () => {
         userType.value = null;
         accessToken.value = null;
         refreshToken.value = null;
+        sessionResolved.value = false;
         
         // Limpiar localStorage
         localStorage.removeItem('accessToken');
         localStorage.removeItem('idToken');
         localStorage.removeItem('refreshToken');
         localStorage.removeItem('expiresIn');
+        // Limpieza de la clave heredada: ya no se usa para decidir el rol.
         localStorage.removeItem('userType');
         localStorage.removeItem('profileId');
         
@@ -197,14 +198,9 @@ export const useAuthenticationStore = defineStore('authentication', () => {
             
             console.log('🔄 Obteniendo usuario con token');
             const currentUserData = await authenticationService.getCurrentUser(token);
-            setUser(currentUserData);
+            applyAuthenticatedUser(currentUserData);
             signedIn.value = true;
-
-            // Mantener el rol sincronizado con el backend (/me).
-            if (user.value?.userType) {
-                setUserType(user.value.userType);
-            }
-            syncProfileId(user.value);
+            sessionResolved.value = true;
             
             console.log('✅ Usuario cargado:', user.value?.email);
             return true;
@@ -222,13 +218,12 @@ export const useAuthenticationStore = defineStore('authentication', () => {
             const response = await authenticationService.refreshSession(currentRefreshToken);
             accessToken.value = response.accessToken;
             refreshToken.value = response.refreshToken;
-            setUser(response.user);
+            applyAuthenticatedUser(response.user);
             signedIn.value = true;
             localStorage.setItem('accessToken', response.accessToken);
             localStorage.setItem('refreshToken', response.refreshToken);
             localStorage.setItem('expiresIn', response.expiresIn.toString());
-            if (response.user?.userType) setUserType(response.user.userType);
-            syncProfileId(response.user);
+            sessionResolved.value = true;
             return response.accessToken;
         } catch (error) {
             console.error('No se pudo renovar la sesión:', error);
@@ -245,26 +240,17 @@ export const useAuthenticationStore = defineStore('authentication', () => {
             );
             accessToken.value = response.accessToken;
             refreshToken.value = response.refreshToken;
-            setUser(response.user);
+            applyAuthenticatedUser(response.user);
             signedIn.value = true;
             localStorage.setItem('accessToken', response.accessToken);
             localStorage.setItem('refreshToken', response.refreshToken);
             localStorage.setItem('expiresIn', response.expiresIn.toString());
-            if (response.user?.userType) setUserType(response.user.userType);
-            syncProfileId(response.user);
+            sessionResolved.value = true;
             return true;
         } catch (error) {
             console.error('Falló la autenticación con Google:', error);
             return false;
         }
-    }
-
-    /**
-     * Set user type (employee or organization)
-     */
-    function setUserType(type: 'employee' | 'organization'): void {
-        userType.value = type;
-        localStorage.setItem('userType', type);
     }
 
     /**
@@ -290,6 +276,7 @@ export const useAuthenticationStore = defineStore('authentication', () => {
         userType,
         accessToken,
         refreshToken,
+        sessionResolved,
         
         // Computed
         isSignedIn,
@@ -307,7 +294,6 @@ export const useAuthenticationStore = defineStore('authentication', () => {
         loadCurrentUser,
         refreshSession,
         authenticateGoogle,
-        setUserType,
         setAccessToken,
         setRefreshToken
     };

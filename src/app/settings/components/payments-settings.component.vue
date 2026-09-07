@@ -12,8 +12,8 @@ import {
 } from 'lucide-vue-next';
 import {
   paymentService,
+  isPaidCreditPlan,
   type CreditPlanResponse,
-  type PaidCreditPlan,
 } from '@/app/shared/services/payment.service';
 
 const route = useRoute();
@@ -29,9 +29,54 @@ const paymentSuccessDetails = ref<{ credits: number; txId: string | null } | nul
 const paymentCancelMessage = ref(false);
 const errorMessage = ref('');
 const activePlanLoading = ref<string | null>(null);
+const captureOrderId = ref<string | null>(null);
+
+const PENDING_PAYMENT_STORAGE_KEY = 'llanqui.pending-paypal-order';
+
+interface PendingPayment {
+  orderId: string;
+  planCode: string;
+  createdAt: number;
+}
 
 const freePlan = computed(() => plans.value.find((plan) => !plan.requiresPayment) ?? null);
 const paidPlans = computed(() => plans.value.filter((plan) => plan.requiresPayment));
+
+function savePendingPayment(payment: PendingPayment): void {
+  try {
+    sessionStorage.setItem(PENDING_PAYMENT_STORAGE_KEY, JSON.stringify(payment));
+  } catch {
+    // Payment confirmation remains valid without sessionStorage.
+  }
+}
+
+function getPendingPayment(): PendingPayment | null {
+  try {
+    const rawPayment = sessionStorage.getItem(PENDING_PAYMENT_STORAGE_KEY);
+    if (!rawPayment) return null;
+
+    const payment = JSON.parse(rawPayment) as Partial<PendingPayment>;
+    if (
+      typeof payment.orderId !== 'string' ||
+      typeof payment.planCode !== 'string' ||
+      typeof payment.createdAt !== 'number'
+    ) {
+      return null;
+    }
+
+    return payment as PendingPayment;
+  } catch {
+    return null;
+  }
+}
+
+function clearPendingPayment(): void {
+  try {
+    sessionStorage.removeItem(PENDING_PAYMENT_STORAGE_KEY);
+  } catch {
+    // Ignore storage restrictions; the API remains the source of truth.
+  }
+}
 
 function formatPrice(price: number, currency: string): string {
   try {
@@ -71,34 +116,57 @@ async function fetchPlans(): Promise<void> {
   }
 }
 
-async function refreshPaymentData(): Promise<void> {
-  errorMessage.value = '';
+async function refreshPaymentData(clearError = true): Promise<void> {
+  if (clearError) errorMessage.value = '';
   await Promise.all([fetchBalance(), fetchPlans()]);
 }
 
 async function buyPlan(plan: CreditPlanResponse): Promise<void> {
   if (!plan.requiresPayment) return;
 
+  if (!isPaidCreditPlan(plan.code)) {
+    errorMessage.value = 'Este plan no está habilitado para compras con PayPal.';
+    return;
+  }
+
   activePlanLoading.value = plan.code;
   errorMessage.value = '';
+  paymentCancelMessage.value = false;
   const currentUrl = window.location.origin + window.location.pathname;
   const returnUrl = `${currentUrl}?tab=payments&status=success`;
   const cancelUrl = `${currentUrl}?tab=payments&status=cancel`;
 
   try {
     const response = await paymentService.createOrder({
-      creditPlan: plan.code as PaidCreditPlan,
+      creditPlan: plan.code,
       platform: 'Paypal',
       returnUrl,
       cancelUrl,
     });
 
-    if (!response.approvalUrl) {
+    let approvalUrl: URL | null = null;
+    try {
+      approvalUrl = new URL(response.approvalUrl);
+    } catch {
+      // The backend contract requires an absolute PayPal approval URL.
+    }
+
+    if (!response.orderId?.trim()) {
+      errorMessage.value = 'PayPal no devolvió un identificador de orden válido.';
+      return;
+    }
+
+    if (!approvalUrl || !['http:', 'https:'].includes(approvalUrl.protocol)) {
       errorMessage.value = 'PayPal no devolvió un enlace de pago para esta compra.';
       return;
     }
 
-    window.location.assign(response.approvalUrl);
+    savePendingPayment({
+      orderId: response.orderId,
+      planCode: plan.code,
+      createdAt: Date.now(),
+    });
+    window.location.assign(approvalUrl.toString());
   } catch (error) {
     console.error('Error creating PayPal order:', error);
     errorMessage.value = 'No se pudo iniciar el pago con PayPal. Verifica tu sesión e inténtalo nuevamente.';
@@ -107,41 +175,72 @@ async function buyPlan(plan: CreditPlanResponse): Promise<void> {
   }
 }
 
+async function capturePayment(orderId: string): Promise<void> {
+  captureOrderId.value = orderId;
+  isProcessingPayment.value = true;
+  errorMessage.value = '';
+
+  try {
+    const pendingPayment = getPendingPayment();
+    if (pendingPayment && pendingPayment.orderId !== orderId) {
+      throw new Error('La orden retornada por PayPal no coincide con la compra iniciada.');
+    }
+
+    const response = await paymentService.captureOrder(orderId);
+    if (!response.success) {
+      throw new Error('PayPal procesó la orden, pero no fue posible acreditar los créditos.');
+    }
+
+    // Use the capture response immediately, then confirm the canonical balance
+    // with the backend before closing the callback state.
+    balance.value = response.newBalance;
+    paymentSuccessDetails.value = {
+      credits: response.creditsAdded,
+      txId: response.transactionId,
+    };
+    clearPendingPayment();
+    captureOrderId.value = null;
+    await fetchBalance();
+    await router.replace({ query: { ...route.query, status: undefined, token: undefined } });
+  } catch (error) {
+    console.error('Error capturing PayPal order:', error);
+    errorMessage.value = error instanceof Error && error.message.includes('no coincide')
+      ? error.message
+      : error instanceof Error && error.message.includes('no fue posible')
+        ? error.message
+        : 'No se pudo confirmar la orden de PayPal. Puedes reintentarlo desde esta pantalla.';
+  } finally {
+    isProcessingPayment.value = false;
+  }
+}
+
+async function retryPaymentCapture(): Promise<void> {
+  if (captureOrderId.value) {
+    await capturePayment(captureOrderId.value);
+  }
+}
+
 async function handlePaymentCallback(): Promise<void> {
   const status = route.query.status as string | undefined;
   const token = route.query.token as string | undefined;
 
   if (status === 'success' && token) {
-    isProcessingPayment.value = true;
-    errorMessage.value = '';
-    try {
-      const response = await paymentService.captureOrder(token);
-      if (!response.success) {
-        errorMessage.value = 'PayPal procesó la orden, pero no fue posible acreditar los créditos.';
-        return;
-      }
-
-      balance.value = response.newBalance;
-      paymentSuccessDetails.value = {
-        credits: response.creditsAdded,
-        txId: response.transactionId,
-      };
-    } catch (error) {
-      console.error('Error capturing PayPal order:', error);
-      errorMessage.value = 'No se pudo confirmar la orden de PayPal. No vuelvas a pagar: actualiza esta página primero.';
-    } finally {
-      isProcessingPayment.value = false;
-      await router.replace({ query: { ...route.query, status: undefined, token: undefined } });
-    }
+    await capturePayment(token);
   } else if (status === 'cancel') {
+    clearPendingPayment();
     paymentCancelMessage.value = true;
+    await router.replace({ query: { ...route.query, status: undefined, token: undefined } });
+  } else if (status === 'success') {
+    errorMessage.value = '';
+    clearPendingPayment();
+    errorMessage.value = 'PayPal regresó sin un identificador de orden. No se realizó la confirmación.';
     await router.replace({ query: { ...route.query, status: undefined, token: undefined } });
   }
 }
 
 onMounted(async () => {
   await handlePaymentCallback();
-  await refreshPaymentData();
+  await refreshPaymentData(false);
 });
 </script>
 
@@ -176,7 +275,10 @@ onMounted(async () => {
       <Transition name="slide-down">
         <div v-if="errorMessage" class="toast error-toast" role="alert" @click="errorMessage = ''">
           <AlertCircle :size="18" aria-hidden="true" />
-          <span>{{ errorMessage }}</span>
+          <span class="toast-message">{{ errorMessage }}</span>
+          <button v-if="captureOrderId" type="button" class="toast-action" @click.stop="retryPaymentCapture">
+            Reintentar
+          </button>
         </div>
       </Transition>
     </Teleport>
@@ -197,7 +299,7 @@ onMounted(async () => {
         <strong v-else aria-live="polite">—</strong>
         <p>Cada generación o mejora con IA consume 1 crédito.</p>
       </div>
-      <button type="button" class="refresh-button" :disabled="isLoadingBalance || isLoadingPlans" @click="refreshPaymentData">
+      <button type="button" class="refresh-button" :disabled="isLoadingBalance || isLoadingPlans" @click="refreshPaymentData()">
         <RefreshCw :size="16" :class="{ 'spinner-loader': isLoadingBalance || isLoadingPlans }" aria-hidden="true" />
         Actualizar
       </button>
@@ -224,7 +326,15 @@ onMounted(async () => {
         </div>
       </div>
 
-      <p v-if="isLoadingPlans" class="loading-copy" aria-live="polite">Cargando paquetes disponibles…</p>
+      <div v-if="isLoadingPlans" class="plans-grid plans-grid--loading" aria-live="polite" aria-busy="true">
+        <article v-for="slot in 3" :key="slot" class="plan-card plan-card--skeleton" aria-hidden="true">
+          <span class="skeleton-line skeleton-line--short"></span>
+          <span class="skeleton-line"></span>
+          <span class="skeleton-line skeleton-line--long"></span>
+          <span class="skeleton-price"></span>
+          <span class="skeleton-button"></span>
+        </article>
+      </div>
       <p v-else-if="!paidPlans.length" class="loading-copy">No hay paquetes disponibles en este momento.</p>
 
       <div v-else class="plans-grid">
@@ -284,6 +394,13 @@ onMounted(async () => {
 .plans-heading h2 { font-size: 20px; }
 .plans-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
 .plan-card { display: grid; gap: 14px; padding: 20px; background: var(--color-surface); }
+.plan-card--skeleton { min-height: 270px; pointer-events: none; }
+.skeleton-line, .skeleton-price, .skeleton-button { display: block; border-radius: 8px; background: linear-gradient(90deg, var(--color-surface-subtle), #e9edfa, var(--color-surface-subtle)); background-size: 220% 100%; animation: skeleton-shimmer 1.25s ease-in-out infinite; }
+.skeleton-line { width: 72%; height: 14px; }
+.skeleton-line--short { width: 38%; height: 18px; }
+.skeleton-line--long { width: 92%; height: 42px; }
+.skeleton-price { width: 48%; height: 34px; margin-top: 6px; }
+.skeleton-button { width: 100%; height: 46px; margin-top: auto; }
 .plan-topline { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
 .plan-code { margin: 0; font-size: 15px; }
 .plan-description { min-height: 63px; font-size: 13px; }
@@ -301,11 +418,12 @@ onMounted(async () => {
 .modal-content { display: grid; justify-items: center; gap: 12px; max-width: 400px; padding: 28px; color: var(--color-text-primary); text-align: center; background: var(--color-surface); border-radius: var(--radius-card); box-shadow: 0 20px 60px rgba(0, 0, 0, .3); }
 .modal-content h2, .modal-content p { margin: 0; }.modal-content h2 { font-size: 19px; }.modal-content p { color: var(--color-text-secondary); font-size: 14px; line-height: 1.5; }
 .toast { position: fixed; top: max(86px, calc(70px + env(safe-area-inset-top, 0px) + 16px)); right: 24px; z-index: 99999; display: flex; gap: 12px; align-items: flex-start; max-width: min(440px, calc(100vw - 32px)); padding: 14px 18px; color: #fff; border-radius: 12px; box-shadow: 0 14px 36px rgba(21, 32, 59, 0.22); font-family: var(--font-family); font-size: 14px; line-height: 1.4; cursor: pointer; box-sizing: border-box; }
-.toast strong, .toast small { display: block; }.toast small { margin-top: 3px; opacity: .88; font-size: 11px; }.success-toast { background: #24751d; cursor: pointer; }.notice-toast { color: #4d3e00; background: #f5dc73; }.error-toast { background: #b92c38; }.text-primary { color: var(--color-primary); }
+.toast strong, .toast small { display: block; }.toast small { margin-top: 3px; opacity: .88; font-size: 11px; }.toast-message { min-width: 0; }.toast-action { min-height: 32px; padding: 0 10px; color: #fff; background: transparent; border: 1px solid rgba(255, 255, 255, .7); border-radius: 8px; font: inherit; font-size: 12px; font-weight: var(--fw-bold); cursor: pointer; white-space: nowrap; }.toast-action:hover { background: rgba(255, 255, 255, .14); }.success-toast { background: #24751d; cursor: pointer; }.notice-toast { color: #4d3e00; background: #f5dc73; }.error-toast { background: #b92c38; }.text-primary { color: var(--color-primary); }
 .spinner-loader { animation: spin .85s linear infinite; }
 .slide-down-enter-active, .slide-down-leave-active { transition: opacity .2s ease, transform .2s ease; }.slide-down-enter-from, .slide-down-leave-to { opacity: 0; transform: translateY(-10px); }
 @keyframes spin { to { transform: rotate(360deg); } }
+@keyframes skeleton-shimmer { 0% { background-position: 100% 0; } 100% { background-position: -100% 0; } }
 @media (max-width: 860px) { .plans-grid { grid-template-columns: 1fr; max-width: 540px; }.plan-description { min-height: 0; } }
 @media (max-width: 560px) { .balance-card, .free-plan-card { align-items: flex-start; flex-direction: column; }.refresh-button { width: 100%; }.free-credit-summary { text-align: left; }.toast { top: max(80px, calc(70px + env(safe-area-inset-top, 0px) + 10px)); right: 16px; left: 16px; max-width: none; }.payments-header { gap: 10px; } }
-@media (prefers-reduced-motion: reduce) { .spinner-loader { animation: none; }.slide-down-enter-active, .slide-down-leave-active { transition: none; } }
+@media (prefers-reduced-motion: reduce) { .spinner-loader, .skeleton-line, .skeleton-price, .skeleton-button { animation: none; }.slide-down-enter-active, .slide-down-leave-active { transition: none; } }
 </style>

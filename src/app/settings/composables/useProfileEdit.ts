@@ -1,4 +1,4 @@
-import { computed, reactive, ref, type Ref } from 'vue';
+import { computed, reactive, ref, watch, type Ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useAuthenticationStore } from '@/app/auth/services/authentication.store';
 import { ProfileIdUnavailableError, profileService } from '@/app/profile/services/profile.service';
@@ -31,6 +31,8 @@ export function useProfileEdit() {
     const error = ref('');
     const isNewProfile = ref(false);
 
+    // El perfil de empresa se decide con el rol de la sesión, no con los
+    // datos que quedaron en el formulario de una sesión anterior.
     const isEmployee = computed(() => authStore.currentUserType !== 'organization');
     /**
      * Solo se habilita después de confirmar que GET /profile devolvió las tres
@@ -56,6 +58,15 @@ export function useProfileEdit() {
         const message = payload?.message ?? payload?.detail ?? payload;
         if (Array.isArray(message)) return message.join(', ');
         return typeof message === 'string' && message.trim() ? message : fallback;
+    }
+
+    function isValidCorporateWebsite(value: string): boolean {
+        try {
+            const url = new URL(value);
+            return url.protocol === 'https:' || url.protocol === 'http:';
+        } catch {
+            return false;
+        }
     }
 
     function announceSuccess(message = 'Cambios guardados con éxito en la plataforma') {
@@ -179,8 +190,7 @@ export function useProfileEdit() {
     // Employee refs
     const firstName = ref('');
     const lastName = ref('');
-    const personType = ref<'natural' | 'juridica'>('natural');
-    const identificationType = ref<'dni' | 'passport' | 'ruc'>('dni');
+    const identificationType = ref<'dni' | 'passport'>('dni');
     const dni = ref(''); // Serves as identification
     const district = ref('');
     const profession = ref('');
@@ -194,7 +204,7 @@ export function useProfileEdit() {
     const dniError = ref('');
     const dniValidationMessage = ref('');
 
-    // Organization refs (Also used on Employee Juridica)
+    // Organization refs. Solo se usan cuando el perfil resuelto es Company.
     const companyName = ref('');
     const ruc = ref('');
     const website = ref('');
@@ -205,9 +215,54 @@ export function useProfileEdit() {
 
     // Organization interactive RUC validation refs
     const isValidatingRuc = ref(false);
+    const isRucValidated = ref(false);
     const rucVerified = ref(false);
     const rucError = ref('');
     const rucCompanyName = ref('');
+
+    /**
+     * Esta vista puede permanecer montada al cerrar sesión e ingresar con otra
+     * cuenta. Limpiar ambos borradores antes de cada lectura evita mostrar
+     * información de un candidato dentro del formulario de una empresa.
+     */
+    function resetProfileDraft(): void {
+        firstName.value = '';
+        lastName.value = '';
+        identificationType.value = 'dni';
+        dni.value = '';
+        district.value = '';
+        profession.value = '';
+        bio.value = '';
+        keywords.value = [];
+        newKeyword.value = '';
+        isDniFormatValid.value = false;
+        dniError.value = '';
+        dniValidationMessage.value = '';
+
+        companyName.value = '';
+        ruc.value = '';
+        website.value = '';
+        industry.value = '';
+        companySize.value = '';
+        mainLocation.value = '';
+        companyDescription.value = '';
+        isValidatingRuc.value = false;
+        isRucValidated.value = false;
+        rucVerified.value = false;
+        rucError.value = '';
+        rucCompanyName.value = '';
+
+        profilePictureFile.value = null;
+        profilePicturePreview.value = '';
+        historyPersistenceAvailable.value = false;
+        historyItemSequence = 0;
+        workExperienceSection.items.value = [];
+        educationSection.items.value = [];
+        languageSection.items.value = [];
+        workExperienceSection.resetDraft();
+        educationSection.resetDraft();
+        languageSection.resetDraft();
+    }
 
     const bioLength = computed(() => bio.value.length);
     const companyDescLength = computed(() => companyDescription.value.length);
@@ -262,7 +317,7 @@ export function useProfileEdit() {
             loading.value = true;
             error.value = '';
             isNewProfile.value = false;
-            historyPersistenceAvailable.value = false;
+            resetProfileDraft();
             
             const response = await profileService.getCurrentProfile();
             const d = response.data?.data || response.data;
@@ -274,8 +329,7 @@ export function useProfileEdit() {
             if (isEmployee.value) {
                 firstName.value = candidate.firstName || '';
                 lastName.value = candidate.lastName || '';
-                personType.value = d.personType || 'natural';
-                identificationType.value = d.identificationType || 'dni';
+                identificationType.value = d.identificationType === 'passport' ? 'passport' : 'dni';
                 dni.value = d.identification || d.dni || d.nationalId || '';
                 district.value = d.district || '';
                 profession.value = d.profession || d.jobTitle || '';
@@ -283,16 +337,6 @@ export function useProfileEdit() {
                 keywords.value = d.skills || [];
 
                 hydrateCandidateHistory(d);
-
-                // If personType is juridica, load company/ruc details on employee profile
-                if (personType.value === 'juridica') {
-                    ruc.value = d.ruc || '';
-                    companyName.value = d.companyName || '';
-                    rucVerified.value = false;
-                    if (ruc.value && rucVerified.value) {
-                        rucCompanyName.value = companyName.value;
-                    }
-                }
 
                 // GET /profile/me no devuelve un estado de verificación de DNI
                 // ni confirma identidad. Nunca se infiere ese estado en la UI.
@@ -305,10 +349,12 @@ export function useProfileEdit() {
             } else {
                 companyName.value = company.companyName || '';
                 ruc.value = company.ruc || '';
-                website.value = d.website || '';
+                website.value = company.website || '';
                 industry.value = company.sector || '';
-                companySize.value = d.companySize || '';
-                mainLocation.value = d.mainLocation || d.district || '';
+                companySize.value = company.companySize || '';
+                mainLocation.value = DISTRICT_OPTIONS.find(
+                    (option) => districtNameToUbigeo(option) === d.ubigeo,
+                ) || '';
                 companyDescription.value = (d.description || '').slice(0, BIO_MAX);
 
                 // Una empresa con RUC registrado no queda verificada por ese
@@ -329,7 +375,6 @@ export function useProfileEdit() {
                 if (isEmployee.value) {
                     firstName.value = authStore.currentUser?.firstName || '';
                     lastName.value = authStore.currentUser?.lastName || '';
-                    personType.value = 'natural';
                     identificationType.value = 'dni';
                     keywords.value = [];
                 } else {
@@ -369,10 +414,8 @@ export function useProfileEdit() {
     }
 
     /**
-     * Validación local de formato/checksum (el backend no expone
-     * /profile/validate-ruc). No confirma el registro en SUNAT ni obtiene
-     * la razón social. La validación de formato se complementa con
-     * POST /profile/ruc/{ruc}/validate.
+     * Valida el formato y checksum antes de consultar el endpoint real de
+     * SUNAT. El backend confirma únicamente que el RUC exista y esté ACTIVO.
      */
     async function verifyRuc() {
         if (!ruc.value || ruc.value.length < 11) {
@@ -383,19 +426,19 @@ export function useProfileEdit() {
         rucCompanyName.value = '';
 
         if (!isValidRUC(ruc.value)) {
-            rucVerified.value = false;
-            rucError.value = 'El RUC ingresado no es válido.';
+            isRucValidated.value = false;
+            rucError.value = 'El RUC debe tener 11 dígitos, empezar en 10, 15, 17 o 20 y tener un dígito verificador válido.';
             return;
         }
 
         isValidatingRuc.value = true;
         try {
-            rucVerified.value = await profileService.validateRuc(ruc.value);
-            rucCompanyName.value = rucVerified.value ? 'RUC validado' : '';
-            if (!rucVerified.value) rucError.value = 'El RUC no pudo ser validado.';
+            isRucValidated.value = await profileService.validateRuc(ruc.value);
+            rucCompanyName.value = isRucValidated.value ? 'RUC válido para el registro' : '';
+            if (!isRucValidated.value) rucError.value = 'El RUC no pudo ser validado.';
         } catch (err) {
             console.error('Error validating RUC:', err);
-            rucVerified.value = false;
+            isRucValidated.value = false;
             rucError.value = 'No se pudo validar el RUC en este momento.';
         } finally {
             isValidatingRuc.value = false;
@@ -478,15 +521,31 @@ export function useProfileEdit() {
         success.value = false;
 
         try {
+            if (!isEmployee.value) {
+                if (!companyName.value.trim()) {
+                    error.value = 'Ingresa la razón social de la empresa.';
+                    return;
+                }
+                if (!isNewProfile.value) {
+                    // El RUC solo se informa al crear; el contrato de PUT no
+                    // permite modificarlo después.
+                } else if (!isValidRUC(ruc.value)) {
+                    error.value = 'Ingresa un RUC válido de 11 dígitos antes de crear el perfil de empresa.';
+                    return;
+                }
+                if (website.value.trim() && !isValidCorporateWebsite(website.value.trim())) {
+                    error.value = 'Ingresa un sitio web válido que empiece con https:// o http://.';
+                    return;
+                }
+            }
+
             if (!isNewProfile.value && profilePictureFile.value) await uploadSelectedProfilePicture();
 
             // Create y Update son requests distintos en el backend real (no
             // aceptan additionalProperties), así que cada uno arma su propio
-            // payload en vez de reutilizar un objeto común. Campos de la UI sin
-            // equivalente en el backend (profession, personType 'juridica' +
-            // ruc/companyName en candidato, website, companySize) son gaps de
-            // backend documentados aquí: no se envían porque el backend los
-            // ignoraría de todas formas.
+            // payload en vez de reutilizar un objeto común. Candidate y Company
+            // tienen contratos deliberadamente distintos y no comparten datos
+            // fiscales ni identidad corporativa.
             if (isNewProfile.value) {
                 console.log('🔄 Creating new profile on backend...');
                 if (isEmployee.value) {
@@ -513,6 +572,8 @@ export function useProfileEdit() {
                         companyName: companyName.value,
                         sector: industry.value,
                         ruc: ruc.value,
+                        website: website.value,
+                        companySize: companySize.value,
                         description: companyDescription.value,
                         ubigeo: districtNameToUbigeo(mainLocation.value),
                         skills: [],
@@ -546,6 +607,8 @@ export function useProfileEdit() {
                     await profileService.updateCompanyProfile(authStore.currentUserId, {
                         companyName: companyName.value,
                         sector: industry.value,
+                        website: website.value,
+                        companySize: companySize.value,
                         description: companyDescription.value,
                         ubigeo: districtNameToUbigeo(mainLocation.value),
                     });
@@ -591,6 +654,18 @@ export function useProfileEdit() {
 
     loadProfileData();
 
+    // Recarga y limpia la vista cuando cambia la sesión o el rol resuelto por
+    // /auth/me. Esto cubre el paso inmediato de crear cuenta a completar la
+    // empresa sin mezclar el borrador del usuario anterior.
+    watch(
+        () => `${authStore.currentUserId}:${authStore.currentUserType ?? ''}`,
+        (sessionKey, previousSessionKey) => {
+            if (sessionKey && sessionKey !== previousSessionKey) {
+                void loadProfileData();
+            }
+        },
+    );
+
     return {
         BIO_MAX,
         DISTRICT_OPTIONS,
@@ -611,7 +686,6 @@ export function useProfileEdit() {
         // Employee Refs
         firstName,
         lastName,
-        personType,
         identificationType,
         dni,
         district,
@@ -620,7 +694,7 @@ export function useProfileEdit() {
         keywords,
         newKeyword,
         
-        // Organization / Juridica Refs
+        // Organization refs
         companyName,
         ruc,
         website,
@@ -638,6 +712,7 @@ export function useProfileEdit() {
         
         // Interactive RUC validation refs
         isValidatingRuc,
+        isRucValidated,
         rucVerified,
         rucError,
         rucCompanyName,

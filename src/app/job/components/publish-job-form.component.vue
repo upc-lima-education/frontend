@@ -20,6 +20,25 @@ const submitting = ref(false);
 const submitError = ref('');
 const submitSuccess = ref(false);
 
+function toDateTimeLocal(date: Date): string {
+    const local = new Date(date.getTime() - date.getTimezoneOffset() * 60_000);
+    return local.toISOString().slice(0, 16);
+}
+
+function getSuggestedPublicationWindow() {
+    // El backend admite una pequeña tolerancia para publicar inmediatamente.
+    // Se resta unos segundos porque datetime-local no conserva milisegundos.
+    const opensAt = new Date(Date.now() - 10_000);
+    const closesAt = new Date(opensAt.getTime() + 30 * 24 * 60 * 60_000);
+    return {
+        opensAt: toDateTimeLocal(opensAt),
+        closesAt: toDateTimeLocal(closesAt),
+    };
+}
+
+const initialPublicationWindow = getSuggestedPublicationWindow();
+const minimumOpening = ref(toDateTimeLocal(new Date(Date.now() - 2 * 60_000)));
+
 const form = reactive({
     //Details
     title: '',
@@ -38,8 +57,9 @@ const form = reactive({
     salaryPeriod: SalaryPeriod.Monthly,
     compensationType: CompensationType.Fixed,
     //Traceability
-    opensAt: '',
-    closesAt: '',
+    // Valores reales, editables y seguros frente a la validación UTC del API.
+    opensAt: initialPublicationWindow.opensAt,
+    closesAt: initialPublicationWindow.closesAt,
     applyUrl: '',
 });
 
@@ -87,6 +107,35 @@ const selectedSkills = computed<string[]>({
 });
 function getSkillsFromSkillBubbles(): string[] {
     return Array.from(skillBubbles.value);
+}
+
+function isValidHttpUrl(value: string): boolean {
+    try {
+        const url = new URL(value);
+        return url.protocol === 'http:' || url.protocol === 'https:';
+    } catch {
+        return false;
+    }
+}
+
+function getApiErrorMessage(error: any): string {
+    const data = error?.response?.data;
+    const validationErrors = data?.errors;
+    if (validationErrors && typeof validationErrors === 'object') {
+        const messages = Object.values(validationErrors)
+            .flatMap((value) => Array.isArray(value) ? value : [value])
+            .filter((value): value is string => typeof value === 'string' && value.trim().length > 0);
+        if (messages.length > 0) return messages.join(' ');
+    }
+    return data?.detail || data?.message || 'No se pudo publicar la oferta.';
+}
+
+function useSuggestedPublicationWindow() {
+    const window = getSuggestedPublicationWindow();
+    form.opensAt = window.opensAt;
+    form.closesAt = window.closesAt;
+    minimumOpening.value = toDateTimeLocal(new Date(Date.now() - 2 * 60_000));
+    submitError.value = '';
 }
 //Steps for dinamic effect
 const currentStep = ref(1);
@@ -136,9 +185,36 @@ async function submit() {
         const opensAt = new Date(form.opensAt);
         const closesAt = new Date(form.closesAt);
         const skills = getSkillsFromSkillBubbles();
-        if (skills.length <= 0) return;
-        if (Number.isNaN(opensAt.getTime()) || Number.isNaN(closesAt.getTime()) || closesAt <= opensAt) {
+        if (skills.length <= 0) {
+            submitError.value = 'Agrega al menos una habilidad para publicar la oferta.';
+            return;
+        }
+        if (skills.length > 20) {
+            submitError.value = 'Una oferta puede tener como máximo 20 habilidades.';
+            return;
+        }
+        if (Number.isNaN(opensAt.getTime()) || opensAt.getTime() < Date.now() - 2 * 60_000) {
+            submitError.value = 'La apertura tiene más de dos minutos de antigüedad. Usa las fechas sugeridas o elige una fecha reciente.';
+            return;
+        }
+        if (Number.isNaN(closesAt.getTime()) || closesAt <= opensAt) {
             submitError.value = 'La fecha de cierre debe ser posterior a la fecha de apertura.';
+            return;
+        }
+        if (!ubigeo.value || ubigeo.value.length !== 6) {
+            submitError.value = 'Selecciona departamento, provincia y distrito válidos.';
+            return;
+        }
+        if (form.address.trim().length > 255) {
+            submitError.value = 'La dirección no puede exceder 255 caracteres.';
+            return;
+        }
+        if (form.minSalary > form.maxSalary) {
+            submitError.value = 'El salario máximo debe ser mayor o igual al salario mínimo.';
+            return;
+        }
+        if (form.applyUrl.trim() && !isValidHttpUrl(form.applyUrl.trim())) {
+            submitError.value = 'El enlace externo debe comenzar con http:// o https://.';
             return;
         }
 
@@ -169,7 +245,7 @@ async function submit() {
         submitSuccess.value = true;
     } catch (e: any) {
         console.error('Error publishing job:', e);
-        submitError.value = e?.response?.data?.message || e?.response?.data?.detail || 'No se pudo publicar la oferta.';
+        submitError.value = getApiErrorMessage(e);
     } finally {
         submitting.value = false;
     }
@@ -178,7 +254,17 @@ async function submit() {
 
 <template>
     <div class="publish-wizard-card">
-        <p v-if="submitError" class="submit-message submit-message--error" role="alert">{{ submitError }}</p>
+        <div v-if="submitError" class="submit-message submit-message--error" role="alert">
+            <span>{{ submitError }}</span>
+            <button
+                v-if="submitError.includes('apertura tiene más de dos minutos')"
+                type="button"
+                class="submit-message-action"
+                @click="useSuggestedPublicationWindow"
+            >
+                Usar fechas sugeridas
+            </button>
+        </div>
         <p v-if="submitSuccess" class="submit-message submit-message--success" role="status">Oferta publicada correctamente.</p>
         <!-- Horizontal visual stepper -->
         <div class="wizard-stepper">
@@ -379,21 +465,26 @@ async function submit() {
                         <label for="opensAt">{{ $t('job.data.opensAt') }}</label>
                         <ButtonClueComponent text="Fecha desde la cual el trabajo será visible para el público" />
                     </div>
-                    <input id="opensAt" type="datetime-local" v-model="form.opensAt" />
+                    <input id="opensAt" type="datetime-local" v-model="form.opensAt" :min="minimumOpening" />
+                    <small class="field-help">La oferta se publicará inmediatamente. Puedes programarla con una fecha futura si lo necesitas.</small>
                 </div>
                 <div class="input-container">
                     <div class="label-row">
                         <label for="closesAt">{{ $t('job.data.closesAt') }}</label>
                         <ButtonClueComponent text="Fecha desde la cual el trabajo se ocultará para el público. No se podrán recibir más postulaciones después de esta fecha" />
                     </div>
-                    <input id="closesAt" type="datetime-local" v-model="form.closesAt" />
+                    <input id="closesAt" type="datetime-local" v-model="form.closesAt" :min="form.opensAt" />
                 </div>
                 <div class="input-container">
                     <div class="label-row">
                         <label for="applyUrl">Enlace externo de postulación (opcional)</label>
-                        <ButtonClueComponent text="Déjalo vacío para recibir postulaciones con CV dentro de Llanqui." />
+                        <ButtonClueComponent text="Si agregas un enlace, las personas postularán fuera de Llanqui y no recibirás su CV en Seguimiento de postulaciones." />
                     </div>
-                    <input id="applyUrl" type="url" v-model="form.applyUrl" placeholder="https://empresa.com/postular" />
+                    <input id="applyUrl" v-model="form.applyUrl" type="url" placeholder="https://empresa.com/postular" />
+                </div>
+                <div class="application-flow-note" role="note">
+                    <strong>¿Sin enlace externo?</strong>
+                    <span>La postulación se realizará dentro de Llanqui: el candidato adjunta un PDF y tu empresa lo revisa desde Seguimiento de postulaciones.</span>
                 </div>
             </section>
         </main>
@@ -462,6 +553,9 @@ async function submit() {
 }
 
 .submit-message--error {
+    display: flex;
+    align-items: center;
+    gap: 12px;
     color: var(--color-state-error-dark);
     background: rgba(210, 38, 38, .08);
     border: 1px solid rgba(210, 38, 38, .2);
@@ -592,6 +686,48 @@ async function submit() {
 .input-container textarea {
     min-height: 120px;
     resize: vertical;
+}
+
+.submit-message-action {
+    min-height: 38px;
+    margin-left: auto;
+    padding: 8px 12px;
+    border: 1px solid currentColor;
+    border-radius: 8px;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    font-weight: var(--fw-semibold);
+    cursor: pointer;
+}
+
+.submit-message-action:hover {
+    background: color-mix(in srgb, currentColor 8%, transparent);
+}
+
+.field-help {
+    display: block;
+    margin-top: 6px;
+    color: var(--color-text-secondary);
+    font-size: 0.8125rem;
+    line-height: 1.4;
+}
+
+.application-flow-note {
+    display: grid;
+    gap: 4px;
+    padding: 14px 16px;
+    color: var(--color-text-secondary);
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-card);
+    font-size: var(--fs-body-sm);
+    line-height: 1.5;
+}
+
+.application-flow-note strong {
+    color: var(--color-text-primary);
+    font-weight: var(--fw-bold);
 }
 
 /* Skills additions */
@@ -772,6 +908,13 @@ async function submit() {
     }
     .salary-grid {
         grid-template-columns: 1fr;
+    }
+    .submit-message--error {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+    .submit-message-action {
+        margin-left: 0;
     }
 }
 </style>

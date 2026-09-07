@@ -1,10 +1,8 @@
 /**
  * Client-side format/checksum validation for Peruvian identification numbers.
- * The backend has no /profile/validate-* endpoints, so this replaces what
- * used to be a network call. It only checks structural validity (format and,
- * for RUC, the official check digit) — it cannot confirm the number is
- * registered or fetch the owner's name from RENIEC/SUNAT. Authoritative
- * identity verification happens via POST /profile/{userId}/verify.
+ * El formato se comprueba localmente para evitar una solicitud innecesaria.
+ * Para RUC, el backend además consulta SUNAT mediante
+ * POST /profile/ruc/{ruc}/validate y solo acepta empresas activas.
  */
 
 const RUC_FACTORS = [5, 4, 3, 2, 7, 6, 5, 4, 3, 2];
@@ -15,6 +13,10 @@ export function isValidDNI(dni: string): boolean {
 
 export function isValidRUC(ruc: string): boolean {
     if (!/^\d{11}$/.test(ruc)) {
+        return false;
+    }
+
+    if (!/^(10|15|17|20)/.test(ruc)) {
         return false;
     }
 

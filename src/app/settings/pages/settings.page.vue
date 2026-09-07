@@ -8,9 +8,7 @@ import {
   KeyRound,
   Pencil,
   Palette,
-  ShieldCheck,
   Sparkles,
-  TrendingUp,
   User,
 } from 'lucide-vue-next';
 import ProfileOverviewComponent from '../components/profile-overview.component.vue';
@@ -22,13 +20,11 @@ const ProfileEditComponent = defineAsyncComponent(() => import('../components/pr
 const AppearanceSettingsComponent = defineAsyncComponent(() => import('../components/appearance-settings.component.vue'));
 const NotificationSettingsComponent = defineAsyncComponent(() => import('../components/notification-settings.component.vue'));
 const PaymentsSettingsComponent = defineAsyncComponent(() => import('../components/payments-settings.component.vue'));
-const JobBoostSettingsComponent = defineAsyncComponent(() => import('../components/job-boost-settings.component.vue'));
-const PrivacySettingsComponent = defineAsyncComponent(() => import('../components/privacy-settings.component.vue'));
 const SecuritySettingsComponent = defineAsyncComponent(() => import('../components/security-settings.component.vue'));
 import { useSettingsPage } from '@/app/settings/composables/useSettingsPage';
 
 const { t } = useI18n();
-const { activeTab, isOrganization, profileTabLabel, paymentsTabLabel, setTab } = useSettingsPage();
+const { activeTab, isOrganization, profileTabLabel, setTab } = useSettingsPage();
 
 const tabsRef = ref<HTMLElement | null>(null);
 
@@ -50,9 +46,10 @@ const navItems = computed<SettingsTabItem[]>(() => {
     { id: 'appearance', label: 'Apariencia', icon: Palette },
     { id: 'settings', label: t('settings.tabSettings'), icon: Bell },
     { id: 'security', label: t('settings.tabSecurity'), icon: KeyRound },
-    { id: 'payments', label: paymentsTabLabel.value, icon: isOrganization.value ? TrendingUp : Sparkles },
-    { id: 'privacy', label: t('settings.tabPrivacy'), icon: ShieldCheck },
   );
+  if (!isOrganization.value) {
+    items.push({ id: 'payments', label: t('settings.tabPayments'), icon: Sparkles });
+  }
   return items;
 });
 
@@ -200,21 +197,21 @@ function handleTabKeydown(e: KeyboardEvent, index: number) {
             </div>
           </button>
 
-          <!-- 4. Herramientas IA / Impulso -->
+          <!-- 4. Herramientas IA, disponibles solo para candidatos -->
           <button
+            v-if="!isOrganization"
             type="button"
             class="bento-stat-tile bento-stat-tile--highlight"
             :class="{ 'is-tile-active': activeTab === 'payments' }"
-            :aria-label="isOrganization ? 'Destacar vacantes con PayPal' : 'Administrar créditos de IA'"
+            aria-label="Administrar créditos de IA"
             @click="setTab('payments')"
           >
             <div class="tile-icon-box tile-icon-box--lime">
-              <TrendingUp v-if="isOrganization" :size="18" aria-hidden="true" />
-              <Sparkles v-else :size="18" aria-hidden="true" />
+              <Sparkles :size="18" aria-hidden="true" />
             </div>
             <div class="tile-meta">
-              <span class="tile-label">{{ isOrganization ? 'Destacar' : 'Herramientas IA' }}</span>
-              <strong class="tile-number">{{ isOrganization ? 'Impulso' : 'Créditos IA' }}</strong>
+              <span class="tile-label">Herramientas IA</span>
+              <strong class="tile-number">Créditos IA</strong>
             </div>
           </button>
         </div>
@@ -271,9 +268,7 @@ function handleTabKeydown(e: KeyboardEvent, index: number) {
         <AppearanceSettingsComponent v-else-if="activeTab === 'appearance'" />
         <NotificationSettingsComponent v-else-if="activeTab === 'settings'" />
         <SecuritySettingsComponent v-else-if="activeTab === 'security'" />
-        <JobBoostSettingsComponent v-else-if="activeTab === 'payments' && isOrganization" />
-        <PaymentsSettingsComponent v-else-if="activeTab === 'payments'" />
-        <PrivacySettingsComponent v-else-if="activeTab === 'privacy'" />
+        <PaymentsSettingsComponent v-else-if="activeTab === 'payments' && !isOrganization" />
 
         <!-- Fallback Placeholder -->
         <div v-else class="settings-placeholder-card">

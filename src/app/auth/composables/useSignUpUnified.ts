@@ -51,10 +51,6 @@ export function useSignUpUnified() {
     function selectRole(selectedRole: SignUpUserRole) {
         role.value = selectedRole;
         roleError.value = false;
-
-        if (selectedRole) {
-            authStore.setUserType(selectedRole);
-        }
     }
 
     function beforeGoogleSignUp(): boolean {
@@ -96,16 +92,27 @@ export function useSignUpUnified() {
         loading.value = true;
 
         try {
-            const request = new SignUpRequest(email.value, password.value);
+            const request = new SignUpRequest(
+                email.value,
+                password.value,
+                role.value === 'organization' ? 'Company' : 'Candidate',
+            );
 
             const success = await authStore.signUp(request);
 
             if (!success) {
-                serverError.value = 'No se pudo crear la cuenta. Verifica que el correo no esté registrado e inténtalo nuevamente.';
+                serverError.value = 'No se pudo crear la cuenta. Inténtalo nuevamente.';
             }
-        } catch (error) {
+        } catch (error: any) {
             console.error('Sign up error:', error);
-            serverError.value = 'Error de conexión con el servidor';
+            const status = error?.response?.status;
+            if (status === 409) {
+                serverError.value = 'Este correo ya tiene una cuenta. Inicia sesión para continuar con el perfil asociado.';
+            } else if (status === 400) {
+                serverError.value = 'Revisa el correo y la contraseña antes de crear tu cuenta.';
+            } else {
+                serverError.value = 'No fue posible conectar con el servidor. Inténtalo nuevamente.';
+            }
         } finally {
             loading.value = false;
         }

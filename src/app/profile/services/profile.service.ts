@@ -41,7 +41,19 @@ export interface CreateCompanyProfilePayload {
     companyName: string;
     sector?: string;
     ruc: string;
+    website?: string;
+    companySize?: string;
     profilePicture?: File;
+}
+
+export interface UpdateCompanyProfilePayload {
+    description?: string;
+    ubigeo?: string;
+    phoneNumber?: string;
+    companyName?: string;
+    sector?: string;
+    website?: string;
+    companySize?: string;
 }
 
 function appendOptional(formData: FormData, key: string, value?: string): void {
@@ -121,6 +133,8 @@ export class ProfileService {
         formData.append('CompanyName', profileData.companyName);
         appendOptional(formData, 'Sector', profileData.sector);
         formData.append('Ruc', profileData.ruc);
+        appendOptional(formData, 'Website', profileData.website);
+        appendOptional(formData, 'CompanySize', profileData.companySize);
         if (profileData.profilePicture) formData.append('ProfilePicture', profileData.profilePicture);
 
         const response = await http.post(`${this.endpoint}/company`, formData);
@@ -143,7 +157,7 @@ export class ProfileService {
      * Actualizar perfil de empresa/organización
      * PUT /api/v1/profile/company
      */
-    async updateCompanyProfile(_userId: string, profileData: any) {
+    async updateCompanyProfile(_userId: string, profileData: UpdateCompanyProfilePayload) {
         console.log('🔄 ProfileService: Updating company profile:', profileData);
         const response = await http.put(`${this.endpoint}/company`, profileData);
         console.log('📦 ProfileService: Company update response:', response.data);

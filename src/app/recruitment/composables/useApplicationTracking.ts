@@ -2,6 +2,8 @@ import { computed, ref, watch } from 'vue';
 import { JobService } from '@/app/job/services/job.service';
 import { recruitmentService } from '../services/recruitment.service';
 import { notificationService } from '../services/notification.service';
+import { useAuthenticationStore } from '@/app/auth/services/authentication.store';
+import { isInternalJob } from '@/app/job/utils/job-origin.util';
 import {
     ApplicationStatus,
     APPLICATION_PIPELINE,
@@ -17,6 +19,7 @@ import { NotificationChannel, NotificationType } from '../model/notification.mod
 
 export function useApplicationTracking() {
     const jobService = new JobService();
+    const auth = useAuthenticationStore();
     const applications = ref<ApplicationResponse[]>([]);
     const loading = ref(false);
     const actionPending = ref(false);
@@ -32,9 +35,10 @@ export function useApplicationTracking() {
         loading.value = true;
         errorMessage.value = '';
         try {
-            const companyProfileId = localStorage.getItem('profileId');
+            const companyProfileId = auth.currentUser?.profileId;
             if (!companyProfileId) throw new Error('No se encontró el perfil de la empresa.');
             jobs.value = (await jobService.getJobsByCompany(companyProfileId))
+                .filter(isInternalJob)
                 .map(job => ({ id: job.id, title: job.title }));
             hydratingJobs.value = true;
             selectedJobId.value = jobs.value[0]?.id ?? '';

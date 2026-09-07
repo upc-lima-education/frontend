@@ -30,9 +30,7 @@ export const authenticationGuard = (
         const allowedRoles = to.meta?.roles as string[] | undefined;
         if (!allowedRoles || allowedRoles.length === 0) return next();
 
-        const userType =
-            authenticationStore.currentUserType
-            || (localStorage.getItem('userType') as 'employee' | 'organization' | null);
+        const userType = authenticationStore.currentUserType;
 
         if (userType && allowedRoles.includes(userType)) return next();
 
@@ -48,19 +46,9 @@ export const authenticationGuard = (
         return next('/sign-in');
     }
 
-    // Hay token pero la sesión no está cargada en el store:
-    if (hasToken && !isSignedIn) {
-        const allowedRoles = to.meta?.roles as string[] | undefined;
-        const cachedUserType = localStorage.getItem('userType') as 'employee' | 'organization' | null;
-
-        // Si no hay restricción de rol o el rol en caché coincide, avanzar de inmediato
-        // y validar en segundo plano para no bloquear el First Contentful Paint.
-        if (!allowedRoles || allowedRoles.length === 0 || (cachedUserType && allowedRoles.includes(cachedUserType))) {
-            authenticationStore.loadCurrentUser().catch(() => {});
-            return proceedWithRole();
-        }
-
-        // Si la ruta requiere un rol estricto y no está en caché, esperar validación
+    // Una ruta exclusiva debe esperar a la identidad resuelta por /auth/me.
+    // No se permite decidir el rol con un valor viejo del navegador.
+    if (hasToken && (!isSignedIn || !authenticationStore.sessionResolved)) {
         authenticationStore.loadCurrentUser().then(success => {
             if (success) {
                 proceedWithRole();

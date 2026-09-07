@@ -24,5 +24,6 @@ export interface CreateJobRequest {
     payment?: JobPaymentRequest;
     opensAt: string;
     closesAt: string;
+    /** Si existe, la postulación continúa en el portal definido por la empresa. */
     applyUrl?: string;
 }

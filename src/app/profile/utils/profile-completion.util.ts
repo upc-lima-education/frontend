@@ -33,15 +33,14 @@ export function calculateProfileCompletion(
 ): number {
     if (!profile) return 0;
 
-    const checks = isOrganization
-        ? [
-            hasText(profile.company?.companyName),
-            hasText(profile.description),
-            hasText(profile.profilePicture),
-            hasItems(profile.skills),
-            hasText(profile.company?.sector),
-            hasText(profile.company?.ruc),
-        ]
+  const checks = isOrganization
+    ? [
+        hasText(profile.company?.companyName),
+        hasText(profile.description),
+        hasText(profile.profilePicture),
+        hasText(profile.company?.sector),
+        hasText(profile.company?.ruc),
+      ]
         : [
             hasText(profile.candidate?.firstName) && hasText(profile.candidate?.lastName),
             hasText(profile.description),

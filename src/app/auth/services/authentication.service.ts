@@ -11,21 +11,17 @@ export class AuthenticationService {
     /**
      * Mapea el objeto crudo de usuario del backend a UserResponse.
      * Centraliza el orden de argumentos (antes estaba corrido y dejaba
-     * El backend clean devuelve ProfileType.Candidate/ProfileType.Company.
-     * Durante el registro profileType puede ser null hasta crear el perfil; en
-     * ese caso se conserva el rol elegido y persistido por el frontend.
+     * El perfil existente es la fuente de verdad. Para cuentas nuevas sin
+     * perfil, el backend devuelve accountType, persistido al registrarse.
      */
     private mapUser(u: any): UserResponse {
-        const backendProfileType = String(u?.profileType ?? u?.userType ?? '').toLowerCase();
-        const storedUserType = localStorage.getItem('userType');
-        const userType: 'employee' | 'organization' =
-            backendProfileType === 'company' || backendProfileType === 'organization'
+        const backendType = String(u?.profileType ?? u?.accountType ?? u?.userType ?? '').toLowerCase();
+        const userType: 'employee' | 'organization' | undefined =
+            backendType === 'company' || backendType === 'organization'
                 ? 'organization'
-                : backendProfileType === 'candidate' || backendProfileType === 'employee'
+                : backendType === 'candidate' || backendType === 'employee'
                     ? 'employee'
-                    : storedUserType === 'organization'
-                        ? 'organization'
-                        : 'employee';
+                    : undefined;
         return new UserResponse(
             u.id,
             u.email,

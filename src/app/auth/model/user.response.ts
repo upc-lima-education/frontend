@@ -5,7 +5,8 @@ export class UserResponse {
     firstName?: string;      // Para employees
     lastName?: string;       // Para employees
     companyName?: string;    // Para organizations
-    userType: 'employee' | 'organization';
+    /** Rol resuelto únicamente desde la respuesta de autenticación. */
+    userType?: 'employee' | 'organization';
     picture?: string;
     locale?: string;
     createdAt?: string;
@@ -31,7 +32,7 @@ export class UserResponse {
         this.firstName = firstName;
         this.lastName = lastName;
         this.companyName = companyName;
-        this.userType = userType || 'employee';
+        this.userType = userType;
         this.picture = picture;
         this.locale = locale;
         this.createdAt = createdAt;

@@ -51,7 +51,6 @@ const {
   profilePictureFile,
   firstName,
   lastName,
-  personType,
   identificationType,
   dni,
   district,
@@ -73,6 +72,7 @@ const {
   dniError,
   dniValidationMessage,
   isValidatingRuc,
+  isRucValidated,
   rucVerified,
   rucError,
   rucCompanyName,
@@ -251,15 +251,6 @@ function triggerFileInput() {
   fileInputRef.value?.click();
 }
 
-// Watch personType and update identificationType automatically
-function onPersonTypeChange() {
-  if (personType.value === 'juridica') {
-    identificationType.value = 'ruc';
-  } else {
-    identificationType.value = 'dni';
-  }
-}
-
 const completenessPercent = computed(() => {
   return calculateProfileCompletion({
     // Una vista previa local no cuenta como foto completada hasta que el
@@ -294,7 +285,7 @@ const completenessColor = computed(() => {
 const completenessLabel = computed(() => {
   const p = completenessPercent.value;
   if (p <= 40) return 'Perfil Inicial';
-  if (p <= 79) return 'Perfil Intermedio';
+  if (p < 100) return 'Perfil en progreso';
   return 'Perfil Completo';
 });
 
@@ -422,32 +413,21 @@ const isRucInputValid = computed(() => ruc.value && ruc.value.length === 11 && /
 
         <!-- COLUMN 2: Main Form Card -->
         <div class="main-col">
-          <!-- CARD: ID VERIFICATION & PERSON TYPE -->
+          <!-- CARD: IDENTIFICACIÓN DEL CANDIDATO / VERIFICACIÓN DE EMPRESA -->
           <div class="glass-card">
             <template v-if="isEmployee">
               <h3 class="card-section-title">
                 <UserCheck :size="18" class="title-icon" />
-                <span>Tipo de Persona e Identificación</span>
+                <span>Identificación personal</span>
               </h3>
               
-              <div class="grid-2">
-                <div class="field">
-                  <label for="pe-persontype">Tipo de Persona</label>
-                  <div class="select-wrapper">
-                    <select id="pe-persontype" v-model="personType" @change="onPersonTypeChange">
-                      <option value="natural">Persona Natural</option>
-                      <option value="juridica">Persona Jurídica</option>
-                    </select>
-                  </div>
-                </div>
-
+              <div class="field field--compact">
                 <div class="field">
                   <label for="pe-idtype">Tipo de Documento</label>
                   <div class="select-wrapper">
-                    <select id="pe-idtype" v-model="identificationType" :disabled="personType === 'juridica'">
+                    <select id="pe-idtype" v-model="identificationType">
                       <option value="dni">DNI (RENIEC)</option>
                       <option value="passport">Pasaporte / Extranjería</option>
-                      <option value="ruc" v-if="personType === 'juridica'">RUC (SUNAT)</option>
                     </select>
                   </div>
                 </div>
@@ -455,8 +435,7 @@ const isRucInputValid = computed(() => ruc.value && ruc.value.length === 11 && /
 
               <!-- DNI: formato local. La API no ofrece verificación de identidad para candidatos. -->
               <div class="verification-box text-margin-top">
-                <!-- DNI / PASSPORT FOR NATURAL PERSON -->
-                <div v-if="personType === 'natural'" class="field">
+                <div class="field">
                   <label for="pe-dni">Número de Documento ({{ identificationType.toUpperCase() }})</label>
                   <div class="verification-input-group">
                     <input 
@@ -495,64 +474,13 @@ const isRucInputValid = computed(() => ruc.value && ruc.value.length === 11 && /
                   </p>
                 </div>
 
-                <!-- RUC FOR JURIDICAL PERSON -->
-                <div v-else class="field">
-                  <div class="grid-2">
-                    <div class="field">
-                      <label for="pe-ruc">Número de RUC</label>
-                      <div class="verification-input-group">
-                        <input 
-                          id="pe-ruc" 
-                          v-model="ruc" 
-                          type="text" 
-                          placeholder="20776655441" 
-                          maxlength="11" 
-                          class="verify-input text-bold"
-                          :disabled="rucVerified"
-                        />
-                        <button 
-                          type="button" 
-                          class="btn-verify" 
-                          :class="{ verified: rucVerified, loading: isValidatingRuc }"
-                          :disabled="isValidatingRuc || !isRucInputValid || rucVerified" 
-                          @click="verifyRuc"
-                        >
-                          <span v-if="isValidatingRuc" class="spinner-verify"></span>
-                          <span v-else-if="rucVerified">Verificado</span>
-                          <span v-else>Verificar RUC</span>
-                        </button>
-                      </div>
-                      <Transition name="fade">
-                        <p v-if="rucError" class="feedback-msg error-msg">
-                          <AlertCircle :size="14" />
-                          <span>{{ rucError }}</span>
-                        </p>
-                      </Transition>
-                    </div>
-
-                    <div class="field">
-                      <label for="pe-company-name">Razón Social</label>
-                      <input 
-                        id="pe-company-name" 
-                        v-model="companyName" 
-                        type="text" 
-                        placeholder="Razón Social" 
-                        :disabled="rucVerified" 
-                      />
-                    </div>
-                  </div>
-                  <p v-if="rucVerified && rucCompanyName" class="feedback-msg success-msg no-margin-top">
-                    <CheckCircle2 :size="14" />
-                    <span>Razón Social validada por SUNAT: {{ rucCompanyName }}</span>
-                  </p>
-                </div>
               </div>
             </template>
 
             <template v-else>
               <h3 class="card-section-title">
                 <ShieldCheck :size="18" class="title-icon" />
-                <span>Verificación de Organización (SUNAT)</span>
+                <span>RUC y estado de organización</span>
               </h3>
               
               <div class="verification-box">
@@ -563,32 +491,40 @@ const isRucInputValid = computed(() => ruc.value && ruc.value.length === 11 && /
                       id="org-ruc" 
                       v-model="ruc" 
                       type="text" 
-                      placeholder="20776655441" 
+                      placeholder="RUC de 11 dígitos"
                       maxlength="11" 
                       class="verify-input text-bold"
-                      :disabled="rucVerified || isValidatingRuc"
+                      :disabled="!isNewProfile || isValidatingRuc"
                     />
                     <button 
                       type="button" 
                       class="btn-verify" 
-                      :class="{ verified: rucVerified, loading: isValidatingRuc }"
-                      :disabled="isValidatingRuc || !isRucInputValid || rucVerified" 
+                      :class="{ verified: isRucValidated, loading: isValidatingRuc }"
+                      :disabled="!isNewProfile || isValidatingRuc || !isRucInputValid || isRucValidated"
                       @click="verifyRuc"
                     >
                       <span v-if="isValidatingRuc" class="spinner-verify"></span>
-                      <span v-else-if="rucVerified">Verificado</span>
+                      <span v-else-if="isRucValidated">RUC válido</span>
                       <span v-else>Verificar con SUNAT</span>
                     </button>
                   </div>
+                  <p class="field-help">Usa el RUC real de la empresa. Se validará contra SUNAT y debe encontrarse activo.</p>
                   
                   <Transition name="fade">
                     <p v-if="rucError" class="feedback-msg error-msg">
                       <AlertCircle :size="14" />
                       <span>{{ rucError }}</span>
                     </p>
-                    <p v-else-if="rucVerified && rucCompanyName" class="feedback-msg success-msg">
+                    <p v-else-if="isRucValidated && rucCompanyName" class="feedback-msg success-msg">
                       <CheckCircle2 :size="14" />
                       <span>Razón Social validada: {{ rucCompanyName }}</span>
+                    </p>
+                    <p v-else-if="rucVerified" class="feedback-msg success-msg">
+                      <CheckCircle2 :size="14" />
+                      <span>Empresa verificada por Llanqui.</span>
+                    </p>
+                    <p v-else-if="!isNewProfile" class="field-help">
+                      El RUC no puede modificarse después de crear la empresa.
                     </p>
                   </Transition>
                 </div>
@@ -691,7 +627,6 @@ const isRucInputValid = computed(() => ruc.value && ruc.value.length === 11 && /
                     v-model="companyName"
                     type="text"
                     placeholder="Ej. Nombre legal de la empresa"
-                    :disabled="rucVerified"
                   />
                 </div>
                 <div class="field">

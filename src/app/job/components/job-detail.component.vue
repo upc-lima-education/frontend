@@ -53,21 +53,20 @@ const department = ref('');
 const district = ref('');
 const isCopied = ref(false);
 
-onMounted(() => {
-  const response = ubigeoService.getLocation(props.job.ubigeo);
-  if (response !== null) {
-    department.value = response.department;
-    district.value = response.district;
-  }
-});
-
 const hasLocationLabel = computed(() => Boolean(department.value && district.value));
 
 const isInternalListing = computed(() => isInternalJob(props.job));
 const isExternalListing = computed(() => isExternalJob(props.job));
 const isCandidate = computed(() => !props.isCompany);
+const redirectsApplication = computed(() => isExternalListing.value || Boolean(props.job.applyUrl?.trim()));
+const canApplyInternally = computed(() =>
+  isCandidate.value && isInternalListing.value && !redirectsApplication.value,
+);
 const externalJobUrl = computed(() => getExternalJobUrl(props.job));
 const originLabel = computed(() => getJobOriginLabel(props.job));
+const applicationDestinationLabel = computed(() =>
+  props.job.applyUrl?.trim() ? 'el sitio de la empresa' : originLabel.value,
+);
 const canManageJob = computed(() =>
   props.isCompany
   && isInternalListing.value
@@ -183,6 +182,22 @@ const applicationCv = ref<File | null>(null);
 const applicationError = ref('');
 const applicationSuccess = ref('');
 const externalActionError = ref('');
+const alreadyApplied = ref(false);
+const checkingApplication = ref(false);
+
+async function loadApplicationEligibility() {
+  if (!canApplyInternally.value) return;
+  checkingApplication.value = true;
+  try {
+    const applications = await recruitmentService.getCandidateApplications();
+    alreadyApplied.value = applications.some((application) => application.jobId === props.job.id);
+  } catch (error) {
+    // El servidor conserva la protección contra duplicados; esta comprobación solo mejora la experiencia.
+    console.warn('No se pudo comprobar el estado de la postulación:', error);
+  } finally {
+    checkingApplication.value = false;
+  }
+}
 
 function toggleSaved() {
   saved.value = !saved.value;
@@ -199,10 +214,12 @@ function handleFileChange(event: Event) {
   }
 
   const isPdf = file.type === 'application/pdf' && /\.pdf$/i.test(file.name);
-  if (!isPdf) {
+  if (!isPdf || file.size > 2 * 1024 * 1024) {
     applicationCv.value = null;
     target.value = '';
-    applicationError.value = 'Selecciona un archivo PDF para enviar tu postulación.';
+    applicationError.value = !isPdf
+      ? 'Selecciona un archivo PDF para enviar tu postulación.'
+      : 'El CV debe pesar como máximo 2 MB.';
     return;
   }
 
@@ -210,6 +227,7 @@ function handleFileChange(event: Event) {
 }
 
 function openInternalApplication() {
+  if (alreadyApplied.value || checkingApplication.value) return;
   applicationError.value = '';
   applicationSuccess.value = '';
   applyJobDialogRef.value?.open();
@@ -228,12 +246,16 @@ function continueInExternalPortal() {
 
 async function ApplyToJob() {
   if (applying.value) return;
-  if (isExternalListing.value) {
+  if (redirectsApplication.value) {
     continueInExternalPortal();
     return;
   }
   if (!applicationCv.value) {
     applicationError.value = 'Adjunta tu CV en formato PDF antes de enviar la postulación.';
+    return;
+  }
+  if (alreadyApplied.value) {
+    applicationError.value = 'Ya enviaste una postulación para esta vacante. Revisa su estado en Mis postulaciones.';
     return;
   }
   applying.value = true;
@@ -244,16 +266,27 @@ async function ApplyToJob() {
       cv: applicationCv.value,
     });
     applicationSuccess.value = 'Tu postulación fue enviada a la empresa.';
+    alreadyApplied.value = true;
     applicationCv.value = null;
     applyJobDialogRef.value?.close();
   } catch (error) {
     console.error('Error al postular:', error);
-    const detail = (error as { response?: { data?: { detail?: string } } })?.response?.data?.detail;
-    applicationError.value = detail || 'No se pudo enviar la postulación. Verifica tu CV e inténtalo nuevamente.';
+    const data = (error as { response?: { data?: { detail?: string; title?: string; errors?: Record<string, string[]> } } })?.response?.data;
+    const validationMessage = data?.errors ? Object.values(data.errors).flat().find(Boolean) : undefined;
+    applicationError.value = validationMessage || data?.detail || data?.title || 'No se pudo enviar la postulación. Verifica tu CV e inténtalo nuevamente.';
   } finally {
     applying.value = false;
   }
 }
+
+onMounted(async () => {
+  const response = ubigeoService.getLocation(props.job.ubigeo);
+  if (response !== null) {
+    department.value = response.department;
+    district.value = response.district;
+  }
+  await loadApplicationEligibility();
+});
 </script>
 
 <template>
@@ -267,9 +300,9 @@ async function ApplyToJob() {
       </RouterLink>
 
       <div class="topbar-badges-cluster">
-        <span v-if="isExternalListing" class="source-tag-chip">
+        <span v-if="redirectsApplication" class="source-tag-chip">
           <ExternalLink :size="13" aria-hidden="true" />
-          <span>Oferta externa · {{ originLabel }}</span>
+          <span>{{ props.job.applyUrl ? 'Postulación externa de la empresa' : `Oferta externa · ${originLabel}` }}</span>
         </span>
         <button
           type="button"
@@ -350,26 +383,27 @@ async function ApplyToJob() {
         </button>
 
         <button
-          v-if="isCandidate && isExternalListing"
+          v-if="isCandidate && redirectsApplication"
           type="button"
           class="btn-hero-apply"
           :disabled="!externalJobUrl"
-          :aria-label="externalJobUrl ? `Continuar la postulación en ${originLabel}` : 'El enlace externo no está disponible'"
+          :aria-label="externalJobUrl ? `Continuar la postulación en ${applicationDestinationLabel}` : 'El enlace externo no está disponible'"
           @click="continueInExternalPortal"
         >
           <ExternalLink :size="17" aria-hidden="true" />
-          <span>{{ externalJobUrl ? `Continuar en ${originLabel}` : 'Enlace no disponible' }}</span>
+          <span>{{ externalJobUrl ? `Continuar en ${applicationDestinationLabel}` : 'Enlace no disponible' }}</span>
         </button>
 
         <button
-          v-else-if="isCandidate && isInternalListing"
+          v-else-if="canApplyInternally"
           type="button"
           class="btn-hero-apply"
-          aria-label="Abrir formulario de postulación"
+          :disabled="alreadyApplied || checkingApplication"
+          :aria-label="alreadyApplied ? 'Ya enviaste una postulación para esta vacante' : 'Abrir formulario de postulación'"
           @click="openInternalApplication"
         >
           <CheckSquare :size="17" aria-hidden="true" />
-          <span>Postularme ahora</span>
+          <span>{{ checkingApplication ? 'Comprobando postulación…' : alreadyApplied ? 'Ya te postulaste' : 'Postularme ahora' }}</span>
         </button>
 
         <button
@@ -490,7 +524,10 @@ async function ApplyToJob() {
 
         <!-- Related Job News Component -->
         <section v-if="isInternalListing" class="dossier-section" aria-labelledby="news-section-title">
-          <JobNewsComponent :job-id="job.id" />
+          <JobNewsComponent
+            v-if="isCompany || job.jobStatus === 'Active'"
+            :job-id="job.id"
+          />
         </section>
 
       </main>
@@ -499,19 +536,19 @@ async function ApplyToJob() {
       <aside class="job-sidebar-column" aria-label="Panel de postulación y métricas">
         
         <!-- Candidate Sticky Application Deck -->
-        <div v-if="isCandidate && isExternalListing" class="external-source-card">
+        <div v-if="isCandidate && redirectsApplication" class="external-source-card">
           <div class="external-source-icon" aria-hidden="true">
             <ExternalLink :size="22" />
           </div>
           <div>
-            <h2 class="external-source-heading">Continúa en {{ originLabel }}</h2>
+            <h2 class="external-source-heading">Continúa en {{ applicationDestinationLabel }}</h2>
             <p class="external-source-copy">
-              Esta oferta fue publicada fuera de Llanqui. Para proteger tu información, tu CV no se adjunta ni se comparte desde esta plataforma.
+              Esta postulación continúa fuera de Llanqui. Para proteger tu información, tu CV no se adjunta ni se comparte desde esta plataforma.
             </p>
           </div>
           <div class="external-source-notice">
             <ShieldCheck :size="16" aria-hidden="true" />
-            <span>Revisarás y enviarás tu postulación directamente en {{ originLabel }}.</span>
+            <span>Revisarás y enviarás tu postulación directamente en {{ applicationDestinationLabel }}.</span>
           </div>
           <button
             type="button"
@@ -519,13 +556,13 @@ async function ApplyToJob() {
             :disabled="!externalJobUrl"
             @click="continueInExternalPortal"
           >
-            <span>{{ externalJobUrl ? `Ir a ${originLabel}` : 'Enlace no disponible' }}</span>
+            <span>{{ externalJobUrl ? `Ir a ${applicationDestinationLabel}` : 'Enlace no disponible' }}</span>
             <ExternalLink :size="17" aria-hidden="true" />
           </button>
           <p v-if="externalActionError" class="action-error" role="alert">{{ externalActionError }}</p>
         </div>
 
-        <div v-else-if="isCandidate && isInternalListing" class="sticky-apply-card">
+        <div v-else-if="canApplyInternally" class="sticky-apply-card">
           <div class="apply-card-top">
             <span class="apply-card-kicker">Postulación directa</span>
             <h2 class="apply-card-heading">Postula desde Llanqui</h2>
@@ -548,23 +585,22 @@ async function ApplyToJob() {
           <button
             type="button"
             class="btn-dock-apply"
-            :disabled="applying"
-            aria-label="Postular a esta vacante"
+            :disabled="applying || alreadyApplied || checkingApplication"
+            :aria-label="alreadyApplied ? 'Ya enviaste una postulación para esta vacante' : 'Postular a esta vacante'"
             @click="openInternalApplication"
           >
             <CheckSquare :size="18" aria-hidden="true" />
-            <span>{{ applying ? 'Enviando postulación…' : 'Postular a esta vacante' }}</span>
+            <span>{{ checkingApplication ? 'Comprobando postulación…' : applying ? 'Enviando postulación…' : alreadyApplied ? 'Postulación enviada' : 'Postular a esta vacante' }}</span>
           </button>
           <p v-if="applicationSuccess" class="application-success" role="status">{{ applicationSuccess }}</p>
+          <RouterLink v-if="alreadyApplied" :to="ROUTE_CONSTANTS.MY_APPLICATIONS" class="application-history-link">
+            Ver mis postulaciones <ArrowRight :size="15" aria-hidden="true" />
+          </RouterLink>
         </div>
 
-        <!-- Organization Metrics Card -->
+        <!-- Job management with data provided by the API. -->
         <div v-if="canManageJob" class="stats-card-panel">
-          <h2 class="stats-panel-title">Rendimiento del anuncio</h2>
-          <div class="stats-kpi-box">
-            <span class="stats-kpi-number">{{ job.views || 0 }}</span>
-            <span class="stats-kpi-label">Visualizaciones totales</span>
-          </div>
+          <h2 class="stats-panel-title">Estado de la vacante</h2>
 
           <div class="stats-meta-list">
             <div class="stats-meta-row">
@@ -610,7 +646,7 @@ async function ApplyToJob() {
     </DialogComponent>
 
     <DialogComponent
-      v-if="isCandidate && isInternalListing"
+      v-if="canApplyInternally"
       ref="applyJobDialogRef"
       title="Postular a la vacante"
       subtitle="Tu CV será enviado únicamente a la empresa que publicó esta vacante en Llanqui."
@@ -633,7 +669,7 @@ async function ApplyToJob() {
           <div class="dropzone-text">
             <strong v-if="!applicationCv">Haz clic para seleccionar tu CV</strong>
             <strong v-else class="filename-highlight">{{ applicationCv.name }}</strong>
-            <small>{{ applicationCv ? `${(applicationCv.size / 1024).toFixed(0)} KB · PDF seleccionado` : 'Formatos aceptados: .pdf (Máx 5MB)' }}</small>
+            <small>{{ applicationCv ? `${(applicationCv.size / 1024).toFixed(0)} KB · PDF seleccionado` : 'Formato aceptado: PDF (máximo 2 MB)' }}</small>
           </div>
           <input
             id="apply-cv"
@@ -1298,6 +1334,31 @@ async function ApplyToJob() {
   color: var(--color-brand-lime);
 }
 
+.application-history-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 12px;
+  min-height: 44px;
+  color: var(--color-brand-lime);
+  font-size: var(--fs-body-sm);
+  font-weight: var(--fw-semibold);
+  text-decoration: none;
+}
+
+.application-history-link:hover {
+  color: #d7ff91;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.application-history-link:focus-visible {
+  outline: 2px solid var(--color-brand-lime);
+  outline-offset: 3px;
+  border-radius: var(--radius-button);
+}
+
 .apply-card-kicker {
   font-size: 10px;
   font-weight: var(--fw-extrabold);
@@ -1401,32 +1462,6 @@ async function ApplyToJob() {
   font-size: 16px;
   font-weight: var(--fw-bold);
   color: var(--color-text-primary);
-}
-
-.stats-kpi-box {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 18px;
-  border-radius: var(--radius-card);
-  background: var(--color-surface-subtle);
-  border: 1px solid var(--color-border-subtle);
-}
-
-.stats-kpi-number {
-  font-family: var(--font-display);
-  font-size: 36px;
-  font-weight: var(--fw-extrabold);
-  color: var(--color-primary);
-  font-variant-numeric: tabular-nums;
-  line-height: 1;
-}
-
-.stats-kpi-label {
-  font-size: 12px;
-  font-weight: var(--fw-semibold);
-  color: var(--color-text-secondary);
-  margin-top: 4px;
 }
 
 .stats-meta-list {

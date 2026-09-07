@@ -14,7 +14,6 @@ import {
   Pencil,
   MessageSquare,
   Sparkles,
-  TrendingUp,
   FileText,
   Building2,
   Phone,
@@ -267,25 +266,20 @@ const completenessColor = computed(() => {
               </button>
 
               <button
+                v-if="isEmployee"
                 type="button"
                 class="quick-link quick-link--cv"
-                @click="goToTab(isEmployee ? 'cv' : 'payments')"
+                @click="goToTab('cv')"
               >
                 <span class="quick-link-icon">
-                  <component
-                    :is="isEmployee ? FileText : TrendingUp"
-                    :size="18"
-                    :stroke-width="1.6"
-                    aria-hidden="true"
-                  />
+                  <FileText :size="18" :stroke-width="1.6" aria-hidden="true" />
                 </span>
                 <span class="quick-link-text">
                   <span class="quick-link-title-row">
-                    <strong>{{ isEmployee ? 'Mis CV y Generador IA' : 'Destaca tus vacantes' }}</strong>
-                    <span v-if="isEmployee" class="quick-link-badge">IA ATS</span>
-                    <span v-else class="quick-link-badge quick-link-badge--boost">Impulso</span>
+                    <strong>Mis CV y Generador IA</strong>
+                    <span class="quick-link-badge">IA ATS</span>
                   </span>
-                  <span>{{ isEmployee ? 'Crea, sube y gestiona tus versiones de currículum en PDF.' : 'Más visibilidad en los resultados, más postulantes.' }}</span>
+                  <span>Crea, sube y gestiona tus versiones de currículum en PDF.</span>
                 </span>
                 <ArrowRight :size="16" class="quick-link-arrow" aria-hidden="true" />
               </button>
@@ -1066,12 +1060,6 @@ const completenessColor = computed(() => {
   background: var(--color-brand-lime-soft);
   color: var(--color-state-success-dark);
   border: 1px solid color-mix(in srgb, var(--color-brand-lime) 50%, transparent);
-}
-
-.quick-link-badge--boost {
-  background: var(--color-lavender);
-  color: var(--color-primary);
-  border-color: color-mix(in srgb, var(--color-primary) 30%, transparent);
 }
 
 .quick-link-text span:not(.quick-link-badge):not(.quick-link-title-row) {

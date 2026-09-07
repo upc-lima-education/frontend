@@ -23,6 +23,7 @@ Este documento registra el estado real de la comunicación entre el frontend de 
 ## Cambios detectados tras actualizar `backend-v2/clean` (31/08/2026)
 
 - [x] **Sesión y perfil propio**: `sign-in`, `auth/me` y `refresh` ahora resuelven `profileType` y `profileId`; el frontend los persiste desde la respuesta real. `GET /profile/me` sustituye la lectura dependiente de un `profileId` local.
+- [x] **Perfiles de candidato y empresa separados**: un `404` de `GET /profile/me` para una cuenta nueva se interpreta como ausencia de perfil, no como un error de sesión. La selección durante el registro solo guía el onboarding; el rol se vuelve autoritativo cuando la API crea `CandidateProfile` o `CompanyProfile`. El candidato ya no puede seleccionar “persona jurídica” ni enviar RUC. La empresa crea su perfil con `POST /profile/company` en `multipart/form-data`, usando razón social, RUC, sector, sitio web, tamaño, ubicación, descripción y foto. El RUC queda inmutable después de crear la empresa; `isVerified` solo representa la verificación persistida por Llanqui, no una validación local de SUNAT.
 - [x] **Conversaciones propias**: `GET /conversation/me` habilita la bandeja del candidato y devuelve mensajes ordenados en cada conversación. Ambas vistas cargan el historial real después de seleccionar o enviar un mensaje.
 - [x] **Historial de postulaciones**: `GET /recruitment/applications/me` alimenta `/my-applications` con cargo, empresa, estado y fechas reales del candidato autenticado.
 - [x] **Biblioteca de CV**: `GET /cv/me` muestra los CV guardados del candidato, usando los endpoints existentes de transformar, descargar y eliminar para cada documento.
@@ -87,7 +88,7 @@ Esta auditoría distingue un endpoint consumido desde una vista de uno que solo 
 ### Candidato: perfil, oportunidades y CV
 
 - [x] Inicio, exploración y detalle consumen `GET /job` y `GET /job/{id}` con datos reales para el candidato.
-- [x] La postulación consume `POST /recruitment/applications/send` con `jobId` y CV en `multipart/form-data`.
+- [x] La postulación consume `POST /recruitment/applications/send` con `jobId` y CV en `multipart/form-data`. El detalle habilita esta acción solo si la oferta es `Internal` y no tiene `applyUrl`; exige PDF de hasta 2 MB, consulta el historial para evitar duplicados y el backend mantiene la misma protección. Con `applyUrl`, el candidato continúa en el portal indicado sin compartir su CV desde Llanqui.
 - [x] `/my-applications` consume `GET /recruitment/applications/me` y muestra el historial real del candidato autenticado.
 - [x] El candidato puede crear y actualizar su perfil con `POST/PUT /profile/candidate`, además de `PATCH /profile/upload-photo`.
 - [x] `GET /profile/me` carga el perfil de la sesión actual y actualiza el `profileId` local. `GET /profile/{id}` se conserva para consultas explícitas, como el perfil de un postulante desde company.
@@ -103,7 +104,7 @@ Esta auditoría distingue un endpoint consumido desde una vista de uno que solo 
 
 ### Company: vacantes, postulantes y pagos
 
-- [x] La company crea vacantes con `POST /job`, consulta las propias con `GET /job/company/{companyId}` y elimina con `DELETE /job/{id}`.
+- [x] La company crea vacantes internas con `POST /job`, consulta las propias con `GET /job/company/{companyId}` y elimina con `DELETE /job/{id}`. El enlace externo `applyUrl` es opcional: vacío recibe CVs en Llanqui; configurado redirige la postulación al portal indicado.
 - [x] La vista de detalle compartida usa `GET /job/{id}` y oculta la postulación para company.
 - [ ] `PUT /job/{id}`, `PATCH /job/{id}/schedule` y `PATCH /job/{id}/skill` cuentan con cliente alineado, pero no tienen una pantalla de edición publicada.
 - [-] `PATCH /job/{id}/claim` requiere una confirmación de propiedad que la UI no ofrece; no se ejecuta automáticamente.
@@ -158,6 +159,7 @@ Esta auditoría distingue un endpoint consumido desde una vista de uno que solo 
 - [x] `GET /api/v1/profile/me` recupera el perfil sin depender de estado local. `GET /api/v1/profile/{id}` sigue requiriendo un `profileId`, nunca un `userId`.
 - [x] Crear candidato con `POST /api/v1/profile/candidate` y `multipart/form-data`.
 - [x] Crear company con `POST /api/v1/profile/company` y `multipart/form-data`.
+- [x] Company consume y persiste `companyName`, `ruc`, `sector`, `website`, `companySize`, `ubigeo`, `description`, `phoneNumber` y foto. `website` debe ser una URL HTTP(S); `companySize` usa `1-10`, `11-50`, `51-200`, `201-500` o `501+`.
 - [x] Actualizar candidato con `PUT /api/v1/profile/candidate`, sin `userId` en la URL.
 - [x] Actualizar company con `PUT /api/v1/profile/company`, sin `userId` en la URL.
 - [x] Subir foto con `PATCH /api/v1/profile/upload-photo`; en perfiles nuevos se incluye en el formulario de creación.
@@ -321,3 +323,9 @@ Agregar aquí cada cambio confirmado con el formato:
 - 2026-08-31 — Sesión, perfil, mensajería, postulaciones y CV — Adaptación al `clean` b022f81: perfil propio, `profileId` de sesión, bandeja/historial, historial de postulaciones, biblioteca de CV y resumen de candidato — `npm run type-check` correcto — Pendiente prueba local y commit.
 - 2026-09-01 — CV e identidad de candidato — El botón de generación crea una nueva versión mejorada mediante `/cv/ai-assist-creation`; el historial queda para descargar/eliminar. Se retiró la promesa de verificación RENIEC local y el aviso de identidad no verificada para candidatos porque la API actual no persiste ni devuelve ese estado — Pendiente validación y commit.
 - 2026-09-01 — Créditos y PDF de CV — Plan Free de tres créditos, catálogo/saldo reales, consumo protegido antes de IA, compra solo por PayPal para Starter/Pro/Max y restricción PDF de 2 MB para CV subidos — Compilación backend y `npm run type-check` correctos — Pendiente migración y prueba local.
+- 2026-09-07 — Postulaciones internas — La publicación company se define como flujo interno; el detalle candidato valida PDF de 2 MB, evita reenvíos y deriva a Mis postulaciones. El tablero company usa el `profileId` de la sesión, no un valor aislado de almacenamiento local — Pendiente validación local y commit.
+- 2026-09-07 — Autenticación y perfiles por rol — El registro persiste `accountType` en backend; `profileType` real tiene prioridad cuando ya existe perfil. El frontend eliminó el fallback de `localStorage` y los guards esperan `/auth/me` antes de entrar a rutas exclusivas. La creación de perfil candidate/company queda bloqueada si contradice el tipo de cuenta — `npm run type-check` correcto; pendiente aplicar migración `AddAccountTypeToUsers` y prueba local.
+- 2026-09-07 — Publicación de vacantes — Prevalidación del contrato `POST /api/v1/job`: fechas futuras, ubicación UBIGEO, URL externa HTTP/HTTPS, salarios, dirección y máximo de habilidades. Los errores `ValidationProblemDetails.errors` se muestran al usuario en lugar de un mensaje genérico — Pendiente prueba local.
+- 2026-09-07 — Activación de vacantes — Publicación inmediata alineada entre frontend y backend: se permite una tolerancia de dos minutos para `opensAt`, la oferta inicia activa y un candidato puede postular. Las novedades de una vacante programada no se solicitan para un candidato — Pendiente reinicio de API y prueba con dos cuentas.
+- 2026-09-07 — Completitud de perfil company — Se retiró `skills` del cálculo de organización: el contrato y el formulario company no permiten gestionar habilidades, por lo que no puede ser un requisito de completitud. El indicador ahora solo considera razón social, descripción, foto, sector y RUC; la etiqueta “Perfil Completo” se reserva para 100% — Pendiente validación local y commit.
+- 2026-09-07 — Configuración y vacantes company — Se retiraron las rutas visibles de Privacidad y “Destacar vacantes”: no existen preferencias ni planes Boost persistibles en la API. `?tab=privacy` y Pagos para company se normalizan a Perfil. El contador de visualizaciones se dejó de mostrar porque `Job.Views` se devuelve, pero la API actual no registra aperturas ni incrementa ese campo; el panel conserva solo estado y fechas reales — `npm run type-check` correcto.
