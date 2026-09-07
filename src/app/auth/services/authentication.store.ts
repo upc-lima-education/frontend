@@ -72,6 +72,12 @@ export const useAuthenticationStore = defineStore('authentication', () => {
         syncProfileId(authenticatedUser);
     }
 
+    function authenticatedLandingRoute(): string {
+        return userType.value === 'employee'
+            ? ROUTE_CONSTANTS.JOB_SEARCH
+            : ROUTE_CONSTANTS.HOME_PAGE;
+    }
+
     // Actions
     async function signIn(signInRequest: SignInRequest): Promise<boolean> {
         try {
@@ -98,8 +104,9 @@ export const useAuthenticationStore = defineStore('authentication', () => {
             }
             sessionResolved.value = true;
 
-            // Inicio compartido; sus acciones se adaptan al rol autoritativo.
-            await router.push(ROUTE_CONSTANTS.HOME_PAGE);
+            // El candidato entra directamente a la búsqueda; la empresa a su
+            // espacio de vacantes. El rol procede de /auth/me, no del navegador.
+            await router.push(authenticatedLandingRoute());
             return true;
         } catch (error) {
             console.error('Sign in failed:', error);

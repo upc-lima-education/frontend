@@ -12,6 +12,7 @@ import {
   DollarSign,
   Clock,
   Briefcase,
+  GraduationCap,
   Heart,
   ArrowRight,
   ExternalLink,
@@ -123,15 +124,17 @@ const modalityText = computed(() => {
 });
 
 const salaryText = computed(() => {
-  if (!props.job) return 'A convenir';
+  if (!props.job) return '';
   const { minSalary, maxSalary, currency } = props.job;
-  if (!minSalary && !maxSalary) return 'Salario a convenir';
+  if (!minSalary && !maxSalary) return '';
   const symbol = currency === 'PEN' ? 'S/' : (currency || 'S/');
   if (minSalary && maxSalary && minSalary !== maxSalary) {
     return `${symbol} ${minSalary.toLocaleString()} - ${maxSalary.toLocaleString()}`;
   }
   return `${symbol} ${(minSalary || maxSalary)?.toLocaleString()}`;
 });
+
+const hasSalaryInfo = computed(() => Boolean(props.job?.minSalary || props.job?.maxSalary));
 
 const workHoursText = computed(() => {
   if (!props.job) return 'Jornada regular';
@@ -144,6 +147,20 @@ const experienceText = computed(() => {
     return 'Sin experiencia previa';
   }
   return props.job.experience;
+});
+
+const educationLevelText = computed(() => {
+  const level = props.job?.educationLevel;
+  const labels: Record<string, string> = {
+    Primary: 'Primaria',
+    Secondary: 'Secundaria',
+    Technical: 'Técnico o superior técnico',
+    University: 'Universitario',
+    Master: 'Maestría',
+    Doctorate: 'Doctorado',
+  };
+
+  return level && level !== 'Unspecified' ? labels[level] || level : '';
 });
 
 const publishDateText = computed(() => {
@@ -278,8 +295,8 @@ function handleViewFullJob() {
                 </div>
               </div>
 
-              <!-- Tile 2: Salario (Emerald/Green Theme) -->
-              <div class="preview-tile preview-tile--green">
+              <!-- Tile 2: Salary, only when the detail endpoint provides it. -->
+              <div v-if="hasSalaryInfo" class="preview-tile preview-tile--green">
                 <div class="tile-icon-wrap tile-icon-wrap--green">
                   <DollarSign :size="18" />
                 </div>
@@ -308,6 +325,17 @@ function handleViewFullJob() {
                 <div class="tile-content">
                   <span class="tile-label">Experiencia</span>
                   <strong class="tile-value">{{ experienceText }}</strong>
+                </div>
+              </div>
+
+              <!-- Tile 5: Education requirement, rendered only when the API defines it. -->
+              <div v-if="educationLevelText" class="preview-tile preview-tile--purple">
+                <div class="tile-icon-wrap tile-icon-wrap--purple">
+                  <GraduationCap :size="18" />
+                </div>
+                <div class="tile-content">
+                  <span class="tile-label">Nivel educativo mínimo</span>
+                  <strong class="tile-value">{{ educationLevelText }}</strong>
                 </div>
               </div>
             </section>

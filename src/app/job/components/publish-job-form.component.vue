@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { computed, reactive, ref, watch } from 'vue';
+import { computed, nextTick, onMounted, reactive, ref, watch } from 'vue';
 import { JobService } from '../services/job.service';
-import type { CreateJobRequest } from '../model/create-job.request';
+import type { UpdateJobRequest } from '../model/update-job.request';
+import type { GetJobByIdResponse } from '../model/get-job-by-id.response';
 import { Currency } from '../enums/currency.enum';
 import { Experience } from '../enums/experience.enum';
 import { SalaryPeriod } from '../enums/salary-period';
@@ -15,10 +16,22 @@ import ButtonClueComponent from '@/app/shared/components/button-clue.component.v
 import SkillPickerComponent from '@/app/shared/components/skill-picker.component.vue';
 import { ArrowLeft, ArrowRight, Save } from 'lucide-vue-next';
 
+const props = defineProps<{
+    editJobId?: string;
+}>();
+
+const emit = defineEmits<{
+    updated: [jobId: string];
+}>();
+
 const jobService = new JobService();
 const submitting = ref(false);
 const submitError = ref('');
 const submitSuccess = ref(false);
+const loadingExistingJob = ref(false);
+const loadError = ref('');
+const hydratingForm = ref(false);
+const isEditing = computed(() => Boolean(props.editJobId));
 
 function toDateTimeLocal(date: Date): string {
     const local = new Date(date.getTime() - date.getTimezoneOffset() * 60_000);
@@ -72,6 +85,7 @@ const departments = computed(() => {
     return ubigeoService.getDepartments();
 });
 watch(selectedDepartment, () => {
+    if (hydratingForm.value) return;
     selectedProvince.value = '';
     selectedDistrict.value = '';
 });
@@ -81,6 +95,7 @@ const provinces = computed(() => {
     return ubigeoService.getProvinces(selectedDepartment.value);
 });
 watch(selectedProvince, () => {
+    if (hydratingForm.value) return;
     selectedDistrict.value = '';
 });
 
@@ -107,6 +122,64 @@ const selectedSkills = computed<string[]>({
 });
 function getSkillsFromSkillBubbles(): string[] {
     return Array.from(skillBubbles.value);
+}
+
+function toEnumValue(
+    enumObject: Record<string, string | number>,
+    value: string | number | undefined,
+    fallback: number,
+): number {
+    if (typeof value === 'number') return value;
+    const key = Object.keys(enumObject).find((candidate) => candidate.toLowerCase() === String(value ?? '').toLowerCase());
+    const resolved = key ? enumObject[key] : undefined;
+    return typeof resolved === 'number' ? resolved : fallback;
+}
+
+async function hydrateFormFromJob(job: GetJobByIdResponse): Promise<void> {
+    hydratingForm.value = true;
+    const location = ubigeoService.map[job.ubigeo];
+
+    form.title = job.title || '';
+    form.description = job.description || '';
+    form.jobType = toEnumValue(JobType, job.jobType, JobType.InPerson) as JobType;
+    form.workHours = toEnumValue(WorkHours, job.workHours, WorkHours.FullTime) as WorkHours;
+    form.experience = toEnumValue(Experience, job.experience, Experience.NoExperienceNeeded) as Experience;
+    form.educationLevel = toEnumValue(EducationLevel, job.educationLevel, EducationLevel.Unspecified) as EducationLevel;
+    form.address = job.address || '';
+    form.minSalary = Number(job.minSalary) || 0;
+    form.maxSalary = Number(job.maxSalary) || 0;
+    form.currency = toEnumValue(Currency, job.currency, Currency.PEN) as Currency;
+    form.salaryPeriod = toEnumValue(SalaryPeriod, job.salaryPeriod, SalaryPeriod.Monthly) as SalaryPeriod;
+    form.compensationType = toEnumValue(CompensationType, job.compensationType, CompensationType.Fixed) as CompensationType;
+    const existingOpenAt = new Date(job.opensAt);
+    const existingCloseAt = new Date(job.closesAt);
+    const fallbackWindow = getSuggestedPublicationWindow();
+    form.opensAt = Number.isNaN(existingOpenAt.getTime()) ? fallbackWindow.opensAt : toDateTimeLocal(existingOpenAt);
+    form.closesAt = Number.isNaN(existingCloseAt.getTime()) ? fallbackWindow.closesAt : toDateTimeLocal(existingCloseAt);
+    form.applyUrl = job.applyUrl || '';
+    skillBubbles.value = new Set((job.skills ?? []).map((skill) => skill.trim()).filter(Boolean));
+    selectedDepartment.value = location?.sDepartamento || '';
+    selectedProvince.value = location?.sProvincia || '';
+    selectedDistrict.value = location?.sDistrito || '';
+    minimumOpening.value = form.opensAt;
+
+    await nextTick();
+    hydratingForm.value = false;
+}
+
+async function loadExistingJob(): Promise<void> {
+    if (!props.editJobId) return;
+    loadingExistingJob.value = true;
+    loadError.value = '';
+    try {
+        const job = await jobService.getJobById({ id: props.editJobId });
+        await hydrateFormFromJob(job);
+    } catch (error) {
+        console.error('Error loading job for editing:', error);
+        loadError.value = 'No se pudo cargar esta vacante para editarla. Verifica que pertenezca a tu empresa.';
+    } finally {
+        loadingExistingJob.value = false;
+    }
 }
 
 function isValidHttpUrl(value: string): boolean {
@@ -193,7 +266,7 @@ async function submit() {
             submitError.value = 'Una oferta puede tener como máximo 20 habilidades.';
             return;
         }
-        if (Number.isNaN(opensAt.getTime()) || opensAt.getTime() < Date.now() - 2 * 60_000) {
+        if (Number.isNaN(opensAt.getTime()) || (!isEditing.value && opensAt.getTime() < Date.now() - 2 * 60_000)) {
             submitError.value = 'La apertura tiene más de dos minutos de antigüedad. Usa las fechas sugeridas o elige una fecha reciente.';
             return;
         }
@@ -218,7 +291,7 @@ async function submit() {
             return;
         }
 
-        const request: CreateJobRequest = {
+        const request: UpdateJobRequest = {
             title: form.title.trim(),
             description: form.description.trim(),
             jobType: JobType[form.jobType],
@@ -241,6 +314,12 @@ async function submit() {
             closesAt: closesAt.toISOString(),
             applyUrl: form.applyUrl.trim() || undefined,
         };
+        if (props.editJobId) {
+            await jobService.updateJob(props.editJobId, request);
+            emit('updated', props.editJobId);
+            return;
+        }
+
         await jobService.createJob(request);
         submitSuccess.value = true;
     } catch (e: any) {
@@ -250,10 +329,14 @@ async function submit() {
         submitting.value = false;
     }
 }
+
+onMounted(loadExistingJob);
 </script>
 
 <template>
     <div class="publish-wizard-card">
+        <p v-if="loadingExistingJob" class="submit-message submit-message--loading" role="status">Cargando los datos reales de la vacante…</p>
+        <p v-else-if="loadError" class="submit-message submit-message--error" role="alert">{{ loadError }}</p>
         <div v-if="submitError" class="submit-message submit-message--error" role="alert">
             <span>{{ submitError }}</span>
             <button
@@ -287,8 +370,8 @@ async function submit() {
 
         <header class="section-header">
             <aside class="section-header-title">
-                <h2>{{ $t(`job.creationPage.header.${currentStepTitle}`) }}</h2>
-                <p>{{ $t(`job.creationPage.subheader.${currentStepTitle}`) }}</p>
+                <h2>{{ isEditing ? 'Editar vacante' : $t(`job.creationPage.header.${currentStepTitle}`) }}</h2>
+                <p>{{ isEditing ? 'Actualiza los datos de esta publicación. La fecha de apertura original se conserva.' : $t(`job.creationPage.subheader.${currentStepTitle}`) }}</p>
             </aside>
         </header>
 
@@ -465,8 +548,8 @@ async function submit() {
                         <label for="opensAt">{{ $t('job.data.opensAt') }}</label>
                         <ButtonClueComponent text="Fecha desde la cual el trabajo será visible para el público" />
                     </div>
-                    <input id="opensAt" type="datetime-local" v-model="form.opensAt" :min="minimumOpening" />
-                    <small class="field-help">La oferta se publicará inmediatamente. Puedes programarla con una fecha futura si lo necesitas.</small>
+                    <input id="opensAt" type="datetime-local" v-model="form.opensAt" :min="isEditing ? undefined : minimumOpening" />
+                    <small class="field-help">{{ isEditing ? 'Conserva la apertura original para que una vacante activa no deje de estar disponible. Puedes programar una nueva apertura futura si es necesario.' : 'La oferta se publicará inmediatamente. Puedes programarla con una fecha futura si lo necesitas.' }}</small>
                 </div>
                 <div class="input-container">
                     <div class="label-row">
@@ -519,10 +602,10 @@ async function submit() {
                 type="button" 
                 class="btn-nav btn-nav--submit" 
                 @click="submit()" 
-                :disabled="!form.opensAt || !form.closesAt || submitting"
+                :disabled="!form.opensAt || !form.closesAt || submitting || loadingExistingJob || Boolean(loadError)"
             >
                 <Save :size="16" />
-                <span>{{ submitting ? 'Publicando...' : 'Publicar oferta' }}</span>
+                <span>{{ submitting ? (isEditing ? 'Guardando…' : 'Publicando…') : (isEditing ? 'Guardar cambios' : 'Publicar oferta') }}</span>
             </button>
         </footer>
     </div>
@@ -686,6 +769,12 @@ async function submit() {
 .input-container textarea {
     min-height: 120px;
     resize: vertical;
+}
+
+.submit-message--loading {
+    color: var(--color-primary);
+    background: var(--color-surface-subtle);
+    border: 1px solid var(--color-border-subtle);
 }
 
 .submit-message-action {

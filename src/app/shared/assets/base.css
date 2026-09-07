@@ -33,6 +33,12 @@ html {
   overflow-x: hidden;
   overflow-y: scroll;
   scrollbar-gutter: stable;
+  color-scheme: light;
+}
+
+html[data-theme="dark"],
+:root[data-theme="dark"] {
+  color-scheme: dark;
 }
 
 /*Other values*/
@@ -71,11 +77,21 @@ body{
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeSpeed;
+  -webkit-tap-highlight-color: transparent;
 }
 
 #app{
   min-height: 100%;
   width: 100%;
+}
+
+a {
+  color: inherit;
+}
+
+button,
+[role="button"] {
+  touch-action: manipulation;
 }
 
 ::selection {
@@ -99,6 +115,21 @@ body{
     scroll-behavior: auto !important;
     transition-duration: 0.01ms !important;
     animation-duration: 0.01ms !important;
+  }
+}
+
+@media (max-width: 640px) {
+  :root {
+    --page-gutter: 16px;
+    --space-4: 24px;
+    --space-5: 32px;
+    --space-6: 40px;
+  }
+
+  .page-content-full,
+  .page-content-80,
+  .page-content-narrow {
+    padding-block: var(--space-4);
   }
 }
 

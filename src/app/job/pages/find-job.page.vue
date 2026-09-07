@@ -4,8 +4,9 @@ import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
 import type { GetJobByIdResponse } from '../model/get-job-by-id.response';
 import { JobService } from '../services/job.service';
-import { RecommendationService } from '../services/recommendation.service';
+import { RecommendationService, type RecommendationResponse } from '../services/recommendation.service';
 import { ubigeoService } from '@/app/shared/services/ubigeo.service';
+import { profileService } from '@/app/profile/services/profile.service';
 import {
   ArrowRight,
   BriefcaseBusiness,
@@ -39,9 +40,22 @@ const recommendationService = new RecommendationService();
 const selectedJobForPreview = ref<GetJobByIdResponse | null>(null);
 const isPreviewModalOpen = ref(false);
 
-function openJobPreview(job: GetJobByIdResponse) {
+async function openJobPreview(job: GetJobByIdResponse) {
   selectedJobForPreview.value = job;
   isPreviewModalOpen.value = true;
+
+  // GET /job solo entrega un resumen. Al abrir la vista previa se completa
+  // con GET /job/{id}, que incluye requisitos como nivel educativo.
+  try {
+    const jobDetail = await jobService.getJobById({ id: job.id });
+    if (selectedJobForPreview.value?.id === job.id) {
+      selectedJobForPreview.value = jobDetail;
+    }
+  } catch (err) {
+    // La vista previa conserva el resumen que ya se cargó; el detalle completo
+    // sigue disponible al abrir "Ver empleo".
+    console.error('Error loading job preview details:', err);
+  }
 }
 
 function closeJobPreview() {
@@ -72,6 +86,26 @@ const appliedSalary = ref<number | null>(null);
 const isRecommendationActive = ref(false);
 const recommendedJobs = ref<GetJobByIdResponse[]>([]);
 const savedJobIds = ref<Set<string>>(new Set());
+
+type CandidateProfileForRecommendations = {
+  skills?: string[];
+  ubigeo?: string;
+  workExperiences?: Array<{ position?: string }>;
+  educations?: Array<{ degree?: string; fieldOfStudy?: string | null }>;
+};
+
+const profileSkills = ref<string[]>([]);
+const profileSignals = ref<string[]>([]);
+const profileUbigeo = ref('');
+const isPersonalizationOpen = ref(false);
+const isPersonalizationLoading = ref(false);
+const personalizationStep = ref(1);
+const personalizationStepCount = 3;
+const personalizationError = ref('');
+const personalizationNotice = ref('');
+const personalizationQuery = ref('');
+const personalizationModality = ref('');
+const personalizationSalary = ref<number | null>(null);
 
 async function loadJobs() {
   loading.value = true;
@@ -176,6 +210,133 @@ function recommendationScore(job: GetJobByIdResponse): number | undefined {
   return (job as GetJobByIdResponse & { similarityScore?: number }).similarityScore;
 }
 
+function recommendationPercentage(score?: number): number {
+  if (!score) return 0;
+  return Math.round(score <= 1 ? score * 100 : score);
+}
+
+function matchRecommendations(recommendations: RecommendationResponse[]): GetJobByIdResponse[] {
+  const matched: GetJobByIdResponse[] = [];
+
+  recommendations.forEach((recommendation) => {
+    const job = jobs.value.find(
+      (item) =>
+        (item.sourceUrl && item.sourceUrl === recommendation.source_url) ||
+        item.id === recommendation.source_url,
+    );
+
+    if (job) {
+      (job as GetJobByIdResponse & { similarityScore?: number }).similarityScore =
+        recommendationPercentage(recommendation.similarity_score);
+      matched.push(job);
+    }
+  });
+
+  return matched;
+}
+
+function profileDataFromResponse(response: { data?: unknown }): CandidateProfileForRecommendations | null {
+  const payload = response.data as unknown;
+  if (!payload || typeof payload !== 'object') return null;
+  const data = 'data' in payload ? (payload as { data?: unknown }).data : payload;
+  return data && typeof data === 'object' ? (data as CandidateProfileForRecommendations) : null;
+}
+
+async function loadProfileSignals() {
+  try {
+    const response = await profileService.getCurrentProfile();
+    const profile = profileDataFromResponse(response);
+    if (!profile) return;
+
+    profileSkills.value = Array.isArray(profile.skills)
+      ? profile.skills.filter((skill): skill is string => Boolean(skill?.trim())).slice(0, 6)
+      : [];
+    profileUbigeo.value = profile.ubigeo || '';
+
+    const experienceSignals = (profile.workExperiences || [])
+      .map((experience) => experience.position?.trim())
+      .filter((position): position is string => Boolean(position));
+    const educationSignals = (profile.educations || [])
+      .flatMap((education) => [education.fieldOfStudy, education.degree])
+      .map((value) => value?.trim())
+      .filter((value): value is string => Boolean(value));
+
+    profileSignals.value = [...new Set([...profileSkills.value, ...experienceSignals, ...educationSignals])].slice(0, 8);
+    personalizationQuery.value = profileSignals.value.join(' ');
+  } catch (err) {
+    // El buscador sigue disponible si el perfil aún no existe o no se puede consultar.
+    console.error('Error loading profile signals for recommendations:', err);
+  }
+}
+
+async function applyPersonalizedRecommendations() {
+  const query = personalizationQuery.value.trim();
+  personalizationError.value = '';
+  personalizationNotice.value = '';
+
+  if (!query) {
+    personalizationError.value = 'Agrega una habilidad o el tipo de puesto que buscas para personalizar los resultados.';
+    isPersonalizationOpen.value = true;
+    return;
+  }
+
+  isPersonalizationLoading.value = true;
+  loading.value = true;
+  currentPage.value = 1;
+
+  try {
+    const recommendations = await recommendationService.getSpecificRecommendations({
+      title_search: query,
+      ubigeo: profileUbigeo.value || undefined,
+      job_type: personalizationModality.value || undefined,
+      min_salary: personalizationSalary.value || undefined,
+      limit: 100,
+    });
+    const matched = matchRecommendations(recommendations);
+
+    if (!matched.length) {
+      isRecommendationActive.value = false;
+      recommendedJobs.value = [];
+      personalizationNotice.value = 'No hubo coincidencias exactas con tus criterios. Ajusta una preferencia o explora todas las vacantes.';
+      return;
+    }
+
+    recommendedJobs.value = matched;
+    isRecommendationActive.value = true;
+    sortBy.value = 'relevance';
+    isPersonalizationOpen.value = false;
+    personalizationNotice.value = `Actualizamos tus recomendaciones con ${profileSignals.value.length ? 'los datos de tu perfil y tus preferencias' : 'tus preferencias'}.`;
+  } catch (err) {
+    console.error('Error fetching personalized recommendations:', err);
+    isRecommendationActive.value = false;
+    recommendedJobs.value = [];
+    personalizationError.value = 'No pudimos consultar el recomendador ahora. Puedes seguir buscando con los filtros de Llanqui.';
+  } finally {
+    isPersonalizationLoading.value = false;
+    loading.value = false;
+  }
+}
+
+function openPersonalization() {
+  isPersonalizationOpen.value = true;
+  personalizationStep.value = 1;
+  personalizationNotice.value = '';
+}
+
+function previousPersonalizationStep() {
+  personalizationError.value = '';
+  personalizationStep.value = Math.max(1, personalizationStep.value - 1);
+}
+
+function nextPersonalizationStep() {
+  personalizationError.value = '';
+  if (personalizationStep.value === 1 && !personalizationQuery.value.trim()) {
+    personalizationError.value = 'Indica un puesto, área o habilidad para que el modelo encuentre afinidades.';
+    return;
+  }
+  personalizationStep.value = Math.min(personalizationStepCount, personalizationStep.value + 1);
+}
+
 function toggleSaveJob(id: string) {
   if (savedJobIds.value.has(id)) {
     savedJobIds.value.delete(id);
@@ -206,16 +367,7 @@ async function searchJobs() {
         limit: 100,
       });
 
-      const matched: GetJobByIdResponse[] = [];
-      recs.forEach((rec) => {
-        const job = jobs.value.find(
-          (j) => (j.sourceUrl && j.sourceUrl === rec.source_url) || j.id === rec.source_url
-        );
-        if (job) {
-          (job as any).similarityScore = Math.round((rec.similarity_score || 0) * 100);
-          matched.push(job);
-        }
-      });
+      const matched = matchRecommendations(recs);
       recommendedJobs.value = matched.length > 0 ? matched : jobs.value;
     } catch (err) {
       console.error('Error fetching recommendations:', err);
@@ -330,7 +482,11 @@ const hasFiltersActive = computed(() =>
   )
 );
 
-onMounted(loadJobs);
+onMounted(async () => {
+  await loadJobs();
+  await loadProfileSignals();
+  if (profileSignals.value.length) await applyPersonalizedRecommendations();
+});
 </script>
 
 <template>
@@ -657,7 +813,7 @@ onMounted(loadJobs);
                   <Building2 :size="14" class="meta-icon" aria-hidden="true" />
                   <span>{{ modalityLabel(job.jobType) }}</span>
                 </div>
-                <div class="meta-data-chip meta-data-chip--salary">
+                <div v-if="hasVisibleSalary(job)" class="meta-data-chip meta-data-chip--salary">
                   <Wallet :size="14" class="meta-icon" aria-hidden="true" />
                   <span>{{ salaryRangeLabel(job) }}</span>
                 </div>
@@ -768,6 +924,159 @@ onMounted(loadJobs);
 
         <!-- Sidebar Context Deck (Desktop Only) -->
         <aside class="search-sidebar-deck" aria-label="Guías y herramientas de búsqueda">
+          <section class="recommendation-sidebar-card" aria-labelledby="personalization-heading">
+            <header class="recommendation-sidebar-card__header">
+              <div class="recommendation-sidebar-card__icon" aria-hidden="true">
+                <Sparkles :size="17" />
+              </div>
+              <div>
+                <h2 id="personalization-heading">Recomendaciones para tu perfil</h2>
+                <p v-if="profileSignals.length">Basadas en tus datos y el modelo híbrido.</p>
+                <p v-else>Cuéntanos qué tipo de empleo buscas.</p>
+              </div>
+            </header>
+
+            <div v-if="profileSkills.length" class="profile-skill-list" aria-label="Habilidades usadas por el recomendador">
+              <span v-for="skill in profileSkills.slice(0, 4)" :key="skill" class="profile-skill-token">{{ skill }}</span>
+            </div>
+
+            <div v-if="isPersonalizationLoading" class="recommendation-loading" role="status" aria-live="polite">
+              <RotateCw :size="16" class="spin-icon" aria-hidden="true" />
+              <span>Buscando afinidades…</span>
+            </div>
+
+            <ol v-else-if="recommendedJobs.length" class="recommendation-mini-list" aria-label="Vacantes recomendadas">
+              <li v-for="job in recommendedJobs.slice(0, 3)" :key="job.id">
+                <button type="button" class="recommendation-mini-job" @click="openJobPreview(job)">
+                  <span class="recommendation-mini-job__content">
+                    <strong>{{ job.title || 'Vacante laboral' }}</strong>
+                    <span>{{ companyNameFor(job) }}</span>
+                  </span>
+                  <span v-if="recommendationScore(job)" class="recommendation-mini-job__score">
+                    {{ recommendationScore(job) }}%
+                  </span>
+                  <ArrowRight :size="15" aria-hidden="true" />
+                </button>
+              </li>
+            </ol>
+
+            <p v-if="personalizationNotice" class="personalization-status personalization-status--success" role="status">
+              {{ personalizationNotice }}
+            </p>
+
+            <button
+              v-if="!isPersonalizationOpen"
+              type="button"
+              class="btn-personalize"
+              :aria-expanded="false"
+              aria-controls="personalization-preferences"
+              @click="openPersonalization"
+            >
+              <SlidersHorizontal :size="16" aria-hidden="true" />
+              {{ recommendedJobs.length ? 'No es lo que busco' : 'Personalizar recomendaciones' }}
+            </button>
+
+            <form
+              v-if="isPersonalizationOpen || !profileSignals.length"
+              id="personalization-preferences"
+              class="personalization-form"
+              @submit.prevent="applyPersonalizedRecommendations"
+            >
+              <div class="personalization-wizard__progress" aria-live="polite">
+                <span>Pregunta {{ personalizationStep }} de {{ personalizationStepCount }}</span>
+                <div class="personalization-wizard__track" aria-hidden="true">
+                  <span :style="{ transform: `scaleX(${personalizationStep / personalizationStepCount})` }"></span>
+                </div>
+              </div>
+
+              <div v-if="personalizationStep === 1" class="personalization-wizard__step">
+                <div class="personalization-form__heading">
+                  <h3>¿Qué puesto, área o habilidad quieres priorizar?</h3>
+                  <p>Tomamos como punto de partida los datos reales de tu perfil. Puedes corregirlos aquí.</p>
+                </div>
+                <label class="personalization-field" for="recommendation-focus">
+                  <span>Puesto, área o habilidades</span>
+                  <input
+                    id="recommendation-focus"
+                    v-model="personalizationQuery"
+                    type="text"
+                    autocomplete="off"
+                    placeholder="Ej. ventas, Excel, atención al cliente"
+                  />
+                </label>
+              </div>
+
+              <fieldset v-else-if="personalizationStep === 2" class="personalization-wizard__step personalization-modality-question">
+                <legend>¿Qué modalidad prefieres?</legend>
+                <p>Este criterio se envía al modelo junto con tus habilidades.</p>
+                <div class="personalization-modality-options">
+                  <label v-for="option in [
+                    { value: '', label: 'Cualquiera' },
+                    { value: 'Remote', label: 'Remoto' },
+                    { value: 'Hybrid', label: 'Híbrido' },
+                    { value: 'InPerson', label: 'Presencial' },
+                  ]" :key="option.label" class="personalization-option" :class="{ 'is-selected': personalizationModality === option.value }">
+                    <input v-model="personalizationModality" type="radio" name="recommendation-modality" :value="option.value" />
+                    <span>{{ option.label }}</span>
+                  </label>
+                </div>
+              </fieldset>
+
+              <div v-else class="personalization-wizard__step">
+                <div class="personalization-form__heading">
+                  <h3>¿Cuál es tu salario mínimo esperado?</h3>
+                  <p>Es opcional. Si lo dejas vacío, el modelo no descartará vacantes por salario.</p>
+                </div>
+                <label class="personalization-field" for="recommendation-salary">
+                  <span>Salario mensual mínimo en soles</span>
+                  <input
+                    id="recommendation-salary"
+                    v-model.number="personalizationSalary"
+                    type="number"
+                    min="0"
+                    step="100"
+                    inputmode="numeric"
+                    placeholder="Sin mínimo"
+                  />
+                </label>
+              </div>
+
+              <p v-if="personalizationError" class="personalization-status personalization-status--error" role="alert">
+                {{ personalizationError }}
+              </p>
+
+              <div class="personalization-wizard__actions">
+                <button
+                  v-if="personalizationStep > 1"
+                  type="button"
+                  class="btn-personalization-back"
+                  @click="previousPersonalizationStep"
+                >
+                  Atrás
+                </button>
+                <button
+                  v-if="personalizationStep < personalizationStepCount"
+                  type="button"
+                  class="btn-apply-personalization"
+                  @click="nextPersonalizationStep"
+                >
+                  Siguiente
+                  <ArrowRight :size="16" aria-hidden="true" />
+                </button>
+                <button v-else type="submit" class="btn-apply-personalization" :disabled="isPersonalizationLoading">
+                  <RotateCw v-if="isPersonalizationLoading" :size="16" class="spin-icon" aria-hidden="true" />
+                  <Sparkles v-else :size="16" aria-hidden="true" />
+                  {{ isPersonalizationLoading ? 'Buscando…' : 'Ver mis recomendaciones' }}
+                </button>
+              </div>
+            </form>
+
+            <div v-if="recommendedJobs.length && !isPersonalizationOpen" class="recommendation-rating-placeholder">
+              <strong>¿Estas recomendaciones eran lo que buscabas?</strong>
+              <span>La escala de 1 a 5 se habilitará cuando el modelo reciba feedback persistente.</span>
+            </div>
+          </section>
+
           <!-- Quick Filter Status Widget -->
           <section class="sidebar-widget-card" aria-labelledby="sidebar-summary-title">
             <h2 id="sidebar-summary-title" class="widget-title">Resumen de búsqueda</h2>
@@ -1298,6 +1607,402 @@ onMounted(loadJobs);
 .btn-reset-filters:focus-visible {
   outline: 2px solid var(--color-state-alert);
   outline-offset: 1px;
+}
+
+/* Candidate recommendation workspace */
+.recommendation-sidebar-card {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: var(--space-3);
+  border: 1px solid color-mix(in srgb, var(--color-primary) 18%, var(--color-border));
+  border-radius: var(--radius-card);
+  background: linear-gradient(145deg, var(--color-surface) 0%, color-mix(in srgb, var(--color-lavender) 48%, var(--color-surface)) 100%);
+  box-sizing: border-box;
+}
+
+.recommendation-sidebar-card__header {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+  gap: 10px;
+}
+
+.recommendation-sidebar-card__icon {
+  display: grid;
+  width: 36px;
+  height: 36px;
+  place-items: center;
+  border-radius: 12px;
+  background: var(--color-primary);
+  color: var(--color-surface);
+}
+
+.recommendation-sidebar-card h2,
+.personalization-form h3 {
+  margin: 0;
+  color: var(--color-text-primary);
+  font-size: 15px;
+  line-height: 1.25;
+  letter-spacing: -0.02em;
+}
+
+.recommendation-sidebar-card__header p,
+.personalization-form__heading p {
+  margin: 5px 0 0;
+  color: var(--color-text-secondary);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.profile-skill-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.profile-skill-token {
+  padding: 4px 9px;
+  border-radius: var(--radius-pill);
+  background: color-mix(in srgb, var(--color-brand-lime) 35%, var(--color-surface));
+  color: var(--color-text-primary);
+  font-size: 12px;
+  font-weight: var(--fw-semibold);
+}
+
+.btn-personalize,
+.btn-apply-personalization {
+  display: inline-flex;
+  min-height: 46px;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border-radius: var(--radius-button);
+  font-family: var(--font-family);
+  font-size: 13px;
+  font-weight: var(--fw-bold);
+  cursor: pointer;
+  text-decoration: none;
+  transition: background-color 150ms ease, border-color 150ms ease, transform 150ms ease;
+}
+
+.btn-personalize {
+  width: 100%;
+  padding: 0 16px;
+  border: 1px solid var(--color-primary);
+  background: var(--color-surface);
+  color: var(--color-primary);
+}
+
+.btn-personalize:hover {
+  background: var(--color-lavender);
+}
+
+.personalization-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: var(--radius-card-sm);
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.personalization-status--success {
+  background: color-mix(in srgb, var(--color-brand-lime) 25%, var(--color-surface));
+  color: var(--color-text-primary);
+}
+
+.personalization-status--error {
+  background: color-mix(in srgb, var(--color-state-alert) 9%, var(--color-surface));
+  color: var(--color-state-alert);
+}
+
+.personalization-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-top: 14px;
+  border-top: 1px solid var(--color-border-subtle);
+}
+
+.personalization-wizard__progress {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  color: var(--color-text-secondary);
+  font-size: 12px;
+  font-weight: var(--fw-semibold);
+}
+
+.personalization-wizard__track {
+  width: 100%;
+  height: 4px;
+  overflow: hidden;
+  border-radius: var(--radius-pill);
+  background: var(--color-border-subtle);
+}
+
+.personalization-wizard__track span {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--color-brand-lime);
+  transform-origin: left center;
+  transition: transform 220ms ease-out;
+}
+
+.personalization-wizard__step {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.personalization-modality-question legend {
+  padding: 0;
+  color: var(--color-text-primary);
+  font-size: 15px;
+  font-weight: var(--fw-bold);
+  line-height: 1.35;
+  letter-spacing: -0.015em;
+}
+
+.personalization-modality-question p {
+  margin: -5px 0 0;
+  color: var(--color-text-secondary);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.personalization-modality-options {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.personalization-option {
+  display: flex;
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
+  padding: 0 8px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-button);
+  background: var(--color-surface);
+  color: var(--color-text-secondary);
+  font-size: 12px;
+  font-weight: var(--fw-semibold);
+  text-align: center;
+  cursor: pointer;
+  transition: border-color 150ms ease, background-color 150ms ease, color 150ms ease;
+}
+
+.personalization-option input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.personalization-option:hover,
+.personalization-option.is-selected {
+  border-color: var(--color-primary);
+  background: var(--color-lavender);
+  color: var(--color-primary);
+}
+
+.personalization-option:has(input:focus-visible) {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.personalization-field {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 7px;
+  color: var(--color-text-secondary);
+  font-size: 13px;
+  font-weight: var(--fw-semibold);
+}
+
+.personalization-field input,
+.personalization-field select {
+  width: 100%;
+  min-height: 48px;
+  padding: 0 12px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-button);
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+  font: inherit;
+  font-size: 14px;
+  box-sizing: border-box;
+}
+
+.personalization-field input::placeholder {
+  color: var(--color-text-secondary);
+  opacity: 0.78;
+}
+
+.personalization-field input:focus-visible,
+.personalization-field select:focus-visible,
+.btn-personalize:focus-visible,
+.btn-apply-personalization:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.btn-apply-personalization {
+  width: 100%;
+  padding: 0 18px;
+  border: 1px solid var(--color-primary);
+  background: var(--color-primary);
+  color: var(--color-surface);
+}
+
+.btn-apply-personalization:hover:not(:disabled) {
+  background: var(--color-primary-dark);
+  transform: translateY(-1px);
+}
+
+.btn-apply-personalization:disabled {
+  cursor: wait;
+  opacity: 0.72;
+}
+
+.personalization-wizard__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.personalization-wizard__actions .btn-apply-personalization {
+  flex: 1;
+}
+
+.btn-personalization-back {
+  min-height: 46px;
+  padding: 0 14px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-button);
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+  font-family: var(--font-family);
+  font-size: 13px;
+  font-weight: var(--fw-bold);
+  cursor: pointer;
+}
+
+.btn-personalization-back:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.btn-personalization-back:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.recommendation-loading,
+.recommendation-rating-placeholder {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 0 0;
+  color: var(--color-text-secondary);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.recommendation-loading {
+  flex-direction: row;
+  align-items: center;
+}
+
+.recommendation-rating-placeholder {
+  border-top: 1px solid var(--color-border-subtle);
+}
+
+.recommendation-rating-placeholder strong {
+  color: var(--color-text-primary);
+  font-size: 12px;
+}
+
+.recommendation-mini-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.recommendation-mini-job {
+  display: grid;
+  width: 100%;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 0;
+  border: 0;
+  border-bottom: 1px solid var(--color-border-subtle);
+  background: transparent;
+  color: var(--color-text-primary);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.recommendation-mini-list li:last-child .recommendation-mini-job {
+  border-bottom: 0;
+}
+
+.recommendation-mini-job__content {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.recommendation-mini-job__content strong {
+  overflow: hidden;
+  color: var(--color-text-primary);
+  font-size: 13px;
+  line-height: 1.3;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.recommendation-mini-job__content span {
+  overflow: hidden;
+  color: var(--color-text-secondary);
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.recommendation-mini-job__score {
+  color: var(--color-primary);
+  font-size: 12px;
+  font-weight: var(--fw-bold);
+  font-variant-numeric: tabular-nums;
+}
+
+.recommendation-mini-job:hover strong,
+.recommendation-mini-job:focus-visible strong {
+  color: var(--color-primary);
+}
+
+.recommendation-mini-job:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+  border-radius: 6px;
 }
 
 /* ============================================================

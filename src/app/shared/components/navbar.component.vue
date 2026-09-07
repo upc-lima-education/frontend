@@ -12,7 +12,6 @@ import {
     LogOut,
     Search,
     PlusCircle,
-    Home,
     Briefcase,
     FileText,
     MessageSquare,
@@ -45,25 +44,22 @@ type NavLink = {
 
 const isOrganization = computed(() => auth.currentUserType === 'organization');
 const roleLabel = computed(() => (isOrganization.value ? 'Empresa' : 'Candidato'));
+const primaryRoute = computed(() =>
+    isOrganization.value ? ROUTE_CONSTANTS.HOME_PAGE : ROUTE_CONSTANTS.JOB_SEARCH,
+);
 
 const links = computed<NavLink[]>(() => {
-    const home: NavLink = { to: ROUTE_CONSTANTS.HOME_PAGE, label: 'Inicio', icon: Home };
-    const profile: NavLink = { to: ROUTE_CONSTANTS.SETTINGS_PAGE, label: 'Mi perfil', icon: User };
-
     if (isOrganization.value) {
         return [
-            home,
+            { to: ROUTE_CONSTANTS.HOME_PAGE, label: 'Mis vacantes', icon: Briefcase },
             { to: ROUTE_CONSTANTS.RECRUITMENT_APPLICATIONS, label: 'Postulaciones', icon: Briefcase },
             { to: ROUTE_CONSTANTS.MESSAGE_COMPANY, label: 'Mensajes', icon: MessageSquare },
-            profile,
         ];
     }
     return [
-        home,
-        { to: ROUTE_CONSTANTS.JOB_SEARCH, label: 'Explorar empleos', icon: Search },
+        { to: ROUTE_CONSTANTS.JOB_SEARCH, label: 'Buscar empleos', icon: Search },
         { to: ROUTE_CONSTANTS.MY_APPLICATIONS, label: 'Mis postulaciones', icon: FileText },
         { to: ROUTE_CONSTANTS.MESSAGE_EMPLOYEE, label: 'Mensajes', icon: MessageSquare },
-        profile,
     ];
 });
 
@@ -75,11 +71,7 @@ const cta = computed(() => {
             icon: PlusCircle,
         };
     }
-    return {
-        to: ROUTE_CONSTANTS.JOB_SEARCH,
-        label: 'Buscar empleo',
-        icon: Search,
-    };
+    return null;
 });
 
 const displayName = computed(() => {
@@ -249,7 +241,7 @@ async function handleLogout() {
     <header ref="rootEl" class="navbar">
         <div class="navbar-inner">
             <!-- Left: Brand Logo & Wordmark with Opportunity Route Glow -->
-            <RouterLink :to="ROUTE_CONSTANTS.HOME_PAGE" class="brand" aria-label="Llanqui - Ir al inicio">
+            <RouterLink :to="primaryRoute" class="brand" aria-label="Llanqui - Ir a la sección principal">
                 <div class="brand-logo-wrap">
                     <img class="brand-logo" src="../assets/icons/logo.svg" alt="" width="36" height="36" />
                 </div>
@@ -274,7 +266,7 @@ async function handleLogout() {
             <!-- Right: Action Controls -->
             <div class="nav-actions">
                 <!-- Search / Publish Job CTA (Desktop) -->
-                <RouterLink :to="cta.to" class="nav-cta">
+                <RouterLink v-if="cta" :to="cta.to" class="nav-cta">
                     <component :is="cta.icon" :size="16" :stroke-width="2.2" class="cta-icon" />
                     <span>{{ cta.label }}</span>
                 </RouterLink>
@@ -458,7 +450,7 @@ async function handleLogout() {
                 </div>
 
                 <!-- Primary Action CTA on Mobile -->
-                <RouterLink :to="cta.to" class="mobile-cta-btn">
+                <RouterLink v-if="cta" :to="cta.to" class="mobile-cta-btn">
                     <component :is="cta.icon" :size="18" :stroke-width="2.2" />
                     <span>{{ cta.label }}</span>
                 </RouterLink>

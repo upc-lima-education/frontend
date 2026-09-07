@@ -2,46 +2,68 @@
   "tool": "build-phase",
   "version": 2,
   "startedAt": "2026-08-31T03:09:39.388Z",
-  "comp": null,
+  "comp": ".impeccable\\mocks\\candidate-search-mobile.png",
   "direction": "74bcba89",
-  "breakpoint": null,
+  "breakpoint": "864x1821",
   "artifact": null,
-  "phase": "comps",
+  "phase": "hero",
   "phases": {
     "comps": {
-      "status": "open",
+      "status": "closed",
       "openedAt": "2026-08-31T03:09:39.387Z",
-      "closedAt": null,
-      "attempts": 0,
+      "closedAt": "2026-09-07T16:55:43.964Z",
+      "attempts": 2,
       "notes": [],
-      "gate": null,
+      "gate": {
+        "ok": true,
+        "reasons": [],
+        "summary": "3 comps, 1 approved",
+        "approved": ".impeccable\\mocks\\candidate-search-mobile.png",
+        "at": "2026-09-07T16:55:43.964Z"
+      },
       "forced": null
     },
     "spec": {
-      "status": "pending",
-      "openedAt": null,
-      "closedAt": null,
-      "attempts": 0,
+      "status": "closed",
+      "openedAt": "2026-09-07T16:55:44.002Z",
+      "closedAt": "2026-09-07T16:56:14.024Z",
+      "attempts": 1,
       "notes": [],
-      "gate": null,
+      "gate": {
+        "ok": true,
+        "reasons": [],
+        "summary": "6 regions, 0 plates, 2 text regions measured",
+        "at": "2026-09-07T16:56:14.024Z"
+      },
       "forced": null
     },
     "plates": {
-      "status": "pending",
-      "openedAt": null,
-      "closedAt": null,
-      "attempts": 0,
+      "status": "closed",
+      "openedAt": "2026-09-07T16:56:14.024Z",
+      "closedAt": "2026-09-07T16:56:14.082Z",
+      "attempts": 1,
       "notes": [],
-      "gate": null,
+      "gate": {
+        "ok": true,
+        "reasons": [],
+        "summary": "no plates owed",
+        "at": "2026-09-07T16:56:14.082Z"
+      },
       "forced": null
     },
     "hero": {
-      "status": "pending",
-      "openedAt": null,
+      "status": "open",
+      "openedAt": "2026-09-07T16:56:14.082Z",
       "closedAt": null,
-      "attempts": 0,
+      "attempts": 1,
       "notes": [],
-      "gate": null,
+      "gate": {
+        "ok": false,
+        "reasons": [
+          "no hero capture at .impeccable\\review\\hero-repro.png: screenshot the first viewport at the comp's own dimensions (864x1821) into that path"
+        ],
+        "at": "2026-09-07T16:56:35.185Z"
+      },
       "forced": null
     },
     "sections": {
@@ -81,5 +103,6 @@
       "forced": null
     }
   },
-  "finish": null
+  "finish": null,
+  "plates": {}
 }

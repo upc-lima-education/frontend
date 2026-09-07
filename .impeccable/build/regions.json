@@ -1,0 +1,10 @@
+{
+  "regions": [
+    { "id": "mobile-chrome", "kind": "chrome", "grid": "A0:J0", "note": "Compact Llanqui application header" },
+    { "id": "search-heading", "kind": "text", "grid": "A1:J1", "note": "Employment search heading and supporting copy" },
+    { "id": "search-controls", "kind": "control", "grid": "A2:J2", "note": "Search input and filter action" },
+    { "id": "result-heading", "kind": "text", "grid": "A3:J3", "note": "Employment results heading" },
+    { "id": "job-results", "kind": "control", "grid": "A3:J8", "note": "Stacked real job result cards" },
+    { "id": "mobile-navigation", "kind": "chrome", "grid": "A9:J9", "note": "Safe-area-aware mobile navigation" }
+  ]
+}

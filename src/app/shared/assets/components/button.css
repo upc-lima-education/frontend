@@ -3,7 +3,8 @@ button {
     font-weight: var(--fw-semibold);
     border: 1px solid transparent;
     border-radius: var(--radius-button);
-    padding: 10px 16px;
+    min-height: 40px;
+    padding: 9px 16px;
     cursor: pointer;
     background-color: transparent;
     color: var(--color-text-primary);
@@ -18,6 +19,11 @@ button:active:not(:disabled) {
 button:disabled {
     opacity: .55;
     cursor: not-allowed;
+}
+
+button:focus-visible {
+    outline: 3px solid color-mix(in srgb, var(--color-brand-lime) 70%, white);
+    outline-offset: 3px;
 }
 
 @media (hover: hover) and (pointer: fine) {

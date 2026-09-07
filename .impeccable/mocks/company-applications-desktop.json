@@ -1,0 +1,6 @@
+{
+  "surface": "company-applications-desktop",
+  "viewport": "1536x1024",
+  "prompt": "High-fidelity desktop web app UI composition for Llanqui, a Spanish employment platform, company view. Preserve this precise visual identity: white top navigation bar only (no global sidebar), Inter typography, primary blue #2838D3, lime #B9EF4A, app background #F6F7FB, white cards with 14-16px radius and restrained borders. The company’s task is to manage a vacancy: compact job header with status and primary action, a candidate applications list with real information hierarchy, filters that are simple and touch friendly, and a clear empty/error/loading design language. Use practical Spanish labels, no social feed, no fake metrics, no dashboards with invented analytics, no glassmorphism, no decorative gradients, no emojis.",
+  "approved": false
+}

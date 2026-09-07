@@ -26,8 +26,10 @@ import {
   DollarSign,
   ExternalLink,
   FileText,
+  GraduationCap,
   Heart,
   MapPin,
+  Pencil,
   Share2,
   ShieldCheck,
   Sparkles,
@@ -99,8 +101,21 @@ function companyInitials(name: string): string {
 
 const hasSalaryInfo = computed(() => (props.job.minSalary || 0) > 0 || (props.job.maxSalary || 0) > 0);
 
+const educationLevelText = computed(() => {
+  const labels: Record<string, string> = {
+    Primary: 'Primaria',
+    Secondary: 'Secundaria',
+    Technical: 'Técnico o superior técnico',
+    University: 'Universitario',
+    Master: 'Maestría',
+    Doctorate: 'Doctorado',
+  };
+  const level = props.job.educationLevel;
+  return level && level !== 'Unspecified' ? labels[level] || level : '';
+});
+
 function formatSalary(min: number, max: number, currency?: string) {
-  if (!min && !max) return 'Salario no especificado';
+  if (!min && !max) return 'La empresa no publicó un rango salarial';
   const symbol = currency === 'PEN' ? 'S/' : currency || 'S/';
   if (min && max && min !== max) {
     return `${symbol} ${min.toLocaleString()} - ${symbol} ${max.toLocaleString()}`;
@@ -433,7 +448,7 @@ onMounted(async () => {
               <Wallet :size="20" aria-hidden="true" />
             </div>
             <div class="spec-tile-content">
-              <span class="spec-tile-label">Remuneración estimada</span>
+              <span class="spec-tile-label">Remuneración</span>
               <p class="spec-tile-value">{{ formatSalary(job.minSalary, job.maxSalary, job.currency) }}</p>
               <small class="spec-tile-sub">
                 {{ hasSalaryInfo ? $t(`job.data.salaryPeriod.${job.salaryPeriod || 'Monthly'}`) : 'Sin información de periodicidad' }}
@@ -482,6 +497,17 @@ onMounted(async () => {
                 {{ job.closesAt ? formatDate(job.closesAt) : 'Convocatoria activa' }}
               </p>
               <small class="spec-tile-sub">Publicado el {{ formatDate(job.creationDate) }}</small>
+            </div>
+          </article>
+
+          <article v-if="educationLevelText" class="spec-tile">
+            <div class="spec-tile-icon spec-tile-icon--primary">
+              <GraduationCap :size="20" aria-hidden="true" />
+            </div>
+            <div class="spec-tile-content">
+              <span class="spec-tile-label">Nivel educativo mínimo</span>
+              <p class="spec-tile-value">{{ educationLevelText }}</p>
+              <small class="spec-tile-sub">Requisito definido por la empresa</small>
             </div>
           </article>
         </section>
@@ -616,6 +642,14 @@ onMounted(async () => {
               <strong>{{ formatDate(job.closesAt) }}</strong>
             </div>
           </div>
+
+          <RouterLink
+            :to="{ path: ROUTE_CONSTANTS.JOB_PUBLISH, query: { edit: job.id } }"
+            class="btn-edit-ad"
+          >
+            <Pencil :size="15" aria-hidden="true" />
+            <span>Editar vacante</span>
+          </RouterLink>
 
           <button
             type="button"
@@ -1508,6 +1542,35 @@ onMounted(async () => {
   font-weight: var(--fw-bold);
   cursor: pointer;
   transition: all 150ms ease;
+}
+
+.btn-edit-ad {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 40px;
+  width: 100%;
+  color: var(--color-primary);
+  background: var(--color-surface);
+  border: 1px solid color-mix(in srgb, var(--color-primary) 32%, transparent);
+  border-radius: var(--radius-button);
+  font-size: 13px;
+  font-weight: var(--fw-bold);
+  text-decoration: none;
+  transition: var(--transition);
+  box-sizing: border-box;
+}
+
+.btn-edit-ad:hover {
+  color: #fff;
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+}
+
+.btn-edit-ad:focus-visible {
+  outline: 3px solid var(--color-brand-lime);
+  outline-offset: 3px;
 }
 
 .btn-delete-ad:hover {

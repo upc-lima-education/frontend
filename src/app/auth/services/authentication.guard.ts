@@ -28,9 +28,15 @@ export const authenticationGuard = (
     // Comprueba el rol contra meta.roles y resuelve el next() adecuado.
     const proceedWithRole = () => {
         const allowedRoles = to.meta?.roles as string[] | undefined;
-        if (!allowedRoles || allowedRoles.length === 0) return next();
-
         const userType = authenticationStore.currentUserType;
+
+        // La búsqueda es el punto de entrada del candidato. /home se reserva
+        // para el espacio operativo de vacantes de la empresa y onboarding.
+        if (to.path === ROUTE_CONSTANTS.HOME_PAGE && userType === 'employee') {
+            return next(ROUTE_CONSTANTS.JOB_SEARCH);
+        }
+
+        if (!allowedRoles || allowedRoles.length === 0) return next();
 
         if (userType && allowedRoles.includes(userType)) return next();
 
