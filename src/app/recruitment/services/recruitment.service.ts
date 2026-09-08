@@ -1,4 +1,4 @@
-import http from '@/app/shared/services/base.service';
+import http, { resolveBackendAssetUrl } from '@/app/shared/services/base.service';
 import type { CreateApplicationRequest } from '../model/application.request';
 import type { ApplicationResponse, CandidateApplicationResponse } from '../model/application.response';
 import type { NotificationChannel } from '../model/notification.model';
@@ -76,7 +76,7 @@ export class RecruitmentService {
                 reference: application.candidateId,
                 firstName: application.candidate?.firstName ?? undefined,
                 lastName: application.candidate?.lastName ?? undefined,
-                profilePicture: application.candidate?.profilePicture ?? undefined,
+                profilePicture: resolveBackendAssetUrl(application.candidate?.profilePicture, application.createdAt),
                 phoneNumber: application.candidate?.phoneNumber ?? undefined,
                 skills: application.candidate?.skills ?? [],
             },

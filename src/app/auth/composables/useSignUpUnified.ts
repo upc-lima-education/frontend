@@ -95,7 +95,6 @@ export function useSignUpUnified() {
             const request = new SignUpRequest(
                 email.value,
                 password.value,
-                role.value === 'organization' ? 'Company' : 'Candidate',
             );
 
             const success = await authStore.signUp(request);

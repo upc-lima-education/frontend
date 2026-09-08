@@ -368,6 +368,11 @@ onMounted(loadExistingJob);
             </div>
         </div>
 
+        <div class="wizard-progress-mobile" aria-live="polite">
+            <span class="wizard-progress-mobile__eyebrow">Paso {{ currentStep }} de {{ totalSteps }}</span>
+            <span class="wizard-progress-mobile__title">{{ $t(`job.creationPage.header.${currentStepTitle}`) }}</span>
+        </div>
+
         <header class="section-header">
             <aside class="section-header-title">
                 <h2>{{ isEditing ? 'Editar vacante' : $t(`job.creationPage.header.${currentStepTitle}`) }}</h2>
@@ -616,13 +621,13 @@ onMounted(loadExistingJob);
     background: var(--color-surface);
     border: 1px solid var(--color-border);
     border-radius: var(--radius-card);
-    padding: var(--space-3);
+    padding: clamp(20px, 3vw, 36px);
     box-shadow: var(--shadow-card);
     display: flex;
     flex-direction: column;
     gap: var(--space-2);
     width: 100%;
-    max-width: 760px;
+    max-width: 880px;
     margin: 0 auto;
     box-sizing: border-box;
 }
@@ -656,7 +661,7 @@ onMounted(loadExistingJob);
     justify-content: space-between;
     align-items: center;
     position: relative;
-    margin-bottom: var(--space-2);
+    margin: 4px 0 var(--space-3);
 }
 
 .wizard-stepper::before {
@@ -732,7 +737,8 @@ onMounted(loadExistingJob);
 
 .section-header-title h2 {
     margin: 0 0 4px;
-    font-size: var(--fs-subtitle);
+    font-size: clamp(20px, 2.2vw, 26px);
+    letter-spacing: -0.025em;
     font-weight: var(--fw-bold);
     color: var(--color-text-primary);
 }
@@ -751,7 +757,8 @@ onMounted(loadExistingJob);
 
 /* Form panels */
 .wizard-content {
-    min-height: 280px;
+    min-height: 300px;
+    padding: 4px 0;
 }
 
 .step-panel {
@@ -931,7 +938,8 @@ onMounted(loadExistingJob);
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    padding: 12px 24px;
+    min-height: 48px;
+    padding: 12px 22px;
     border-radius: var(--radius-button);
     font-weight: var(--fw-semibold);
     cursor: pointer;
@@ -953,6 +961,15 @@ onMounted(loadExistingJob);
 .btn-nav:disabled {
     opacity: 0.5;
     cursor: not-allowed;
+}
+
+.btn-nav:focus-visible,
+.submit-message-action:focus-visible,
+select:focus-visible,
+input:focus-visible,
+textarea:focus-visible {
+    outline: 3px solid color-mix(in srgb, var(--color-primary) 28%, transparent);
+    outline-offset: 2px;
 }
 
 .btn-nav--submit {
@@ -988,15 +1005,57 @@ onMounted(loadExistingJob);
     text-align: center;
 }
 
+.wizard-progress-mobile {
+    display: none;
+}
+
 @media (max-width: 640px) {
     .wizard-stepper {
-        display: none; /* Hide stepper dots on tiny mobile screens */
+        display: none;
+    }
+    .wizard-progress-mobile {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 10px 12px;
+        border: 1px solid color-mix(in srgb, var(--color-primary) 16%, var(--color-border));
+        border-radius: 12px;
+        background: color-mix(in srgb, var(--color-lavender) 55%, var(--color-surface));
+    }
+    .wizard-progress-mobile__eyebrow {
+        color: var(--color-primary);
+        font-size: 11px;
+        font-weight: var(--fw-bold);
+        letter-spacing: .06em;
+        text-transform: uppercase;
+    }
+    .wizard-progress-mobile__title {
+        min-width: 0;
+        overflow: hidden;
+        color: var(--color-text-primary);
+        font-size: var(--fs-body-sm);
+        font-weight: var(--fw-bold);
+        text-overflow: ellipsis;
+        white-space: nowrap;
     }
     .grid-2 {
         grid-template-columns: 1fr;
     }
     .salary-grid {
         grid-template-columns: 1fr;
+    }
+    .publish-wizard-card {
+        border-radius: 14px;
+        padding: 18px 16px;
+    }
+    .wizard-footer {
+        gap: 10px;
+    }
+    .btn-nav {
+        flex: 1;
+        justify-content: center;
+        padding-inline: 14px;
     }
     .submit-message--error {
         align-items: flex-start;

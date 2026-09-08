@@ -506,10 +506,6 @@ onMounted(async () => {
            ============================================================ -->
       <section class="search-hero-card" aria-label="Buscador de oportunidades laborales">
         <div class="search-hero__header">
-          <div class="hero-chip-badge">
-            <Sparkles :size="13" aria-hidden="true" />
-            <span>Directorio de Empleo Verificado</span>
-          </div>
           <h1 class="search-hero__title">
             Encuentra tu próximo <span class="highlight-lime">paso profesional</span>
           </h1>
@@ -1078,7 +1074,7 @@ onMounted(async () => {
           </section>
 
           <!-- Quick Filter Status Widget -->
-          <section class="sidebar-widget-card" aria-labelledby="sidebar-summary-title">
+          <section class="sidebar-widget-card sidebar-widget-card--summary" aria-labelledby="sidebar-summary-title">
             <h2 id="sidebar-summary-title" class="widget-title">Resumen de búsqueda</h2>
             <div class="widget-metrics-list">
               <div class="widget-metric-row">
@@ -1297,20 +1293,6 @@ onMounted(async () => {
   flex-direction: column;
   gap: 8px;
   max-width: 780px;
-}
-
-.hero-chip-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 4px 12px;
-  border-radius: var(--radius-pill);
-  font-size: var(--fs-caption);
-  font-weight: var(--fw-bold);
-  color: var(--color-primary);
-  background: var(--color-lavender);
-  border: 1px solid color-mix(in srgb, var(--color-primary) 20%, transparent);
-  width: fit-content;
 }
 
 .search-hero__title {
@@ -2598,6 +2580,13 @@ onMounted(async () => {
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
+  position: sticky;
+  top: 88px;
+  align-self: start;
+}
+
+.sidebar-widget-card--summary {
+  order: -1;
 }
 
 .sidebar-widget-card {
@@ -2763,6 +2752,7 @@ onMounted(async () => {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: var(--space-2);
+    position: static;
   }
 }
 

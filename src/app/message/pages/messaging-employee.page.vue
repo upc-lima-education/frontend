@@ -12,9 +12,7 @@ import {
   CheckCheck,
   MessageSquare,
   Sparkles,
-  Building2,
   ShieldCheck,
-  CheckCircle2,
   ChevronLeft,
   RefreshCw,
   ExternalLink,
@@ -41,10 +39,6 @@ const quickReplies = [
   '¿Cuándo coordinamos la entrevista?',
   'Muchas gracias por contactarme.',
 ];
-
-const totalUnread = computed(() => {
-  return conversations.value.reduce((sum, c) => sum + (c.unreadCount || 0), 0);
-});
 
 const filteredConversations = computed(() => {
   const query = searchQuery.value.trim().toLowerCase();
@@ -174,10 +168,6 @@ onMounted(async () => {
       <!-- Command Hero Header -->
       <header class="msg-command-hero" aria-labelledby="msg-page-title">
         <div class="msg-hero-topline">
-          <div class="hero-chip-badge">
-            <Sparkles :size="13" class="hero-chip-icon" aria-hidden="true" />
-            <span class="hero-chip-text">Comunicación Directa</span>
-          </div>
           <button
             type="button"
             class="hero-refresh-btn"
@@ -199,69 +189,6 @@ onMounted(async () => {
           </p>
         </div>
       </header>
-
-      <!-- 4-Tile Bento Pipeline Overview -->
-      <section class="pipeline-bento-grid" aria-label="Resumen de mensajería">
-        <!-- Tile 1: Total -->
-        <div class="bento-stat-tile">
-          <div class="bento-tile-top">
-            <div class="tile-icon-box tile-icon-box--primary">
-              <MessageSquare :size="18" aria-hidden="true" />
-            </div>
-            <span class="tile-metric-value">{{ conversations.length }}</span>
-          </div>
-          <div class="tile-meta-body">
-            <span class="tile-metric-label">Bandeja activa</span>
-            <span class="tile-metric-caption">Conversaciones en curso</span>
-          </div>
-        </div>
-
-        <!-- Tile 2: Unread -->
-        <div class="bento-stat-tile">
-          <div class="bento-tile-top">
-            <div class="tile-icon-box" :class="totalUnread > 0 ? 'tile-icon-box--pending' : 'tile-icon-box--lime'">
-              <CheckCircle2 :size="18" aria-hidden="true" />
-            </div>
-            <span class="tile-metric-value">{{ totalUnread > 0 ? totalUnread : '0' }}</span>
-          </div>
-          <div class="tile-meta-body">
-            <span class="tile-metric-label">Sin leer</span>
-            <span class="tile-metric-caption">{{ totalUnread > 0 ? 'Mensajes pendientes' : 'Al día con tus avisos' }}</span>
-          </div>
-        </div>
-
-        <!-- Tile 3: Active Focus -->
-        <div class="bento-stat-tile">
-          <div class="bento-tile-top">
-            <div class="tile-icon-box tile-icon-box--neutral">
-              <Building2 :size="18" aria-hidden="true" />
-            </div>
-            <span class="tile-metric-value tile-metric-value--text">
-              {{ currentConversation ? currentConversation.title : '—' }}
-            </span>
-          </div>
-          <div class="tile-meta-body">
-            <span class="tile-metric-label">Empresa en foco</span>
-            <span class="tile-metric-caption truncate">
-              {{ currentConversation?.subtitle || 'Ningún chat seleccionado' }}
-            </span>
-          </div>
-        </div>
-
-        <!-- Tile 4: Security Guarantee -->
-        <div class="bento-stat-tile">
-          <div class="bento-tile-top">
-            <div class="tile-icon-box tile-icon-box--lime">
-              <ShieldCheck :size="18" aria-hidden="true" />
-            </div>
-            <span class="tile-metric-value tile-metric-value--text">Verificado</span>
-          </div>
-          <div class="tile-meta-body">
-            <span class="tile-metric-label">Canal Oficial</span>
-            <span class="tile-metric-caption">Contacto profesional seguro</span>
-          </div>
-        </div>
-      </section>
 
       <!-- Zero Conversations Empty State -->
       <section
@@ -489,7 +416,7 @@ onMounted(async () => {
 
 .msg-workspace-page {
   position: relative;
-  min-height: calc(100vh - 70px);
+  min-height: calc(100dvh - 70px);
   width: 100%;
   background: transparent;
   padding-bottom: var(--space-6);
@@ -569,7 +496,9 @@ onMounted(async () => {
   z-index: 1;
   max-width: var(--page-max);
   margin: 0 auto;
-  padding: var(--space-4) var(--page-gutter) 0;
+  width: 100%;
+  box-sizing: border-box;
+  padding: clamp(16px, 3vh, 28px) var(--page-gutter) clamp(16px, 3vh, 28px);
   display: flex;
   flex-direction: column;
   gap: var(--space-4);
@@ -587,21 +516,6 @@ onMounted(async () => {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-}
-
-.hero-chip-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  padding: 5px 12px;
-  background: var(--color-lavender);
-  border: 1px solid color-mix(in srgb, var(--color-primary) 18%, transparent);
-  border-radius: var(--radius-pill);
-  color: var(--color-primary);
-  font-size: var(--fs-label);
-  font-weight: var(--fw-bold);
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
 }
 
 .hero-refresh-btn {
@@ -900,8 +814,8 @@ onMounted(async () => {
 
 /* Messaging Console (Two-Panel Workspace) */
 .msg-console-card {
-  height: 680px;
-  max-height: calc(100vh - 120px);
+  height: clamp(500px, calc(100dvh - 300px), 680px);
+  max-height: calc(100dvh - 300px);
   min-height: 540px;
   display: grid;
   grid-template-columns: 360px 1fr;
@@ -925,7 +839,7 @@ onMounted(async () => {
 }
 
 .msg-sidebar-head {
-  padding: 16px 18px;
+  padding: 18px;
   border-bottom: 1px solid var(--color-border);
   display: flex;
   flex-direction: column;
@@ -963,7 +877,8 @@ onMounted(async () => {
   display: flex;
   align-items: center;
   gap: 8px;
-  height: 38px;
+  height: 42px;
+  box-sizing: border-box;
   padding: 0 12px;
   background: var(--color-surface-subtle);
   border: 1px solid var(--color-border);
@@ -984,6 +899,15 @@ onMounted(async () => {
 
 .msg-search-input {
   width: 100%;
+  min-width: 0;
+  min-height: 0 !important;
+  max-height: 100%;
+  height: 24px;
+  flex: 1 1 auto;
+  box-sizing: border-box;
+  padding: 0;
+  line-height: 24px;
+  align-self: center;
   border: none;
   background: transparent;
   outline: none;
@@ -1017,8 +941,8 @@ onMounted(async () => {
 
 .msg-conv-item.is-active {
   background: var(--color-lavender);
-  border-left: 3px solid var(--color-primary);
-  padding-left: 15px;
+  box-shadow: inset 2px 0 0 var(--color-primary);
+  padding-left: 16px;
 }
 
 .msg-avatar-logo {
@@ -1117,6 +1041,7 @@ onMounted(async () => {
   flex-direction: column;
   height: 100%;
   min-width: 0;
+  min-height: 0;
   background: var(--color-surface-subtle);
 }
 
@@ -1234,6 +1159,7 @@ onMounted(async () => {
 /* Stream scroll area */
 .msg-stream-scroll {
   flex: 1;
+  min-height: 0;
   overflow-y: auto;
   padding: 20px 24px;
   display: flex;
@@ -1341,6 +1267,7 @@ onMounted(async () => {
   border-top: 1px solid var(--color-border-subtle);
   overflow-x: auto;
   white-space: nowrap;
+  flex: 0 0 auto;
 }
 
 .msg-quick-label {
@@ -1376,6 +1303,9 @@ onMounted(async () => {
 
 /* Input Footer */
 .msg-input-footer {
+  position: relative;
+  z-index: 2;
+  flex: 0 0 auto;
   padding: 14px 20px;
   background: var(--color-surface);
   border-top: 1px solid var(--color-border);
@@ -1399,6 +1329,7 @@ onMounted(async () => {
 }
 
 .msg-text-input {
+  min-width: 0;
   flex: 1;
   border: none;
   background: transparent;
@@ -1502,7 +1433,8 @@ onMounted(async () => {
 
   .msg-console-card {
     grid-template-columns: 1fr;
-    height: calc(100vh - 160px);
+    height: calc(100dvh - 160px);
+    max-height: calc(100dvh - 160px);
     min-height: 520px;
   }
 
@@ -1520,6 +1452,24 @@ onMounted(async () => {
 
   .msg-bubble {
     max-width: 86%;
+  }
+
+  .msg-quick-replies-bar {
+    padding-inline: 14px;
+  }
+
+  .msg-input-footer {
+    padding: 12px 14px max(12px, env(safe-area-inset-bottom));
+  }
+
+  .msg-input-form {
+    min-height: 48px;
+    padding-left: 14px;
+  }
+
+  .msg-btn-send {
+    width: 42px;
+    height: 42px;
   }
 }
 </style>

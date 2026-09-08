@@ -11,11 +11,10 @@ export class AuthenticationService {
     /**
      * Mapea el objeto crudo de usuario del backend a UserResponse.
      * Centraliza el orden de argumentos (antes estaba corrido y dejaba
-     * El perfil existente es la fuente de verdad. Para cuentas nuevas sin
-     * perfil, el backend devuelve accountType, persistido al registrarse.
+     * El perfil existente es la única fuente de verdad del tipo de usuario.
      */
     private mapUser(u: any): UserResponse {
-        const backendType = String(u?.profileType ?? u?.accountType ?? u?.userType ?? '').toLowerCase();
+        const backendType = String(u?.profileType ?? u?.userType ?? '').toLowerCase();
         const userType: 'employee' | 'organization' | undefined =
             backendType === 'company' || backendType === 'organization'
                 ? 'organization'

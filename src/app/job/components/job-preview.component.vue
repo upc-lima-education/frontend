@@ -630,23 +630,36 @@ function handleViewFullJob() {
 }
 
 .preview-close-btn {
+  position: relative;
+  z-index: 2;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 34px;
-  height: 34px;
-  border-radius: 50%;
-  border: 1px solid #E2E8F0;
-  background: #F8FAFC;
-  color: #64748B;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  border: 1px solid color-mix(in srgb, var(--color-primary) 24%, var(--color-border));
+  background: var(--color-surface-subtle);
+  color: var(--color-primary-dark);
   cursor: pointer;
   flex-shrink: 0;
-  transition: all 150ms ease;
+  transition: background 150ms ease, color 150ms ease, border-color 150ms ease, transform 150ms ease;
 }
 
-.preview-close-btn:hover {
-  background: #E2E8F0;
-  color: #0F172A;
+.preview-close-btn:hover,
+.preview-close-btn:focus-visible {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: #fff;
+}
+
+.preview-close-btn:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--color-primary) 30%, transparent);
+  outline-offset: 2px;
+}
+
+.preview-close-btn:active {
+  transform: scale(.96);
 }
 
 /* ============================================================

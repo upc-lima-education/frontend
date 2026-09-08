@@ -186,10 +186,6 @@ onMounted(loadApplications);
            ============================================================ -->
       <header class="apps-command-hero" aria-label="Cabecera y métricas de postulaciones">
         <div class="hero-titles-wrap">
-          <div class="hero-chip-badge">
-            <Sparkles :size="13" aria-hidden="true" />
-            <span>Seguimiento de Empleo</span>
-          </div>
           <h1 class="apps-page-title">
             Panel de <span class="highlight-lime">mis postulaciones</span>
           </h1>
@@ -622,20 +618,6 @@ onMounted(loadApplications);
   flex-direction: column;
   gap: 8px;
   max-width: 780px;
-}
-
-.hero-chip-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 4px 12px;
-  border-radius: var(--radius-pill);
-  font-size: var(--fs-caption);
-  font-weight: var(--fw-bold);
-  color: var(--color-primary);
-  background: var(--color-lavender);
-  border: 1px solid color-mix(in srgb, var(--color-primary) 20%, transparent);
-  width: fit-content;
 }
 
 .apps-page-title {

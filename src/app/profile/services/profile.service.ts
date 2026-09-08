@@ -210,5 +210,14 @@ export class ProfileService {
 
 }
 
+export interface UpdateContactPayload {
+    email: string;
+    phoneNumber?: string;
+}
+
+export async function updateAccountContact(payload: UpdateContactPayload): Promise<void> {
+    await http.put('/account/contact', payload);
+}
+
 // Instancia singleton
 export const profileService = new ProfileService();
