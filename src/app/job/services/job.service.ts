@@ -11,6 +11,7 @@ export class JobService {
 
     /** Mapea la respuesta resumida real de GET /api/v1/job. */
     private mapJobListItem(data: any): GetJobByIdResponse {
+        const payment = data.payment ?? {};
         const job = new GetJobByIdResponse(
             data.id,
             '',
@@ -21,14 +22,14 @@ export class JobService {
             '',
             data.ubigeo || '',
             '',
-            undefined as any,
-            undefined as any,
-            undefined as any,
-            undefined as any,
-            undefined as any,
-            undefined as any,
-            undefined as any,
-            undefined as any,
+            data.latitude,
+            data.longitude,
+            payment.minSalary ?? data.minSalary,
+            payment.maxSalary ?? data.maxSalary,
+            payment.currency || data.currency,
+            payment.salaryPeriod || data.salaryPeriod,
+            payment.compensationType || data.compensationType,
+            data.opensAt ? new Date(data.opensAt) : undefined as any,
             data.closesAt ? new Date(data.closesAt) : undefined as any,
             data.jobStatus || '',
             data.views,
@@ -39,6 +40,7 @@ export class JobService {
             data.originPage || 'Internal',
             data.sourceUrl || '',
         );
+        job.experience = data.experience || '';
         job.companyName = data.companyName || undefined;
         job.companyImage = data.companyImage || undefined;
         return job;

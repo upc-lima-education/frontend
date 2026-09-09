@@ -235,6 +235,29 @@ function matchRecommendations(recommendations: RecommendationResponse[]): GetJob
   return matched;
 }
 
+function normalizeExperience(value?: string): string {
+  return (value || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .trim();
+}
+
+function matchesExperienceFilter(value: string | undefined, filter: string): boolean {
+  const experience = normalizeExperience(value);
+  if (!experience) return false;
+
+  if (filter === 'none') {
+    return experience.includes('sin experiencia') || experience.includes('no experience') || experience.includes('noexperience');
+  }
+  if (filter === '3m') return experience.includes('3 mes') || experience.includes('3 month') || experience.includes('threemonth');
+  if (filter === '6m') return experience.includes('6 mes') || experience.includes('6 month') || experience.includes('sixmonth');
+  if (filter === '1y') {
+    return experience.includes('1 an') || experience.includes('1 year') || experience.includes('oneyear') || experience.includes('2 an') || experience.includes('twoor') || experience.includes('2 year');
+  }
+  return true;
+}
+
 function profileDataFromResponse(response: { data?: unknown }): CandidateProfileForRecommendations | null {
   const payload = response.data as unknown;
   if (!payload || typeof payload !== 'object') return null;
@@ -391,11 +414,11 @@ function quickSelectSalary(val: number | null) {
 }
 
 const filteredJobs = computed(() => {
-  if (isRecommendationActive.value && recommendedJobs.value.length > 0) {
-    return recommendedJobs.value;
-  }
+  const sourceJobs = isRecommendationActive.value && recommendedJobs.value.length > 0
+    ? recommendedJobs.value
+    : jobs.value;
 
-  return jobs.value.filter((job) => {
+  return sourceJobs.filter((job) => {
     if (appliedSearchText.value) {
       const query = appliedSearchText.value;
       const titleMatch = job.title?.toLowerCase().includes(query);
@@ -411,17 +434,7 @@ const filteredJobs = computed(() => {
       if (jobCeiling < appliedSalary.value) return false;
     }
     if (appliedModality.value && job.jobType !== appliedModality.value) return false;
-    if (experienceFilter.value && job.experience) {
-      const experience = job.experience.toLowerCase();
-      const filters: Record<string, string[]> = {
-        none: ['sin experiencia', 'no experience'],
-        '3m': ['3 meses', '3 months'],
-        '6m': ['6 meses', '6 months'],
-        '1y': ['1 año', '1 aÃ±o', '1 year'],
-      };
-      const acceptedLabels = filters[experienceFilter.value] ?? [];
-      if (acceptedLabels.length && !acceptedLabels.some((label) => experience.includes(label))) return false;
-    }
+    if (experienceFilter.value && !matchesExperienceFilter(job.experience, experienceFilter.value)) return false;
     return true;
   });
 });
