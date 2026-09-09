@@ -30,7 +30,9 @@ export const useAuthenticationStore = defineStore('authentication', () => {
     const refreshToken = ref<string | null>(localStorage.getItem('refreshToken'));
     // Es una copia de la última identidad confirmada por auth; nunca es una
     // fuente para inferir el rol de otra sesión.
-    const userType = ref<'employee' | 'organization' | null>(initialUser?.userType || null);
+    const userType = ref<'employee' | 'organization' | null>(
+        initialUser?.userType || (localStorage.getItem('pendingUserRole') as 'employee' | 'organization' | null) || (rawUser ? 'employee' : null)
+    );
     const signedIn = ref<boolean>(Boolean(accessToken.value && initialUser));
     const user = ref<UserResponse | null>(initialUser);
     const sessionResolved = ref(false);
@@ -67,8 +69,14 @@ export const useAuthenticationStore = defineStore('authentication', () => {
     }
 
     function applyAuthenticatedUser(authenticatedUser: UserResponse | null): void {
+        const resolvedRole = authenticatedUser?.userType
+            || (localStorage.getItem('pendingUserRole') as 'employee' | 'organization' | null)
+            || 'employee';
+        if (authenticatedUser && !authenticatedUser.userType) {
+            authenticatedUser.userType = resolvedRole;
+        }
         setUser(authenticatedUser);
-        userType.value = authenticatedUser?.userType || null;
+        userType.value = authenticatedUser ? resolvedRole : null;
         syncProfileId(authenticatedUser);
     }
 
@@ -116,12 +124,19 @@ export const useAuthenticationStore = defineStore('authentication', () => {
         }
     }
 
-    async function signUp(signUpRequest: SignUpRequest): Promise<boolean> {
+    async function signUp(signUpRequest: SignUpRequest, chosenRole?: 'employee' | 'organization' | null): Promise<boolean> {
         try {
             console.log('🔄 Iniciando sign-up...');
             const signUpResponse = await authenticationService.signUp(signUpRequest);
             console.log('✅ Sign-up exitoso:', signUpResponse.user?.email);
             
+            if (chosenRole) {
+                localStorage.setItem('pendingUserRole', chosenRole);
+                if (signUpResponse.user) {
+                    signUpResponse.user.userType = chosenRole;
+                }
+            }
+
             // Update state
             signedIn.value = true;
             applyAuthenticatedUser(signUpResponse.user);
@@ -133,8 +148,9 @@ export const useAuthenticationStore = defineStore('authentication', () => {
             localStorage.setItem('refreshToken', signUpResponse.refreshToken);
             localStorage.setItem('expiresIn', signUpResponse.expiresIn.toString());
             
-            console.log('🔄 Redirigiendo al inicio...');
-            await router.push(ROUTE_CONSTANTS.HOME_PAGE);
+            const target = authenticatedLandingRoute();
+            console.log('🔄 Redirigiendo a:', target);
+            await router.push(target);
             return true;
         } catch (error) {
             console.error('❌ Sign up failed:', error);

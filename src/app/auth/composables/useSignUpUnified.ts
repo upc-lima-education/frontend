@@ -97,7 +97,7 @@ export function useSignUpUnified() {
                 password.value,
             );
 
-            const success = await authStore.signUp(request);
+            const success = await authStore.signUp(request, role.value);
 
             if (!success) {
                 serverError.value = 'No se pudo crear la cuenta. Inténtalo nuevamente.';

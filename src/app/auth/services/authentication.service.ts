@@ -14,13 +14,25 @@ export class AuthenticationService {
      * El perfil existente es la única fuente de verdad del tipo de usuario.
      */
     private mapUser(u: any): UserResponse {
-        const backendType = String(u?.profileType ?? u?.userType ?? '').toLowerCase();
-        const userType: 'employee' | 'organization' | undefined =
+        const backendType = String(u?.profileType ?? u?.userType ?? u?.accountType ?? '').toLowerCase();
+        let userType: 'employee' | 'organization' | undefined =
             backendType === 'company' || backendType === 'organization'
                 ? 'organization'
                 : backendType === 'candidate' || backendType === 'employee'
                     ? 'employee'
                     : undefined;
+
+        if (!userType) {
+            const pending = localStorage.getItem('pendingUserRole');
+            if (pending === 'organization' || pending === 'employee') {
+                userType = pending;
+            } else if (u?.companyName) {
+                userType = 'organization';
+            } else {
+                userType = 'employee';
+            }
+        }
+
         return new UserResponse(
             u.id,
             u.email,
@@ -35,11 +47,6 @@ export class AuthenticationService {
             u.profileId || undefined,
         );
     }
-
-    /**
-     * Register a new user
-     * POST /api/v1/auth/sign-up
-     */
     async signUp(signUpRequest: SignUpRequest): Promise<SignUpResponse> {
         console.log('🔄 AuthService: SignUp request:', signUpRequest);
         
