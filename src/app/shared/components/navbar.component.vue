@@ -11,6 +11,7 @@ import {
     Settings,
     LogOut,
     Search,
+    Compass,
     PlusCircle,
     Briefcase,
     FileText,
@@ -39,7 +40,8 @@ type NavLink = {
     to: string;
     label: string;
     icon: LucideIcon;
-    badge?: number;
+    badge?: number | string;
+    featured?: boolean;
 };
 
 const isOrganization = computed(() => auth.currentUserType === 'organization');
@@ -57,6 +59,13 @@ const links = computed<NavLink[]>(() => {
         ];
     }
     return [
+        {
+            to: ROUTE_CONSTANTS.CANDIDATE_RECOMMENDATIONS,
+            label: 'Para ti',
+            icon: Compass,
+            badge: 'Nuevo',
+            featured: true,
+        },
         { to: ROUTE_CONSTANTS.JOB_SEARCH, label: 'Buscar empleos', icon: Search },
         { to: ROUTE_CONSTANTS.MY_APPLICATIONS, label: 'Mis postulaciones', icon: FileText },
         { to: ROUTE_CONSTANTS.MESSAGE_EMPLOYEE, label: 'Mensajes', icon: MessageSquare },
@@ -255,11 +264,12 @@ async function handleLogout() {
                     :key="link.to"
                     :to="link.to"
                     class="nav-link"
-                    :class="{ 'is-active': isRouteActive(link.to) }"
+                    :class="{ 'is-active': isRouteActive(link.to), 'is-featured': link.featured }"
                     :aria-current="isRouteActive(link.to) ? 'page' : undefined"
+                    :aria-label="link.featured ? 'Para ti, nueva vista de recomendaciones personalizadas' : undefined"
                 >
                     <span class="nav-link-label">{{ link.label }}</span>
-                    <span v-if="link.badge" class="nav-badge" :aria-label="`${link.badge} elementos`">{{ link.badge }}</span>
+                    <span v-if="link.badge" class="nav-badge" aria-hidden="true">{{ link.badge }}</span>
                 </RouterLink>
             </nav>
 
@@ -464,8 +474,9 @@ async function handleLogout() {
                         :key="link.to"
                         :to="link.to"
                         class="mobile-link"
-                        :class="{ 'is-active': isRouteActive(link.to) }"
+                        :class="{ 'is-active': isRouteActive(link.to), 'is-featured': link.featured }"
                         :aria-current="isRouteActive(link.to) ? 'page' : undefined"
+                        :aria-label="link.featured ? 'Para ti, nueva vista de recomendaciones personalizadas' : undefined"
                     >
                         <div class="mobile-link-left">
                             <component :is="link.icon" :size="18" :stroke-width="1.8" class="mobile-link-icon" />
@@ -631,6 +642,38 @@ async function handleLogout() {
     font-weight: 600;
 }
 
+/* "Para ti" es una puerta de descubrimiento, visible sin competir con la ruta activa. */
+.nav-link.is-featured {
+    margin: 0 2px;
+    padding-left: clamp(10px, 1vw, 14px);
+    padding-right: clamp(10px, 1vw, 14px);
+    border: 1px solid color-mix(in srgb, var(--color-primary) 22%, var(--color-border));
+    background: color-mix(in srgb, var(--color-primary) 7%, var(--color-surface));
+    color: var(--color-primary);
+    font-weight: 650;
+}
+
+.nav-link.is-featured::before {
+    content: '';
+    position: absolute;
+    top: 8px;
+    right: 12px;
+    left: 12px;
+    height: 2px;
+    border-radius: var(--radius-pill);
+    background: linear-gradient(90deg, var(--color-primary), #22d3ee 62%, var(--color-brand-lime));
+    opacity: .9;
+}
+
+.nav-link.is-featured:hover {
+    border-color: color-mix(in srgb, var(--color-primary) 55%, var(--color-border));
+    background: color-mix(in srgb, var(--color-primary) 12%, var(--color-surface));
+}
+
+.nav-link.is-featured .nav-link-label {
+    transform: translateY(1px);
+}
+
 /* Signature "Ruta de Oportunidad" Active Indicator */
 .nav-link.is-active::after,
 .nav-link.router-link-active::after {
@@ -660,6 +703,14 @@ async function handleLogout() {
     line-height: 1;
     font-variant-numeric: tabular-nums;
     box-shadow: 0 1px 3px rgba(21, 32, 59, 0.08);
+}
+
+.nav-link.is-featured .nav-badge {
+    min-width: 34px;
+    padding: 0 6px;
+    font-size: 9px;
+    letter-spacing: .035em;
+    text-transform: uppercase;
 }
 
 /* Nav Actions */
@@ -1393,6 +1444,17 @@ async function handleLogout() {
 }
 
 .mobile-link.is-active .mobile-link-icon {
+    color: var(--color-primary);
+}
+
+.mobile-link.is-featured {
+    border: 1px solid color-mix(in srgb, var(--color-primary) 24%, var(--color-border));
+    background: color-mix(in srgb, var(--color-primary) 7%, var(--color-surface));
+    color: var(--color-primary);
+    font-weight: 650;
+}
+
+.mobile-link.is-featured .mobile-link-icon {
     color: var(--color-primary);
 }
 

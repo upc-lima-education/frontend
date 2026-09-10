@@ -11,6 +11,7 @@ const HomePage = () => import('@/app/public/pages/home.page.vue');
 const NewsPage = () => import('@/app/news/pages/news.page.vue');
 const SettingsPage = () => import('@/app/settings/pages/settings.page.vue');
 const FindJobPage = () => import('@/app/job/pages/find-job.page.vue');
+const CandidateRecommendationsPage = () => import('@/app/job/pages/candidate-recommendations.page.vue');
 const PublishJobPage = () => import('@/app/job/pages/publish-job.page.vue');
 const MessagingCompanyPage = () => import('@/app/message/pages/messaging-company.page.vue');
 const MessagingEmployeePage = () => import('@/app/message/pages/messaging-employee.page.vue');
@@ -39,6 +40,7 @@ const router = createRouter({
 
     { path: `${ROUTE_CONSTANTS.JOB_DETAIL}/:id`, name: "job-detail-company", component: JobDetailPage},
     { path: ROUTE_CONSTANTS.JOB_SEARCH, name: 'job-search', component: FindJobPage, meta: { roles: ['employee'] } },
+    { path: ROUTE_CONSTANTS.CANDIDATE_RECOMMENDATIONS, name: 'candidate-recommendations', component: CandidateRecommendationsPage, meta: { roles: ['employee'] } },
     { path: ROUTE_CONSTANTS.JOB_PUBLISH, name: 'job-publish', component: PublishJobPage, meta: { roles: ['organization'] } },
 
     { path: ROUTE_CONSTANTS.RECRUITMENT_APPLICATIONS, name: 'recruitment-applications', component: ApplicationsTrackingPage, meta: { roles: ['organization'] } },

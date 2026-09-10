@@ -11,7 +11,7 @@
     --color-brand-lime:     #B9EF4A;   /* progreso y confirmación, no texto de cuerpo */
     --color-brand-lime-alt: #B9EF4A;
     --color-brand-lime-soft:#F4FCE3;
-    --color-bg:             #F6F7FB;   /* fondo suave de la aplicacion */
+    --color-bg:             #F8FAFC;   /* fondo suave de la aplicacion */
     --color-surface:        #FFFFFF;   /* tarjetas, formularios, paneles */
     --color-text-primary:   #15203B;   /* títulos y texto principal */
     --color-text-secondary: #55627C;   /* texto de apoyo y subtítulos */
@@ -144,7 +144,7 @@
 html[data-theme="dark"],
 :root[data-theme="dark"] {
     /* Fondos y Superficies */
-    --color-bg:              #0B101E;  /* Fondo base de la app (Deep Navy) */
+    --color-bg:              #081120;  /* Fondo base de la app (Deep Navy) */
     --color-surface:         #131B2E;  /* Tarjetas, formularios, paneles, navbar */
     --color-surface-subtle:  #1B253D;  /* Inputs, headers de tabla, hover de listas */
     --color-surface-elevated:#222F4C;  /* Modales, popovers, menús flotantes */
