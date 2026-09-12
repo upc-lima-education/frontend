@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, watch } from 'vue';
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { GetJobByIdResponse } from '../model/get-job-by-id.response';
 import { ubigeoService } from '@/app/shared/services/ubigeo.service';
@@ -13,7 +13,6 @@ import {
   Clock,
   Briefcase,
   GraduationCap,
-  Heart,
   ArrowRight,
   ExternalLink,
   Sparkles,
@@ -25,15 +24,23 @@ import {
 const props = defineProps<{
   job: GetJobByIdResponse | null;
   isOpen: boolean;
-  isSaved?: boolean;
 }>();
 
 const emit = defineEmits<{
   (e: 'close'): void;
-  (e: 'toggleSave', id: string): void;
 }>();
 
 const router = useRouter();
+const failedCompanyImage = ref(false);
+
+watch(
+  () => props.job?.companyImage,
+  () => { failedCompanyImage.value = false; },
+);
+
+function handleCompanyImageError(): void {
+  failedCompanyImage.value = true;
+}
 
 // Bloquear scroll de la página cuando el modal está abierto
 watch(
@@ -235,9 +242,10 @@ function handleViewFullJob() {
             <div class="preview-header-main">
               <div class="preview-avatar">
                 <img
-                  v-if="job.companyImage"
+                  v-if="job.companyImage && !failedCompanyImage"
                   :src="job.companyImage"
                   :alt="`Logo de ${displayCompanyName}`"
+                  @error="handleCompanyImageError"
                 />
                 <span v-else class="preview-avatar-initials">{{ companyInitials }}</span>
               </div>
@@ -379,23 +387,6 @@ function handleViewFullJob() {
 
           <!-- Sticky Action Footer -->
           <footer class="preview-footer">
-            <div class="footer-left">
-              <button
-                type="button"
-                class="btn-save-toggle"
-                :class="{ 'is-saved': isSaved }"
-                :aria-label="isSaved ? 'Oferta guardada' : 'Guardar oferta'"
-                @click="emit('toggleSave', job.id)"
-              >
-                <Heart
-                  :size="18"
-                  :fill="isSaved ? '#EC4E10' : 'none'"
-                  :stroke="isSaved ? '#EC4E10' : 'currentColor'"
-                />
-                <span>{{ isSaved ? 'Guardada' : 'Guardar' }}</span>
-              </button>
-            </div>
-
             <div class="footer-right">
               <button
                 type="button"
@@ -523,13 +514,17 @@ function handleViewFullJob() {
   flex-shrink: 0;
   overflow: hidden;
   box-shadow: 0 4px 14px rgba(40, 56, 211, 0.25);
-  border: 2px solid #ffffff;
+  border: 2px solid var(--color-surface);
 }
 
 .preview-avatar img {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  display: block;
+  box-sizing: border-box;
+  padding: 4px;
+  background: var(--color-surface);
+  object-fit: contain;
 }
 
 .preview-avatar-initials {
@@ -902,45 +897,11 @@ function handleViewFullJob() {
 .preview-footer {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
   gap: 12px;
   padding: 16px 24px;
   background: var(--color-surface);
   border-top: 1px solid var(--color-border);
-}
-
-.footer-left {
-  display: flex;
-  align-items: center;
-}
-
-.btn-save-toggle {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  height: 44px;
-  padding: 0 16px;
-  border-radius: 10px;
-  border: 1px solid var(--color-state-alert-border);
-  background: var(--color-state-alert-bg);
-  color: var(--color-state-alert);
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 150ms ease;
-}
-
-.btn-save-toggle:hover {
-  background: color-mix(in srgb, var(--color-state-alert) 22%, transparent);
-  color: var(--color-state-alert-dark);
-  border-color: var(--color-state-alert);
-}
-
-.btn-save-toggle.is-saved {
-  color: var(--color-state-alert-dark);
-  background: var(--color-state-alert-bg);
-  border-color: var(--color-state-alert);
-  box-shadow: 0 2px 6px color-mix(in srgb, var(--color-state-alert) 25%, transparent);
 }
 
 .footer-right {
@@ -1038,12 +999,10 @@ function handleViewFullJob() {
     gap: 10px;
   }
 
-  .footer-left,
   .footer-right {
     width: 100%;
   }
 
-  .btn-save-toggle,
   .btn-cancel-modal,
   .btn-primary-cta {
     width: 100%;

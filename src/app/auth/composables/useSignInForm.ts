@@ -1,6 +1,6 @@
 import router from '@/app/shared/router';
 import { ROUTE_CONSTANTS } from '@/app/shared/router/route-constants';
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 import { useAuthenticationStore } from '@/app/auth/services/authentication.store';
 import { SignInRequest } from '@/app/auth/model/sign-in/sign-in.request';
 
@@ -11,24 +11,48 @@ export function useSignInForm() {
     const password = ref('');
     const loading = ref(false);
     const error = ref('');
+    const submitted = ref(false);
+
+    const emailError = computed(() => {
+        if (!submitted.value) return '';
+        if (!email.value.trim()) return 'Ingresa tu correo electrónico.';
+        return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.value)
+            ? ''
+            : 'Ingresa un correo electrónico válido.';
+    });
+
+    const passwordError = computed(() => {
+        if (!submitted.value || password.value) return '';
+        return 'Ingresa tu contraseña.';
+    });
+
+    const isFormValid = computed(() => !emailError.value && !passwordError.value && !!email.value.trim() && !!password.value);
 
     async function onSignIn() {
-        loading.value = true;
+        submitted.value = true;
         error.value = '';
+
+        if (!isFormValid.value) {
+            return false;
+        }
+
+        loading.value = true;
 
         try {
             const request = new SignInRequest(email.value, password.value);
             const success = await authStore.signIn(request);
 
             if (!success) {
-                error.value = 'Email o contraseña incorrectos';
+                error.value = 'El correo o la contraseña no coinciden. Verifica tus datos o recupera tu cuenta.';
             }
         } catch (err) {
             console.error('Login error:', err);
-            error.value = 'Error al conectar con el servidor';
+            error.value = 'No fue posible conectar con el servidor. Revisa tu conexión e inténtalo nuevamente.';
         } finally {
             loading.value = false;
         }
+
+        return true;
     }
 
     function goToSignUp() {
@@ -40,6 +64,9 @@ export function useSignInForm() {
         password,
         loading,
         error,
+        emailError,
+        passwordError,
+        isFormValid,
         onSignIn,
         goToSignUp,
     };

@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import AsmrParticlesBackground from '@/app/shared/components/asmr-particles-background.component.vue';
 import ForgotPasswordComponent from '../components/password/forgot-password.component.vue';
+import { useAuthViewport } from '../composables/use-auth-viewport';
+
+useAuthViewport();
 </script>
 
 <template>
@@ -16,18 +19,25 @@ import ForgotPasswordComponent from '../components/password/forgot-password.comp
 .auth-stage {
     position: relative;
     box-sizing: border-box;
-    min-height: 100vh;
+    height: 100vh;
+    height: 100dvh;
+    min-height: 100svh;
     width: 100%;
     display: flex;
     align-items: center;
     justify-content: center;
     padding: clamp(24px, 5vh, 56px) 1rem;
-    overflow: hidden;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: none;
     background:
         radial-gradient(circle at 20% 30%, rgba(41, 67, 255, 0.16), transparent 32%),
         radial-gradient(circle at 90% 65%, rgba(199, 243, 107, 0.09), transparent 30%),
         #07162F;
 }
+
+.auth-stage::-webkit-scrollbar { display: none; }
 
 .auth-stage::before {
     content: '';

@@ -8,7 +8,6 @@ import {
   Compass,
   FileCheck2,
   Filter,
-  Heart,
   Layers,
   MapPin,
   Plus,
@@ -30,7 +29,6 @@ import type { GetJobByIdResponse } from '@/app/job/model/get-job-by-id.response'
 
 const selectedJobForPreview = ref<GetJobByIdResponse | null>(null);
 const isPreviewModalOpen = ref(false);
-const savedJobIds = ref<Set<string>>(new Set());
 
 // Client-side quick filter tabs
 type FilterCategory = 'all' | 'remote' | 'salary' | 'recent';
@@ -47,18 +45,6 @@ function openJobPreview(job: GetJobByIdResponse) {
 function closeJobPreview() {
   isPreviewModalOpen.value = false;
   selectedJobForPreview.value = null;
-}
-
-function toggleSaveJob(id: string) {
-  if (savedJobIds.value.has(id)) {
-    savedJobIds.value.delete(id);
-  } else {
-    savedJobIds.value.add(id);
-  }
-}
-
-function isJobSaved(id: string): boolean {
-  return savedJobIds.value.has(id);
 }
 
 function handleTabKeydown(e: KeyboardEvent, current: FilterCategory) {
@@ -761,21 +747,6 @@ const filteredJobs = computed(() => {
                   <div class="job-card-cta">
                     <button
                       type="button"
-                      class="btn-save-job"
-                      :class="{ 'is-saved': isJobSaved(job.id) }"
-                      :aria-label="isJobSaved(job.id) ? 'Quitar de guardados' : 'Guardar oportunidad'"
-                      @click.stop="toggleSaveJob(job.id)"
-                    >
-                      <Heart
-                        :size="16"
-                        :fill="isJobSaved(job.id) ? 'var(--color-state-alert)' : 'none'"
-                        :stroke="isJobSaved(job.id) ? 'var(--color-state-alert)' : 'currentColor'"
-                        aria-hidden="true"
-                      />
-                    </button>
-
-                    <button
-                      type="button"
                       class="btn-row-action"
                       aria-label="Ver detalles en vista previa"
                       @click.stop="openJobPreview(job)"
@@ -878,9 +849,7 @@ const filteredJobs = computed(() => {
     <JobPreviewComponent
       :job="selectedJobForPreview"
       :is-open="isPreviewModalOpen"
-      :is-saved="selectedJobForPreview ? isJobSaved(selectedJobForPreview.id) : false"
       @close="closeJobPreview"
-      @toggle-save="toggleSaveJob"
     />
   </main>
 </template>
@@ -1884,49 +1853,6 @@ const filteredJobs = computed(() => {
   flex-shrink: 0;
 }
 
-.btn-save-job {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0 !important;
-  margin: 0;
-  width: 40px;
-  height: 40px;
-  min-width: 40px;
-  min-height: 40px;
-  border-radius: var(--radius-button);
-  border: 1px solid var(--color-border);
-  background: var(--color-surface);
-  color: var(--color-text-secondary);
-  cursor: pointer;
-  box-sizing: border-box;
-  transition: all 150ms ease;
-}
-
-.btn-save-job svg {
-  display: block;
-  flex-shrink: 0;
-  margin: auto;
-}
-
-.btn-save-job:hover {
-  border-color: var(--color-state-alert);
-  color: var(--color-state-alert);
-  background: color-mix(in srgb, var(--color-state-alert) 8%, var(--color-surface));
-}
-
-.btn-save-job.is-saved {
-  border-color: var(--color-state-alert);
-  background: color-mix(in srgb, var(--color-state-alert) 8%, var(--color-surface));
-  color: var(--color-state-alert);
-}
-
-.btn-save-job:focus-visible {
-  outline: 2px solid var(--color-state-alert);
-  outline-offset: 1px;
-}
-
 .btn-row-action {
   display: inline-flex;
   align-items: center;
@@ -2213,14 +2139,6 @@ const filteredJobs = computed(() => {
    COARSE POINTER / TOUCH TARGET ADAPTATION
    ============================================================ */
 @media (pointer: coarse) {
-  .btn-save-job {
-    width: 44px;
-    height: 44px;
-    min-width: 44px;
-    min-height: 44px;
-    padding: 0 !important;
-  }
-
   .btn-clear-search {
     width: 32px;
     height: 32px;
@@ -2355,7 +2273,6 @@ const filteredJobs = computed(() => {
   .hub-link-action,
   .filter-tab,
   .job-card,
-  .btn-save-job,
   .btn-row-action,
   .quick-matrix-item,
   .meter-action-link,

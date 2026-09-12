@@ -17,7 +17,6 @@ import {
   Compass,
   DollarSign,
   Filter,
-  Heart,
   MapPin,
   RotateCw,
   Search,
@@ -70,6 +69,7 @@ function viewJobDetails(job: GetJobByIdResponse) {
 const jobs = ref<GetJobByIdResponse[]>([]);
 const loading = ref(false);
 const error = ref('');
+const failedImages = ref<Set<string>>(new Set());
 
 const searchText = ref('');
 const locationInput = ref('');
@@ -85,7 +85,6 @@ const appliedSalary = ref<number | null>(null);
 
 const isRecommendationActive = ref(false);
 const recommendedJobs = ref<GetJobByIdResponse[]>([]);
-const savedJobIds = ref<Set<string>>(new Set());
 
 type CandidateProfileForRecommendations = {
   skills?: string[];
@@ -110,6 +109,7 @@ const personalizationSalary = ref<number | null>(null);
 async function loadJobs() {
   loading.value = true;
   error.value = '';
+  failedImages.value.clear();
   try {
     const list = await jobService.listJobs();
     jobs.value = Array.isArray(list) ? list : [];
@@ -164,6 +164,10 @@ function companyInitialsFor(job: GetJobByIdResponse): string {
     .join('')
     .toUpperCase();
   return initials || 'LL';
+}
+
+function handleImageError(jobId: string): void {
+  failedImages.value.add(jobId);
 }
 
 function modalityLabel(jobType?: string): string {
@@ -360,18 +364,6 @@ function nextPersonalizationStep() {
   personalizationStep.value = Math.min(personalizationStepCount, personalizationStep.value + 1);
 }
 
-function toggleSaveJob(id: string) {
-  if (savedJobIds.value.has(id)) {
-    savedJobIds.value.delete(id);
-  } else {
-    savedJobIds.value.add(id);
-  }
-}
-
-function isJobSaved(id: string): boolean {
-  return savedJobIds.value.has(id);
-}
-
 async function searchJobs() {
   currentPage.value = 1;
   appliedSearchText.value = searchText.value.trim().toLowerCase();
@@ -495,6 +487,10 @@ const hasFiltersActive = computed(() =>
   )
 );
 
+const activeAdvancedFiltersCount = computed(() =>
+  Number(salaryFilter.value !== null) + Number(Boolean(experienceFilter.value))
+);
+
 onMounted(async () => {
   await loadJobs();
   await loadProfileSignals();
@@ -520,10 +516,10 @@ onMounted(async () => {
       <section class="search-hero-card" aria-label="Buscador de oportunidades laborales">
         <div class="search-hero__header">
           <h1 class="search-hero__title">
-            Encuentra tu próximo <span class="highlight-lime">paso profesional</span>
+            Busca <span class="highlight-lime">empleos</span>
           </h1>
           <p class="search-hero__subtitle">
-            Conecta con oportunidades reales en Lima y a nivel nacional, con salarios transparentes y postulaciones directas.
+            Filtra por puesto, ubicación y modalidad.
           </p>
         </div>
 
@@ -622,38 +618,84 @@ onMounted(async () => {
               <span>Presencial</span>
             </button>
 
-            <!-- Salary quick dropdown -->
-            <div class="quick-select-pill">
-              <Wallet :size="13" class="pill-prefix-icon" aria-hidden="true" />
-              <select v-model="salaryFilter" aria-label="Filtrar por salario mínimo" @change="searchJobs">
-                <option :value="null">Cualquier salario</option>
-                <option :value="1200">Desde S/ 1,200</option>
-                <option :value="1500">Desde S/ 1,500</option>
-                <option :value="2000">Desde S/ 2,000</option>
-                <option :value="2500">Desde S/ 2,500</option>
-                <option :value="3500">Desde S/ 3,500</option>
-              </select>
-              <ChevronDown :size="13" class="pill-caret-icon" aria-hidden="true" />
+            <div class="desktop-advanced-filters">
+              <div class="quick-select-pill">
+                <Wallet :size="13" class="pill-prefix-icon" aria-hidden="true" />
+                <select v-model="salaryFilter" aria-label="Filtrar por salario mínimo" @change="searchJobs">
+                  <option :value="null">Cualquier salario</option>
+                  <option :value="1200">Desde S/ 1,200</option>
+                  <option :value="1500">Desde S/ 1,500</option>
+                  <option :value="2000">Desde S/ 2,000</option>
+                  <option :value="2500">Desde S/ 2,500</option>
+                  <option :value="3500">Desde S/ 3,500</option>
+                </select>
+                <ChevronDown :size="13" class="pill-caret-icon" aria-hidden="true" />
+              </div>
+
+              <div class="quick-select-pill">
+                <BriefcaseBusiness :size="13" class="pill-prefix-icon" aria-hidden="true" />
+                <select v-model="experienceFilter" aria-label="Filtrar por experiencia requerida" @change="searchJobs">
+                  <option value="">Cualquier experiencia</option>
+                  <option value="none">Sin experiencia previa</option>
+                  <option value="3m">3 meses</option>
+                  <option value="6m">6 meses</option>
+                  <option value="1y">1 año a más</option>
+                </select>
+                <ChevronDown :size="13" class="pill-caret-icon" aria-hidden="true" />
+              </div>
             </div>
 
-            <!-- Experience quick dropdown -->
-            <div class="quick-select-pill">
-              <BriefcaseBusiness :size="13" class="pill-prefix-icon" aria-hidden="true" />
-              <select v-model="experienceFilter" aria-label="Filtrar por experiencia requerida" @change="searchJobs">
-                <option value="">Cualquier experiencia</option>
-                <option value="none">Sin experiencia previa</option>
-                <option value="3m">3 meses</option>
-                <option value="6m">6 meses</option>
-                <option value="1y">1 año a más</option>
-              </select>
-              <ChevronDown :size="13" class="pill-caret-icon" aria-hidden="true" />
-            </div>
+            <details class="mobile-advanced-filters">
+              <summary>
+                <span class="mobile-advanced-filters__label">
+                  <SlidersHorizontal :size="15" aria-hidden="true" />
+                  Más filtros
+                </span>
+                <span v-if="activeAdvancedFiltersCount" class="mobile-advanced-filters__count">
+                  {{ activeAdvancedFiltersCount }} activo{{ activeAdvancedFiltersCount === 1 ? '' : 's' }}
+                </span>
+                <ChevronDown :size="15" class="mobile-advanced-filters__caret" aria-hidden="true" />
+              </summary>
+              <div class="mobile-advanced-filters__content">
+                <div class="quick-select-pill">
+                  <Wallet :size="14" class="pill-prefix-icon" aria-hidden="true" />
+                  <select v-model="salaryFilter" aria-label="Filtrar por salario mínimo" @change="searchJobs">
+                    <option :value="null">Cualquier salario</option>
+                    <option :value="1200">Desde S/ 1,200</option>
+                    <option :value="1500">Desde S/ 1,500</option>
+                    <option :value="2000">Desde S/ 2,000</option>
+                    <option :value="2500">Desde S/ 2,500</option>
+                    <option :value="3500">Desde S/ 3,500</option>
+                  </select>
+                  <ChevronDown :size="14" class="pill-caret-icon" aria-hidden="true" />
+                </div>
+                <div class="quick-select-pill">
+                  <BriefcaseBusiness :size="14" class="pill-prefix-icon" aria-hidden="true" />
+                  <select v-model="experienceFilter" aria-label="Filtrar por experiencia requerida" @change="searchJobs">
+                    <option value="">Cualquier experiencia</option>
+                    <option value="none">Sin experiencia previa</option>
+                    <option value="3m">3 meses</option>
+                    <option value="6m">6 meses</option>
+                    <option value="1y">1 año a más</option>
+                  </select>
+                  <ChevronDown :size="14" class="pill-caret-icon" aria-hidden="true" />
+                </div>
+                <button
+                  v-if="hasFiltersActive"
+                  type="button"
+                  class="btn-reset-filters btn-reset-filters--mobile"
+                  @click="clearFilters"
+                >
+                  <X :size="14" aria-hidden="true" /> Restablecer filtros
+                </button>
+              </div>
+            </details>
 
             <!-- Reset Filters CTA -->
             <button
               v-if="hasFiltersActive"
               type="button"
-              class="btn-reset-filters"
+              class="btn-reset-filters btn-reset-filters--desktop"
               aria-label="Restablecer todos los filtros"
               @click="clearFilters"
             >
@@ -810,11 +852,12 @@ onMounted(async () => {
               <div class="opportunity-card__lead">
                 <div class="company-brand-avatar" aria-hidden="true">
                   <img
-                    v-if="job.companyImage"
+                    v-if="job.companyImage && !failedImages.has(job.id)"
                     :src="job.companyImage"
                     :alt="`Logo de ${companyNameFor(job)}`"
                     class="avatar-img"
                     loading="lazy"
+                    @error="handleImageError(job.id)"
                   />
                   <span v-else class="avatar-initials">{{ companyInitialsFor(job) }}</span>
                 </div>
@@ -877,21 +920,6 @@ onMounted(async () => {
                 <div class="card-action-btns">
                   <button
                     type="button"
-                    class="btn-bookmark-job"
-                    :class="{ 'is-saved': isJobSaved(job.id) }"
-                    :aria-label="isJobSaved(job.id) ? 'Quitar de guardados' : 'Guardar oferta'"
-                    @click.stop="toggleSaveJob(job.id)"
-                  >
-                    <Heart
-                      :size="16"
-                      :fill="isJobSaved(job.id) ? 'var(--color-state-alert)' : 'none'"
-                      :stroke="isJobSaved(job.id) ? 'var(--color-state-alert)' : 'currentColor'"
-                      aria-hidden="true"
-                    />
-                  </button>
-
-                  <button
-                    type="button"
                     class="btn-view-preview"
                     aria-label="Ver detalles del empleo"
                     @click.stop="viewJobDetails(job)"
@@ -906,6 +934,7 @@ onMounted(async () => {
 
           <!-- Bottom Structured Pagination -->
           <nav v-if="totalPages > 1" class="bottom-pagination-deck" aria-label="Navegación de páginas completa">
+            <span class="mobile-pagination-status">Página {{ currentPage }} de {{ totalPages }}</span>
             <button
               type="button"
               class="pagination-nav-btn"
@@ -1169,9 +1198,7 @@ onMounted(async () => {
     <JobPreviewComponent
       :job="selectedJobForPreview"
       :is-open="isPreviewModalOpen"
-      :is-saved="selectedJobForPreview ? isJobSaved(selectedJobForPreview.id) : false"
       @close="closeJobPreview"
-      @toggle-save="toggleSaveJob"
     />
   </div>
 </template>
@@ -1511,6 +1538,16 @@ onMounted(async () => {
   align-items: center;
   gap: 8px;
   flex-wrap: wrap;
+}
+
+.desktop-advanced-filters {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.mobile-advanced-filters {
+  display: none;
 }
 
 .ribbon-caption {
@@ -2370,7 +2407,11 @@ onMounted(async () => {
 .company-brand-avatar img {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  display: block;
+  box-sizing: border-box;
+  padding: 4px;
+  background: var(--color-surface);
+  object-fit: contain;
 }
 
 .opportunity-card__info {
@@ -2524,49 +2565,6 @@ onMounted(async () => {
   gap: 8px;
 }
 
-.btn-bookmark-job {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 40px;
-  height: 40px;
-  min-width: 40px;
-  min-height: 40px;
-  border-radius: var(--radius-button);
-  border: 1px solid var(--color-border);
-  background: var(--color-surface);
-  color: var(--color-text-secondary);
-  cursor: pointer;
-  padding: 0 !important;
-  margin: 0;
-  box-sizing: border-box;
-  transition: all 150ms ease;
-}
-
-.btn-bookmark-job svg {
-  display: block;
-  flex-shrink: 0;
-  margin: auto;
-}
-
-.btn-bookmark-job:hover {
-  border-color: var(--color-state-alert);
-  color: var(--color-state-alert);
-  background: color-mix(in srgb, var(--color-state-alert) 8%, var(--color-surface));
-}
-
-.btn-bookmark-job.is-saved {
-  border-color: var(--color-state-alert);
-  background: color-mix(in srgb, var(--color-state-alert) 8%, var(--color-surface));
-  color: var(--color-state-alert);
-}
-
-.btn-bookmark-job:focus-visible {
-  outline: 2px solid var(--color-state-alert);
-  outline-offset: 1px;
-}
-
 .btn-view-preview {
   display: inline-flex;
   align-items: center;
@@ -2670,6 +2668,10 @@ onMounted(async () => {
   gap: 12px;
   padding-top: var(--space-3);
   margin-top: var(--space-2);
+}
+
+.mobile-pagination-status {
+  display: none;
 }
 
 .pagination-nav-btn {
@@ -2878,14 +2880,6 @@ onMounted(async () => {
    COARSE POINTER / TOUCH TARGETS
    ============================================================ */
 @media (pointer: coarse) {
-  .btn-bookmark-job {
-    width: 44px;
-    height: 44px;
-    min-width: 44px;
-    min-height: 44px;
-    padding: 0 !important;
-  }
-
   .quick-pill {
     min-height: 44px;
     padding: 8px 16px;
@@ -2932,10 +2926,20 @@ onMounted(async () => {
 }
 
 @media (max-width: 768px) {
+  .search-hero-card {
+    gap: 16px;
+    padding: 20px;
+  }
+
+  .search-hero__title {
+    font-size: 26px;
+    line-height: 1.15;
+  }
+
   .search-command-bar {
     grid-template-columns: 1fr;
-    gap: 10px;
-    padding: 10px;
+    gap: 6px;
+    padding: 8px;
   }
 
   .search-bar-divider {
@@ -2944,6 +2948,109 @@ onMounted(async () => {
 
   .btn-execute-search {
     width: 100%;
+    min-height: 46px;
+  }
+
+  .search-field-unit {
+    padding: 6px 10px;
+  }
+
+  .search-quick-ribbon {
+    padding-top: 14px;
+  }
+
+  .ribbon-filters-wrap {
+    width: 100%;
+    gap: 8px;
+  }
+
+  .ribbon-caption {
+    width: 100%;
+    margin: 0;
+  }
+
+  .quick-pill {
+    flex: 1 1 0;
+    justify-content: center;
+    min-height: 44px;
+    min-width: 0;
+    padding: 0 10px;
+  }
+
+  .desktop-advanced-filters,
+  .btn-reset-filters--desktop {
+    display: none;
+  }
+
+  .mobile-advanced-filters {
+    display: block;
+    width: 100%;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-card-sm);
+    background: var(--color-surface-subtle);
+  }
+
+  .mobile-advanced-filters summary {
+    display: flex;
+    align-items: center;
+    min-height: 44px;
+    padding: 0 12px;
+    color: var(--color-text-primary);
+    cursor: pointer;
+    list-style: none;
+    font-size: 13px;
+    font-weight: var(--fw-bold);
+  }
+
+  .mobile-advanced-filters summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .mobile-advanced-filters__label {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .mobile-advanced-filters__count {
+    margin-left: auto;
+    padding: 2px 7px;
+    border-radius: var(--radius-pill);
+    background: var(--color-lavender);
+    color: var(--color-primary);
+    font-size: 11px;
+    font-weight: var(--fw-bold);
+  }
+
+  .mobile-advanced-filters__caret {
+    margin-left: 8px;
+    color: var(--color-text-secondary);
+    transition: transform 150ms ease;
+  }
+
+  .mobile-advanced-filters[open] .mobile-advanced-filters__caret {
+    transform: rotate(180deg);
+  }
+
+  .mobile-advanced-filters__content {
+    display: grid;
+    gap: 8px;
+    padding: 0 12px 12px;
+  }
+
+  .mobile-advanced-filters__content .quick-select-pill,
+  .mobile-advanced-filters__content .quick-select-pill select {
+    width: 100%;
+  }
+
+  .mobile-advanced-filters__content .quick-select-pill select {
+    height: 44px;
+    padding-right: 34px;
+  }
+
+  .btn-reset-filters--mobile {
+    justify-content: center;
+    min-height: 42px;
   }
 
   .search-field-inner input.search-main-input,
@@ -2984,7 +3091,15 @@ onMounted(async () => {
 
 @media (max-width: 640px) {
   .search-hero-card {
-    padding: var(--space-3);
+    padding: 18px 16px;
+  }
+
+  .search-hero__title {
+    font-size: 24px;
+  }
+
+  .search-hero__subtitle {
+    display: none;
   }
 
   .for-you-discovery {
@@ -3011,6 +3126,41 @@ onMounted(async () => {
     width: 100%;
     justify-content: space-between;
   }
+
+  .sort-selector-wrap,
+  .sort-select-box,
+  .sort-select-box select {
+    width: 100%;
+  }
+
+  .sort-caption,
+  .header-page-stepper {
+    display: none;
+  }
+
+  .bottom-pagination-deck {
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  .mobile-pagination-status {
+    display: inline-block;
+    flex: 1;
+    color: var(--color-text-secondary);
+    font-size: 12px;
+    font-weight: var(--fw-semibold);
+    text-align: center;
+  }
+
+  .pagination-numbers-cluster {
+    display: none;
+  }
+
+  .pagination-nav-btn {
+    min-width: 44px;
+    height: 44px;
+    padding: 0 12px;
+  }
 }
 
 /* ============================================================
@@ -3023,7 +3173,6 @@ onMounted(async () => {
   .for-you-discovery__action,
   .quick-pill,
   .opportunity-card,
-  .btn-bookmark-job,
   .btn-view-preview,
   .spin-icon,
   .pagination-nav-btn,

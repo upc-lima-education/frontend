@@ -41,6 +41,18 @@ html[data-theme="dark"],
   color-scheme: dark;
 }
 
+/* Auth uses its own invisible scroller so short forms do not reserve a rail. */
+html.auth-flow {
+  overflow-y: hidden;
+  scrollbar-gutter: auto;
+}
+
+html.auth-flow,
+html.auth-flow body,
+html.auth-flow #app {
+  height: 100%;
+}
+
 /*Other values*/
 
 * {
@@ -162,7 +174,6 @@ button,
   .theme-toggle-btn,
   .nav-actions,
   .mobile-toggle,
-  .btn-save-toggle,
   .btn-primary-cta {
     display: none !important;
   }

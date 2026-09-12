@@ -19,8 +19,7 @@ export function useSignUpUnified() {
     const loading = ref(false);
     const serverError = ref('');
     const roleError = ref(false);
-    const areAllFieldsFilled = ref(true);
-    const doPasswordsMatch = ref(true);
+    const submitted = ref(false);
     const isPasswordValid = computed(() => {
         const value = password.value;
         return value.length >= 8
@@ -36,6 +35,29 @@ export function useSignUpUnified() {
         return emailPattern.test(email.value);
     });
 
+    const doPasswordsMatch = computed(() => password.value === confirmPassword.value);
+
+    const emailError = computed(() => {
+        if (!submitted.value) return '';
+        if (!email.value.trim()) return 'Ingresa tu correo electrónico.';
+        return isEmailValid.value ? '' : 'Ingresa un correo electrónico válido.';
+    });
+
+    const passwordError = computed(() => {
+        if (!submitted.value) return '';
+        if (!password.value) return 'Crea una contraseña para continuar.';
+        return isPasswordValid.value
+            ? ''
+            : 'Usa 8 caracteres o más, con mayúscula, minúscula, número y símbolo.';
+    });
+
+    const confirmPasswordError = computed(() => {
+        if (!submitted.value || !confirmPassword.value) {
+            return submitted.value ? 'Confirma tu contraseña.' : '';
+        }
+        return doPasswordsMatch.value ? '' : 'Las contraseñas no coinciden.';
+    });
+
     const isFormValid = computed(() => {
         return (
             !!email.value &&
@@ -43,7 +65,7 @@ export function useSignUpUnified() {
             !!confirmPassword.value &&
             isEmailValid.value &&
             isPasswordValid.value &&
-            password.value === confirmPassword.value &&
+            doPasswordsMatch.value &&
             !!role.value
         );
     });
@@ -69,24 +91,21 @@ export function useSignUpUnified() {
         password.value = '';
         confirmPassword.value = '';
         serverError.value = '';
-        areAllFieldsFilled.value = true;
-        doPasswordsMatch.value = true;
+        submitted.value = false;
     }
 
     async function onSignUp() {
-        areAllFieldsFilled.value = true;
-        doPasswordsMatch.value = true;
+        submitted.value = true;
         serverError.value = '';
         roleError.value = false;
 
         if (!role.value) {
-            areAllFieldsFilled.value = false;
-            return;
+            roleError.value = true;
+            return false;
         }
 
         if (!isFormValid.value) {
-            areAllFieldsFilled.value = false;
-            return;
+            return false;
         }
 
         loading.value = true;
@@ -115,6 +134,8 @@ export function useSignUpUnified() {
         } finally {
             loading.value = false;
         }
+
+        return true;
     }
 
     function goToSignIn() {
@@ -129,11 +150,14 @@ export function useSignUpUnified() {
         loading,
         serverError,
         roleError,
-        areAllFieldsFilled,
+        submitted,
         doPasswordsMatch,
         isPasswordValid,
         isEmailValid,
         isFormValid,
+        emailError,
+        passwordError,
+        confirmPasswordError,
         beforeGoogleSignUp,
         selectRole,
         resetForm,

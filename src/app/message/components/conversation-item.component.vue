@@ -31,36 +31,27 @@ const image = computed(() => props.userImage || "/src/app/shared/assets/icons/Us
 <style scoped>
 .item {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     gap: 12px;
-    padding: 12px var(--space-2);
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    padding: 14px 18px;
+    overflow: hidden;
     cursor: pointer;
-    border-bottom: 1px solid var(--color-border);
-    transition: var(--transition);
+    border-bottom: 1px solid var(--color-border-subtle);
+    transition: background-color 150ms ease;
     position: relative;
 }
 
-.item::before {
-    content: '';
-    position: absolute;
-    left: 0;
-    top: 0;
-    bottom: 0;
-    width: 3px;
-    background: transparent;
-    transition: var(--transition);
-}
-
 .item:hover {
-    background: var(--color-bg);
+    background: var(--color-surface-subtle);
 }
 
 .item.active {
-    background: var(--color-ai-bg);
-}
-
-.item.active::before {
-    background: var(--color-accent);
+    padding-left: 16px;
+    background: var(--color-lavender);
+    box-shadow: inset 2px 0 0 var(--color-primary);
 }
 
 .avatar {
@@ -70,14 +61,17 @@ const image = computed(() => props.userImage || "/src/app/shared/assets/icons/Us
 .avatar img {
     width: 44px;
     height: 44px;
-    border-radius: 50%;
+    border-radius: 12px;
     object-fit: cover;
-    border: 1px solid var(--color-border);
+    border: 0;
+    background: var(--color-lavender);
 }
 
 .content {
     flex: 1;
     min-width: 0;
+    max-width: 100%;
+    overflow: hidden;
     display: flex;
     flex-direction: column;
     gap: 3px;
@@ -88,11 +82,12 @@ const image = computed(() => props.userImage || "/src/app/shared/assets/icons/Us
     justify-content: space-between;
     align-items: center;
     gap: 8px;
+    min-width: 0;
 }
 
 .title {
     margin: 0;
-    font-size: var(--fs-body-sm);
+    font-size: 14px;
     font-weight: var(--fw-semibold);
     color: var(--color-text-primary);
     white-space: nowrap;
@@ -101,20 +96,35 @@ const image = computed(() => props.userImage || "/src/app/shared/assets/icons/Us
 }
 
 .subtitle {
-    font-size: var(--fs-caption);
-    color: var(--color-text-secondary);
+    display: block;
+    max-width: 100%;
+    font-size: 12px;
+    font-weight: var(--fw-medium);
+    color: var(--color-primary);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }
 
 .badge {
-    background: var(--color-state-alert);
-    color: white;
+    background: var(--color-brand-lime);
+    color: var(--color-text-primary);
     font-size: 10px;
     font-weight: var(--fw-bold);
-    padding: 2px 6px;
+    padding: 2px 7px;
     border-radius: 999px;
     flex-shrink: 0;
+}
+
+@media (max-width: 768px) {
+    .item,
+    .item.active {
+        padding: 13px 14px;
+    }
+
+    .avatar img {
+        width: 42px;
+        height: 42px;
+    }
 }
 </style>

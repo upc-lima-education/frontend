@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { computed, type Component } from 'vue';
-import { Sun, Moon, Laptop, CheckCircle2, Activity } from 'lucide-vue-next';
+import { Sun, Moon, Laptop, CheckCircle2 } from 'lucide-vue-next';
 import { useTheme, type ThemePreference } from '@/app/shared/composables/useTheme';
 
-const { themePreference, resolvedTheme, setTheme, reducedMotion, setReducedMotion } = useTheme();
+const { themePreference, resolvedTheme, setTheme } = useTheme();
 
 interface ThemeOption {
   id: ThemePreference;
@@ -90,42 +90,6 @@ const themeOptions = computed<ThemeOption[]>(() => [
           <CheckCircle2 v-if="themePreference === option.id" :size="20" class="check-icon" />
           <div v-else class="radio-circle"></div>
         </div>
-      </div>
-    </div>
-
-    <!-- Sección de Accesibilidad: Movimiento y Pulso de Fondo -->
-    <div class="motion-section">
-      <div class="motion-header">
-        <h3 class="motion-title">Efectos y Fondo Dinámico</h3>
-        <p class="motion-subtitle">
-          Controla las animaciones de ondas de matching y transiciones visuales en segundo plano.
-        </p>
-      </div>
-
-      <div class="motion-card">
-        <div class="motion-info">
-          <div class="motion-icon-wrap">
-            <Activity :size="20" class="motion-icon" />
-          </div>
-          <div class="motion-text">
-            <span class="motion-name">Reducir movimiento y pausar pulsos de fondo</span>
-            <span class="motion-desc">
-              Pausa las ondas viajeras y mantiene el fondo en un estado estático y sobrio.
-            </span>
-          </div>
-        </div>
-
-        <button
-          type="button"
-          role="switch"
-          :aria-checked="reducedMotion"
-          class="motion-toggle-btn"
-          :class="{ 'is-active': reducedMotion }"
-          @click="setReducedMotion(!reducedMotion)"
-          aria-label="Pausar pulsos de fondo y reducir movimiento"
-        >
-          <span class="motion-toggle-knob"></span>
-        </button>
       </div>
     </div>
   </div>
@@ -417,116 +381,4 @@ const themeOptions = computed<ThemeOption[]>(() => [
   background: var(--color-surface);
 }
 
-/* ============================================================
-   SECCIÓN DE MOVIMIENTO Y EFECTOS
-   ============================================================ */
-.motion-section {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2, 16px);
-  padding-top: var(--space-3, 24px);
-  border-top: 1px solid var(--color-border-subtle);
-}
-
-.motion-header {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.motion-title {
-  margin: 0;
-  font-size: var(--fs-body, 16px);
-  font-weight: var(--fw-bold, 700);
-  color: var(--color-text-primary);
-}
-
-.motion-subtitle {
-  margin: 0;
-  font-size: var(--fs-caption, 12px);
-  color: var(--color-text-secondary);
-  line-height: 1.5;
-}
-
-.motion-card {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  padding: 16px 20px;
-  border-radius: var(--radius-card, 14px);
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  box-shadow: var(--shadow-card);
-}
-
-.motion-info {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-}
-
-.motion-icon-wrap {
-  width: 40px;
-  height: 40px;
-  border-radius: 10px;
-  background: var(--color-lavender);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.motion-icon {
-  color: var(--color-primary);
-}
-
-.motion-text {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.motion-name {
-  font-size: var(--fs-body-sm, 14px);
-  font-weight: var(--fw-semibold, 600);
-  color: var(--color-text-primary);
-}
-
-.motion-desc {
-  font-size: var(--fs-caption, 12px);
-  color: var(--color-text-secondary);
-  line-height: 1.4;
-}
-
-.motion-toggle-btn {
-  position: relative;
-  width: 46px;
-  height: 26px;
-  border-radius: 999px;
-  background: var(--color-border);
-  border: none;
-  cursor: pointer;
-  padding: 3px;
-  transition: background-color 200ms ease;
-  flex-shrink: 0;
-}
-
-.motion-toggle-btn.is-active {
-  background: var(--color-primary);
-}
-
-.motion-toggle-knob {
-  display: block;
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  background: #ffffff;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
-  transition: transform 200ms cubic-bezier(0.2, 0.8, 0.4, 1);
-}
-
-.motion-toggle-btn.is-active .motion-toggle-knob {
-  transform: translateX(20px);
-}
 </style>

@@ -403,7 +403,7 @@ async function handleLogout() {
                                 <User :size="17" :stroke-width="1.8" />
                                 <span>Mi perfil</span>
                             </RouterLink>
-                            <RouterLink :to="{ path: ROUTE_CONSTANTS.SETTINGS_PAGE, query: { tab: 'settings' } }" class="menu-item" role="menuitem">
+                            <RouterLink :to="{ path: ROUTE_CONSTANTS.SETTINGS_PAGE, query: { tab: 'profile' } }" class="menu-item" role="menuitem">
                                 <Settings :size="17" :stroke-width="1.8" />
                                 <span>Configuración</span>
                             </RouterLink>
@@ -510,7 +510,7 @@ async function handleLogout() {
                     </div>
 
                     <RouterLink
-                        :to="{ path: ROUTE_CONSTANTS.SETTINGS_PAGE, query: { tab: 'settings' } }"
+                        :to="{ path: ROUTE_CONSTANTS.SETTINGS_PAGE, query: { tab: 'profile' } }"
                         class="mobile-link mobile-link--secondary"
                     >
                         <div class="mobile-link-left">
@@ -640,38 +640,6 @@ async function handleLogout() {
 .nav-link.router-link-active {
     color: var(--color-primary);
     font-weight: 600;
-}
-
-/* "Para ti" es una puerta de descubrimiento, visible sin competir con la ruta activa. */
-.nav-link.is-featured {
-    margin: 0 2px;
-    padding-left: clamp(10px, 1vw, 14px);
-    padding-right: clamp(10px, 1vw, 14px);
-    border: 1px solid color-mix(in srgb, var(--color-primary) 22%, var(--color-border));
-    background: color-mix(in srgb, var(--color-primary) 7%, var(--color-surface));
-    color: var(--color-primary);
-    font-weight: 650;
-}
-
-.nav-link.is-featured::before {
-    content: '';
-    position: absolute;
-    top: 8px;
-    right: 12px;
-    left: 12px;
-    height: 2px;
-    border-radius: var(--radius-pill);
-    background: linear-gradient(90deg, var(--color-primary), #22d3ee 62%, var(--color-brand-lime));
-    opacity: .9;
-}
-
-.nav-link.is-featured:hover {
-    border-color: color-mix(in srgb, var(--color-primary) 55%, var(--color-border));
-    background: color-mix(in srgb, var(--color-primary) 12%, var(--color-surface));
-}
-
-.nav-link.is-featured .nav-link-label {
-    transform: translateY(1px);
 }
 
 /* Signature "Ruta de Oportunidad" Active Indicator */
@@ -826,6 +794,7 @@ async function handleLogout() {
     top: calc(100% + 8px);
     right: 0;
     width: 340px;
+    max-height: min(560px, calc(100dvh - 96px));
     background: var(--color-surface);
     border: 1px solid var(--color-border);
     border-radius: var(--radius-card);
@@ -843,6 +812,7 @@ async function handleLogout() {
     display: flex;
     flex-direction: column;
     gap: 2px;
+    flex: 0 0 auto;
 }
 
 .notif-title-row {
@@ -878,8 +848,10 @@ async function handleLogout() {
 }
 
 .notif-list-body {
-    max-height: 320px;
+    flex: 1 1 auto;
+    min-height: 0;
     overflow-y: auto;
+    overscroll-behavior: contain;
     padding: 8px;
 }
 
@@ -1036,6 +1008,7 @@ async function handleLogout() {
     padding: 10px 14px;
     border-top: 1px solid var(--color-border-subtle);
     background: var(--color-surface-subtle);
+    flex: 0 0 auto;
 }
 
 .notif-foot-link {
@@ -1250,7 +1223,7 @@ async function handleLogout() {
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(21, 32, 59, 0.42);
+    background: color-mix(in srgb, var(--color-text-primary) 34%, transparent);
     backdrop-filter: blur(4px);
     -webkit-backdrop-filter: blur(4px);
     z-index: 98;
@@ -1267,12 +1240,18 @@ async function handleLogout() {
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
     flex-direction: column;
-    gap: 8px;
-    padding: 16px var(--page-gutter) max(24px, env(safe-area-inset-bottom, 24px));
+    gap: 10px;
+    padding: 14px var(--page-gutter) max(24px, env(safe-area-inset-bottom, 24px));
     border-bottom: 1px solid var(--color-border);
     background: var(--color-surface);
-    box-shadow: 0 16px 32px rgba(21, 32, 59, 0.12);
+    box-shadow: var(--shadow-card);
+    overscroll-behavior: contain;
+    scrollbar-width: none;
     z-index: 99;
+}
+
+.mobile-panel::-webkit-scrollbar {
+    display: none;
 }
 
 /* User Card inside Mobile Drawer */
@@ -1282,7 +1261,7 @@ async function handleLogout() {
     gap: 12px;
     padding: 12px 14px;
     border-radius: var(--radius-card-sm);
-    background: var(--color-bg);
+    background: var(--color-surface-subtle);
     border: 1px solid var(--color-border-subtle);
     margin-bottom: 4px;
 }
@@ -1364,7 +1343,6 @@ async function handleLogout() {
     font-weight: 600;
     text-decoration: none;
     transition: background-color 150ms ease, transform 120ms ease;
-    box-shadow: 0 4px 12px color-mix(in srgb, var(--color-primary) 24%, transparent);
     width: 100%;
 }
 
@@ -1376,6 +1354,13 @@ async function handleLogout() {
 .mobile-cta-btn:active {
     background: var(--color-primary-dark);
     transform: scale(0.99);
+}
+
+.mobile-cta-btn:focus-visible,
+.mobile-link:focus-visible,
+.mobile-theme-switch:focus-visible {
+    outline: 3px solid color-mix(in srgb, var(--color-primary) 32%, transparent);
+    outline-offset: 2px;
 }
 
 .mobile-divider {
@@ -1414,6 +1399,7 @@ async function handleLogout() {
     display: flex;
     align-items: center;
     gap: 12px;
+    min-width: 0;
 }
 
 .mobile-link-icon {
@@ -1424,6 +1410,12 @@ async function handleLogout() {
 
 .mobile-link span {
     color: inherit;
+}
+
+.mobile-link-left > span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .mobile-link:hover,
@@ -1444,17 +1436,6 @@ async function handleLogout() {
 }
 
 .mobile-link.is-active .mobile-link-icon {
-    color: var(--color-primary);
-}
-
-.mobile-link.is-featured {
-    border: 1px solid color-mix(in srgb, var(--color-primary) 24%, var(--color-border));
-    background: color-mix(in srgb, var(--color-primary) 7%, var(--color-surface));
-    color: var(--color-primary);
-    font-weight: 650;
-}
-
-.mobile-link.is-featured .mobile-link-icon {
     color: var(--color-primary);
 }
 
@@ -1517,8 +1498,8 @@ async function handleLogout() {
     }
 
     .notif-popover {
-        width: 300px;
-        right: -40px;
+        width: min(340px, calc(100vw - 32px));
+        right: max(16px, env(safe-area-inset-right, 0px));
     }
 }
 
@@ -1560,8 +1541,34 @@ async function handleLogout() {
     }
 
     .notif-popover {
-        width: 290px;
-        right: -30px;
+        position: fixed;
+        top: calc(env(safe-area-inset-top, 0px) + 72px);
+        left: 50%;
+        right: auto;
+        width: min(400px, calc(100vw - 24px));
+        max-height: calc(100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px) - 88px);
+        transform: translateX(-50%);
+    }
+
+    .notif-popover-head {
+        padding: 13px 14px 11px;
+    }
+
+    .notif-list-body {
+        padding: 6px;
+    }
+
+    .notif-item {
+        gap: 9px;
+        padding: 11px 10px;
+    }
+
+    .notif-popover-foot {
+        padding: 6px 10px;
+    }
+
+    .notif-foot-link {
+        min-height: 44px;
     }
 }
 
@@ -1607,8 +1614,8 @@ async function handleLogout() {
     }
 
     .notif-popover {
-        width: calc(100vw - 24px);
-        right: -48px;
+        top: calc(env(safe-area-inset-top, 0px) + 68px);
+        max-height: calc(100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px) - 80px);
     }
 }
 
@@ -1637,29 +1644,43 @@ async function handleLogout() {
 
 .mobile-theme-switch {
     position: relative;
-    width: 44px;
-    height: 24px;
+    box-sizing: border-box;
+    width: 48px;
+    height: 28px;
     border-radius: 999px;
-    background: var(--color-border);
-    border: none;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
     cursor: pointer;
     padding: 2px;
-    transition: background 200ms ease;
+    transition: background-color 180ms ease, border-color 180ms ease;
     display: flex;
     align-items: center;
+    justify-content: flex-start;
 }
 
 .mobile-theme-switch.is-active {
     background: var(--color-primary);
+    border-color: var(--color-primary);
+}
+
+.mobile-theme-switch:hover {
+    border-color: color-mix(in srgb, var(--color-primary) 44%, var(--color-border));
+}
+
+.mobile-theme-switch.is-active:hover {
+    background: var(--color-primary-dark);
+    border-color: var(--color-primary-dark);
 }
 
 .mobile-theme-switch .switch-handle {
-    width: 20px;
-    height: 20px;
+    box-sizing: border-box;
+    width: 22px;
+    height: 22px;
     border-radius: 50%;
-    background: #FFFFFF;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
-    transition: transform 200ms cubic-bezier(0.16, 1, 0.3, 1);
+    background: var(--color-surface);
+    border: 1px solid color-mix(in srgb, var(--color-text-primary) 10%, transparent);
+    box-shadow: 0 2px 5px color-mix(in srgb, var(--color-text-primary) 20%, transparent);
+    transition: transform 200ms cubic-bezier(0.16, 1, 0.3, 1), background-color 180ms ease;
     transform: translateX(0);
 }
 

@@ -50,7 +50,7 @@ onUnmounted(() => {
   >
     <svg
       class="matching-pulse-svg"
-      viewBox="0 0 1440 600"
+      viewBox="0 0 1440 680"
       fill="none"
       preserveAspectRatio="none"
     >
@@ -146,6 +146,7 @@ onUnmounted(() => {
             class="wave-path wave-path--carrier-core"
             d="M-60,184 C106,196 192,332 320,432 C412,504 480,528 574,548"
             stroke="url(#pulseGradLeft)"
+            filter="url(#pulseGlow)"
           />
           <path
             v-if="!isReducedMotion"
@@ -196,6 +197,7 @@ onUnmounted(() => {
             class="wave-path wave-path--carrier-core"
             d="M1500,184 C1334,196 1248,332 1120,432 C1028,504 960,528 866,548"
             stroke="url(#pulseGradRight)"
+            filter="url(#pulseGlow)"
           />
           <path
             v-if="!isReducedMotion"
@@ -224,6 +226,7 @@ onUnmounted(() => {
         </g>
 
       </g>
+
     </svg>
   </div>
 </template>
@@ -358,13 +361,25 @@ html[data-theme="dark"] .wave-path--pulse {
 }
 
 /* ============================================================
-   4. RESPONSIVE (< 768px): Reducir escala y opacidad
+   4. RESPONSIVE (< 768px): misma composición, con contraste legible
    ============================================================ */
 @media (max-width: 768px) {
   .pulse-waves-group {
-    opacity: 0.35 !important;
-    transform: scale(0.92);
+    opacity: 0.68 !important;
+    transform: scale(0.98);
     transform-origin: center center;
+  }
+
+  html[data-theme="dark"] .pulse-waves-group {
+    opacity: 0.9 !important;
+  }
+
+  html[data-theme="dark"] .wave-path--carrier-core {
+    stroke-width: 3px;
+  }
+
+  html[data-theme="dark"] .wave-path--pulse-core {
+    stroke-width: 3.2px;
   }
 }
 

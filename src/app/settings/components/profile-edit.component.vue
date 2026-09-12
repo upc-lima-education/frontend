@@ -38,7 +38,6 @@ import {
 const {
   BIO_MAX,
   DISTRICT_OPTIONS,
-  PROFESSION_OPTIONS,
   INDUSTRY_OPTIONS,
   COMPANY_SIZE_OPTIONS,
   loading,
@@ -113,7 +112,10 @@ const spanishLanguageNames = new Intl.DisplayNames(['es'], { type: 'language' })
 function formatLanguageCode(code: string) {
   const normalized = normalizeLanguageCode(code);
   try {
-    return spanishLanguageNames.of(normalized.toLowerCase()) || normalized;
+    const languageName = spanishLanguageNames.of(normalized.toLowerCase());
+    return languageName
+      ? `${languageName.charAt(0).toLocaleUpperCase('es-PE')}${languageName.slice(1)}`
+      : normalized;
   } catch {
     return normalized;
   }
@@ -397,8 +399,8 @@ const isRucInputValid = computed(() => ruc.value && ruc.value.length === 11 && /
               <div class="completeness-tips" v-if="completenessPercent < 100">
                 <span class="tips-title">Sugerencia para mejorar:</span>
                 <ul class="tips-list">
-                  <li v-if="!profilePicturePreview || profilePictureFile">{{ profilePictureFile ? 'Guarda la foto seleccionada.' : 'Sube una foto de perfil profesional.' }}</li>
-                  <li v-if="isEmployee && (!bio || bio.length < 1)">Escribe un resumen profesional.</li>
+                  <li v-if="!profilePicturePreview || profilePictureFile">{{ profilePictureFile ? 'Guarda la foto seleccionada.' : 'Sube una foto para tu perfil laboral.' }}</li>
+                  <li v-if="isEmployee && (!bio || bio.length < 1)">Escribe un resumen laboral.</li>
                   <li v-if="isEmployee && !keywords.length">Agrega al menos una habilidad.</li>
                   <li v-if="isEmployee && !workExperiences.length">Agrega una experiencia laboral.</li>
                   <li v-if="isEmployee && !educations.length">Agrega un estudio.</li>
@@ -537,7 +539,7 @@ const isRucInputValid = computed(() => ruc.value && ruc.value.length === 11 && /
             <template v-if="isEmployee">
               <h3 class="card-section-title">
                 <Sparkles :size="18" class="title-icon" />
-                <span>Información Profesional</span>
+                <span>Información laboral</span>
               </h3>
 
               <div class="grid-2">
@@ -563,18 +565,18 @@ const isRucInputValid = computed(() => ruc.value && ruc.value.length === 11 && /
 
               <div class="grid-2">
                 <div class="field">
-                  <label for="pe-prof">Profesión / Cargo actual</label>
-                  <div class="select-wrapper">
-                    <select id="pe-prof" v-model="profession">
-                      <option value="">{{ $t('profile.selectProfession') }}</option>
-                      <option v-for="opt in PROFESSION_OPTIONS" :key="opt" :value="opt">
-                        {{ opt }}
-                      </option>
-                    </select>
-                  </div>
+                  <label for="pe-prof">Ocupación o cargo actual</label>
+                  <input
+                    id="pe-prof"
+                    v-model="profession"
+                    type="text"
+                    autocomplete="organization-title"
+                    maxlength="150"
+                    placeholder="Ej. Atención al cliente, construcción o estudiante"
+                  />
                 </div>
                 <div class="field">
-                  <label for="pe-district">Distrito de Residencia</label>
+                  <label for="pe-district">Distrito de residencia</label>
                   <div class="select-wrapper">
                     <select id="pe-district" v-model="district">
                       <option value="">{{ $t('profile.selectDistrict') }}</option>
@@ -588,7 +590,7 @@ const isRucInputValid = computed(() => ruc.value && ruc.value.length === 11 && /
 
               <div class="field">
                 <div class="field-header">
-                  <label for="pe-bio">Biografía / Resumen profesional</label>
+                  <label for="pe-bio">Sobre ti / Resumen laboral</label>
                   <span class="char-count" :class="{ 'warning-count': bioLength > BIO_MAX * 0.85 }">
                     {{ bioLength }}/{{ BIO_MAX }}
                   </span>
@@ -715,7 +717,7 @@ const isRucInputValid = computed(() => ruc.value && ruc.value.length === 11 && /
           </div>
 
           <div v-else-if="isEmployee && !historyPersistenceAvailable" class="history-contract-notice" role="status">
-            <strong>No pudimos cargar tu trayectoria profesional</strong>
+            <strong>No pudimos cargar tu trayectoria laboral</strong>
             <p>Actualiza la API y vuelve a cargar la página antes de editar estas secciones. Así evitamos reemplazar información existente.</p>
           </div>
 
@@ -736,8 +738,8 @@ const isRucInputValid = computed(() => ruc.value && ruc.value.length === 11 && /
                     <p v-if="exp.description" class="history-item-desc">{{ exp.description }}</p>
                   </div>
                   <div class="history-item-actions">
-                    <button type="button" class="icon-btn" :disabled="loading" aria-label="Editar experiencia" @click="startWorkExperienceEdit(exp)"><Pencil :size="14" /></button>
-                    <button type="button" class="icon-btn danger" :disabled="loading" aria-label="Eliminar experiencia" @click="deleteWorkExperience(exp.id!)"><Trash2 :size="14" /></button>
+                    <button type="button" class="icon-btn" :disabled="loading" aria-label="Editar experiencia" title="Editar experiencia" @click="startWorkExperienceEdit(exp)"><Pencil :size="18" /></button>
+                    <button type="button" class="icon-btn danger" :disabled="loading" aria-label="Eliminar experiencia" title="Eliminar experiencia" @click="deleteWorkExperience(exp.id!)"><Trash2 :size="18" /></button>
                   </div>
                 </div>
               </div>
@@ -747,11 +749,11 @@ const isRucInputValid = computed(() => ruc.value && ruc.value.length === 11 && /
                 <div class="grid-2">
                   <div class="field" :class="{ 'field-invalid': fieldHasError(workExperienceErrors, 'role') }">
                     <label for="we-role">Cargo</label>
-                    <input id="we-role" v-model="workExperienceDraft.role" placeholder="Ej. Backend Developer" maxlength="150" />
+                    <input id="we-role" v-model="workExperienceDraft.role" placeholder="Ej. Vendedor, asistente o técnico" maxlength="150" />
                   </div>
                   <div class="field" :class="{ 'field-invalid': fieldHasError(workExperienceErrors, 'organization') }">
                     <label for="we-org">Empresa</label>
-                    <input id="we-org" v-model="workExperienceDraft.organization" placeholder="Ej. Acme Corp" maxlength="150" />
+                    <input id="we-org" v-model="workExperienceDraft.organization" placeholder="Ej. Nombre de la empresa o negocio" maxlength="150" />
                   </div>
                 </div>
                 <div class="grid-2">
@@ -816,8 +818,8 @@ const isRucInputValid = computed(() => ruc.value && ruc.value.length === 11 && /
                     </span>
                   </div>
                   <div class="history-item-actions">
-                    <button type="button" class="icon-btn" :disabled="loading" aria-label="Editar educación" @click="startEducationEdit(edu)"><Pencil :size="14" /></button>
-                    <button type="button" class="icon-btn danger" :disabled="loading" aria-label="Eliminar educación" @click="deleteEducation(edu.id!)"><Trash2 :size="14" /></button>
+                    <button type="button" class="icon-btn" :disabled="loading" aria-label="Editar educación" title="Editar educación" @click="startEducationEdit(edu)"><Pencil :size="18" /></button>
+                    <button type="button" class="icon-btn danger" :disabled="loading" aria-label="Eliminar educación" title="Eliminar educación" @click="deleteEducation(edu.id!)"><Trash2 :size="18" /></button>
                   </div>
                 </div>
               </div>
@@ -827,16 +829,16 @@ const isRucInputValid = computed(() => ruc.value && ruc.value.length === 11 && /
                 <div class="grid-2">
                   <div class="field" :class="{ 'field-invalid': fieldHasError(educationErrors, 'institution') }">
                     <label for="ed-institution">Institución</label>
-                    <input id="ed-institution" v-model="educationDraft.institution" placeholder="Ej. UPC" maxlength="150" />
+                    <input id="ed-institution" v-model="educationDraft.institution" placeholder="Ej. Colegio, instituto o universidad" maxlength="150" />
                   </div>
                   <div class="field" :class="{ 'field-invalid': fieldHasError(educationErrors, 'degree') }">
                     <label for="ed-degree">Grado / Carrera</label>
-                    <input id="ed-degree" v-model="educationDraft.degree" placeholder="Ej. Ingeniería de Software" maxlength="150" />
+                    <input id="ed-degree" v-model="educationDraft.degree" placeholder="Ej. Secundaria, carrera técnica o universitaria" maxlength="150" />
                   </div>
                 </div>
                 <div class="field">
                   <label for="ed-field">Área de estudio <span class="optional-label">Opcional</span></label>
-                  <input id="ed-field" v-model="educationDraft.fieldOfStudy" placeholder="Ej. Sistemas" maxlength="64" />
+                  <input id="ed-field" v-model="educationDraft.fieldOfStudy" placeholder="Ej. Administración, salud o cocina" maxlength="64" />
                 </div>
                 <div class="grid-2">
                   <div class="field" :class="{ 'field-invalid': fieldHasError(educationErrors, 'startDate') }">
@@ -892,8 +894,8 @@ const isRucInputValid = computed(() => ruc.value && ruc.value.length === 11 && /
                     <span class="history-item-sub">{{ lang.level }}</span>
                   </div>
                   <div class="history-item-actions">
-                    <button type="button" class="icon-btn" :disabled="loading" aria-label="Editar idioma" @click="startLanguageEdit(lang)"><Pencil :size="14" /></button>
-                    <button type="button" class="icon-btn danger" :disabled="loading" aria-label="Eliminar idioma" @click="deleteLanguage(lang.id!)"><Trash2 :size="14" /></button>
+                    <button type="button" class="icon-btn" :disabled="loading" aria-label="Editar idioma" title="Editar idioma" @click="startLanguageEdit(lang)"><Pencil :size="18" /></button>
+                    <button type="button" class="icon-btn danger" :disabled="loading" aria-label="Eliminar idioma" title="Eliminar idioma" @click="deleteLanguage(lang.id!)"><Trash2 :size="18" /></button>
                   </div>
                 </div>
               </div>
@@ -903,11 +905,15 @@ const isRucInputValid = computed(() => ruc.value && ruc.value.length === 11 && /
                 <div class="grid-2">
                   <div class="field" :class="{ 'field-invalid': fieldHasError(languageErrors, 'name') }">
                     <label for="lang-name">Idioma</label>
-                    <input id="lang-name" v-model="languageDraft.name" list="backend-language-codes" placeholder="Ej. Es" maxlength="2" autocapitalize="none" />
-                    <datalist id="backend-language-codes">
-                      <option v-for="code in BACKEND_LANGUAGE_CODES" :key="code" :value="code" :label="formatLanguageCode(code)" />
-                    </datalist>
-                    <p class="field-hint">Selecciona el código del idioma, por ejemplo <strong>Es</strong> o <strong>En</strong>.</p>
+                    <div class="select-wrapper">
+                      <select id="lang-name" v-model="languageDraft.name">
+                        <option value="" disabled>Selecciona un idioma</option>
+                        <option v-for="code in BACKEND_LANGUAGE_CODES" :key="code" :value="code">
+                          {{ formatLanguageCode(code) }}
+                        </option>
+                      </select>
+                    </div>
+                    <p class="field-hint">Elige el idioma que deseas agregar a tu perfil.</p>
                   </div>
                   <div class="field" :class="{ 'field-invalid': fieldHasError(languageErrors, 'level') }">
                     <label for="lang-level">Nivel</label>
@@ -1548,26 +1554,33 @@ const isRucInputValid = computed(() => ruc.value && ruc.value.length === 11 && /
 }
 
 .history-item {
-  display: flex;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: flex-start;
-  gap: 12px;
-  padding: 12px;
+  gap: 14px;
+  padding: 14px;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-input);
-  background: var(--color-bg);
+  background: var(--color-surface-subtle);
+  transition: border-color 150ms ease, background-color 150ms ease;
+}
+
+.history-item:hover {
+  border-color: color-mix(in srgb, var(--color-primary) 24%, var(--color-border));
+  background: var(--color-surface);
 }
 
 .history-item-main {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 3px;
   min-width: 0;
 }
 
 .history-item-main strong {
   font-size: 13px;
   color: var(--color-text-primary);
+  overflow-wrap: anywhere;
 }
 
 .history-item-sub {
@@ -1589,7 +1602,11 @@ const isRucInputValid = computed(() => ruc.value && ruc.value.length === 11 && /
 
 .history-item-actions {
   display: flex;
-  gap: 6px;
+  gap: 5px;
+  padding: 4px;
+  border: 1px solid var(--color-border-subtle);
+  border-radius: 12px;
+  background: var(--color-surface);
   flex-shrink: 0;
 }
 
@@ -1597,24 +1614,35 @@ const isRucInputValid = computed(() => ruc.value && ruc.value.length === 11 && /
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 28px;
-  height: 28px;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-button);
-  background: var(--color-surface);
-  color: var(--color-text-secondary);
+  width: 46px;
+  height: 46px;
+  border: 1px solid transparent;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--color-primary);
   cursor: pointer;
   transition: var(--transition);
 }
 
 .icon-btn:hover {
-  background: var(--color-bg);
-  color: var(--color-text-primary);
+  background: var(--color-lavender);
+  border-color: color-mix(in srgb, var(--color-primary) 24%, var(--color-border));
+  color: var(--color-primary-dark);
+}
+
+.icon-btn.danger {
+  color: var(--color-text-muted);
 }
 
 .icon-btn.danger:hover {
+  background: color-mix(in srgb, var(--color-state-error) 9%, var(--color-surface));
   color: var(--color-state-error);
-  border-color: var(--color-state-error);
+  border-color: color-mix(in srgb, var(--color-state-error) 30%, var(--color-border));
+}
+
+.icon-btn:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--color-primary) 30%, transparent);
+  outline-offset: 2px;
 }
 
 .history-form {
@@ -1729,6 +1757,23 @@ const isRucInputValid = computed(() => ruc.value && ruc.value.length === 11 && /
 .icon-btn:disabled {
   cursor: not-allowed;
   opacity: 0.55;
+}
+
+@media (max-width: 576px) {
+  .history-item {
+    gap: 10px;
+    padding: 12px;
+  }
+
+  .history-item-actions {
+    gap: 4px;
+    padding: 2px;
+  }
+
+  .icon-btn {
+    width: 48px;
+    height: 48px;
+  }
 }
 
 /* Action button row */

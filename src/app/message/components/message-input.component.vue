@@ -39,9 +39,9 @@ const isButtonDisabled = computed(() => {
     display: flex;
     align-items: center;
     gap: 8px;
-    padding: var(--space-2);
+    padding: 12px 20px 16px;
     background: var(--color-surface);
-    border-top: 1px solid var(--color-border);
+    box-sizing: border-box;
 }
 
 .btn-attach {
@@ -64,14 +64,28 @@ const isButtonDisabled = computed(() => {
 
 .input-field-wrap {
     flex: 1;
+    display: flex;
+    align-items: center;
+    min-height: 52px;
+    padding-left: 16px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-card);
+    background: var(--color-surface);
+    transition: border-color 150ms ease, box-shadow 150ms ease;
+}
+
+.input-field-wrap:focus-within {
+    border-color: color-mix(in srgb, var(--color-primary) 72%, var(--color-border));
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 14%, transparent);
 }
 
 .chat-input {
     width: 100% !important;
-    padding: 10px 14px !important;
-    border: 1px solid var(--color-border) !important;
-    border-radius: 20px !important;
-    background: var(--color-surface-subtle) !important;
+    min-height: 40px;
+    padding: 0 8px 0 0 !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: transparent !important;
     color: var(--color-text-primary) !important;
     font-size: var(--fs-body-sm) !important;
     transition: var(--transition) !important;
@@ -80,16 +94,19 @@ const isButtonDisabled = computed(() => {
 
 .chat-input:focus {
     outline: none !important;
-    border-color: var(--color-accent) !important;
-    background: var(--color-surface) !important;
-    box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-accent) 20%, transparent) !important;
+    box-shadow: none !important;
 }
 
 .btn-send {
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    background: var(--color-accent);
+    width: 42px;
+    height: 42px;
+    justify-content: center;
+    padding: 0;
+    border-radius: 12px;
+    background: var(--color-primary);
     color: #ffffff;
     border: none;
     border-radius: var(--radius-button);
@@ -101,12 +118,27 @@ const isButtonDisabled = computed(() => {
 }
 
 .btn-send:hover:not(:disabled) {
-    background: var(--color-accent-hover);
+    background: var(--color-primary-dark);
 }
 
 .btn-send:disabled {
-    background: var(--color-border);
+    background: var(--color-surface-subtle);
     color: var(--color-text-muted);
     cursor: not-allowed;
+}
+
+.btn-send span {
+    display: none;
+}
+
+@media (max-width: 768px) {
+    .message-input-form {
+        padding: 12px 14px max(12px, env(safe-area-inset-bottom));
+    }
+
+    .input-field-wrap {
+        min-height: 48px;
+        padding-left: 14px;
+    }
 }
 </style>

@@ -1,4 +1,4 @@
-import type { NavigationGuardNext, RouteLocationNormalized } from "vue-router";
+import type { RouteLocationNormalized, RouteLocationRaw } from "vue-router";
 import { useAuthenticationStore } from "./authentication.store";
 import { ROUTE_CONSTANTS } from "@/app/shared/router/route-constants";
 
@@ -9,11 +9,9 @@ import { ROUTE_CONSTANTS } from "@/app/shared/router/route-constants";
  *   su inicio (Novedades). Así una organización no entra a vistas de empleado
  *   (ej. búsqueda de empleo / generación de CV) y viceversa.
  */
-export const authenticationGuard = (
+export const authenticationGuard = async (
     to: RouteLocationNormalized,
-    from: RouteLocationNormalized,
-    next: NavigationGuardNext
-): void => {
+): Promise<true | RouteLocationRaw> => {
     const authenticationStore = useAuthenticationStore();
 
     // Rutas públicas sin autenticación (incluye subrutas, ej: /sign-up/...)
@@ -25,47 +23,38 @@ export const authenticationGuard = (
     const hasToken = localStorage.getItem('accessToken');
     const isSignedIn = authenticationStore.isSignedIn;
 
-    // Comprueba el rol contra meta.roles y resuelve el next() adecuado.
-    const proceedWithRole = () => {
-        const allowedRoles = to.meta?.roles as string[] | undefined;
-        const userType = authenticationStore.currentUserType;
-
-        // La búsqueda es el punto de entrada del candidato. /home se reserva
-        // para el espacio operativo de vacantes de la empresa y onboarding.
-        if (to.path === ROUTE_CONSTANTS.HOME_PAGE && userType === 'employee') {
-            return next(ROUTE_CONSTANTS.JOB_SEARCH);
-        }
-
-        if (!allowedRoles || allowedRoles.length === 0) return next();
-
-        if (userType && allowedRoles.includes(userType)) return next();
-
-        // Rol no autorizado para esta ruta: lo enviamos al inicio compartido.
-        return next(ROUTE_CONSTANTS.HOME_PAGE);
-    };
-
     if (isPublicRoute) {
-        return next();
+        return true;
     }
 
     if (!hasToken) {
-        return next('/sign-in');
+        return ROUTE_CONSTANTS.SIGN_IN_PAGE;
     }
 
     // Una ruta exclusiva debe esperar a la identidad resuelta por /auth/me.
     // No se permite decidir el rol con un valor viejo del navegador.
     if (hasToken && (!isSignedIn || !authenticationStore.sessionResolved)) {
-        authenticationStore.loadCurrentUser().then(success => {
-            if (success) {
-                proceedWithRole();
-            } else {
-                next('/sign-in');
-            }
-        }).catch(() => {
-            next('/sign-in');
-        });
-        return;
+        try {
+            const sessionLoaded = await authenticationStore.loadCurrentUser();
+            if (!sessionLoaded) return ROUTE_CONSTANTS.SIGN_IN_PAGE;
+        } catch {
+            return ROUTE_CONSTANTS.SIGN_IN_PAGE;
+        }
     }
 
-    proceedWithRole();
+    const allowedRoles = to.meta?.roles as string[] | undefined;
+    const userType = authenticationStore.currentUserType;
+
+    // La búsqueda es el punto de entrada del candidato. /home se reserva
+    // para el espacio operativo de vacantes de la empresa y onboarding.
+    if (to.path === ROUTE_CONSTANTS.HOME_PAGE && userType === 'employee') {
+        return ROUTE_CONSTANTS.JOB_SEARCH;
+    }
+
+    if (!allowedRoles || allowedRoles.length === 0) return true;
+
+    if (userType && allowedRoles.includes(userType)) return true;
+
+    // Rol no autorizado para esta ruta: lo enviamos al inicio compartido.
+    return ROUTE_CONSTANTS.HOME_PAGE;
 };

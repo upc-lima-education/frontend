@@ -288,18 +288,18 @@ onMounted(async () => {
           <template v-if="currentConversation">
             <!-- Chat Header -->
             <header class="msg-chat-head">
-              <div class="msg-chat-head-left">
-                <!-- Mobile back button -->
-                <button
-                  type="button"
-                  class="msg-mobile-back-btn"
-                  @click="mobileView = 'list'"
-                  aria-label="Volver a la lista de conversaciones"
-                >
-                  <ChevronLeft :size="20" aria-hidden="true" />
-                  <span>Conversaciones</span>
-                </button>
+              <!-- Mobile back button -->
+              <button
+                type="button"
+                class="msg-mobile-back-btn"
+                @click="mobileView = 'list'"
+                aria-label="Volver a la lista de conversaciones"
+              >
+                <ChevronLeft :size="20" aria-hidden="true" />
+                <span>Conversaciones</span>
+              </button>
 
+              <div class="msg-chat-head-left">
                 <div class="msg-chat-avatar">
                   {{ conversationInitials(currentConversation) }}
                 </div>
@@ -1049,8 +1049,8 @@ onMounted(async () => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
-  padding: 14px 20px;
+  gap: 12px;
+  padding: 13px 20px;
   background: var(--color-surface);
   border-bottom: 1px solid var(--color-border);
 }
@@ -1059,6 +1059,7 @@ onMounted(async () => {
   display: flex;
   align-items: center;
   gap: 12px;
+  flex: 1;
   min-width: 0;
 }
 
@@ -1075,12 +1076,24 @@ onMounted(async () => {
   font-size: 13px;
   font-weight: var(--fw-semibold);
   cursor: pointer;
+  transition: var(--transition);
+}
+
+.msg-mobile-back-btn:hover {
+  background: var(--color-lavender);
+  border-color: color-mix(in srgb, var(--color-primary) 28%, var(--color-border));
+}
+
+.msg-mobile-back-btn:focus-visible,
+.msg-view-job-btn:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--color-primary) 30%, transparent);
+  outline-offset: 2px;
 }
 
 .msg-chat-avatar {
-  width: 42px;
-  height: 42px;
-  border-radius: 12px;
+  width: 40px;
+  height: 40px;
+  border-radius: 11px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1095,7 +1108,7 @@ onMounted(async () => {
 .msg-chat-head-text {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 3px;
   min-width: 0;
 }
 
@@ -1103,6 +1116,7 @@ onMounted(async () => {
   display: flex;
   align-items: center;
   gap: 8px;
+  min-width: 0;
   flex-wrap: wrap;
 }
 
@@ -1111,7 +1125,10 @@ onMounted(async () => {
   font-family: var(--font-display);
   font-size: 16px;
   font-weight: var(--fw-bold);
+  line-height: 1.25;
   color: var(--color-text-primary);
+  min-width: 0;
+  flex: 0 1 auto;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1125,6 +1142,8 @@ onMounted(async () => {
   border: 1px solid color-mix(in srgb, var(--color-brand-lime) 45%, var(--color-border));
   padding: 2px 8px;
   border-radius: var(--radius-pill);
+  line-height: 1.25;
+  flex-shrink: 0;
 }
 
 .msg-chat-head-sub {
@@ -1139,7 +1158,8 @@ onMounted(async () => {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 6px 12px;
+  min-height: 36px;
+  padding: 6px 11px;
   background: var(--color-surface-subtle);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-button);
@@ -1265,9 +1285,18 @@ onMounted(async () => {
   padding: 8px 20px;
   background: var(--color-surface);
   border-top: 1px solid var(--color-border-subtle);
+  min-width: 0;
+  max-width: 100%;
   overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
   white-space: nowrap;
   flex: 0 0 auto;
+}
+
+.msg-quick-replies-bar::-webkit-scrollbar {
+  display: none;
 }
 
 .msg-quick-label {
@@ -1306,7 +1335,7 @@ onMounted(async () => {
   position: relative;
   z-index: 2;
   flex: 0 0 auto;
-  padding: 14px 20px;
+  padding: 12px 20px 16px;
   background: var(--color-surface);
   border-top: 1px solid var(--color-border);
 }
@@ -1314,28 +1343,30 @@ onMounted(async () => {
 .msg-input-form {
   display: flex;
   align-items: center;
-  gap: 10px;
-  background: var(--color-surface-subtle);
+  min-height: 52px;
+  gap: 8px;
+  background: var(--color-surface);
   border: 1px solid var(--color-border);
-  border-radius: var(--radius-pill);
-  padding: 4px 6px 4px 18px;
+  border-radius: var(--radius-card);
+  padding: 4px 5px 4px 16px;
   transition: var(--transition);
 }
 
 .msg-input-form:focus-within {
-  background: var(--color-surface);
-  border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 12%, transparent);
+  border-color: color-mix(in srgb, var(--color-primary) 72%, var(--color-border));
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 14%, transparent);
 }
 
 .msg-text-input {
   min-width: 0;
   flex: 1;
+  min-height: 40px;
   border: none;
   background: transparent;
   outline: none;
   font-family: var(--font-family);
   font-size: 14px;
+  line-height: 1.4;
   color: var(--color-text-primary);
 }
 
@@ -1344,31 +1375,34 @@ onMounted(async () => {
 }
 
 .msg-btn-send {
-  width: 40px;
-  height: 40px;
+  width: 42px;
+  height: 42px;
   border: none;
   background: var(--color-primary);
   color: #ffffff;
-  border-radius: 50%;
+  border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   transition: var(--transition);
-  box-shadow: 0 2px 8px color-mix(in srgb, var(--color-primary) 30%, transparent);
   flex-shrink: 0;
 }
 
 .msg-btn-send:hover:not(:disabled) {
   background: var(--color-primary-dark);
-  transform: scale(1.05);
+  transform: translateY(-1px);
+}
+
+.msg-btn-send:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--color-primary) 32%, transparent);
+  outline-offset: 2px;
 }
 
 .msg-btn-send:disabled {
-  background: var(--color-border);
+  background: var(--color-surface-subtle);
   color: var(--color-text-muted);
   cursor: not-allowed;
-  box-shadow: none;
 }
 
 /* Placeholder State */
@@ -1448,6 +1482,68 @@ onMounted(async () => {
 
   .msg-mobile-back-btn {
     display: inline-flex;
+  }
+
+  .msg-chat-head {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      "back back"
+      "details action";
+    align-items: center;
+    gap: 8px 10px;
+    padding: 10px 14px 12px;
+  }
+
+  .msg-mobile-back-btn {
+    grid-area: back;
+    justify-self: start;
+    min-height: 28px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+  }
+
+  .msg-chat-head-left {
+    grid-area: details;
+    gap: 10px;
+  }
+
+  .msg-chat-avatar {
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    font-size: 14px;
+  }
+
+  .msg-chat-head-title-row {
+    gap: 6px;
+  }
+
+  .msg-chat-head-title {
+    font-size: 15px;
+  }
+
+  .msg-verified-pill {
+    font-size: 9px;
+    padding: 2px 6px;
+  }
+
+  .msg-chat-head-sub {
+    font-size: 11px;
+  }
+
+  .msg-chat-head-right {
+    grid-area: action;
+  }
+
+  .msg-view-job-btn {
+    min-height: 36px;
+    padding-inline: 9px;
+  }
+
+  .msg-view-job-btn svg:last-child {
+    display: none;
   }
 
   .msg-bubble {

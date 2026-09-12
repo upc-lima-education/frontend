@@ -366,31 +366,34 @@ onMounted(loadApplications);
             :key="app.id"
             class="app-record-card"
           >
-            <!-- Left Company Avatar -->
-            <div class="app-company-avatar" aria-hidden="true">
-              {{ getCompanyMonogram(app.companyName, app.jobTitle) }}
-            </div>
-
-            <!-- Central Content Info -->
-            <div class="app-record-main">
-              <div class="app-title-cluster">
-                <h2 class="app-record-title">
-                  <RouterLink :to="`${ROUTE_CONSTANTS.JOB_DETAIL}/${app.jobId}`" class="title-link">
-                    {{ app.jobTitle || 'Oferta de empleo' }}
-                  </RouterLink>
-                </h2>
-                <span class="status-pill" :class="statusPillClass(app.status)">
-                  <span class="status-dot"></span>
-                  <span>{{ statusLabel(app.status) }}</span>
-                </span>
+            <!-- Offer and company identity -->
+            <div class="app-record-identity">
+              <div class="app-company-avatar" aria-hidden="true">
+                {{ getCompanyMonogram(app.companyName, app.jobTitle) }}
               </div>
 
-              <p class="app-company-label">
-                <Building2 :size="14" aria-hidden="true" />
-                <span>{{ app.companyName || 'Empresa verificada' }}</span>
-              </p>
+              <div class="app-record-heading">
+                <div class="app-title-cluster">
+                  <h2 class="app-record-title">
+                    <RouterLink :to="`${ROUTE_CONSTANTS.JOB_DETAIL}/${app.jobId}`" class="title-link">
+                      {{ app.jobTitle || 'Oferta de empleo' }}
+                    </RouterLink>
+                  </h2>
+                  <span class="status-pill" :class="statusPillClass(app.status)">
+                    <span class="status-dot"></span>
+                    <span>{{ statusLabel(app.status) }}</span>
+                  </span>
+                </div>
 
-              <!-- Process Step Progression Indicator -->
+                <p class="app-company-label">
+                  <Building2 :size="14" aria-hidden="true" />
+                  <span>{{ app.companyName || 'Empresa verificada' }}</span>
+                </p>
+              </div>
+            </div>
+
+            <!-- Process Step Progression Indicator -->
+            <div class="app-record-main">
               <div class="process-progression-bar" aria-label="Progreso del proceso de selección">
                 <div
                   class="progress-step is-complete"
@@ -939,10 +942,11 @@ onMounted(loadApplications);
 }
 
 .app-record-card {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(230px, 0.9fr) minmax(280px, 1.25fr) auto;
   align-items: center;
-  gap: 20px;
-  padding: 20px 24px;
+  gap: 24px;
+  padding: 18px 22px;
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-card);
@@ -972,19 +976,36 @@ onMounted(loadApplications);
   box-shadow: 0 4px 12px color-mix(in srgb, var(--color-primary) 20%, transparent);
 }
 
-.app-record-main {
+.app-record-identity {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.app-record-heading {
+  display: flex;
   flex: 1;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+}
+
+.app-record-main {
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  justify-content: center;
+  gap: 10px;
+  padding-left: 24px;
+  border-left: 1px solid var(--color-border-subtle);
 }
 
 .app-title-cluster {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 12px;
+  justify-content: flex-start;
+  gap: 8px;
   flex-wrap: wrap;
 }
 
@@ -996,6 +1017,8 @@ onMounted(loadApplications);
   font-weight: var(--fw-bold);
   line-height: 1.25;
   letter-spacing: -0.015em;
+  min-width: 0;
+  flex: 0 1 auto;
 }
 
 .title-link {
@@ -1006,6 +1029,12 @@ onMounted(loadApplications);
 
 .title-link:hover {
   color: var(--color-primary);
+}
+
+.title-link:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 3px;
+  border-radius: 2px;
 }
 
 .app-company-label {
@@ -1020,50 +1049,69 @@ onMounted(loadApplications);
 
 /* Process Progression Bar */
 .process-progression-bar {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  padding: 8px 12px;
-  background: var(--color-surface-subtle);
-  border-radius: var(--radius-xs);
-  border: 1px solid var(--color-border-subtle);
-  margin-top: 2px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0;
+  padding: 3px 0 0;
 }
 
 .progress-step {
   display: flex;
-  align-items: center;
-  gap: 6px;
+  position: relative;
+  z-index: 0;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 5px;
+  min-width: 0;
   font-size: 11px;
   font-weight: var(--fw-semibold);
   color: var(--color-text-secondary);
 }
 
+.progress-step:not(:first-child)::before {
+  position: absolute;
+  z-index: -1;
+  top: 4px;
+  left: -100%;
+  width: 100%;
+  height: 2px;
+  content: '';
+  background: var(--color-border);
+}
+
 .step-bullet {
-  width: 8px;
-  height: 8px;
+  width: 10px;
+  height: 10px;
   border-radius: 50%;
   background: var(--color-border);
+  border: 2px solid var(--color-surface);
+  box-sizing: border-box;
   flex-shrink: 0;
 }
 
 .progress-step.is-complete .step-bullet {
   background: var(--color-state-success);
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-state-success) 30%, transparent);
 }
 
 .progress-step.is-complete {
   color: var(--color-text-primary);
 }
 
+.progress-step.is-complete::before {
+  background: var(--color-state-success);
+}
+
 .progress-step.is-current .step-bullet {
   background: var(--color-primary);
-  box-shadow: 0 0 0 2px var(--color-lavender);
 }
 
 .progress-step.is-current {
   color: var(--color-primary-dark);
   font-weight: var(--fw-bold);
+}
+
+.progress-step.is-current::before {
+  background: var(--color-primary);
 }
 
 .progress-step.is-rejected .step-bullet {
@@ -1072,6 +1120,10 @@ onMounted(loadApplications);
 
 .progress-step.is-rejected {
   color: var(--color-state-alert);
+}
+
+.progress-step.is-rejected::before {
+  background: var(--color-state-alert);
 }
 
 .app-record-meta {
@@ -1128,6 +1180,7 @@ onMounted(loadApplications);
 /* Action CTA */
 .app-record-cta {
   flex-shrink: 0;
+  align-self: center;
 }
 
 .btn-view-job {
@@ -1395,16 +1448,27 @@ onMounted(loadApplications);
   }
 
   .app-record-card {
-    flex-direction: column;
+    grid-template-columns: 1fr;
     align-items: flex-start;
     gap: 16px;
     padding: 16px 18px;
   }
 
+  .app-record-identity {
+    width: 100%;
+  }
+
+  .app-record-main {
+    width: 100%;
+    padding-top: 14px;
+    padding-left: 0;
+    border-top: 1px solid var(--color-border-subtle);
+    border-left: 0;
+  }
+
   .app-title-cluster {
-    flex-direction: column;
     align-items: flex-start;
-    gap: 6px;
+    gap: 6px 8px;
   }
 
   .app-record-cta {
@@ -1448,10 +1512,17 @@ onMounted(loadApplications);
 
   .progress-step {
     flex-direction: column;
+    align-items: center;
     gap: 4px;
     font-size: 10px;
     text-align: center;
     justify-content: center;
+  }
+
+  .progress-step:not(:first-child)::before {
+    top: 4px;
+    left: -50%;
+    width: 100%;
   }
 }
 

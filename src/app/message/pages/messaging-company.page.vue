@@ -9,7 +9,7 @@ import { MessageResponse } from '../model/message.response';
 import ConversationListComponent from '../components/conversation-list.component.vue';
 import MessageListComponent from '../components/message-list.component.vue';
 import MessageInputComponent from '../components/message-input.component.vue';
-import { MessageCircle, Trash2, UserMinus, UserPlus, UsersRound } from 'lucide-vue-next';
+import { ChevronLeft, MessageCircle, RefreshCw, Trash2, UserMinus, UserPlus, UsersRound } from 'lucide-vue-next';
 
 const route = useRoute();
 const authStore = useAuthenticationStore();
@@ -26,6 +26,7 @@ const participantUserId = ref('');
 const participantPending = ref(false);
 const actionError = ref('');
 const deleteArmed = ref(false);
+const mobileView = ref<'list' | 'chat'>('list');
 
 async function getConversations(): Promise<ConversationResponse[]> {
     const companyProfileId = localStorage.getItem('profileId');
@@ -46,6 +47,7 @@ function mergeConversation(updated: ConversationResponse, previous: Conversation
 async function selectConversation(conversation: ConversationResponse): Promise<void> {
     actionError.value = '';
     deleteArmed.value = false;
+    mobileView.value = 'chat';
     currentConversation.value = conversation;
     try {
         const detail = await messageService.getConversationById(conversation.id, conversation.title);
@@ -140,8 +142,7 @@ async function deleteCurrentConversation(): Promise<void> {
     }
 }
 
-onMounted(async () => {
-    userId.value = authStore.currentUserId;
+async function loadConversations(): Promise<void> {
     loading.value = true;
     error.value = '';
     try {
@@ -155,19 +156,46 @@ onMounted(async () => {
     } finally {
         loading.value = false;
     }
+}
+
+onMounted(async () => {
+    userId.value = authStore.currentUserId;
+    await loadConversations();
 });
 </script>
 
 <template>
-    <div class="message-page">
-        <p v-if="success" class="message-status" role="status">{{ success }}</p>
-        <aside class="conversation-panel" :aria-busy="loading">
-            <ConversationListComponent :conversations="conversations" :selected-id="currentConversation?.id" @select="selectConversation" />
-        </aside>
+    <div class="msg-company-page">
+        <div class="msg-company-backdrop" aria-hidden="true">
+            <div class="company-orb company-orb--primary"></div>
+            <div class="company-orb company-orb--lime"></div>
+        </div>
 
-        <main class="chat-panel">
+        <div class="msg-company-workspace">
+            <header class="msg-company-hero" aria-labelledby="company-messages-title">
+                <div>
+                    <h1 id="company-messages-title">Mensajes de selección</h1>
+                    <p>Gestiona las conversaciones con postulantes de tus vacantes activas.</p>
+                </div>
+                <button type="button" class="company-refresh-btn" :disabled="loading" @click="loadConversations">
+                    <RefreshCw :size="15" :class="{ 'spin-loader': loading }" aria-hidden="true" />
+                    <span>Actualizar</span>
+                </button>
+            </header>
+
+            <div class="message-page">
+                <p v-if="success" class="message-status" role="status">{{ success }}</p>
+                <aside class="conversation-panel" :class="{ 'is-mobile-hidden': mobileView === 'chat' }" :aria-busy="loading">
+            <ConversationListComponent :conversations="conversations" :selected-id="currentConversation?.id" @select="selectConversation" />
+                </aside>
+
+                <main class="chat-panel" :class="{ 'is-mobile-hidden': mobileView === 'list' }">
             <template v-if="currentConversation">
                 <header class="chat-header">
+                    <button type="button" class="company-mobile-back" @click="mobileView = 'list'" aria-label="Volver a la lista de conversaciones">
+                        <ChevronLeft :size="20" aria-hidden="true" />
+                        <span>Conversaciones</span>
+                    </button>
                     <div class="chat-contact-info">
                         <span class="chat-contact-avatar" aria-hidden="true"><MessageCircle :size="19" /></span>
                         <div>
@@ -202,7 +230,6 @@ onMounted(async () => {
                 <p v-if="actionError" class="chat-error" role="alert">{{ actionError }}</p>
                 <section class="chat-messages" aria-label="Mensajes de la conversación">
                     <MessageListComponent :messages="messages" :user-id="userId" />
-                    <p v-if="!messages.length" class="history-note">Aún no hay mensajes en esta conversación.</p>
                 </section>
                 <footer class="chat-input"><MessageInputComponent @send="sendMessage" /></footer>
             </template>
@@ -214,7 +241,9 @@ onMounted(async () => {
                     <p v-if="error">{{ error }}</p><p v-else-if="loading">Cargando conversaciones…</p><p v-else>Selecciona una conversación o inicia una desde el seguimiento de postulantes.</p>
                 </div>
             </section>
-        </main>
+                </main>
+            </div>
+        </div>
     </div>
 </template>
 
@@ -244,4 +273,303 @@ onMounted(async () => {
 .empty-chat { display: grid; place-items: center; flex: 1; min-height: 360px; padding: var(--space-4); text-align: center; }.empty-chat-content { display: grid; justify-items: center; gap: 11px; max-width: 390px; }.empty-icon-circle { display: grid; place-items: center; width: 64px; height: 64px; border-radius: 16px; color: var(--color-primary); background: var(--color-ai-bg); }.empty-chat-content h1, .empty-chat-content p { margin: 0; }.empty-chat-content h1 { color: var(--color-text-primary); font-size: var(--fs-subtitle); }.empty-chat-content p { color: var(--color-text-secondary); font-size: var(--fs-body-sm); line-height: 1.5; }
 @media (max-width: 760px) { .message-page { width: 100%; height: calc(100dvh - 70px); max-height: none; min-height: 540px; margin: 0; grid-template-columns: 1fr; grid-template-rows: minmax(220px, 34vh) minmax(0, 1fr); border-right: 0; border-left: 0; border-radius: 0; } .conversation-panel { border-right: 0; border-bottom: 1px solid var(--color-border); } }
 @media (max-width: 540px) { .chat-header { align-items: flex-start; flex-direction: column; }.chat-actions { width: 100%; justify-content: stretch; }.header-action { flex: 1; justify-content: center; }.participant-form > div { flex-direction: column; }.participant-form button { width: 100%; } }
+
+/* La empresa comparte la misma consola clara y enfocada de la bandeja del candidato. */
+.msg-company-page {
+    position: relative;
+    width: 100%;
+    box-sizing: border-box;
+    min-height: calc(100dvh - 70px);
+    padding: clamp(28px, 4vw, 56px) 0;
+    overflow-x: clip;
+    font-family: var(--font-family);
+    display: grid;
+    justify-items: center;
+    align-content: center;
+}
+
+.msg-company-backdrop {
+    position: absolute;
+    inset: 0 0 auto;
+    height: 420px;
+    overflow: hidden;
+    pointer-events: none;
+}
+
+.company-orb {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(1px);
+    opacity: .72;
+}
+
+.company-orb--primary {
+    top: -230px;
+    right: 4%;
+    width: 430px;
+    height: 430px;
+    background: radial-gradient(circle, color-mix(in srgb, var(--color-primary) 18%, transparent), transparent 68%);
+}
+
+.company-orb--lime {
+    top: -185px;
+    left: 7%;
+    width: 340px;
+    height: 340px;
+    background: radial-gradient(circle, color-mix(in srgb, var(--color-brand-lime) 22%, transparent), transparent 70%);
+}
+
+.msg-company-workspace {
+    position: relative;
+    z-index: 1;
+    width: min(100%, 1180px);
+    padding-inline: var(--page-gutter);
+    box-sizing: border-box;
+    margin: 0 auto;
+}
+
+.msg-company-hero {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 20px;
+    margin: 0 0 20px;
+}
+
+.msg-company-hero h1,
+.msg-company-hero p {
+    margin: 0;
+}
+
+.msg-company-hero h1 {
+    font-family: var(--font-display);
+    font-size: clamp(25px, 3.2vw, 34px);
+    font-weight: var(--fw-bold);
+    letter-spacing: -0.025em;
+    color: var(--color-text-primary);
+}
+
+.msg-company-hero p {
+    margin-top: 5px;
+    color: var(--color-text-secondary);
+    font-size: 14px;
+}
+
+.company-refresh-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    min-height: 40px;
+    padding: 0 13px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-button);
+    background: var(--color-surface);
+    color: var(--color-primary);
+    font: inherit;
+    font-size: 12px;
+    font-weight: var(--fw-semibold);
+    cursor: pointer;
+}
+
+.company-refresh-btn:hover:not(:disabled) {
+    background: var(--color-lavender);
+    border-color: color-mix(in srgb, var(--color-primary) 35%, var(--color-border));
+}
+
+.company-refresh-btn:disabled {
+    opacity: .58;
+    cursor: not-allowed;
+}
+
+.spin-loader {
+    animation: company-spin .8s linear infinite;
+}
+
+@keyframes company-spin {
+    to { transform: rotate(360deg); }
+}
+
+.message-page {
+    width: 100%;
+    height: clamp(520px, calc(100dvh - 260px), 680px);
+    max-height: calc(100dvh - 220px);
+    min-height: 540px;
+    margin: 0 auto;
+    grid-template-columns: 360px minmax(0, 1fr);
+}
+
+.conversation-panel {
+    display: flex;
+    min-height: 0;
+    background: var(--color-surface);
+}
+
+.chat-panel {
+    min-height: 0;
+    background: var(--color-surface-subtle);
+}
+
+.chat-header {
+    min-height: 68px;
+    padding: 13px 20px;
+    background: var(--color-surface);
+}
+
+.chat-contact-avatar {
+    width: 40px;
+    height: 40px;
+    flex-basis: 40px;
+    border-radius: 11px;
+    color: #fff;
+    background: linear-gradient(135deg, var(--color-primary-dark), var(--color-primary));
+}
+
+.chat-contact-name {
+    font-family: var(--font-display);
+    font-size: 16px;
+    line-height: 1.25;
+}
+
+.chat-contact-status {
+    margin-top: 3px;
+    font-size: 12px;
+}
+
+.chat-actions {
+    flex-wrap: nowrap;
+}
+
+.header-action {
+    min-height: 38px;
+    padding: 0 10px;
+    border-radius: var(--radius-button);
+    background: var(--color-surface-subtle);
+}
+
+.participant-manager {
+    gap: 12px;
+    padding: 14px 20px;
+    background: var(--color-surface);
+}
+
+.chat-messages {
+    min-height: 0;
+    padding: 0;
+    background: var(--color-surface-subtle);
+}
+
+/* En conversaciones cortas, el historial ocupa el centro visual del panel. */
+.chat-messages :deep(.messages) {
+    min-height: 100%;
+}
+
+.chat-messages :deep(.messages::before),
+.chat-messages :deep(.messages::after) {
+    content: '';
+    flex: 1 1 24px;
+}
+
+.chat-input {
+    border-top: 1px solid var(--color-border);
+}
+
+.history-note {
+    padding: 0 20px 14px;
+}
+
+.empty-chat {
+    background: var(--color-surface-subtle);
+}
+
+.empty-icon-circle {
+    width: 68px;
+    height: 68px;
+    border-radius: 50%;
+    background: var(--color-lavender);
+}
+
+.company-mobile-back {
+    display: none;
+}
+
+@media (max-width: 768px) {
+    .msg-company-page {
+        min-height: calc(100dvh - 64px);
+        padding: 12px 0 0;
+        align-content: start;
+    }
+
+    .msg-company-backdrop,
+    .msg-company-hero {
+        display: none;
+    }
+
+    .msg-company-workspace {
+        width: 100%;
+        padding-inline: 0;
+    }
+
+    .message-page {
+        height: calc(100dvh - 76px);
+        max-height: none;
+        min-height: 520px;
+        border-right: 0;
+        border-left: 0;
+        border-radius: 0;
+        grid-template-columns: 1fr;
+    }
+
+    .conversation-panel.is-mobile-hidden,
+    .chat-panel.is-mobile-hidden {
+        display: none;
+    }
+
+    .chat-header {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        grid-template-areas: "back back" "details actions";
+        gap: 8px 10px;
+        padding: 10px 14px 12px;
+    }
+
+    .company-mobile-back {
+        grid-area: back;
+        display: inline-flex;
+        align-items: center;
+        gap: 3px;
+        min-height: 30px;
+        padding: 0;
+        border: 0;
+        background: transparent;
+        color: var(--color-primary);
+        font: inherit;
+        font-size: 13px;
+        font-weight: var(--fw-semibold);
+    }
+
+    .chat-contact-info {
+        grid-area: details;
+    }
+
+    .chat-actions {
+        grid-area: actions;
+        gap: 5px;
+    }
+
+    .header-action {
+        width: 38px;
+        min-height: 38px;
+        padding: 0;
+        justify-content: center;
+    }
+
+    .header-action span {
+        display: none;
+    }
+
+    .participant-manager {
+        padding: 12px 14px;
+    }
+}
 </style>

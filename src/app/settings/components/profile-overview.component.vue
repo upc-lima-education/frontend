@@ -479,7 +479,7 @@ const completenessColor = computed(() => {
 
 /* Cover Deck */
 .hero-cover-deck {
-  height: 162px;
+  height: 132px;
   background: linear-gradient(135deg, #0b1329 0%, #152055 50%, #1e2e98 100%);
   position: relative;
   overflow: hidden;
@@ -598,13 +598,13 @@ const completenessColor = computed(() => {
 
 /* Identity Deck */
 .hero-identity-deck {
-  padding: 0 24px 18px;
-  margin-top: -52px;
+  padding: 0 22px 16px;
+  margin-top: -44px;
   position: relative;
   z-index: 10;
   display: flex;
   align-items: flex-start;
-  gap: 22px;
+  gap: 18px;
 }
 
 .hero-avatar-wrap {
@@ -612,9 +612,9 @@ const completenessColor = computed(() => {
 }
 
 .hero-avatar-frame {
-  width: 108px;
-  height: 108px;
-  border-radius: 24px;
+  width: 96px;
+  height: 96px;
+  border-radius: 20px;
   position: relative;
   box-shadow: 0 10px 24px rgba(11, 19, 41, 0.18);
   background: #ffffff;
@@ -623,7 +623,7 @@ const completenessColor = computed(() => {
 .hero-avatar-img {
   width: 100%;
   height: 100%;
-  border-radius: 24px;
+  border-radius: 20px;
   object-fit: cover;
   border: 3px solid #ffffff;
   display: block;
@@ -632,14 +632,14 @@ const completenessColor = computed(() => {
 .hero-avatar-initials {
   width: 100%;
   height: 100%;
-  border-radius: 24px;
+  border-radius: 20px;
   border: 3px solid #ffffff;
   display: flex;
   align-items: center;
   justify-content: center;
   background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
   color: #ffffff;
-  font-size: 36px;
+  font-size: 32px;
   font-weight: var(--fw-bold);
   font-family: var(--font-display);
 }
@@ -662,10 +662,10 @@ const completenessColor = computed(() => {
 .hero-identity-main {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 5px;
   flex: 1;
   min-width: 0;
-  padding-top: 58px;
+  padding-top: 44px;
 }
 
 .hero-meta-badge-row {
@@ -739,7 +739,7 @@ const completenessColor = computed(() => {
 }
 
 .hero-display-name {
-  margin: 2px 0 0 0;
+  margin: 1px 0 0;
   font-family: var(--font-display);
   font-size: clamp(22px, 3vw, 26px);
   font-weight: var(--fw-bold);
@@ -763,15 +763,11 @@ const completenessColor = computed(() => {
 }
 
 .hero-bio-text {
-  margin: 6px 0 0;
+  margin: 4px 0 0;
   font-size: 13.5px;
   line-height: 1.55;
   color: var(--color-text-secondary);
-  max-width: 740px;
-  background: var(--color-surface-subtle);
-  padding: 10px 14px;
-  border-radius: var(--radius-card);
-  border: 1px solid var(--color-border-subtle);
+  max-width: 70ch;
 }
 
 .hero-bio-placeholder {
@@ -804,8 +800,8 @@ const completenessColor = computed(() => {
 .hero-telemetry-strip {
   display: flex;
   align-items: center;
-  gap: 20px;
-  padding: 12px 24px;
+  gap: 16px;
+  padding: 10px 22px;
   background: var(--color-surface-subtle);
   border-top: 1px solid var(--color-border-subtle);
   flex-wrap: wrap;
@@ -851,29 +847,44 @@ const completenessColor = computed(() => {
 
 @media (max-width: 768px) {
   .hero-cover-deck {
-    height: 140px;
+    height: 124px;
   }
 
   .cover-toolbar {
     top: 10px;
     left: 12px;
     right: 12px;
-    justify-content: center;
+    justify-content: space-between;
   }
 
   .hero-identity-deck {
     flex-direction: column;
     align-items: center;
     text-align: center;
-    margin-top: -55px;
-    padding: 0 16px 16px;
-    gap: 14px;
+    margin-top: -44px;
+    padding: 0 14px 14px;
+    gap: 10px;
   }
 
   .hero-identity-main {
     padding-top: 0;
     align-items: center;
     width: 100%;
+  }
+
+  .hero-avatar-frame {
+    width: 88px;
+    height: 88px;
+    border-radius: 18px;
+  }
+
+  .hero-avatar-img,
+  .hero-avatar-initials {
+    border-radius: 18px;
+  }
+
+  .hero-avatar-initials {
+    font-size: 28px;
   }
 
   .hero-meta-badge-row {
@@ -892,6 +903,48 @@ const completenessColor = computed(() => {
 
   .telemetry-item--status {
     margin-left: 0;
+  }
+}
+
+@media (max-width: 480px) {
+  .cover-toolbar {
+    gap: 6px;
+  }
+
+  .cover-status-pill {
+    width: 30px;
+    height: 30px;
+    justify-content: center;
+    padding: 0;
+  }
+
+  .cover-status-pill > span:last-child,
+  .btn-cover-action--ghost span {
+    display: none;
+  }
+
+  .cover-actions-group {
+    gap: 6px;
+  }
+
+  .btn-cover-action {
+    min-height: 34px;
+    padding: 6px 10px;
+  }
+
+  .btn-cover-action--ghost {
+    width: 34px;
+    justify-content: center;
+    padding-inline: 0;
+  }
+
+  .hero-display-name {
+    font-size: 22px;
+  }
+
+  .hero-bio-placeholder {
+    justify-content: center;
+    padding: 7px 10px;
   }
 }
 

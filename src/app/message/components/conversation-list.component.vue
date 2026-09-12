@@ -55,14 +55,15 @@ const filteredConversations = computed(() => {
 .conversation-header {
     display: flex;
     flex-direction: column;
-    padding: var(--space-2);
+    padding: 18px;
     border-bottom: 1px solid var(--color-border);
-    gap: var(--space-1);
+    gap: 12px;
 }
 
 .sidebar-title {
     margin: 0;
-    font-size: var(--fs-body);
+    font-family: var(--font-display);
+    font-size: 17px;
     font-weight: var(--fw-bold);
     color: var(--color-text-primary);
 }
@@ -70,10 +71,19 @@ const filteredConversations = computed(() => {
 .search-input-wrap {
     display: flex;
     align-items: center;
+    height: 42px;
+    box-sizing: border-box;
     border: 1px solid var(--color-border);
-    border-radius: var(--radius-input);
-    background: var(--color-bg);
-    padding: 6px 12px;
+    border-radius: var(--radius-input, 8px);
+    background: var(--color-surface-subtle);
+    padding: 0 12px;
+    transition: border-color 150ms ease, box-shadow 150ms ease, background-color 150ms ease;
+}
+
+.search-input-wrap:focus-within {
+    border-color: var(--color-primary);
+    background: var(--color-surface);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 12%, transparent);
 }
 
 .search-icon {
@@ -83,7 +93,7 @@ const filteredConversations = computed(() => {
 .search-input {
     border: none !important;
     background: transparent !important;
-    padding: 2px 8px !important;
+    padding: 0 8px !important;
     font-size: var(--fs-body-sm) !important;
     color: var(--color-text-primary) !important;
     outline: none !important;
@@ -95,10 +105,11 @@ const filteredConversations = computed(() => {
     flex-direction: column;
     overflow-y: auto;
     flex: 1;
+    overscroll-behavior: contain;
 }
 
 .empty {
-    padding: var(--space-4);
+    padding: 32px 18px;
     text-align: center;
     font-size: var(--fs-body-sm);
     color: var(--color-text-muted);

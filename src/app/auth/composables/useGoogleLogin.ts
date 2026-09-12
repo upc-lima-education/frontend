@@ -7,9 +7,8 @@ export type GoogleLoginProps = {
     prepareRedirect?: () => boolean | void;
     labelKey?: string;
     /** 
-     * Sent as GET /auth/google/url?userType=…
-     * REQUIRED for backend OAuth state, validated via prepareRedirect callback.
-     * For mode='login': must be validated before calling this function.
+     * Sent during sign-up so OAuth can create the matching profile type.
+     * Login resolves the existing profile from the authenticated account.
      */
     userType?: 'employee' | 'organization';
     /** OAuth flow mode: 'signup' to create new account, 'login' to authenticate existing account */

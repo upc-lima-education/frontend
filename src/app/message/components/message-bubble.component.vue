@@ -24,9 +24,8 @@ const formattedTime = computed(() => {
 
 <style scoped>
 .bubble-wrapper {
-  display: flex;
-  width: 100%;
-  margin-bottom: 2px;
+    display: flex;
+    width: 100%;
 }
 
 .bubble-wrapper.mine {
@@ -38,35 +37,36 @@ const formattedTime = computed(() => {
 }
 
 .bubble {
-  max-width: 60%;
-  padding: 10px 16px;
-  border-radius: 12px;
+  max-width: min(72%, 560px);
+  padding: 12px 18px;
+  border-radius: 16px;
   display: flex;
   flex-direction: column;
   gap: 4px;
   word-break: break-word;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
 }
 
 /* Incoming Bubble */
 .bubble-wrapper:not(.mine) .bubble {
-  background: var(--color-bg);
+  background: var(--color-surface);
   color: var(--color-text-primary);
-  border-top-left-radius: 2px;
+  border-bottom-left-radius: 4px;
   border: 1px solid var(--color-border);
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.04);
 }
 
 /* Outgoing Bubble */
 .bubble-wrapper.mine .bubble {
   background: var(--color-accent);
   color: #ffffff;
-  border-top-right-radius: 2px;
+  border-bottom-right-radius: 4px;
+  box-shadow: 0 4px 14px color-mix(in srgb, var(--color-primary) 24%, transparent);
 }
 
 .content {
   margin: 0;
   line-height: 1.5;
-  font-size: var(--fs-body-sm);
+  font-size: 14px;
   font-family: var(--font-family);
 }
 
@@ -82,5 +82,12 @@ const formattedTime = computed(() => {
 
 .bubble-wrapper.mine .time {
   color: rgba(255, 255, 255, 0.9);
+}
+
+@media (max-width: 768px) {
+  .bubble {
+    max-width: 86%;
+    padding: 11px 14px;
+  }
 }
 </style>

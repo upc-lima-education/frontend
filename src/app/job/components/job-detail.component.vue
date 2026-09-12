@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import type { GetJobByIdResponse } from '../model/get-job-by-id.response';
 import { ubigeoService } from '@/app/shared/services/ubigeo.service';
 import DialogComponent from '@/app/shared/components/dialog.component.vue';
@@ -27,7 +27,6 @@ import {
   ExternalLink,
   FileText,
   GraduationCap,
-  Heart,
   MapPin,
   Pencil,
   Share2,
@@ -54,6 +53,16 @@ const props = defineProps<{
 const department = ref('');
 const district = ref('');
 const isCopied = ref(false);
+const failedCompanyImage = ref(false);
+
+watch(
+  () => props.companyImage,
+  () => { failedCompanyImage.value = false; },
+);
+
+function handleCompanyImageError(): void {
+  failedCompanyImage.value = true;
+}
 
 const hasLocationLabel = computed(() => Boolean(department.value && district.value));
 
@@ -192,7 +201,6 @@ async function DeleteDialog() {
 // Apply to job behaviour
 const applyJobDialogRef = ref<InstanceType<typeof DialogComponent>>();
 const applying = ref(false);
-const saved = ref(false);
 const applicationCv = ref<File | null>(null);
 const applicationError = ref('');
 const applicationSuccess = ref('');
@@ -212,10 +220,6 @@ async function loadApplicationEligibility() {
   } finally {
     checkingApplication.value = false;
   }
-}
-
-function toggleSaved() {
-  saved.value = !saved.value;
 }
 
 function handleFileChange(event: Event) {
@@ -337,10 +341,11 @@ onMounted(async () => {
         <!-- Company Monogram / Logo -->
         <div class="company-lead-avatar" aria-hidden="true">
           <img
-            v-if="companyImage"
+            v-if="companyImage && !failedCompanyImage"
             :src="companyImage"
             :alt="`Logo de ${displayCompanyName}`"
             class="avatar-image"
+            @error="handleCompanyImageError"
           />
           <span v-else class="avatar-text">{{ companyInitials(displayCompanyName) }}</span>
         </div>
@@ -379,24 +384,6 @@ onMounted(async () => {
 
       <!-- Action Cluster on Header -->
       <div class="hero-actions-cluster">
-        <button
-          v-if="isCandidate"
-          type="button"
-          class="btn-hero-save"
-          :class="{ 'is-saved': saved }"
-          :aria-pressed="saved"
-          :aria-label="saved ? 'Guardada en favoritos' : 'Guardar oferta'"
-          @click="toggleSaved"
-        >
-          <Heart
-            :size="17"
-            :fill="saved ? 'var(--color-state-alert)' : 'none'"
-            :stroke="saved ? 'var(--color-state-alert)' : 'currentColor'"
-            aria-hidden="true"
-          />
-          <span>{{ saved ? 'Guardada' : 'Guardar' }}</span>
-        </button>
-
         <button
           v-if="isCandidate && redirectsApplication"
           type="button"
@@ -863,7 +850,11 @@ onMounted(async () => {
 .avatar-image {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  display: block;
+  box-sizing: border-box;
+  padding: 6px;
+  background: var(--color-surface);
+  object-fit: contain;
 }
 
 .hero-titles-block {
@@ -951,41 +942,6 @@ onMounted(async () => {
   align-items: center;
   gap: 12px;
   flex-shrink: 0;
-}
-
-.btn-hero-save {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  height: 44px;
-  padding: 0 16px;
-  border-radius: var(--radius-button);
-  border: 1px solid var(--color-border);
-  background: var(--color-surface);
-  color: var(--color-text-secondary);
-  font-family: var(--font-family);
-  font-size: 13px;
-  font-weight: var(--fw-bold);
-  cursor: pointer;
-  transition: all 150ms ease;
-}
-
-.btn-hero-save:hover {
-  border-color: var(--color-state-alert);
-  color: var(--color-state-alert);
-  background: color-mix(in srgb, var(--color-state-alert) 8%, var(--color-surface));
-}
-
-.btn-hero-save.is-saved {
-  border-color: var(--color-state-alert);
-  background: color-mix(in srgb, var(--color-state-alert) 8%, var(--color-surface));
-  color: var(--color-state-alert);
-}
-
-.btn-hero-save:focus-visible {
-  outline: 2px solid var(--color-state-alert);
-  outline-offset: 2px;
 }
 
 .btn-hero-apply {
@@ -1242,7 +1198,7 @@ onMounted(async () => {
    ============================================================ */
 .job-sidebar-column {
   padding: clamp(24px, 3vw, 36px) 24px;
-  background: #ffffff;
+  background: var(--color-surface);
   box-sizing: border-box;
 }
 
@@ -1270,7 +1226,7 @@ onMounted(async () => {
   padding: 24px;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-card-lg);
-  background: #ffffff;
+  background: var(--color-surface);
   box-shadow: none;
 }
 
@@ -1305,6 +1261,7 @@ onMounted(async () => {
   align-items: flex-start;
   gap: 8px;
   padding: 12px;
+  border: 1px solid color-mix(in srgb, var(--color-state-success) 24%, var(--color-border));
   border-radius: var(--radius-card-sm);
   background: var(--color-brand-lime-soft);
   color: var(--color-text-primary);
@@ -1698,26 +1655,185 @@ onMounted(async () => {
 }
 
 @media (max-width: 768px) {
+  .job-workspace-topbar {
+    min-height: 52px;
+    padding: 8px 14px;
+    flex-wrap: nowrap;
+  }
+
+  .btn-back-breadcrumb {
+    min-height: 40px;
+    font-size: 12px;
+  }
+
+  .btn-share-trigger {
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    justify-content: center;
+  }
+
+  .btn-share-trigger span {
+    display: none;
+  }
+
   .job-hero-deck {
-    flex-direction: column;
+    gap: 14px;
+    padding: 16px 14px;
     align-items: stretch;
-    gap: 20px;
   }
 
   .hero-left-stack {
-    flex-direction: column;
+    flex-direction: row;
     align-items: flex-start;
+    gap: 12px;
+  }
+
+  .company-lead-avatar {
+    width: 52px;
+    height: 52px;
+    flex-basis: 52px;
+    border-radius: 12px;
+    font-size: 17px;
+  }
+
+  .hero-titles-block {
+    gap: 5px;
+  }
+
+  .pill-chip {
+    padding: 2px 8px;
+    font-size: 10px;
+  }
+
+  .job-hero-title {
+    font-size: clamp(24px, 7vw, 30px);
+  }
+
+  .hero-company-meta {
+    gap: 5px 8px;
+    font-size: 12px;
   }
 
   .hero-actions-cluster {
     width: 100%;
   }
 
-  .btn-hero-save,
   .btn-hero-apply,
   .btn-hero-delete {
     flex: 1;
     justify-content: center;
+  }
+
+  .job-dossier-column {
+    padding: 18px 14px 22px;
+    gap: 22px;
+  }
+
+  .specs-bento-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .spec-tile {
+    gap: 8px;
+    padding: 10px;
+    border-radius: 12px;
+  }
+
+  .spec-tile-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 9px;
+  }
+
+  .spec-tile-icon svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  .spec-tile-label {
+    font-size: 9px;
+    letter-spacing: 0.03em;
+  }
+
+  .spec-tile-value {
+    margin-top: 1px;
+    font-size: 13px;
+    line-height: 1.2;
+  }
+
+  .spec-tile-sub {
+    font-size: 10px;
+    line-height: 1.25;
+  }
+
+  .fit-prep-banner {
+    gap: 10px;
+    padding: 12px;
+    border-radius: 12px;
+  }
+
+  .prep-icon-box {
+    width: 32px;
+    height: 32px;
+    border-radius: 9px;
+  }
+
+  .prep-icon-box svg {
+    width: 17px;
+    height: 17px;
+  }
+
+  .prep-text-block strong {
+    font-size: 12px;
+  }
+
+  .prep-text-block p {
+    font-size: 11px;
+    line-height: 1.4;
+  }
+
+  .dossier-section {
+    gap: 10px;
+  }
+
+  .dossier-section-title {
+    padding-bottom: 6px;
+    font-size: 16px;
+  }
+
+  .description-editorial-body {
+    font-size: 13px;
+    line-height: 1.6;
+  }
+
+  .skills-chips-matrix {
+    gap: 6px;
+  }
+
+  .skill-spec-badge {
+    gap: 5px;
+    padding: 6px 10px;
+    font-size: 11px;
+  }
+
+  .job-sidebar-column {
+    padding: 16px 14px 20px;
+  }
+
+  .external-source-card,
+  .sticky-apply-card,
+  .stats-card-panel {
+    gap: 12px;
+    padding: 16px;
+    border-radius: 14px;
+  }
+}
+
+@media (max-width: 389px) {
+  .hero-left-stack {
+    flex-direction: column;
   }
 
   .specs-bento-grid {
@@ -1726,7 +1842,6 @@ onMounted(async () => {
 }
 
 @media (pointer: coarse) {
-  .btn-hero-save,
   .btn-hero-apply,
   .btn-hero-delete,
   .btn-dock-apply,
