@@ -211,7 +211,6 @@ export class ProfileService {
 }
 
 export interface UpdateContactPayload {
-    email: string;
     phoneNumber?: string;
 }
 

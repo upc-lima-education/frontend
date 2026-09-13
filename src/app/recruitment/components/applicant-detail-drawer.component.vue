@@ -107,7 +107,10 @@ watch(
 // Al cambiar el tipo manualmente: rellena título y mensaje sugeridos.
 watch(notifyType, () => applyTemplate());
 
-const decisionChannels = ref<NotificationChannel[]>([]);
+const decisionChannels = ref<NotificationChannel[]>([
+    NotificationChannel.WhatsApp,
+    NotificationChannel.Email,
+]);
 const canDecide = computed(() => props.application.status === ApplicationStatus.Pending);
 
 function approveApplication(): void {

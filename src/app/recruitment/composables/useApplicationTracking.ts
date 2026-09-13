@@ -155,7 +155,7 @@ export function useApplicationTracking() {
             await notificationService.send({
                 profileId: application.candidateId,
                 type: params.type,
-                channels: [NotificationChannel.Email],
+                channels: [NotificationChannel.WhatsApp, NotificationChannel.Email],
                 subject: params.title,
                 message: params.message || `Actualización de tu postulación a ${application.jobTitle}.`,
             });

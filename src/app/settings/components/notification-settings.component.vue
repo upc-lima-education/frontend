@@ -26,12 +26,10 @@ onMounted(async () => {
 async function saveContact(): Promise<void> {
   error.value = '';
   success.value = '';
-  if (!email.value.trim()) { error.value = 'Ingresa un correo electrónico.'; return; }
   saving.value = true;
   try {
-    await updateAccountContact({ email: email.value.trim(), phoneNumber: phoneNumber.value.trim() || undefined });
-    await authStore.refreshSession();
-    success.value = 'Datos de contacto actualizados. Si cambiaste el correo, deberás verificarlo nuevamente.';
+    await updateAccountContact({ phoneNumber: phoneNumber.value.trim() || undefined });
+    success.value = 'Número de contacto actualizado.';
   } catch (cause: any) {
     error.value = cause?.response?.data?.detail || 'No se pudieron actualizar tus datos de contacto.';
   } finally { saving.value = false; }
@@ -46,7 +44,7 @@ async function saveContact(): Promise<void> {
         <div><h2 id="notification-settings-title">Canales de contacto</h2><p>Actualiza dónde quieres recibir avisos sobre tus postulaciones.</p></div>
       </header>
       <form class="contact-form" @submit.prevent="saveContact">
-        <label class="contact-field" for="notification-email"><span><Mail :size="16" aria-hidden="true" /> Correo electrónico</span><input id="notification-email" v-model.trim="email" type="email" autocomplete="email" :disabled="loading || saving" required /><small>Al cambiarlo, el correo queda pendiente de verificación.</small></label>
+        <label class="contact-field" for="notification-email"><span><Mail :size="16" aria-hidden="true" /> Correo electrónico</span><input id="notification-email" v-model.trim="email" type="email" autocomplete="email" disabled /><small>Este correo pertenece a tu cuenta y no se puede editar.</small></label>
         <label class="contact-field" for="notification-phone"><span><MessageSquare :size="16" aria-hidden="true" /> WhatsApp / teléfono</span><input id="notification-phone" v-model.trim="phoneNumber" type="tel" autocomplete="tel" placeholder="+51 999 999 999" :disabled="loading || saving" /><small>Usa el formato internacional para recibir mensajes de WhatsApp.</small></label>
         <p v-if="error" class="form-message form-message--error" role="alert">{{ error }}</p>
         <p v-if="success" class="form-message form-message--success" role="status">{{ success }}</p>
