@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { ROUTE_CONSTANTS } from './route-constants';
 import { authenticationGuard } from '@/app/auth/services/authentication.guard';
+import { useTheme } from '@/app/shared/composables/useTheme';
 
 const SignInPage = () => import('@/app/auth/pages/sign-in.page.vue');
 const SignUpPage = () => import('@/app/auth/pages/sign-up.page.vue');
@@ -23,15 +24,16 @@ const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
     { path: '/', redirect: ROUTE_CONSTANTS.HOME_PAGE },
-    { path: ROUTE_CONSTANTS.SIGN_UP_PAGE, name: 'sign-up', component: SignUpPage },
+    { path: ROUTE_CONSTANTS.SIGN_UP_PAGE, name: 'sign-up', component: SignUpPage, meta: { forceDark: true } },
     {
       path: `${ROUTE_CONSTANTS.SIGN_UP_PAGE}/:legacyPath(.*)`,
       redirect: ROUTE_CONSTANTS.SIGN_UP_PAGE,
+      meta: { forceDark: true },
     },
 
-    { path: ROUTE_CONSTANTS.SIGN_IN_PAGE, name: 'sign-in', component: SignInPage },
-    { path: ROUTE_CONSTANTS.FORGOT_PASSWORD, name: 'forgot-password', component: ForgotPasswordPage },
-    { path: '/auth/callback', name: 'auth-callback', component: GoogleCallbackPage },
+    { path: ROUTE_CONSTANTS.SIGN_IN_PAGE, name: 'sign-in', component: SignInPage, meta: { forceDark: true } },
+    { path: ROUTE_CONSTANTS.FORGOT_PASSWORD, name: 'forgot-password', component: ForgotPasswordPage, meta: { forceDark: true } },
+    { path: '/auth/callback', name: 'auth-callback', component: GoogleCallbackPage, meta: { forceDark: true } },
 
     { path: ROUTE_CONSTANTS.HOME_PAGE, name: 'home', component: HomePage },
     { path: ROUTE_CONSTANTS.NEWS_PAGE, name: 'news', component: NewsPage, meta: { roles: ['employee'] } },
@@ -56,5 +58,16 @@ const router = createRouter({
 
 // Aplicar guard de autenticación
 router.beforeEach(authenticationGuard);
+
+// Sincronizar bloqueo de modo oscuro en rutas de autenticación
+const { lockDarkTheme, unlockDarkTheme } = useTheme();
+
+router.afterEach((to) => {
+  if (to.meta?.forceDark) {
+    lockDarkTheme();
+  } else {
+    unlockDarkTheme();
+  }
+});
 
 export default router

@@ -252,7 +252,7 @@ async function handleLogout() {
             <!-- Left: Brand Logo & Wordmark with Opportunity Route Glow -->
             <RouterLink :to="primaryRoute" class="brand" aria-label="Llanqui - Ir a la sección principal">
                 <div class="brand-logo-wrap">
-                    <img class="brand-logo" src="../assets/icons/logo.svg" alt="" width="36" height="36" />
+                    <img class="brand-logo" src="/llanqui-icon-transparent.png" alt="" width="36" height="36" />
                 </div>
                 <span class="brand-name">Llanqui</span>
             </RouterLink>
@@ -579,11 +579,12 @@ async function handleLogout() {
 }
 
 .brand-logo {
-    width: 36px;
-    height: 36px;
+    width: 42px;
+    height: 42px;
     object-fit: contain;
     flex-shrink: 0;
     image-rendering: -webkit-optimize-contrast;
+    filter: drop-shadow(0 2px 5px rgba(37, 99, 235, 0.2));
     transition: transform 200ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
@@ -1519,8 +1520,8 @@ async function handleLogout() {
     }
 
     .brand-logo {
-        width: 32px;
-        height: 32px;
+        width: 36px;
+        height: 36px;
     }
 
     .brand-name {

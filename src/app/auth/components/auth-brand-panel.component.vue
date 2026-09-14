@@ -3,15 +3,7 @@
         <div class="brand-matrix" aria-hidden="true"></div>
 
         <div class="brand-head">
-            <svg class="brand-logo" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                <circle cx="20" cy="15" r="5.5" fill="#B9EF4A" />
-                <path d="M7 47C7 33.5 17 26 27 26C31.5 26 35.5 27.8 38.5 31C35.2 33.8 32.5 37.8 31 43.5L30.2 47H7Z" fill="#60A5FA" />
-                <circle cx="44" cy="15" r="5.5" fill="#60A5FA" />
-                <path d="M57 47C57 33.5 47 26 37 26C32.5 26 28.5 27.8 25.5 31C28.8 33.8 31.5 37.8 33 43.5L33.8 47H57Z" fill="#2563EB" />
-                <rect x="23.5" y="37" width="4" height="10" rx="2" fill="#60A5FA" />
-                <rect x="30" y="31" width="4" height="16" rx="2" fill="#3B82F6" />
-                <rect x="36.5" y="25" width="4" height="22" rx="2" fill="#2563EB" />
-            </svg>
+            <img class="brand-logo" src="/llanqui-icon-transparent.png" alt="" aria-hidden="true" />
             <span>Llanqui</span>
         </div>
 
@@ -58,7 +50,7 @@
     z-index: -1;
     background-image: radial-gradient(rgba(139, 162, 255, 0.2) 1px, transparent 1px);
     background-size: 16px 16px;
-    opacity: 0.7;
+    opacity: 0.45;
 }
 
 .brand-head {

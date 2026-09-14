@@ -3,7 +3,7 @@
 
 <template>
     <div class="auth-image">
-        <img src="../../shared//assets/icons/logo.svg" alt="Authentication Image" />
+        <img src="/llanqui-icon-transparent.png" alt="Authentication Image" />
     </div>
 </template>
 

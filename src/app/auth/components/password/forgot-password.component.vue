@@ -9,7 +9,7 @@ const { step, email, code, newPassword, confirmPassword, loading, serverError, r
         <!-- Header -->
         <div class="recovery-header">
             <div class="recovery-logo">
-                <img src="../../../shared/assets/icons/logo.svg" alt="Llanqui" class="recovery-logo-img" />
+                <img src="/llanqui-icon-transparent.png" alt="Llanqui" class="recovery-logo-img" />
                 <span class="recovery-logo-name">Llanqui</span>
             </div>
             <span class="recovery-eyebrow">SEGURIDAD DE CUENTA</span>

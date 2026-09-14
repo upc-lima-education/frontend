@@ -6,15 +6,30 @@ export type ResolvedTheme = 'light' | 'dark';
 export const THEME_STORAGE_KEY = 'llanqui-theme';
 export const REDUCED_MOTION_KEY = 'llanqui-reduced-motion';
 
+function checkInitialForcedDark(): boolean {
+  if (typeof window === 'undefined') return false;
+  const path = window.location.pathname;
+  return (
+    path === '/sign-in' ||
+    path.startsWith('/sign-up') ||
+    path === '/forgot-password' ||
+    path.startsWith('/auth/')
+  );
+}
+
 // Estado singleton reactivo compartido en toda la aplicación
 const themePreference = ref<ThemePreference>('system');
 const systemIsDark = ref(false);
 const reducedMotion = ref(false);
+const isForcedDark = ref(checkInitialForcedDark());
 let isInitialized = false;
 
 export function useTheme() {
   // Tema efectivo resuelto ('light' o 'dark')
   const resolvedTheme = computed<ResolvedTheme>(() => {
+    if (isForcedDark.value) {
+      return 'dark';
+    }
     if (themePreference.value === 'system') {
       return systemIsDark.value ? 'dark' : 'light';
     }
@@ -25,13 +40,27 @@ export function useTheme() {
 
   function applyThemeToDOM(theme: ResolvedTheme) {
     if (typeof document === 'undefined') return;
-    if (theme === 'dark') {
+    const effectiveTheme: ResolvedTheme = isForcedDark.value ? 'dark' : theme;
+    if (effectiveTheme === 'dark') {
       document.documentElement.setAttribute('data-theme', 'dark');
       document.documentElement.style.colorScheme = 'dark';
     } else {
       document.documentElement.removeAttribute('data-theme');
       document.documentElement.style.colorScheme = 'light';
     }
+  }
+
+  function lockDarkTheme() {
+    isForcedDark.value = true;
+    applyThemeToDOM('dark');
+  }
+
+  function unlockDarkTheme() {
+    isForcedDark.value = false;
+    const originalTheme = themePreference.value === 'system'
+      ? (systemIsDark.value ? 'dark' : 'light')
+      : themePreference.value;
+    applyThemeToDOM(originalTheme);
   }
 
   function setTheme(preference: ThemePreference) {
@@ -41,10 +70,13 @@ export function useTheme() {
     } catch (e) {
       console.warn('No se pudo guardar la preferencia de tema en localStorage', e);
     }
-    applyThemeToDOM(resolvedTheme.value);
+    if (!isForcedDark.value) {
+      applyThemeToDOM(resolvedTheme.value);
+    }
   }
 
   function toggleTheme() {
+    if (isForcedDark.value) return;
     // Alternancia rápida para el botón del Navbar
     if (resolvedTheme.value === 'light') {
       setTheme('dark');
@@ -107,7 +139,7 @@ export function useTheme() {
 
     const handleSystemChange = (e: MediaQueryListEvent) => {
       systemIsDark.value = e.matches;
-      if (themePreference.value === 'system') {
+      if (!isForcedDark.value && themePreference.value === 'system') {
         applyThemeToDOM(systemIsDark.value ? 'dark' : 'light');
       }
     };
@@ -141,10 +173,13 @@ export function useTheme() {
     themePreference,
     resolvedTheme,
     isDark,
+    isForcedDark: computed(() => isForcedDark.value),
     reducedMotion,
     setTheme,
     toggleTheme,
     setReducedMotion,
     initTheme,
+    lockDarkTheme,
+    unlockDarkTheme,
   };
 }

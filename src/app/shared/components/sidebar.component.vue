@@ -8,7 +8,7 @@ const { signOut } = useLogout();
   <aside class="sidebar">
     <nav>
       <header>
-        <img src="../assets/icons/logo.svg" alt="App Logo" class="logo" />
+        <img src="/llanqui-icon-transparent.png" alt="App Logo" class="logo" />
         <h2 class="title">{{ $t('appName') }}</h2>
       </header>
       <ul class="menu">
