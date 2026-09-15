@@ -1,4 +1,4 @@
-import httpRecommender from "@/app/shared/services/recommender.service";
+import http from "@/app/shared/services/base.service";
 
 export interface RecommendationRequest {
     title_search: string;
@@ -10,27 +10,31 @@ export interface RecommendationRequest {
 }
 
 export interface RecommendationResponse {
-    source_url: string;
+    jobId: string;
     title: string;
-    skills: string[];
-    ubigeo: string;
-    min_salary: number;
-    max_salary: number;
-    originPage: string;
-    similarity_score: number;
+    companyName: string;
+    ubigeo?: string;
+    minSalary?: number;
+    maxSalary?: number;
+    sourceUrl?: string;
+    score: number;
+    /** Legacy aliases kept for untouched consumers while migration completes. */
+    source_url?: string;
+    similarity_score?: number;
 }
 
 export class RecommendationService {
     async getSpecificRecommendations(payload: RecommendationRequest): Promise<RecommendationResponse[]> {
-        const response = await httpRecommender.post<RecommendationResponse[]>("/recommendations/specific", payload);
+        const response = await http.post<RecommendationResponse[]>("/recommendations/search", payload);
         return response.data;
     }
 
     async getGeneralRecommendations(userHistoryTitles: string[], limit?: number): Promise<RecommendationResponse[]> {
-        const response = await httpRecommender.post<RecommendationResponse[]>("/recommendations/general", {
-            user_history_titles: userHistoryTitles,
-            limit: limit || 10
-        });
+        const response = await http.get<RecommendationResponse[]>("/recommendations/for-me", { params: { limit: limit || 10 } });
         return response.data;
+    }
+
+    async createJobInteraction(jobId: string, type = "View"): Promise<void> {
+        await http.post("/job-interactions", { jobId, type });
     }
 }
