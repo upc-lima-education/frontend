@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import {
   ArrowRight,
@@ -17,6 +17,7 @@ import {
   X,
 } from 'lucide-vue-next';
 import { ROUTE_CONSTANTS } from '@/app/shared/router/route-constants';
+import { RecommendationService, type RecommendationResponse } from '@/app/job/services/recommendation.service';
 
 type FeedbackReason = 'Perfil' | 'Modalidad' | 'Salario' | 'Otro';
 type Feedback = 'interested' | 'not-for-me' | null;
@@ -27,7 +28,8 @@ type Recommendation = {
   company: string;
   location: string;
   modality: string;
-  compatibility: number;
+  score: number;
+  scoreLabel: string;
   skills: string[];
   initials: string;
   tone: 'blue' | 'cyan' | 'violet' | 'lime';
@@ -35,95 +37,50 @@ type Recommendation = {
 };
 
 const router = useRouter();
+const recommendationService = new RecommendationService();
+const recommendations = ref<Recommendation[]>([]);
+const loading = ref(true);
+const error = ref('');
+const featuredRecommendation = computed(() => recommendations.value[0] ?? null);
 
-// Datos temporales: se reemplazarán por la respuesta del recomendador híbrido.
-const featuredRecommendation: Recommendation = {
-  id: 'demo-featured',
-  title: 'Especialista de soporte TI',
-  company: 'Empresa verificada',
-  location: 'Lima',
-  modality: 'Híbrido',
-  compatibility: 91,
-  skills: ['Soporte técnico', 'Atención al cliente', 'Herramientas TI'],
-  initials: 'ST',
-  tone: 'blue',
-  reasons: ['Habilidades alineadas', 'Experiencia relacionada', 'Preferencia de modalidad'],
-};
+function initialsFor(value: string): string {
+  return value.split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0]).join('').toUpperCase() || 'LL';
+}
 
-const recommendations = ref<Recommendation[]>([
-  {
-    id: 'demo-1',
-    title: 'Analista de mesa de ayuda',
-    company: 'Soluciones Tech',
-    location: 'Lima',
-    modality: 'Presencial',
-    compatibility: 86,
-    skills: ['Atención al cliente', 'Tickets', 'Office'],
-    initials: 'ST',
-    tone: 'cyan',
-    reasons: ['Atención al cliente', 'Soporte técnico'],
-  },
-  {
-    id: 'demo-2',
-    title: 'Técnico de soporte TI',
-    company: 'Grupo Integra',
-    location: 'Lima',
-    modality: 'Híbrido',
-    compatibility: 82,
-    skills: ['Hardware', 'Redes', 'Soporte'],
-    initials: 'GI',
-    tone: 'blue',
-    reasons: ['Herramientas TI', 'Modalidad híbrida'],
-  },
-  {
-    id: 'demo-3',
-    title: 'Analista de operaciones TI',
-    company: 'Nexora',
-    location: 'Callao',
-    modality: 'Híbrido',
-    compatibility: 77,
-    skills: ['Procesos', 'Excel', 'Reportes'],
-    initials: 'NX',
-    tone: 'violet',
-    reasons: ['Experiencia relacionada', 'Ubicación cercana'],
-  },
-  {
-    id: 'demo-4',
-    title: 'Asistente de experiencia al cliente',
-    company: 'Conecta Perú',
-    location: 'Lima',
-    modality: 'Remoto',
-    compatibility: 74,
-    skills: ['Comunicación', 'CRM', 'Seguimiento'],
-    initials: 'CP',
-    tone: 'lime',
-    reasons: ['Atención al cliente', 'Trabajo remoto'],
-  },
-  {
-    id: 'demo-5',
-    title: 'Auxiliar de soporte operativo',
-    company: 'Impulsa Servicios',
-    location: 'San Isidro',
-    modality: 'Presencial',
-    compatibility: 71,
-    skills: ['Coordinación', 'Office', 'Registro'],
-    initials: 'IS',
-    tone: 'cyan',
-    reasons: ['Habilidades transferibles', 'Ubicación'],
-  },
-  {
-    id: 'demo-6',
-    title: 'Asistente de implementación',
-    company: 'Nodo Digital',
-    location: 'Lima',
-    modality: 'Híbrido',
-    compatibility: 69,
-    skills: ['Capacitación', 'Seguimiento', 'Sistemas'],
-    initials: 'ND',
-    tone: 'violet',
-    reasons: ['Experiencia relacionada', 'Preferencia de modalidad'],
-  },
-]);
+function toRecommendation(item: RecommendationResponse, index: number): Recommendation {
+  const company = item.companyName?.trim() || 'Empresa no indicada';
+  return {
+    id: item.jobId,
+    title: item.title?.trim() || 'Empleo sin título',
+    company,
+    location: item.ubigeo?.trim() || 'Ubicación no indicada',
+    modality: 'Modalidad no indicada',
+    score: item.score,
+    scoreLabel: item.score.toFixed(3),
+    skills: [],
+    initials: initialsFor(company),
+    tone: ['blue', 'cyan', 'violet', 'lime'][index % 4] as Recommendation['tone'],
+    reasons: ['Interacciones similares'],
+  };
+}
+
+async function loadRecommendations(): Promise<void> {
+  loading.value = true;
+  error.value = '';
+  try {
+    const response = await recommendationService.getGeneralRecommendations([], 10);
+    recommendations.value = response.filter((item) => item.jobId && item.score > 0).map(toRecommendation);
+  } catch (cause) {
+    console.error('Error loading ALS recommendations:', cause);
+    error.value = 'No pudimos cargar tus recomendaciones. Intenta nuevamente.';
+  } finally {
+    loading.value = false;
+  }
+}
+
+function openVacancy(id: string): void {
+  void router.push(`${ROUTE_CONSTANTS.JOB_DETAIL}/${id}`);
+}
 
 const shownCount = ref(4);
 const feedbackById = ref<Record<string, Feedback>>({});
@@ -137,9 +94,7 @@ const hasMoreRecommendations = computed(() => shownCount.value < recommendations
 const feedbackReasons: FeedbackReason[] = ['Perfil', 'Modalidad', 'Salario', 'Otro'];
 
 function compatibilityLabel(score: number): string {
-  if (score >= 85) return 'Alta compatibilidad';
-  if (score >= 75) return 'Buena compatibilidad';
-  return 'Compatibilidad media';
+  return score > 0 ? 'Puntaje ALS' : 'Sin puntaje';
 }
 
 function showMoreRecommendations(): void {
@@ -164,13 +119,11 @@ function selectFeedbackReason(id: string, reason: FeedbackReason): void {
   notice.value = 'Gracias. Esta señal se usará para afinar tus próximas recomendaciones.';
 }
 
-function viewDemoVacancy(): void {
-  notice.value = 'Esta vacante usa datos de demostración. Al conectar el recomendador, abrirá la oferta real.';
-}
-
 function openPreferences(): void {
   void router.push({ path: ROUTE_CONSTANTS.SETTINGS_PAGE, query: { tab: 'profile' } });
 }
+
+onMounted(() => { void loadRecommendations(); });
 </script>
 
 <template>
@@ -181,20 +134,32 @@ function openPreferences(): void {
           <h1 id="recommendation-title">Oportunidades elegidas para ti</h1>
           <p class="recommendation-subtitle">Una selección personalizada según tu perfil, experiencia y preferencias.</p>
         </div>
-        <div class="demo-chip" title="Esta vista usa datos temporales mientras se conecta el recomendador">
-          <Sparkles :size="15" aria-hidden="true" /> Vista de demostración
+        <div class="demo-chip" title="Resultados calculados por el modelo colaborativo">
+          <Sparkles :size="15" aria-hidden="true" /> Recomendaciones ALS
         </div>
       </header>
 
-      <section class="featured-match" aria-labelledby="featured-title">
-        <aside class="profile-signal" aria-label="Señales del perfil de demostración">
+      <section v-if="loading" class="method-note" role="status" aria-live="polite">
+        <Sparkles :size="18" aria-hidden="true" />
+        <p>Cargando recomendaciones según tus interacciones…</p>
+      </section>
+      <section v-else-if="error" class="method-note" role="alert">
+        <CircleHelp :size="18" aria-hidden="true" />
+        <p>{{ error }}</p>
+        <button type="button" class="btn-secondary" @click="loadRecommendations">Reintentar</button>
+      </section>
+      <section v-else-if="!recommendations.length" class="method-note" role="status">
+        <CircleHelp :size="18" aria-hidden="true" />
+        <p>Aún no hay suficientes interacciones similares para recomendarte empleos. Explora una vacante para mejorar tus próximas recomendaciones.</p>
+        <button type="button" class="btn-secondary" @click="router.push(ROUTE_CONSTANTS.JOB_SEARCH)">Explorar empleos <ArrowRight :size="16" aria-hidden="true" /></button>
+      </section>
+
+      <section v-if="featuredRecommendation" class="featured-match" aria-labelledby="featured-title">
+        <aside class="profile-signal" aria-label="Origen de la recomendación">
           <span class="signal-label">Tu perfil</span>
           <div class="profile-avatar" aria-hidden="true">TU</div>
-          <strong>Perfil de demostración</strong>
-          <span class="profile-role">Soporte técnico</span>
-          <div class="profile-tags">
-            <span v-for="skill in featuredRecommendation.skills" :key="skill">{{ skill }}</span>
-          </div>
+          <strong>Interacciones recientes</strong>
+          <span class="profile-role">Señales de empleos que consultaste</span>
         </aside>
 
         <div class="match-route" aria-label="Cómo se forma esta recomendación">
@@ -215,7 +180,7 @@ function openPreferences(): void {
               <h2 id="featured-title">{{ featuredRecommendation.title }}</h2>
               <p><MapPin :size="14" aria-hidden="true" /> {{ featuredRecommendation.location }} · {{ featuredRecommendation.modality }}</p>
             </div>
-            <div class="score-badge">{{ featuredRecommendation.compatibility }}%</div>
+            <div class="score-badge">{{ featuredRecommendation.scoreLabel }}</div>
           </div>
 
           <div class="featured-proof">
@@ -225,7 +190,7 @@ function openPreferences(): void {
             </ul>
           </div>
           <div class="featured-actions">
-            <button type="button" class="btn-primary" @click="viewDemoVacancy">Ver vacante <ArrowRight :size="17" aria-hidden="true" /></button>
+            <button type="button" class="btn-primary" @click="openVacancy(featuredRecommendation.id)">Ver vacante <ArrowRight :size="17" aria-hidden="true" /></button>
             <button type="button" class="btn-secondary" :aria-expanded="showMethod" @click="showMethod = !showMethod">Ver cómo se recomienda <ChevronDown :size="16" :class="{ 'is-open': showMethod }" aria-hidden="true" /></button>
           </div>
         </article>
@@ -258,15 +223,14 @@ function openPreferences(): void {
                 <div class="skill-tags"><span v-for="skill in job.skills" :key="skill">{{ skill }}</span></div>
               </div>
 
-              <div class="row-score" :aria-label="`${job.compatibility}% de compatibilidad`">
-                <div class="row-score-head"><strong>{{ job.compatibility }}%</strong><span>{{ compatibilityLabel(job.compatibility) }}</span></div>
-                <div class="score-track"><span :style="{ width: `${job.compatibility}%` }"></span></div>
+              <div class="row-score" :aria-label="`Puntaje ALS ${job.scoreLabel}`">
+                <div class="row-score-head"><strong>{{ job.scoreLabel }}</strong><span>{{ compatibilityLabel(job.score) }}</span></div>
               </div>
 
               <div class="row-actions">
                 <button type="button" class="icon-feedback" :class="{ 'is-active': feedbackById[job.id] === 'interested' }" :aria-label="`Me interesa ${job.title}`" title="Me interesa" @click="markInterested(job.id)"><Heart :size="17" /></button>
                 <button type="button" class="icon-feedback" :class="{ 'is-dismissed': feedbackById[job.id] === 'not-for-me' }" :aria-label="`No recomendar ${job.title}`" title="No recomendar" @click="openNotForMe(job.id)"><ThumbsDown :size="17" /></button>
-                <button type="button" class="row-view-button" @click="viewDemoVacancy">Ver vacante <ArrowRight :size="16" aria-hidden="true" /></button>
+                <button type="button" class="row-view-button" @click="openVacancy(job.id)">Ver vacante <ArrowRight :size="16" aria-hidden="true" /></button>
               </div>
 
               <div v-if="reasonOpenFor === job.id" class="feedback-inline" role="group" :aria-label="`Motivo para no recomendar ${job.title}`">
@@ -280,7 +244,7 @@ function openPreferences(): void {
 
           <div class="list-footer">
             <button v-if="hasMoreRecommendations" type="button" class="load-more" @click="showMoreRecommendations">Ver más recomendaciones <ArrowRight :size="16" aria-hidden="true" /></button>
-            <p v-else>Mostramos todas las recomendaciones de demostración disponibles.</p>
+            <p v-else>Mostramos todas las recomendaciones disponibles.</p>
           </div>
         </section>
 
