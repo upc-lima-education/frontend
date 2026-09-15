@@ -2,9 +2,9 @@
 import { computed, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
-import type { GetJobByIdResponse } from '../model/get-job-by-id.response';
+import { GetJobByIdResponse } from '../model/get-job-by-id.response';
 import { JobService } from '../services/job.service';
-import { RecommendationService, type RecommendationResponse } from '../services/recommendation.service';
+import { RecommendationService, type RecommendationRequest, type RecommendationResponse } from '../services/recommendation.service';
 import { ubigeoService } from '@/app/shared/services/ubigeo.service';
 import { profileService } from '@/app/profile/services/profile.service';
 import {
@@ -72,6 +72,7 @@ const error = ref('');
 const failedImages = ref<Set<string>>(new Set());
 
 const searchText = ref('');
+const searchInputRef = ref<HTMLInputElement | null>(null);
 const locationInput = ref('');
 const modalityFilter = ref('');
 const salaryFilter = ref<number | null>(null);
@@ -85,6 +86,9 @@ const appliedSalary = ref<number | null>(null);
 
 const isRecommendationActive = ref(false);
 const recommendedJobs = ref<GetJobByIdResponse[]>([]);
+const recommendationTotalItems = ref(0);
+const recommendationTotalPages = ref(1);
+const activeRecommendationRequest = ref<RecommendationRequest | null>(null);
 
 type CandidateProfileForRecommendations = {
   skills?: string[];
@@ -219,24 +223,37 @@ function recommendationPercentage(score?: number): number {
   return Math.round(score <= 1 ? score * 100 : score);
 }
 
-function matchRecommendations(recommendations: RecommendationResponse[]): GetJobByIdResponse[] {
-  const matched: GetJobByIdResponse[] = [];
-
-  recommendations.forEach((recommendation) => {
-    const job = jobs.value.find(
-      (item) =>
-        (item.sourceUrl && item.sourceUrl === recommendation.source_url) ||
-        item.id === recommendation.source_url,
-    );
-
-    if (job) {
-      (job as GetJobByIdResponse & { similarityScore?: number }).similarityScore =
-        recommendationPercentage(recommendation.similarity_score);
-      matched.push(job);
-    }
-  });
-
-  return matched;
+function mapRecommendationToJob(recommendation: RecommendationResponse): GetJobByIdResponse {
+  const job = new GetJobByIdResponse(
+    recommendation.jobId,
+    '',
+    recommendation.title || 'Vacante laboral',
+    '',
+    '',
+    [],
+    '',
+    recommendation.ubigeo || '',
+    '',
+    0,
+    0,
+    recommendation.minSalary ?? 0,
+    recommendation.maxSalary ?? 0,
+    '',
+    '',
+    '',
+    new Date(),
+    new Date(),
+    '',
+    0,
+    new Date(),
+    undefined,
+    'External',
+    recommendation.sourceUrl || '',
+  );
+  job.companyName = recommendation.companyName || undefined;
+  (job as GetJobByIdResponse & { similarityScore?: number }).similarityScore =
+    recommendationPercentage(recommendation.score ?? recommendation.similarity_score);
+  return job;
 }
 
 function normalizeExperience(value?: string): string {
@@ -312,14 +329,19 @@ async function applyPersonalizedRecommendations() {
   currentPage.value = 1;
 
   try {
-    const recommendations = await recommendationService.getSpecificRecommendations({
+    const request = {
       title_search: query,
       ubigeo: profileUbigeo.value || undefined,
       job_type: personalizationModality.value || undefined,
       min_salary: personalizationSalary.value || undefined,
-      limit: 100,
-    });
-    const matched = matchRecommendations(recommendations);
+      page: 1,
+      page_size: pageSize,
+    };
+    activeRecommendationRequest.value = request;
+    const recommendations = await recommendationService.getSpecificRecommendations(request);
+    const matched = recommendations.items.map(mapRecommendationToJob);
+    recommendationTotalItems.value = recommendations.totalItems;
+    recommendationTotalPages.value = Math.max(1, recommendations.totalPages);
 
     if (!matched.length) {
       isRecommendationActive.value = false;
@@ -366,6 +388,7 @@ function nextPersonalizationStep() {
 
 async function searchJobs() {
   currentPage.value = 1;
+  error.value = '';
   appliedSearchText.value = searchText.value.trim().toLowerCase();
   appliedUbigeo.value = resolveUbigeoFromInput(locationInput.value);
   appliedSalary.value = salaryFilter.value || null;
@@ -375,24 +398,41 @@ async function searchJobs() {
     loading.value = true;
     isRecommendationActive.value = true;
     try {
-      const recs = await recommendationService.getSpecificRecommendations({
+      const request = {
         title_search: appliedSearchText.value,
         ubigeo: appliedUbigeo.value || undefined,
         min_salary: appliedSalary.value || undefined,
-        limit: 100,
-      });
-
-      const matched = matchRecommendations(recs);
-      recommendedJobs.value = matched.length > 0 ? matched : jobs.value;
+        job_type: appliedModality.value || undefined,
+        page: 1,
+        page_size: pageSize,
+      };
+      activeRecommendationRequest.value = request;
+      const recommendations = await recommendationService.getSpecificRecommendations(request);
+      recommendedJobs.value = recommendations.items.map(mapRecommendationToJob);
+      recommendationTotalItems.value = recommendations.totalItems;
+      recommendationTotalPages.value = Math.max(1, recommendations.totalPages);
     } catch (err) {
       console.error('Error fetching recommendations:', err);
       isRecommendationActive.value = false;
+      recommendedJobs.value = [];
+      error.value = 'No pudimos consultar el buscador inteligente. Intenta nuevamente.';
     } finally {
       loading.value = false;
     }
   } else {
     isRecommendationActive.value = false;
+    activeRecommendationRequest.value = null;
+    recommendationTotalItems.value = 0;
+    recommendationTotalPages.value = 1;
   }
+}
+
+async function retryCurrentSearch() {
+  if (appliedSearchText.value) {
+    await searchJobs();
+    return;
+  }
+  await applyPersonalizedRecommendations();
 }
 
 function quickSelectModality(mod: string) {
@@ -406,9 +446,7 @@ function quickSelectSalary(val: number | null) {
 }
 
 const filteredJobs = computed(() => {
-  const sourceJobs = isRecommendationActive.value && recommendedJobs.value.length > 0
-    ? recommendedJobs.value
-    : jobs.value;
+  const sourceJobs = isRecommendationActive.value ? recommendedJobs.value : jobs.value;
 
   return sourceJobs.filter((job) => {
     if (appliedSearchText.value) {
@@ -442,20 +480,44 @@ const sortedJobs = computed(() => {
   return list.sort((a, b) => new Date(b.creationDate || 0).getTime() - new Date(a.creationDate || 0).getTime());
 });
 
-const totalJobsCount = computed(() => sortedJobs.value.length);
+const totalJobsCount = computed(() =>
+  isRecommendationActive.value ? recommendationTotalItems.value : sortedJobs.value.length,
+);
 
 const currentPage = ref(1);
 const pageSize = 10;
-const totalPages = computed(() => Math.max(1, Math.ceil(sortedJobs.value.length / pageSize)));
+const totalPages = computed(() =>
+  isRecommendationActive.value
+    ? recommendationTotalPages.value
+    : Math.max(1, Math.ceil(sortedJobs.value.length / pageSize)),
+);
 
 const paginatedJobs = computed(() => {
+  if (isRecommendationActive.value) return sortedJobs.value;
   const start = (currentPage.value - 1) * pageSize;
   return sortedJobs.value.slice(start, start + pageSize);
 });
 
-function goToPage(page: number) {
+async function goToPage(page: number) {
   if (page < 1 || page > totalPages.value || page === currentPage.value) return;
   currentPage.value = page;
+  if (isRecommendationActive.value && activeRecommendationRequest.value) {
+    loading.value = true;
+    try {
+      const response = await recommendationService.getSpecificRecommendations({
+        ...activeRecommendationRequest.value,
+        page,
+      });
+      recommendedJobs.value = response.items.map(mapRecommendationToJob);
+      recommendationTotalItems.value = response.totalItems;
+      recommendationTotalPages.value = Math.max(1, response.totalPages);
+    } catch (err) {
+      console.error('Error loading recommendation page:', err);
+      error.value = 'No pudimos cargar esta página de resultados. Intenta nuevamente.';
+    } finally {
+      loading.value = false;
+    }
+  }
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
@@ -470,6 +532,10 @@ function clearFilters() {
   appliedModality.value = '';
   appliedSalary.value = null;
   isRecommendationActive.value = false;
+  activeRecommendationRequest.value = null;
+  recommendationTotalItems.value = 0;
+  recommendationTotalPages.value = 1;
+  recommendedJobs.value = [];
   currentPage.value = 1;
 }
 
@@ -492,7 +558,6 @@ const activeAdvancedFiltersCount = computed(() =>
 );
 
 onMounted(async () => {
-  await loadJobs();
   await loadProfileSignals();
   if (profileSignals.value.length) await applyPersonalizedRecommendations();
 });
@@ -532,6 +597,7 @@ onMounted(async () => {
               <Search :size="18" class="field-icon" aria-hidden="true" />
               <input
                 id="search-job-input"
+                ref="searchInputRef"
                 v-model="searchText"
                 type="text"
                 class="search-main-input"
@@ -806,7 +872,7 @@ onMounted(async () => {
             :description="error"
           >
             <template #icon><BriefcaseBusiness aria-hidden="true" /></template>
-            <button type="button" class="btn-primary-action" @click="loadJobs">
+            <button type="button" class="btn-primary-action" @click="retryCurrentSearch">
               <RotateCw :size="15" aria-hidden="true" /> Reintentar conexión
             </button>
           </EmptyState>
@@ -826,13 +892,13 @@ onMounted(async () => {
           <!-- Empty State: Zero total jobs -->
           <EmptyState
             v-else-if="jobs.length === 0"
-            title="Aún no hay ofertas registradas"
-            description="Las empresas publican nuevas vacantes constantemente. Vuelve a consultar en breve o ajusta tu perfil para recibir alertas."
+            title="Busca una oportunidad laboral"
+            description="Escribe un puesto, habilidad o ubicación para consultar coincidencias inteligentes. Las recomendaciones se cargan solo cuando existe una consulta válida."
           >
             <template #icon><BriefcaseBusiness aria-hidden="true" /></template>
-            <RouterLink :to="ROUTE_CONSTANTS.SETTINGS_PAGE" class="btn-primary-action">
-              Optimizar mi perfil profesional
-            </RouterLink>
+            <button type="button" class="btn-primary-action" @click="searchInputRef?.focus()">
+              Empezar búsqueda
+            </button>
           </EmptyState>
 
           <!-- Job Cards List -->
