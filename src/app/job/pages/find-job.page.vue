@@ -67,6 +67,7 @@ function viewJobDetails(job: GetJobByIdResponse) {
 }
 
 const jobs = ref<GetJobByIdResponse[]>([]);
+const platformActiveJobs = ref<number | null>(null);
 const loading = ref(false);
 const error = ref('');
 const failedImages = ref<Set<string>>(new Set());
@@ -168,6 +169,16 @@ function companyInitialsFor(job: GetJobByIdResponse): string {
     .join('')
     .toUpperCase();
   return initials || 'LL';
+}
+
+async function loadPlatformSummary() {
+  try {
+    const total = await jobService.getActiveJobsCount();
+    platformActiveJobs.value = Number.isFinite(total) && total >= 0 ? total : null;
+  } catch (err) {
+    // This count is informative; search and recommendations remain usable if unavailable.
+    console.error('Error loading active jobs summary:', err);
+  }
 }
 
 function handleImageError(jobId: string): void {
@@ -558,6 +569,7 @@ const activeAdvancedFiltersCount = computed(() =>
 );
 
 onMounted(async () => {
+  await loadPlatformSummary();
   await loadProfileSignals();
   if (profileSignals.value.length) await applyPersonalizedRecommendations();
 });
@@ -810,6 +822,9 @@ onMounted(async () => {
             <div class="stream-count-info">
               <span class="count-number">{{ totalJobsCount.toLocaleString() }}</span>
               <span class="count-label">{{ totalJobsCount === 1 ? 'oferta encontrada' : 'ofertas encontradas' }}</span>
+              <span v-if="platformActiveJobs !== null" class="platform-total-note">
+                {{ platformActiveJobs.toLocaleString() }} empleos activos en Llanqui
+              </span>
               <span v-if="isRecommendationActive" class="ai-matched-badge">
                 <Sparkles :size="12" aria-hidden="true" /> Matching inteligente
               </span>
@@ -2303,6 +2318,14 @@ onMounted(async () => {
   font-size: 13px;
   font-weight: var(--fw-medium);
   color: var(--color-text-secondary);
+}
+
+.platform-total-note {
+  padding-inline-start: 8px;
+  border-inline-start: 1px solid var(--color-border-subtle);
+  color: var(--color-primary);
+  font-size: 12px;
+  font-weight: var(--fw-semibold);
 }
 
 .ai-matched-badge {

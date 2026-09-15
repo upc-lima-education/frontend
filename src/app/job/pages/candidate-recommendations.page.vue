@@ -89,7 +89,9 @@ const reasonOpenFor = ref<string | null>(null);
 const showMethod = ref(false);
 const notice = ref('');
 
-const visibleRecommendations = computed(() => recommendations.value.slice(0, shownCount.value));
+const visibleRecommendations = computed(() =>
+  recommendations.value.slice(1, shownCount.value + 1),
+);
 const hasMoreRecommendations = computed(() => shownCount.value < recommendations.value.length);
 const feedbackReasons: FeedbackReason[] = ['Perfil', 'Modalidad', 'Salario', 'Otro'];
 
@@ -132,7 +134,7 @@ onMounted(() => { void loadRecommendations(); });
       <header class="recommendation-header">
         <div>
           <h1 id="recommendation-title">Oportunidades elegidas para ti</h1>
-          <p class="recommendation-subtitle">Una selección personalizada según tu perfil, experiencia y preferencias.</p>
+      <p class="recommendation-subtitle">Una selección basada en los empleos que has consultado y en señales de usuarios con intereses parecidos.</p>
         </div>
         <div class="demo-chip" title="Resultados calculados por el modelo colaborativo">
           <Sparkles :size="15" aria-hidden="true" /> Recomendaciones ALS
@@ -162,13 +164,13 @@ onMounted(() => { void loadRecommendations(); });
           <span class="profile-role">Señales de empleos que consultaste</span>
         </aside>
 
-        <div class="match-route" aria-label="Cómo se forma esta recomendación">
+          <div class="match-route" aria-label="Cómo se forma esta recomendación colaborativa">
           <p class="route-title">Así se forma esta coincidencia</p>
           <div class="route-line" aria-hidden="true"><span></span></div>
           <ol class="route-steps">
-            <li><span class="route-icon"><Check :size="16" /></span><strong>Habilidades</strong><small>Competencias clave</small></li>
-            <li><span class="route-icon"><BriefcaseBusiness :size="16" /></span><strong>Experiencia</strong><small>Trayectoria laboral</small></li>
-            <li><span class="route-icon"><SlidersHorizontal :size="16" /></span><strong>Preferencias</strong><small>Filtros y objetivos</small></li>
+            <li><span class="route-icon"><Check :size="16" /></span><strong>Tus consultas</strong><small>Empleos que viste</small></li>
+            <li><span class="route-icon"><BriefcaseBusiness :size="16" /></span><strong>Usuarios parecidos</strong><small>Patrones compartidos</small></li>
+            <li><span class="route-icon"><SlidersHorizontal :size="16" /></span><strong>Nuevas vacantes</strong><small>Empleos no vistos</small></li>
           </ol>
         </div>
 
@@ -198,10 +200,10 @@ onMounted(() => { void loadRecommendations(); });
 
       <section v-if="showMethod" class="method-note" aria-label="Cómo funciona esta recomendación">
         <CircleHelp :size="18" aria-hidden="true" />
-        <p>El recomendador híbrido combina señales de tu perfil, experiencia y preferencias. Los porcentajes son temporales hasta conectar los resultados reales del modelo.</p>
+        <p>ALS compara tus interacciones con las de otros usuarios y prioriza empleos que todavía no has visto. Un score mayor indica una señal colaborativa más fuerte.</p>
       </section>
 
-      <p class="data-note"><CircleHelp :size="15" aria-hidden="true" /> Esta selección combina información de perfil, experiencia y preferencias.</p>
+      <p class="data-note"><CircleHelp :size="15" aria-hidden="true" /> Esta selección usa interacciones de empleos: no reemplaza la búsqueda CBF ni sus filtros.</p>
 
       <div class="recommendation-content">
         <section class="recommendation-list-section" aria-labelledby="more-title">
@@ -251,10 +253,10 @@ onMounted(() => { void loadRecommendations(); });
         <aside class="compatibility-guide" aria-labelledby="guide-title">
           <div class="guide-icon"><Compass :size="22" aria-hidden="true" /></div>
           <h2 id="guide-title">Tu compatibilidad</h2>
-          <p>El porcentaje resume la afinidad entre tu perfil y cada vacante.</p>
+          <p>El score resume la similitud entre tus interacciones y las de otros usuarios.</p>
           <ul>
-            <li><Check :size="15" aria-hidden="true" /><span>Se consideran habilidades, experiencia y preferencias.</span></li>
-            <li><Check :size="15" aria-hidden="true" /><span>Puedes ajustar tus preferencias cuando lo necesites.</span></li>
+            <li><Check :size="15" aria-hidden="true" /><span>Se consideran empleos que tú y otros usuarios han consultado.</span></li>
+            <li><Check :size="15" aria-hidden="true" /><span>Los empleos ya vistos se excluyen de la recomendación.</span></li>
             <li><Check :size="15" aria-hidden="true" /><span>Tu retroalimentación ayuda a afinar futuros resultados.</span></li>
           </ul>
           <button type="button" class="guide-action" @click="openPreferences">Actualizar perfil <ArrowRight :size="16" aria-hidden="true" /></button>

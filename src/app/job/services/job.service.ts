@@ -9,6 +9,11 @@ import type { DeleteJobRequest } from "../model/delete-job.request";
 export class JobService {
     endpoint = '/job';
 
+    async getActiveJobsCount(): Promise<number> {
+        const response = await http.get<{ totalActiveJobs: number }>(`${this.endpoint}/summary`);
+        return response.data.totalActiveJobs;
+    }
+
     /** Mapea la respuesta resumida real de GET /api/v1/job. */
     private mapJobListItem(data: any): GetJobByIdResponse {
         const payment = data.payment ?? {};
