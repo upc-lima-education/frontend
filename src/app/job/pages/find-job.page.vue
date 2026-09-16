@@ -87,6 +87,7 @@ const appliedSalary = ref<number | null>(null);
 
 const isRecommendationActive = ref(false);
 const recommendedJobs = ref<GetJobByIdResponse[]>([]);
+const profileRecommendedJobs = ref<GetJobByIdResponse[]>([]);
 const recommendationTotalItems = ref(0);
 const recommendationTotalPages = ref(1);
 const activeRecommendationRequest = ref<RecommendationRequest | null>(null);
@@ -351,6 +352,7 @@ async function applyPersonalizedRecommendations() {
     activeRecommendationRequest.value = request;
     const recommendations = await recommendationService.getSpecificRecommendations(request);
     const matched = recommendations.items.map(mapRecommendationToJob);
+    profileRecommendedJobs.value = matched;
     recommendationTotalItems.value = recommendations.totalItems;
     recommendationTotalPages.value = Math.max(1, recommendations.totalPages);
 
@@ -894,13 +896,27 @@ onMounted(async () => {
 
           <!-- Empty State: No results with filter -->
           <EmptyState
-            v-else-if="sortedJobs.length === 0 && jobs.length > 0"
-            title="Sin vacantes con estos criterios"
-            description="No encontramos empleos que coincidan con la combinación de filtros aplicada. Prueba cambiando el distrito o ampliando el rango salarial."
+            v-else-if="isRecommendationActive && sortedJobs.length === 0"
+            title="No encontramos coincidencias exactas"
+            description="La búsqueda no encontró una vacante que coincida con todos tus criterios. Puedes revisar estas oportunidades relacionadas con tu perfil."
           >
             <template #icon><Filter aria-hidden="true" /></template>
+            <ol v-if="profileRecommendedJobs.length" class="empty-state-recommendations" aria-label="Recomendaciones relacionadas con tu perfil">
+              <li v-for="job in profileRecommendedJobs.slice(0, 3)" :key="job.id">
+                <button type="button" class="empty-state-recommendation" @click="openJobPreview(job)">
+                  <span>
+                    <strong>{{ job.title || 'Vacante laboral' }}</strong>
+                    <small>{{ companyNameFor(job) }}</small>
+                  </span>
+                  <span v-if="recommendationScore(job)" class="empty-state-recommendation__score">
+                    {{ recommendationScore(job) }}%
+                  </span>
+                  <ArrowRight :size="16" aria-hidden="true" />
+                </button>
+              </li>
+            </ol>
             <button type="button" class="btn-primary-action" @click="clearFilters">
-              Restablecer todos los filtros
+              {{ profileRecommendedJobs.length ? 'Limpiar búsqueda' : 'Restablecer todos los filtros' }}
             </button>
           </EmptyState>
 
@@ -1090,8 +1106,8 @@ onMounted(async () => {
               <span>Buscando afinidades…</span>
             </div>
 
-            <ol v-else-if="recommendedJobs.length" class="recommendation-mini-list" aria-label="Vacantes recomendadas">
-              <li v-for="job in recommendedJobs.slice(0, 3)" :key="job.id">
+            <ol v-else-if="profileRecommendedJobs.length" class="recommendation-mini-list" aria-label="Vacantes recomendadas">
+              <li v-for="job in profileRecommendedJobs.slice(0, 3)" :key="job.id">
                 <button type="button" class="recommendation-mini-job" @click="openJobPreview(job)">
                   <span class="recommendation-mini-job__content">
                     <strong>{{ job.title || 'Vacante laboral' }}</strong>
@@ -1118,7 +1134,7 @@ onMounted(async () => {
               @click="openPersonalization"
             >
               <SlidersHorizontal :size="16" aria-hidden="true" />
-              {{ recommendedJobs.length ? 'No es lo que busco' : 'Personalizar recomendaciones' }}
+              {{ profileRecommendedJobs.length ? 'No es lo que busco' : 'Personalizar recomendaciones' }}
             </button>
 
             <form
@@ -1216,7 +1232,7 @@ onMounted(async () => {
               </div>
             </form>
 
-            <div v-if="recommendedJobs.length && !isPersonalizationOpen" class="recommendation-rating-placeholder">
+            <div v-if="profileRecommendedJobs.length && !isPersonalizationOpen" class="recommendation-rating-placeholder">
               <strong>¿Estas recomendaciones eran lo que buscabas?</strong>
               <span>La escala de 1 a 5 se habilitará cuando el modelo reciba feedback persistente.</span>
             </div>
@@ -2197,6 +2213,66 @@ onMounted(async () => {
 .recommendation-rating-placeholder strong {
   color: var(--color-text-primary);
   font-size: 12px;
+}
+
+.empty-state-recommendations {
+  display: flex;
+  width: min(560px, 100%);
+  flex-direction: column;
+  gap: 6px;
+  margin: 4px 0 8px;
+  padding: 0;
+  list-style: none;
+  text-align: left;
+}
+
+.empty-state-recommendation {
+  display: grid;
+  width: 100%;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 12px;
+  padding: 13px 14px;
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-card-sm);
+  background: var(--color-surface-subtle);
+  color: var(--color-text-primary);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.empty-state-recommendation:hover,
+.empty-state-recommendation:focus-visible {
+  border-color: var(--color-primary);
+  outline: none;
+}
+
+.empty-state-recommendation > span:first-child {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.empty-state-recommendation strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13px;
+}
+
+.empty-state-recommendation small {
+  overflow: hidden;
+  color: var(--color-text-secondary);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.empty-state-recommendation__score {
+  color: var(--color-primary);
+  font-size: 12px;
+  font-weight: 700;
 }
 
 .recommendation-mini-list {
