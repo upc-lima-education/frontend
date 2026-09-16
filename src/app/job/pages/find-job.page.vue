@@ -461,6 +461,10 @@ function quickSelectSalary(val: number | null) {
 const filteredJobs = computed(() => {
   const sourceJobs = isRecommendationActive.value ? recommendedJobs.value : jobs.value;
 
+  // CBF already applies the semantic query and backend filters. Reapplying a
+  // literal client-side match can hide valid semantic recommendations.
+  if (isRecommendationActive.value) return sourceJobs;
+
   return sourceJobs.filter((job) => {
     if (appliedSearchText.value) {
       const query = appliedSearchText.value;
