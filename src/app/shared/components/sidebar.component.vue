@@ -12,12 +12,6 @@ const { signOut } = useLogout();
         <h2 class="title">{{ $t('appName') }}</h2>
       </header>
       <ul class="menu">
-        <li>
-          <RouterLink to="/news" class="link">
-            <img src="../assets/icons/Novedades.svg" class="sidebar-image"/>
-            <span>{{ $t('sidebar.news') }}</span>
-          </RouterLink>
-        </li>
 
         <!-- Solo employee -->
         <li>

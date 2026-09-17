@@ -9,7 +9,6 @@ const ForgotPasswordPage = () => import('@/app/auth/pages/forgot-password.page.v
 const GoogleCallbackPage = () => import('@/app/auth/pages/google-callback.page.vue');
 const NotFoundPage = () => import('@/app/public/not_found/pages/not-found.page.vue');
 const HomePage = () => import('@/app/public/pages/home.page.vue');
-const NewsPage = () => import('@/app/news/pages/news.page.vue');
 const SettingsPage = () => import('@/app/settings/pages/settings.page.vue');
 const FindJobPage = () => import('@/app/job/pages/find-job.page.vue');
 const CandidateRecommendationsPage = () => import('@/app/job/pages/candidate-recommendations.page.vue');
@@ -36,7 +35,6 @@ const router = createRouter({
     { path: '/auth/callback', name: 'auth-callback', component: GoogleCallbackPage, meta: { forceDark: true } },
 
     { path: ROUTE_CONSTANTS.HOME_PAGE, name: 'home', component: HomePage },
-    { path: ROUTE_CONSTANTS.NEWS_PAGE, name: 'news', component: NewsPage, meta: { roles: ['employee'] } },
     { path: ROUTE_CONSTANTS.PROFILE_PAGE, redirect: ROUTE_CONSTANTS.SETTINGS_PAGE },
     { path: ROUTE_CONSTANTS.SETTINGS_PAGE, name: 'settings', component: SettingsPage },
 
