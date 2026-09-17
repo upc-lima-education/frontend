@@ -187,6 +187,9 @@ const {
     font-size: 1rem;
     font-style: italic;
     opacity: 0.9;
+    white-space: pre-line;
+    word-break: break-word;
+    overflow-wrap: anywhere;
 }
 
 .unverified-badge {
@@ -240,6 +243,9 @@ const {
 
 .detail-item span {
     color: var(--color-text-primary);
+    white-space: pre-line;
+    word-break: break-word;
+    overflow-wrap: anywhere;
 }
 
 .keywords {

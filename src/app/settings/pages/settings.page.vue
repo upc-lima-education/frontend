@@ -112,7 +112,7 @@ function handleTabKeydown(e: KeyboardEvent, index: number) {
             type="button"
             class="bento-stat-tile"
             :class="{ 'is-tile-active': activeTab === 'profile' || activeTab === 'edit' }"
-            :aria-label="isOrganization ? 'Ver perfil de la empresa' : 'Ver mi perfil profesional'"
+            :aria-label="isOrganization ? 'Ver perfil de la empresa' : 'Ver mi perfil'"
             @click="setTab('profile')"
           >
             <div class="tile-icon-box tile-icon-box--primary">

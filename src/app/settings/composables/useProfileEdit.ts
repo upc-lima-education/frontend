@@ -8,7 +8,6 @@ import { districtNameToUbigeo } from '@/app/profile/utils/district-ubigeo.util';
 import {
     PROFILE_BIO_MAX_LENGTH,
     DISTRICT_OPTIONS,
-    PROFESSION_OPTIONS,
     INDUSTRY_OPTIONS,
     COMPANY_SIZE_OPTIONS,
 } from '@/app/profile/model/profile-edit.options';
@@ -193,7 +192,6 @@ export function useProfileEdit() {
     const identificationType = ref<'dni' | 'passport'>('dni');
     const dni = ref(''); // Serves as identification
     const district = ref('');
-    const profession = ref('');
     const bio = ref('');
     const keywords = ref<string[]>([]);
     const newKeyword = ref('');
@@ -231,7 +229,6 @@ export function useProfileEdit() {
         identificationType.value = 'dni';
         dni.value = '';
         district.value = '';
-        profession.value = '';
         bio.value = '';
         keywords.value = [];
         newKeyword.value = '';
@@ -331,8 +328,9 @@ export function useProfileEdit() {
                 lastName.value = candidate.lastName || '';
                 identificationType.value = d.identificationType === 'passport' ? 'passport' : 'dni';
                 dni.value = d.identification || d.dni || d.nationalId || '';
-                district.value = d.district || '';
-                profession.value = d.profession || d.jobTitle || '';
+                district.value = DISTRICT_OPTIONS.find(
+                    (option) => districtNameToUbigeo(option) === d.ubigeo,
+                ) || d.district || '';
                 bio.value = (d.description || d.bio || '').slice(0, BIO_MAX);
                 keywords.value = d.skills || [];
 
@@ -555,7 +553,7 @@ export function useProfileEdit() {
                         lastName: lastName.value,
                         dni: dni.value,
                         description: bio.value,
-                        ubigeo: districtNameToUbigeo(district.value),
+                        ubigeo: district.value ? districtNameToUbigeo(district.value) : undefined,
                         skills: keywords.value,
                         profilePicture: profilePictureFile.value || undefined,
                     });
@@ -599,7 +597,7 @@ export function useProfileEdit() {
                         // ser null, no una cadena vacía que incumple ^\d{8}$.
                         dni: dni.value.trim() || null,
                         description: bio.value,
-                        ubigeo: districtNameToUbigeo(district.value),
+                        ubigeo: district.value ? districtNameToUbigeo(district.value) : undefined,
                         skills: keywords.value,
                     });
                 } else {
@@ -669,7 +667,6 @@ export function useProfileEdit() {
     return {
         BIO_MAX,
         DISTRICT_OPTIONS,
-        PROFESSION_OPTIONS,
         INDUSTRY_OPTIONS,
         COMPANY_SIZE_OPTIONS,
         loading,
@@ -689,7 +686,6 @@ export function useProfileEdit() {
         identificationType,
         dni,
         district,
-        profession,
         bio,
         keywords,
         newKeyword,

@@ -62,3 +62,83 @@ export interface LanguageEntry {
     name: string;
     level: LanguageLevel;
 }
+
+export interface LanguageOptionItem {
+    code: BackendLanguageCode;
+    name: string;
+    label: string;
+    isPopular?: boolean;
+}
+
+/**
+ * Idiomas más frecuentes en el entorno laboral de Perú y la región.
+ */
+export const POPULAR_LANGUAGE_CODES: BackendLanguageCode[] = [
+    'Es', 'En', 'Qu', 'Ay', 'Pt', 'Fr', 'It', 'De', 'Zh', 'Ja', 'Ko', 'Ru',
+];
+
+const spanishLanguageNames = typeof Intl !== 'undefined' && Intl.DisplayNames
+    ? new Intl.DisplayNames(['es-PE', 'es'], { type: 'language' })
+    : null;
+
+const COMMON_LANGUAGE_NAMES: Record<string, string> = {
+    Es: 'Español',
+    En: 'Inglés',
+    Qu: 'Quechua',
+    Ay: 'Aimara',
+    Pt: 'Portugués',
+    Fr: 'Francés',
+    It: 'Italiano',
+    De: 'Alemán',
+    Zh: 'Chino',
+    Ja: 'Japonés',
+    Ko: 'Coreano',
+    Ru: 'Ruso',
+    Ar: 'Árabe',
+    Nl: 'Neerlandés (Holandés)',
+    Pl: 'Polaco',
+    Tr: 'Turco',
+    Hi: 'Hindi',
+    Sv: 'Sueco',
+    No: 'Noruego',
+    Da: 'Danés',
+    Fi: 'Finlandés',
+    El: 'Griego',
+    He: 'Hebreo',
+};
+
+export function getLanguageDisplayName(code: string): string {
+    const normalized = normalizeLanguageCode(code);
+    if (!normalized) return '';
+    if (COMMON_LANGUAGE_NAMES[normalized]) {
+        return COMMON_LANGUAGE_NAMES[normalized];
+    }
+    if (spanishLanguageNames) {
+        try {
+            const name = spanishLanguageNames.of(normalized.toLowerCase());
+            if (name && name.toLowerCase() !== normalized.toLowerCase()) {
+                return `${name.charAt(0).toLocaleUpperCase('es-PE')}${name.slice(1)}`;
+            }
+        } catch {
+            // fallback
+        }
+    }
+    return normalized;
+}
+
+/**
+ * Retorna el catálogo completo de idiomas ordenado alfabéticamente por su nombre en español,
+ * evitando códigos ISO crudos como "aa" o "ee" y facilitando la búsqueda.
+ */
+export function getAvailableLanguageOptions(): LanguageOptionItem[] {
+    const popularSet = new Set(POPULAR_LANGUAGE_CODES);
+    return BACKEND_LANGUAGE_CODES.map((code) => {
+        const name = getLanguageDisplayName(code);
+        return {
+            code,
+            name,
+            label: `${name} (${code.toUpperCase()})`,
+            isPopular: popularSet.has(code),
+        };
+    }).sort((a, b) => a.name.localeCompare(b.name, 'es', { sensitivity: 'base' }));
+}

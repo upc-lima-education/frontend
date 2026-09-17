@@ -27,9 +27,11 @@ import {
   Trash2
 } from 'lucide-vue-next';
 import SkillPickerComponent from '@/app/shared/components/skill-picker.component.vue';
+import LanguagePickerComponent from '@/app/shared/components/language-picker.component.vue';
 import { calculateProfileCompletion } from '@/app/profile/utils/profile-completion.util';
 import {
   BACKEND_LANGUAGE_CODES,
+  getLanguageDisplayName,
   isBackendLanguageCode,
   LANGUAGE_LEVELS,
   normalizeLanguageCode,
@@ -53,7 +55,6 @@ const {
   identificationType,
   dni,
   district,
-  profession,
   bio,
   keywords,
   companyName,
@@ -107,18 +108,9 @@ const {
 } = useProfileEdit();
 
 const LANGUAGE_LEVEL_OPTIONS = LANGUAGE_LEVELS;
-const spanishLanguageNames = new Intl.DisplayNames(['es'], { type: 'language' });
 
 function formatLanguageCode(code: string) {
-  const normalized = normalizeLanguageCode(code);
-  try {
-    const languageName = spanishLanguageNames.of(normalized.toLowerCase());
-    return languageName
-      ? `${languageName.charAt(0).toLocaleUpperCase('es-PE')}${languageName.slice(1)}`
-      : normalized;
-  } catch {
-    return normalized;
-  }
+  return getLanguageDisplayName(code) || code;
 }
 
 interface FieldError {
@@ -563,28 +555,15 @@ const isRucInputValid = computed(() => ruc.value && ruc.value.length === 11 && /
                 </div>
               </div>
 
-              <div class="grid-2">
-                <div class="field">
-                  <label for="pe-prof">Ocupación o cargo actual</label>
-                  <input
-                    id="pe-prof"
-                    v-model="profession"
-                    type="text"
-                    autocomplete="organization-title"
-                    maxlength="150"
-                    placeholder="Ej. Atención al cliente, construcción o estudiante"
-                  />
-                </div>
-                <div class="field">
-                  <label for="pe-district">Distrito de residencia</label>
-                  <div class="select-wrapper">
-                    <select id="pe-district" v-model="district">
-                      <option value="">{{ $t('profile.selectDistrict') }}</option>
-                      <option v-for="opt in DISTRICT_OPTIONS" :key="opt" :value="opt">
-                        {{ opt }}
-                      </option>
-                    </select>
-                  </div>
+              <div class="field">
+                <label for="pe-district">Distrito de residencia</label>
+                <div class="select-wrapper">
+                  <select id="pe-district" v-model="district">
+                    <option value="">{{ $t('profile.selectDistrict') }}</option>
+                    <option v-for="opt in DISTRICT_OPTIONS" :key="opt" :value="opt">
+                      {{ opt }}
+                    </option>
+                  </select>
                 </div>
               </div>
 
@@ -905,15 +884,13 @@ const isRucInputValid = computed(() => ruc.value && ruc.value.length === 11 && /
                 <div class="grid-2">
                   <div class="field" :class="{ 'field-invalid': fieldHasError(languageErrors, 'name') }">
                     <label for="lang-name">Idioma</label>
-                    <div class="select-wrapper">
-                      <select id="lang-name" v-model="languageDraft.name">
-                        <option value="" disabled>Selecciona un idioma</option>
-                        <option v-for="code in BACKEND_LANGUAGE_CODES" :key="code" :value="code">
-                          {{ formatLanguageCode(code) }}
-                        </option>
-                      </select>
-                    </div>
-                    <p class="field-hint">Elige el idioma que deseas agregar a tu perfil.</p>
+                    <LanguagePickerComponent
+                      id="lang-name"
+                      v-model="languageDraft.name"
+                      :disabled="loading"
+                      :has-error="fieldHasError(languageErrors, 'name')"
+                    />
+                    <p class="field-hint">Elige o busca el idioma que deseas agregar a tu perfil.</p>
                   </div>
                   <div class="field" :class="{ 'field-invalid': fieldHasError(languageErrors, 'level') }">
                     <label for="lang-level">Nivel</label>

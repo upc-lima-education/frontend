@@ -478,7 +478,7 @@ const filteredJobs = computed(() => {
             <RouterLink
               :to="ROUTE_CONSTANTS.SETTINGS_PAGE"
               class="meter-action-link"
-              aria-label="Completar información en perfil profesional"
+              aria-label="Completar información en mi perfil"
             >
               <div class="meter-action-text">
                 <small>{{ profileCompletion < 100 ? 'Ruta de oportunidad recomendada' : 'Ajustes del perfil' }}</small>
@@ -778,7 +778,7 @@ const filteredJobs = computed(() => {
                   <div class="quick-matrix-icon"><Bell :size="20" aria-hidden="true" /></div>
                   <span>Mensajes</span>
                 </RouterLink>
-                <RouterLink :to="ROUTE_CONSTANTS.SETTINGS_PAGE" class="quick-matrix-item" aria-label="Ver mi perfil profesional">
+                <RouterLink :to="ROUTE_CONSTANTS.SETTINGS_PAGE" class="quick-matrix-item" aria-label="Ver mi mi perfil">
                   <div class="quick-matrix-icon"><UserRound :size="20" aria-hidden="true" /></div>
                   <span>Mi perfil</span>
                 </RouterLink>
@@ -798,7 +798,7 @@ const filteredJobs = computed(() => {
                 <RouterLink
                   :to="ROUTE_CONSTANTS.SETTINGS_PAGE"
                   class="tip-action-link"
-                  aria-label="Ir a completar mi perfil profesional"
+                  aria-label="Ir a completar mi mi perfil"
                 >
                   <span>Completar mi perfil</span>
                   <ArrowRight :size="14" aria-hidden="true" />
@@ -1646,16 +1646,24 @@ const filteredJobs = computed(() => {
 .btn-clear-search {
   position: absolute;
   right: 8px;
-  display: grid;
-  place-items: center;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   width: 22px;
   height: 22px;
-  border-radius: 50%;
+  min-width: 22px !important;
+  min-height: 22px !important;
+  max-width: 22px !important;
+  max-height: 22px !important;
+  aspect-ratio: 1 / 1 !important;
+  border-radius: 50% !important;
   border: none;
   background: var(--color-border);
   color: var(--color-text-secondary);
   cursor: pointer;
-  padding: 0;
+  padding: 0 !important;
+  line-height: 1;
+  box-sizing: border-box;
   transition: background-color 150ms ease, color 150ms ease, transform 150ms ease;
 }
 

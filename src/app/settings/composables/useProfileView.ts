@@ -2,6 +2,8 @@ import { computed, onMounted, ref } from 'vue';
 import { useAuthenticationStore } from '@/app/auth/services/authentication.store';
 import { ProfileIdUnavailableError, profileService } from '@/app/profile/services/profile.service';
 import { resolveBackendAssetUrl } from '@/app/shared/services/base.service';
+import { DISTRICT_OPTIONS } from '@/app/profile/model/profile-edit.options';
+import { districtNameToUbigeo } from '@/app/profile/utils/district-ubigeo.util';
 
 /** API profile payload shape (subset used by the view). */
 export type ProfileViewData = {
@@ -10,12 +12,14 @@ export type ProfileViewData = {
     updatedAt?: string;
     description?: string;
     phoneNumber?: string;
+    ubigeo?: string;
     skills?: string[];
     languages?: unknown[];
     educations?: unknown[];
     workExperiences?: unknown[];
     isComplete?: boolean;
-    candidate?: { firstName?: string; lastName?: string } | null;
+    candidate?: { firstName?: string; lastName?: string; dni?: string } | null;
+    dni?: string;
     company?: { companyName?: string; sector?: string; ruc?: string; isVerified?: boolean } | null;
     isVerified?: boolean;
     keywords?: string[];
@@ -80,14 +84,20 @@ export function useProfileView() {
             if (authStore.currentUserId) {
                 const response = await profileService.getCurrentProfile();
                 const raw = (response.data?.data || response.data) as ProfileViewData;
+                const resolvedDistrict = raw.ubigeo
+                    ? DISTRICT_OPTIONS.find((opt) => districtNameToUbigeo(opt) === raw.ubigeo) || raw.district || ''
+                    : raw.district || '';
+
                 const mappedProfile: ProfileViewData = {
                     ...raw,
+                    district: resolvedDistrict,
                     keywords: raw.skills || [],
                     companyName: raw.company?.companyName,
                     sector: raw.company?.sector,
                     ruc: raw.company?.ruc,
                     isVerified: raw.company?.isVerified || false,
                     isRucVerified: raw.company?.isVerified || false,
+                    identification: raw.candidate?.dni || raw.identification || raw.dni || '',
                 };
                 profile.value = mappedProfile;
                 try {

@@ -83,7 +83,7 @@ const completenessColor = computed(() => {
       <!-- ============================================================
            PROFILE HERO COMMAND WIDGET (MODERN HALLMARK ARCHITECTURE)
            ============================================================ -->
-      <section class="profile-hero-command animate-fade-in" aria-label="Resumen de perfil profesional">
+      <section class="profile-hero-command animate-fade-in" aria-label="Resumen de tu perfil">
         <!-- Top Cover Deck with Ambient Lighting & Direct Action Toolbar -->
         <div class="hero-cover-deck">
           <!-- Interactive ASMR Kinetic Particle System -->
@@ -156,7 +156,7 @@ const completenessColor = computed(() => {
               <span class="hero-role-chip">
                 <Sparkles v-if="isEmployee" :size="13" class="chip-sparkle" aria-hidden="true" />
                 <Building2 v-else :size="13" class="chip-sparkle" aria-hidden="true" />
-                <span>{{ isEmployee ? 'Candidato Profesional' : 'Organización Empleadora' }}</span>
+                <span>{{ isEmployee ? 'Candidato' : 'Empresa' }}</span>
               </span>
 
               <span v-if="isVerified" class="hero-verified-chip">
@@ -181,16 +181,16 @@ const completenessColor = computed(() => {
               <span class="hero-headline-badge">
                 <Briefcase v-if="isEmployee" :size="14" aria-hidden="true" />
                 <Building v-else :size="14" aria-hidden="true" />
-                <span>{{ profile?.sector || (isEmployee ? 'Profesional en búsqueda activa de empleo' : 'Empresa registrada en Llanqui') }}</span>
+                <span>{{ profile?.sector || (isEmployee ? 'En búsqueda activa de empleo' : 'Empresa registrada en Llanqui') }}</span>
               </span>
             </div>
 
             <!-- Bio / Description block -->
             <p v-if="profile?.description" class="hero-bio-text">
-              {{ profile.description }}
+              {{ profile.description.trim() }}
             </p>
             <div v-else class="hero-bio-placeholder">
-              <span>Agrega una síntesis profesional para que los reclutadores conozcan tus fortalezas.</span>
+              <span>Agrega una breve descripción o resumen laboral para que los empleadores conozcan tus fortalezas.</span>
               <button type="button" class="btn-add-bio-inline" @click="goToEditTab">
                 + Añadir resumen
               </button>
@@ -347,22 +347,9 @@ const completenessColor = computed(() => {
 
               <!-- Employee Specific Fields -->
               <template v-if="isEmployee && profile">
-                <div v-if="profile.personType" class="detail-row">
-                  <dt>Tipo de Persona</dt>
-                  <dd>{{ profile.personType === 'natural' ? 'Persona Natural' : 'Persona Jurídica' }}</dd>
-                </div>
                 <div v-if="profile.identification" class="detail-row">
                   <dt>Documento ({{ (profile.identificationType || 'dni').toUpperCase() }})</dt>
                   <dd>{{ profile.identification }}</dd>
-                </div>
-                <!-- If Juridical Person in Employee -->
-                <div v-if="profile.personType === 'juridica' && profile.companyName" class="detail-row">
-                  <dt>Razón Social (Empresa)</dt>
-                  <dd>{{ profile.companyName }}</dd>
-                </div>
-                <div v-if="profile.personType === 'juridica' && profile.ruc" class="detail-row">
-                  <dt>RUC de Empresa</dt>
-                  <dd>{{ profile.ruc }}</dd>
                 </div>
               </template>
 
@@ -763,11 +750,24 @@ const completenessColor = computed(() => {
 }
 
 .hero-bio-text {
-  margin: 4px 0 0;
-  font-size: 13.5px;
-  line-height: 1.55;
+  margin: 8px 0 0;
+  padding: 12px 16px;
+  background: color-mix(in srgb, var(--color-surface-subtle) 75%, transparent);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-card, 12px);
+  font-family: var(--font-family);
+  font-size: clamp(13px, 0.9vw + 8px, 14px);
+  line-height: 1.65;
   color: var(--color-text-secondary);
-  max-width: 70ch;
+  white-space: pre-line;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+  hyphens: auto;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+  align-self: stretch;
+  text-align: left;
 }
 
 .hero-bio-placeholder {
@@ -845,7 +845,7 @@ const completenessColor = computed(() => {
   background: var(--color-state-success);
 }
 
-@media (max-width: 768px) {
+@media (max-width: 820px) {
   .hero-cover-deck {
     height: 124px;
   }
@@ -895,6 +895,17 @@ const completenessColor = computed(() => {
     justify-content: center;
   }
 
+  .hero-bio-text {
+    width: 100%;
+    max-width: 100%;
+    text-align: left;
+    font-size: 13px;
+    line-height: 1.6;
+    margin-top: 8px;
+    padding: 10px 14px;
+    box-sizing: border-box;
+  }
+
   .hero-telemetry-strip {
     justify-content: center;
     gap: 12px;
@@ -940,6 +951,12 @@ const completenessColor = computed(() => {
 
   .hero-display-name {
     font-size: 22px;
+  }
+
+  .hero-bio-text {
+    padding: 8px 12px;
+    font-size: 12.5px;
+    line-height: 1.55;
   }
 
   .hero-bio-placeholder {
