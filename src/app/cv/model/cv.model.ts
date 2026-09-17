@@ -57,6 +57,19 @@ export interface GenerateCvResponse {
     status: string;
 }
 
+export type AiAssistedCvImprovementOption =
+    | 'Summary'
+    | 'WorkExperience'
+    | 'Certification'
+    | 'Project'
+    | 'Award';
+
+export interface AiAssistedCvImprovementRequest {
+    cvId: string;
+    jobId?: string | null;
+    options: AiAssistedCvImprovementOption[];
+}
+
 /** Resumen persistido del candidato: GET /api/v1/cv/me. */
 export interface CvSummaryResponse {
     id: string;

@@ -1,5 +1,6 @@
 import http from '@/app/shared/services/base.service';
 import type {
+    AiAssistedCvImprovementRequest,
     CreateStructuredCvRequest,
     CvSummaryResponse,
     GenerateCvResponse,
@@ -68,6 +69,11 @@ export class CvService {
 
     async delete(id: string): Promise<void> {
         await http.delete(`${this.endpoint}/${id}`);
+    }
+
+    /** POST /cv/ai-assist-improvement envía orden de optimización con IA. */
+    async improveWithAi(request: AiAssistedCvImprovementRequest): Promise<void> {
+        await http.post(`${this.endpoint}/ai-assist-improvement`, request);
     }
 }
 

@@ -16,10 +16,11 @@ import {
   Trash2,
   RefreshCw,
   Upload,
+  X,
 } from 'lucide-vue-next';
 import { useCvGenerator } from '@/app/cv/composables/useCvGenerator';
 import { cvService } from '@/app/cv/services/cv.service';
-import type { CvSummaryResponse } from '@/app/cv/model/cv.model';
+import type { AiAssistedCvImprovementOption, CvSummaryResponse } from '@/app/cv/model/cv.model';
 import { paymentService } from '@/app/shared/services/payment.service';
 
 defineProps<{
@@ -40,8 +41,27 @@ const savedCvsError = ref('');
 const savedCvActionId = ref<string | null>(null);
 const uploadFile = ref<File | null>(null);
 const uploadTitle = ref('');
+const uploadIsCurrent = ref(false);
 const isUploadingCv = ref(false);
 const uploadInputKey = ref(0);
+
+// Estado de Mejora con IA
+const isImproveModalOpen = ref(false);
+const selectedCvForImprovement = ref<CvSummaryResponse | null>(null);
+const selectedImprovementOptions = ref<AiAssistedCvImprovementOption[]>(['Summary', 'WorkExperience']);
+const isImprovingCv = ref(false);
+const improvingCvId = ref<string | null>(null);
+const improveSuccessMessage = ref('');
+const improveErrorMessage = ref('');
+
+const availableImprovementOptions: Array<{ id: AiAssistedCvImprovementOption; title: string; description: string }> = [
+  { id: 'Summary', title: 'Perfil y Resumen Profesional', description: 'Redacta un extracto de alto impacto orientado a palabras clave y ATS' },
+  { id: 'WorkExperience', title: 'Experiencias Laborales', description: 'Reformula cargos y funciones con verbos de acción y logros medibles' },
+  { id: 'Certification', title: 'Certificaciones y Cursos', description: 'Estructura credenciales y valida competencias de valor profesional' },
+  { id: 'Project', title: 'Proyectos Destacados', description: 'Sintetiza objetivos técnicos, tecnologías y aportes clave' },
+  { id: 'Award', title: 'Reconocimientos y Premios', description: 'Destaca menciones y distinciones profesionales o académicas' },
+];
+
 const creditBalance = ref<number | null>(null);
 const initialFreeCredits = ref<number | null>(null);
 const isLoadingCredits = ref(false);
@@ -71,7 +91,7 @@ async function startGeneration(): Promise<void> {
 
 // Generating steps details
 const generationSteps = [
-  { title: 'Análisis de perfil', description: 'Revisando la información registrada en tu perfil profesional…' },
+  { title: 'Análisis de perfil', description: 'Revisando la información registrada en tu perfil…' },
   { title: 'Redacción con IA', description: 'Optimizando estructura y vocabulario con tus datos reales…' },
   { title: 'Estructuración ATS', description: 'Adaptando el formato para sistemas de selección y reclutadores…' },
   { title: 'Compilación en PDF', description: 'Generando el archivo final listo para postular…' },
@@ -182,9 +202,10 @@ async function uploadPdfCv(): Promise<void> {
   isUploadingCv.value = true;
   savedCvsError.value = '';
   try {
-    await cvService.upload(uploadTitle.value.trim(), false, uploadFile.value);
+    await cvService.upload(uploadTitle.value.trim(), uploadIsCurrent.value, uploadFile.value);
     uploadFile.value = null;
     uploadTitle.value = '';
+    uploadIsCurrent.value = false;
     uploadInputKey.value += 1;
     await loadSavedCvs();
   } catch (error: any) {
@@ -192,6 +213,64 @@ async function uploadPdfCv(): Promise<void> {
     savedCvsError.value = error?.message || error?.response?.data?.detail || 'No se pudo subir el CV en PDF.';
   } finally {
     isUploadingCv.value = false;
+  }
+}
+
+function openImproveModal(cv: CvSummaryResponse) {
+  selectedCvForImprovement.value = cv;
+  selectedImprovementOptions.value = ['Summary', 'WorkExperience'];
+  improveErrorMessage.value = '';
+  improveSuccessMessage.value = '';
+  isImproveModalOpen.value = true;
+}
+
+function closeImproveModal() {
+  if (isImprovingCv.value) return;
+  isImproveModalOpen.value = false;
+  selectedCvForImprovement.value = null;
+  improveErrorMessage.value = '';
+  improveSuccessMessage.value = '';
+}
+
+function toggleImproveOption(optId: AiAssistedCvImprovementOption) {
+  const index = selectedImprovementOptions.value.indexOf(optId);
+  if (index >= 0) {
+    if (selectedImprovementOptions.value.length > 1) {
+      selectedImprovementOptions.value.splice(index, 1);
+    }
+  } else {
+    selectedImprovementOptions.value.push(optId);
+  }
+}
+
+async function confirmImprovement() {
+  if (!selectedCvForImprovement.value || !selectedImprovementOptions.value.length) return;
+  if (hasNoCredits.value) {
+    goToPayments();
+    return;
+  }
+
+  isImprovingCv.value = true;
+  improvingCvId.value = selectedCvForImprovement.value.id;
+  improveErrorMessage.value = '';
+  improveSuccessMessage.value = '';
+  try {
+    await cvService.improveWithAi({
+      cvId: selectedCvForImprovement.value.id,
+      options: selectedImprovementOptions.value,
+    });
+    await loadCreditBalance();
+    improveSuccessMessage.value = '¡Solicitud de optimización enviada! La IA actualizará tu versión en segundo plano.';
+    setTimeout(() => {
+      closeImproveModal();
+      void loadSavedCvs();
+    }, 2200);
+  } catch (err: any) {
+    console.error('Error improving CV with AI:', err);
+    improveErrorMessage.value = err?.response?.data?.message || 'No se pudo enviar la solicitud de mejora. Inténtalo nuevamente.';
+  } finally {
+    isImprovingCv.value = false;
+    improvingCvId.value = null;
   }
 }
 
@@ -262,7 +341,7 @@ async function copyPreviewLink() {
             <Sparkles :size="16" aria-hidden="true" />
           </div>
           <p class="info-callout-text">
-            Cada generación crea una nueva versión mejorada desde tu perfil profesional. El archivo compilado quedará guardado automáticamente en <strong>Mis CV</strong>.
+            Cada generación crea una nueva versión mejorada desde tu perfil. El archivo compilado quedará guardado automáticamente en <strong>Mis CV</strong>.
           </p>
         </div>
 
@@ -446,7 +525,7 @@ async function copyPreviewLink() {
             title="Actualizar lista"
             @click="loadSavedCvs"
           >
-            <RefreshCw :size="15" :class="{ 'spin-rotate': savedCvsLoading }" aria-hidden="true" />
+            <RefreshCw :size="18" :class="{ 'spin-rotate': savedCvsLoading }" aria-hidden="true" />
           </button>
         </div>
       </header>
@@ -507,6 +586,23 @@ async function copyPreviewLink() {
               <span>{{ isUploadingCv ? 'Subiendo…' : 'Subir archivo' }}</span>
             </button>
           </div>
+
+          <!-- Highlight Flag Option -->
+          <div class="upload-highlight-row">
+            <label class="upload-checkbox-label">
+              <input
+                type="checkbox"
+                v-model="uploadIsCurrent"
+                class="upload-checkbox-native"
+                :disabled="isUploadingCv"
+              />
+              <span class="upload-checkbox-box" :class="{ 'is-checked': uploadIsCurrent }">
+                <Check v-if="uploadIsCurrent" :size="11" aria-hidden="true" />
+              </span>
+              <span class="upload-checkbox-text">Marcar como CV destacado</span>
+            </label>
+            <span class="upload-checkbox-tip">Aparecerá con distintivo destacado en tu lista</span>
+          </div>
         </form>
 
         <!-- Status Alerts -->
@@ -541,7 +637,9 @@ async function copyPreviewLink() {
               <div class="cv-doc-details">
                 <div class="cv-doc-title-row">
                   <strong class="cv-doc-title">{{ cv.title }}</strong>
-                  <span v-if="cv.isCurrent" class="cv-doc-badge-current">CV Principal</span>
+                  <span v-if="cv.isCurrent" class="cv-doc-badge-current">
+                    <Sparkles :size="10" aria-hidden="true" /> Destacado
+                  </span>
                   <span class="cv-doc-badge-format">PDF</span>
                 </div>
                 <span class="cv-doc-timestamp">
@@ -550,6 +648,18 @@ async function copyPreviewLink() {
               </div>
 
               <div class="cv-doc-actions-group">
+                <button
+                  type="button"
+                  class="btn-action-improve"
+                  :disabled="isImprovingCv && improvingCvId === cv.id"
+                  :title="`Mejorar ${cv.title} con IA`"
+                  @click="openImproveModal(cv)"
+                >
+                  <RefreshCw v-if="isImprovingCv && improvingCvId === cv.id" :size="13" class="spin-rotate" aria-hidden="true" />
+                  <Sparkles v-else :size="13" aria-hidden="true" />
+                  <span>Mejorar con IA</span>
+                </button>
+
                 <button
                   type="button"
                   class="btn-action-download"
@@ -570,7 +680,8 @@ async function copyPreviewLink() {
                   :title="`Eliminar ${cv.title}`"
                   @click="deleteSavedCv(cv)"
                 >
-                  <Trash2 :size="15" aria-hidden="true" />
+                  <RefreshCw v-if="savedCvActionId === cv.id" :size="17" class="spin-rotate" aria-hidden="true" />
+                  <Trash2 v-else :size="17" aria-hidden="true" />
                 </button>
               </div>
             </li>
@@ -578,6 +689,119 @@ async function copyPreviewLink() {
         </div>
       </div>
     </section>
+
+    <!-- ============================================================
+         MODAL: MEJORAR CV CON INTELIGENCIA ARTIFICIAL
+         ============================================================ -->
+    <Teleport to="body">
+      <Transition name="fade">
+        <div v-if="isImproveModalOpen" class="cv-modal-backdrop" @click.self="closeImproveModal">
+          <div class="cv-improve-modal" role="dialog" aria-modal="true" aria-labelledby="modal-improve-title">
+            <!-- Modal Header -->
+            <div class="modal-improve-header">
+              <div class="modal-improve-title-group">
+                <div class="modal-improve-badge">
+                  <Sparkles :size="13" aria-hidden="true" />
+                  <span>Optimización Inteligente</span>
+                </div>
+                <h3 id="modal-improve-title" class="modal-improve-title">
+                  Mejorar CV con Inteligencia Artificial
+                </h3>
+                <p class="modal-improve-sub">
+                  Elige las secciones de <strong>{{ selectedCvForImprovement?.title }}</strong> que deseas enriquecer y adaptar para sistemas de reclutamiento ATS.
+                </p>
+              </div>
+              <button
+                type="button"
+                class="btn-modal-close"
+                aria-label="Cerrar ventana de optimización"
+                :disabled="isImprovingCv"
+                @click="closeImproveModal"
+              >
+                <X :size="16" aria-hidden="true" />
+              </button>
+            </div>
+
+            <!-- Modal Body -->
+            <div class="modal-improve-body">
+              <!-- Credits strip -->
+              <div class="modal-credits-strip" :class="{ 'modal-credits-strip--empty': hasNoCredits }">
+                <div class="modal-credits-left">
+                  <CreditCard :size="16" aria-hidden="true" />
+                  <span>Saldo actual: <strong>{{ creditBalance ?? 0 }} crédito{{ creditBalance === 1 ? '' : 's' }}</strong></span>
+                </div>
+                <div class="modal-credits-cost">
+                  <span>Costo: <strong>1 crédito</strong></span>
+                </div>
+              </div>
+
+              <!-- Out of credits alert -->
+              <div v-if="hasNoCredits" class="modal-no-credits-alert" role="alert">
+                <AlertCircle :size="15" aria-hidden="true" />
+                <span>No cuentas con créditos disponibles para esta operación.</span>
+                <button type="button" class="btn-buy-modal-link" @click="goToPayments">Comprar créditos</button>
+              </div>
+
+              <!-- Options Selection -->
+              <div class="modal-options-section">
+                <span class="modal-options-label">Secciones a potenciar:</span>
+                <div class="modal-options-grid">
+                  <button
+                    v-for="opt in availableImprovementOptions"
+                    :key="opt.id"
+                    type="button"
+                    class="modal-option-card"
+                    :class="{ 'is-selected': selectedImprovementOptions.includes(opt.id) }"
+                    :disabled="isImprovingCv"
+                    @click="toggleImproveOption(opt.id)"
+                  >
+                    <div class="option-check-circle" :class="{ 'is-checked': selectedImprovementOptions.includes(opt.id) }">
+                      <Check v-if="selectedImprovementOptions.includes(opt.id)" :size="12" aria-hidden="true" />
+                    </div>
+                    <div class="option-content-text">
+                      <strong class="option-title">{{ opt.title }}</strong>
+                      <span class="option-desc">{{ opt.description }}</span>
+                    </div>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Alerts within modal -->
+              <div v-if="improveErrorMessage" class="modal-improve-alert error" role="alert">
+                <AlertCircle :size="15" aria-hidden="true" />
+                <span>{{ improveErrorMessage }}</span>
+              </div>
+              <div v-if="improveSuccessMessage" class="modal-improve-alert success" role="status">
+                <CheckCircle2 :size="15" aria-hidden="true" />
+                <span>{{ improveSuccessMessage }}</span>
+              </div>
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="modal-improve-footer">
+              <button
+                type="button"
+                class="btn-modal-cancel"
+                :disabled="isImprovingCv"
+                @click="closeImproveModal"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                class="btn-modal-confirm"
+                :disabled="isImprovingCv || hasNoCredits || !selectedImprovementOptions.length"
+                @click="confirmImprovement"
+              >
+                <RefreshCw v-if="isImprovingCv" :size="15" class="spin-rotate" aria-hidden="true" />
+                <Sparkles v-else :size="15" aria-hidden="true" />
+                <span>{{ isImprovingCv ? 'Enviando orden…' : 'Optimizar con IA (1 crédito)' }}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </Transition>
+    </Teleport>
   </div>
 </template>
 
@@ -705,24 +929,52 @@ async function copyPreviewLink() {
 }
 
 .btn-refresh-library {
-  width: 36px;
-  height: 36px;
-  border-radius: var(--radius-sm, 8px);
-  background: var(--color-surface-subtle);
+  width: 38px;
+  height: 38px;
+  border-radius: var(--radius-sm, 9px);
+  background: var(--color-surface);
   border: 1px solid var(--color-border);
   color: var(--color-text-secondary);
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: var(--transition);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  flex-shrink: 0;
+}
+
+.btn-refresh-library svg {
+  width: 18px;
+  height: 18px;
   flex-shrink: 0;
 }
 
 .btn-refresh-library:hover:not(:disabled) {
   background: var(--color-lavender);
-  border-color: color-mix(in srgb, var(--color-primary) 30%, var(--color-border));
+  border-color: color-mix(in srgb, var(--color-primary) 35%, var(--color-border));
   color: var(--color-primary);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(79, 70, 229, 0.12);
+}
+
+.btn-refresh-library:hover:not(:disabled) svg:not(.spin-rotate) {
+  transform: rotate(45deg);
+  transition: transform 0.28s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.btn-refresh-library:active:not(:disabled) {
+  transform: scale(0.94);
+}
+
+.btn-refresh-library:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.btn-refresh-library:disabled {
+  opacity: 0.55;
+  cursor: wait;
 }
 
 /* Card Body */
@@ -1441,6 +1693,70 @@ async function copyPreviewLink() {
   cursor: not-allowed;
 }
 
+/* Upload Destacado Checkbox */
+.upload-highlight-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 14px;
+  background: var(--color-surface-subtle);
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius-card, 10px);
+  margin-top: 4px;
+  transition: var(--transition);
+}
+
+.upload-highlight-row:hover {
+  border-color: color-mix(in srgb, var(--color-primary) 30%, var(--color-border));
+}
+
+.upload-checkbox-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.upload-checkbox-native {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+
+.upload-checkbox-box {
+  width: 18px;
+  height: 18px;
+  border-radius: 5px;
+  border: 1.5px solid var(--color-border-strong, #94a3b8);
+  background: var(--color-surface);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  transition: all 0.18s ease;
+  flex-shrink: 0;
+}
+
+.upload-checkbox-box.is-checked {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+}
+
+.upload-checkbox-text {
+  font-size: 13px;
+  font-weight: var(--fw-medium, 500);
+  color: var(--color-text-primary);
+}
+
+.upload-checkbox-tip {
+  font-size: 11.5px;
+  color: var(--color-text-muted);
+}
+
 .library-error-alert {
   display: flex;
   align-items: center;
@@ -1633,29 +1949,430 @@ async function copyPreviewLink() {
   cursor: wait;
 }
 
+.btn-action-improve {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: linear-gradient(135deg, rgba(79, 70, 229, 0.08) 0%, rgba(132, 204, 22, 0.12) 100%);
+  border: 1px solid color-mix(in srgb, var(--color-primary) 30%, var(--color-border));
+  border-radius: var(--radius-button);
+  color: var(--color-primary);
+  font-family: var(--font-family);
+  font-size: 12px;
+  font-weight: var(--fw-semibold);
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+.btn-action-improve:hover:not(:disabled) {
+  background: linear-gradient(135deg, rgba(79, 70, 229, 0.16) 0%, rgba(132, 204, 22, 0.22) 100%);
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.15);
+}
+
+.btn-action-improve:active:not(:disabled) {
+  transform: scale(0.96);
+}
+
+.btn-action-improve:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-action-improve svg {
+  color: var(--color-primary);
+}
+
 .btn-action-delete {
-  width: 32px;
-  height: 32px;
-  display: flex;
+  width: 36px;
+  height: 36px;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: transparent;
-  border: 1px solid transparent;
-  border-radius: var(--radius-sm, 6px);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm, 8px);
   color: var(--color-text-muted);
   cursor: pointer;
-  transition: var(--transition);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  flex-shrink: 0;
+}
+
+.btn-action-delete svg {
+  width: 17px;
+  height: 17px;
+  flex-shrink: 0;
 }
 
 .btn-action-delete:hover:not(:disabled) {
   background: var(--color-state-error-bg, #fef2f2);
   border-color: var(--color-state-error-border, #fecaca);
-  color: var(--color-state-error);
+  color: var(--color-state-error, #dc2626);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(220, 38, 38, 0.14);
+}
+
+.btn-action-delete:active:not(:disabled) {
+  transform: scale(0.94);
+}
+
+.btn-action-delete:focus-visible {
+  outline: 2px solid var(--color-state-error, #dc2626);
+  outline-offset: 2px;
 }
 
 .btn-action-delete:disabled {
-  opacity: 0.4;
+  opacity: 0.45;
   cursor: wait;
+}
+
+/* ============================================================
+   MODAL: MEJORAR CV CON IA
+   ============================================================ */
+.cv-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: rgba(15, 23, 42, 0.65);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  overflow-y: auto;
+}
+
+.cv-improve-modal {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card-lg, 18px);
+  box-shadow: 0 20px 45px -10px rgba(15, 23, 42, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.06);
+  width: 100%;
+  max-width: 540px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: modalScaleIn 0.24s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes modalScaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.modal-improve-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 20px 24px 16px;
+  border-bottom: 1px solid var(--color-border-subtle);
+}
+
+.modal-improve-title-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.modal-improve-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 8px;
+  border-radius: var(--radius-pill);
+  background: var(--color-lavender);
+  border: 1px solid color-mix(in srgb, var(--color-primary) 30%, transparent);
+  color: var(--color-primary);
+  font-size: 11px;
+  font-weight: var(--fw-semibold);
+  width: fit-content;
+}
+
+.modal-improve-title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: var(--fw-bold, 700);
+  color: var(--color-text-primary);
+  line-height: 1.3;
+}
+
+.modal-improve-sub {
+  margin: 0;
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  line-height: 1.45;
+}
+
+.btn-modal-close {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-sm, 6px);
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--color-text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+}
+
+.btn-modal-close:hover:not(:disabled) {
+  background: var(--color-surface-subtle);
+  border-color: var(--color-border);
+  color: var(--color-text-primary);
+}
+
+.modal-improve-body {
+  padding: 20px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-height: 65vh;
+  overflow-y: auto;
+}
+
+.modal-credits-strip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 14px;
+  background: var(--color-lavender);
+  border: 1px solid color-mix(in srgb, var(--color-primary) 22%, var(--color-border));
+  border-radius: var(--radius-card, 10px);
+  font-size: 12.5px;
+  color: var(--color-text-primary);
+}
+
+.modal-credits-strip--empty {
+  background: var(--color-state-error-bg, #fef2f2);
+  border-color: var(--color-state-error-border, #fecaca);
+  color: var(--color-state-error-dark, #991b1b);
+}
+
+.modal-credits-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--color-primary);
+}
+
+.modal-credits-strip--empty .modal-credits-left {
+  color: var(--color-state-error, #dc2626);
+}
+
+.modal-credits-cost {
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+
+.modal-no-credits-alert {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  background: var(--color-state-error-bg, #fef2f2);
+  border: 1px solid var(--color-state-error-border, #fecaca);
+  border-radius: var(--radius-card, 10px);
+  color: var(--color-state-error-dark, #991b1b);
+  font-size: 12px;
+  flex-wrap: wrap;
+}
+
+.btn-buy-modal-link {
+  background: none;
+  border: none;
+  padding: 0;
+  margin-left: auto;
+  color: var(--color-primary);
+  font-size: 12px;
+  font-weight: var(--fw-semibold, 600);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.modal-options-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.modal-options-label {
+  font-size: 12.5px;
+  font-weight: var(--fw-semibold, 600);
+  color: var(--color-text-primary);
+}
+
+.modal-options-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+}
+
+.modal-option-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 14px;
+  background: var(--color-surface-subtle);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card, 10px);
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  width: 100%;
+}
+
+.modal-option-card:hover:not(:disabled) {
+  background: var(--color-surface);
+  border-color: color-mix(in srgb, var(--color-primary) 35%, var(--color-border));
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.05);
+}
+
+.modal-option-card.is-selected {
+  background: color-mix(in srgb, var(--color-primary) 6%, var(--color-surface));
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 1px var(--color-primary);
+}
+
+.option-check-circle {
+  width: 20px;
+  height: 20px;
+  border-radius: 6px;
+  border: 1.5px solid var(--color-border-strong, #94a3b8);
+  background: var(--color-surface);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  flex-shrink: 0;
+  margin-top: 1px;
+  transition: all 0.18s ease;
+}
+
+.option-check-circle.is-checked {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+}
+
+.option-content-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.option-title {
+  font-size: 13.5px;
+  font-weight: var(--fw-semibold, 600);
+  color: var(--color-text-primary);
+}
+
+.option-desc {
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  line-height: 1.35;
+}
+
+.modal-improve-alert {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border-radius: var(--radius-card, 10px);
+  font-size: 12.5px;
+}
+
+.modal-improve-alert.error {
+  background: var(--color-state-error-bg, #fef2f2);
+  border: 1px solid var(--color-state-error-border, #fecaca);
+  color: var(--color-state-error-dark, #991b1b);
+}
+
+.modal-improve-alert.success {
+  background: var(--color-state-success-bg, #f0fdf4);
+  border: 1px solid var(--color-state-success-border, #bbf7d0);
+  color: var(--color-state-success-dark, #166534);
+}
+
+.modal-improve-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 16px 24px;
+  border-top: 1px solid var(--color-border-subtle);
+  background: var(--color-surface-subtle);
+}
+
+.btn-modal-cancel {
+  padding: 8px 16px;
+  border-radius: var(--radius-button);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text-secondary);
+  font-size: 13px;
+  font-weight: var(--fw-medium, 500);
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.btn-modal-cancel:hover:not(:disabled) {
+  background: var(--color-surface-subtle);
+  border-color: var(--color-text-muted);
+  color: var(--color-text-primary);
+}
+
+.btn-modal-confirm {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 18px;
+  border-radius: var(--radius-button);
+  border: none;
+  background: linear-gradient(135deg, var(--color-primary) 0%, color-mix(in srgb, var(--color-primary) 80%, #000) 100%);
+  color: #fff;
+  font-size: 13px;
+  font-weight: var(--fw-semibold, 600);
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(79, 70, 229, 0.25);
+  transition: all 0.2s ease;
+}
+
+.btn-modal-confirm:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(79, 70, 229, 0.35);
+}
+
+.btn-modal-confirm:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.2s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
 }
 
 /* Animations */
@@ -1728,6 +2445,27 @@ async function copyPreviewLink() {
   .ready-notification-box {
     flex-direction: column;
     align-items: flex-start;
+  }
+
+  .cv-improve-modal {
+    max-height: 90vh;
+  }
+
+  .modal-improve-header,
+  .modal-improve-body,
+  .modal-improve-footer {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
+  .modal-improve-footer {
+    flex-direction: column-reverse;
+    gap: 8px;
+  }
+
+  .modal-improve-footer button {
+    width: 100%;
+    justify-content: center;
   }
 }
 
