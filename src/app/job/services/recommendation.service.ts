@@ -19,6 +19,8 @@ export interface RecommendationResponse {
     maxSalary?: number;
     sourceUrl?: string;
     score: number;
+    jobType?: string;
+    companyImage?: string;
     /** Legacy aliases kept for untouched consumers while migration completes. */
     source_url?: string;
     similarity_score?: number;

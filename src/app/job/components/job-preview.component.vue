@@ -247,7 +247,7 @@ function handleViewFullJob() {
                   :alt="`Logo de ${displayCompanyName}`"
                   @error="handleCompanyImageError"
                 />
-                <span v-else class="preview-avatar-initials">{{ companyInitials }}</span>
+                <Building2 v-else :size="28" class="preview-avatar-icon" />
               </div>
 
               <div class="preview-header-titles">
@@ -527,8 +527,9 @@ function handleViewFullJob() {
   object-fit: contain;
 }
 
-.preview-avatar-initials {
-  letter-spacing: 0.5px;
+.preview-avatar-icon {
+  color: #ffffff;
+  opacity: 0.95;
 }
 
 .preview-header-titles {

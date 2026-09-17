@@ -3,7 +3,6 @@ import { computed, onMounted, ref, watch } from 'vue';
 import type { GetJobByIdResponse } from '../model/get-job-by-id.response';
 import { ubigeoService } from '@/app/shared/services/ubigeo.service';
 import DialogComponent from '@/app/shared/components/dialog.component.vue';
-import JobNewsComponent from '@/app/news/components/job-news.component.vue';
 import { recruitmentService } from '@/app/recruitment/services/recruitment.service';
 import { useAuthenticationStore } from '@/app/auth/services/authentication.store';
 import { JobService } from '../services/job.service';
@@ -347,7 +346,7 @@ onMounted(async () => {
             class="avatar-image"
             @error="handleCompanyImageError"
           />
-          <span v-else class="avatar-text">{{ companyInitials(displayCompanyName) }}</span>
+          <Building2 v-else :size="32" class="avatar-company-icon" />
         </div>
 
         <div class="hero-titles-block">
@@ -535,14 +534,6 @@ onMounted(async () => {
           </div>
         </section>
 
-        <!-- Related Job News Component -->
-        <section v-if="isInternalListing" class="dossier-section" aria-labelledby="news-section-title">
-          <JobNewsComponent
-            v-if="isCompany || job.jobStatus === 'Active'"
-            :job-id="job.id"
-          />
-        </section>
-
       </main>
 
       <!-- Sticky Operational Sidebar Deck -->
@@ -662,7 +653,7 @@ onMounted(async () => {
       @confirm="DeleteDialog()"
     >
       <p class="dialog-copy">
-        Esta acción es permanente y no se podrá deshacer. La oferta de empleo dejará de estar visible para todos los profesionales de la plataforma.
+        Esta acción es permanente y no se podrá deshacer. La oferta de empleo dejará de estar visible para las personas que buscan empleo en la plataforma.
       </p>
     </DialogComponent>
 
@@ -855,6 +846,11 @@ onMounted(async () => {
   padding: 6px;
   background: var(--color-surface);
   object-fit: contain;
+}
+
+.avatar-company-icon {
+  color: var(--color-surface);
+  opacity: 0.95;
 }
 
 .hero-titles-block {

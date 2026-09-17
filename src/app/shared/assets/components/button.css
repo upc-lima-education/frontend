@@ -12,6 +12,13 @@ button {
                 transform 100ms ease-out, box-shadow 150ms ease;
 }
 
+button.btn-field-clear,
+button.btn-clear-search {
+    min-height: unset;
+    min-width: unset;
+    padding: 0;
+}
+
 button:active:not(:disabled) {
     transform: scale(0.97);
 }

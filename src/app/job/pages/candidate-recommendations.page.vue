@@ -5,6 +5,7 @@ import {
   ArrowRight,
   BadgeCheck,
   BriefcaseBusiness,
+  Building2,
   Check,
   ChevronDown,
   CircleHelp,
@@ -18,6 +19,7 @@ import {
 } from 'lucide-vue-next';
 import { ROUTE_CONSTANTS } from '@/app/shared/router/route-constants';
 import { RecommendationService, type RecommendationResponse } from '@/app/job/services/recommendation.service';
+import { ubigeoService } from '@/app/shared/services/ubigeo.service';
 
 type FeedbackReason = 'Perfil' | 'Modalidad' | 'Salario' | 'Otro';
 type Feedback = 'interested' | 'not-for-me' | null;
@@ -49,12 +51,23 @@ function initialsFor(value: string): string {
 
 function toRecommendation(item: RecommendationResponse, index: number): Recommendation {
   const company = item.companyName?.trim() || 'Empresa no indicada';
+  const modalityMap: Record<string, string> = {
+    Remote: 'Remoto',
+    Hybrid: 'Híbrido',
+    InPerson: 'Presencial',
+  };
+  const modality = item.jobType ? (modalityMap[item.jobType] || item.jobType) : 'Modalidad no indicada';
+  let location = 'Ubicación no indicada';
+  if (item.ubigeo?.trim()) {
+    const loc = ubigeoService.getLocation(item.ubigeo.trim());
+    location = loc ? `${loc.district}, ${loc.department}` : item.ubigeo.trim();
+  }
   return {
     id: item.jobId,
     title: item.title?.trim() || 'Empleo sin título',
     company,
-    location: item.ubigeo?.trim() || 'Ubicación no indicada',
-    modality: 'Modalidad no indicada',
+    location,
+    modality,
     score: item.score,
     scoreLabel: item.score.toFixed(3),
     skills: [],
@@ -137,7 +150,7 @@ onMounted(() => { void loadRecommendations(); });
       <p class="recommendation-subtitle">Una selección basada en los empleos que has consultado y en señales de usuarios con intereses parecidos.</p>
         </div>
         <div class="demo-chip" title="Resultados calculados por el modelo colaborativo">
-          <Sparkles :size="15" aria-hidden="true" /> Recomendaciones ALS
+          <Sparkles :size="15" aria-hidden="true" /> Recomendaciones Colaborativas (ALS)
         </div>
       </header>
 
@@ -152,8 +165,8 @@ onMounted(() => { void loadRecommendations(); });
       </section>
       <section v-else-if="!recommendations.length" class="method-note" role="status">
         <CircleHelp :size="18" aria-hidden="true" />
-        <p>Aún no hay suficientes interacciones similares para recomendarte empleos. Explora una vacante para mejorar tus próximas recomendaciones.</p>
-        <button type="button" class="btn-secondary" @click="router.push(ROUTE_CONSTANTS.JOB_SEARCH)">Explorar empleos <ArrowRight :size="16" aria-hidden="true" /></button>
+        <p>Aún no hay suficientes interacciones registradas para sugerirte empleos con el modelo colaborativo (ALS). Este modelo aprende de las vacantes que visitas y postulas. Explora vacantes en el buscador para empezar a entrenar tus recomendaciones.</p>
+        <button type="button" class="btn-secondary" @click="router.push(ROUTE_CONSTANTS.JOB_SEARCH)">Explorar vacantes en el buscador <ArrowRight :size="16" aria-hidden="true" /></button>
       </section>
 
       <section v-if="featuredRecommendation" class="featured-match" aria-labelledby="featured-title">
@@ -176,7 +189,7 @@ onMounted(() => { void loadRecommendations(); });
 
         <article class="featured-job">
           <div class="featured-job-top">
-            <div class="company-mark company-mark--blue" aria-hidden="true">{{ featuredRecommendation.initials }}</div>
+            <div class="company-mark company-mark--blue" aria-hidden="true"><Building2 :size="22" /></div>
             <div>
               <div class="verified-line"><span>{{ featuredRecommendation.company }}</span><BadgeCheck :size="16" aria-label="Empresa verificada" /></div>
               <h2 id="featured-title">{{ featuredRecommendation.title }}</h2>
@@ -200,10 +213,10 @@ onMounted(() => { void loadRecommendations(); });
 
       <section v-if="showMethod" class="method-note" aria-label="Cómo funciona esta recomendación">
         <CircleHelp :size="18" aria-hidden="true" />
-        <p>ALS compara tus interacciones con las de otros usuarios y prioriza empleos que todavía no has visto. Un score mayor indica una señal colaborativa más fuerte.</p>
+        <p>El modelo colaborativo (ALS) analiza las vacantes que tú y otras personas con intereses similares han visto o postulado para descubrir oportunidades afines. Un puntaje mayor indica mayor afinidad colectiva.</p>
       </section>
 
-      <p class="data-note"><CircleHelp :size="15" aria-hidden="true" /> Esta selección usa interacciones de empleos: no reemplaza la búsqueda CBF ni sus filtros.</p>
+      <p class="data-note"><CircleHelp :size="15" aria-hidden="true" /> Esta selección se basa en interacciones continuas de usuarios: para buscar puestos o habilidades específicas, utiliza el buscador inteligente (CBF).</p>
 
       <div class="recommendation-content">
         <section class="recommendation-list-section" aria-labelledby="more-title">
@@ -217,7 +230,7 @@ onMounted(() => { void loadRecommendations(); });
 
           <div class="recommendation-list">
             <article v-for="job in visibleRecommendations" :key="job.id" class="recommendation-row">
-              <div class="company-mark" :class="`company-mark--${job.tone}`" aria-hidden="true">{{ job.initials }}</div>
+              <div class="company-mark" :class="`company-mark--${job.tone}`" aria-hidden="true"><Building2 :size="20" /></div>
               <div class="job-summary">
                 <h3>{{ job.title }}</h3>
                 <p class="company-name">{{ job.company }}</p>
