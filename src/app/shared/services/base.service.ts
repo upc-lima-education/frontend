@@ -15,7 +15,11 @@ export function resolveBackendAssetUrl(value?: string | null, version?: string |
     if (/^(?:https?:|data:|blob:)/i.test(value)) return value;
 
     const backendOrigin = API_BASE_URL.replace(/\/api\/v1\/?$/, '').replace(/\/$/, '');
-    const assetUrl = `${backendOrigin}/${value.replace(/^\/+/, '')}`;
+    const normalizedValue = value.replace(/^\/+/, '');
+    const profilePictureMatch = normalizedValue.match(/^profiles\/([^/]+)\/profile-picture(?:\.[^/]+)?$/i);
+    const assetUrl = profilePictureMatch
+        ? `${backendOrigin}/profiles/${profilePictureMatch[1]}/profile-picture`
+        : `${backendOrigin}/${normalizedValue}`;
     return version ? `${assetUrl}?v=${encodeURIComponent(version)}` : assetUrl;
 }
 
