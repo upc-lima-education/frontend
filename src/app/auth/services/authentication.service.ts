@@ -66,9 +66,16 @@ export class AuthenticationService {
      * POST /api/v1/auth/sign-in
      */
     async signIn(signInRequest: SignInRequest): Promise<SignInResponse> {
-        console.log('🔄 AuthService: SignIn request:', signInRequest);
+        // El inicio de sesión solo autentica la cuenta. Los datos de perfil
+        // (nombre, apellido y foto) se completan después de iniciar sesión.
+        const credentials = {
+            email: signInRequest.email,
+            password: signInRequest.password,
+        };
+
+        console.log('🔄 AuthService: SignIn request:', { email: credentials.email });
         
-        const response = await http.post(`${this.endpoint}/sign-in`, signInRequest);
+        const response = await http.post(`${this.endpoint}/sign-in`, credentials);
         console.log('📦 AuthService: SignIn response:', response.data);
         
         return new SignInResponse(
