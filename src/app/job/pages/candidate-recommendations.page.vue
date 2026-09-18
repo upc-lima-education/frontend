@@ -10,20 +10,14 @@ import {
   ChevronDown,
   CircleHelp,
   Compass,
-  Heart,
   MapPin,
   SlidersHorizontal,
   Sparkles,
-  ThumbsDown,
-  X,
 } from 'lucide-vue-next';
 import { ROUTE_CONSTANTS } from '@/app/shared/router/route-constants';
 import { RecommendationService, type RecommendationResponse } from '@/app/job/services/recommendation.service';
 import { ubigeoService } from '@/app/shared/services/ubigeo.service';
 import CompanyAvatar from '@/app/shared/components/company-avatar.component.vue';
-
-type FeedbackReason = 'Perfil' | 'Modalidad' | 'Salario' | 'Otro';
-type Feedback = 'interested' | 'not-for-me' | null;
 
 type Recommendation = {
   id: string;
@@ -99,17 +93,12 @@ function openVacancy(id: string): void {
 }
 
 const shownCount = ref(4);
-const feedbackById = ref<Record<string, Feedback>>({});
-const feedbackReasonById = ref<Record<string, FeedbackReason>>({});
-const reasonOpenFor = ref<string | null>(null);
 const showMethod = ref(false);
-const notice = ref('');
 
 const visibleRecommendations = computed(() =>
   recommendations.value.slice(1, shownCount.value + 1),
 );
 const hasMoreRecommendations = computed(() => shownCount.value < recommendations.value.length);
-const feedbackReasons: FeedbackReason[] = ['Perfil', 'Modalidad', 'Salario', 'Otro'];
 
 function compatibilityLabel(score: number): string {
   return score > 0 ? 'Puntaje ALS' : 'Sin puntaje';
@@ -117,24 +106,6 @@ function compatibilityLabel(score: number): string {
 
 function showMoreRecommendations(): void {
   shownCount.value = Math.min(shownCount.value + 3, recommendations.value.length);
-}
-
-function markInterested(id: string): void {
-  feedbackById.value[id] = 'interested';
-  reasonOpenFor.value = null;
-  notice.value = 'Guardamos tu interés para priorizar oportunidades similares.';
-}
-
-function openNotForMe(id: string): void {
-  feedbackById.value[id] = 'not-for-me';
-  reasonOpenFor.value = id;
-  notice.value = '';
-}
-
-function selectFeedbackReason(id: string, reason: FeedbackReason): void {
-  feedbackReasonById.value[id] = reason;
-  reasonOpenFor.value = null;
-  notice.value = 'Gracias. Esta señal se usará para afinar tus próximas recomendaciones.';
 }
 
 function openPreferences(): void {
@@ -256,17 +227,8 @@ onMounted(() => { void loadRecommendations(); });
               </div>
 
               <div class="row-actions">
-                <button type="button" class="icon-feedback" :class="{ 'is-active': feedbackById[job.id] === 'interested' }" :aria-label="`Me interesa ${job.title}`" title="Me interesa" @click="markInterested(job.id)"><Heart :size="17" /></button>
-                <button type="button" class="icon-feedback" :class="{ 'is-dismissed': feedbackById[job.id] === 'not-for-me' }" :aria-label="`No recomendar ${job.title}`" title="No recomendar" @click="openNotForMe(job.id)"><ThumbsDown :size="17" /></button>
                 <button type="button" class="row-view-button" @click="openVacancy(job.id)">Ver vacante <ArrowRight :size="16" aria-hidden="true" /></button>
               </div>
-
-              <div v-if="reasonOpenFor === job.id" class="feedback-inline" role="group" :aria-label="`Motivo para no recomendar ${job.title}`">
-                <span>¿Por qué no encaja?</span>
-                <button v-for="reason in feedbackReasons" :key="reason" type="button" @click="selectFeedbackReason(job.id, reason)">{{ reason }}</button>
-                <button type="button" class="feedback-close" aria-label="Cerrar motivos" @click="reasonOpenFor = null"><X :size="16" /></button>
-              </div>
-              <p v-else-if="feedbackReasonById[job.id]" class="feedback-confirmation"><Check :size="15" aria-hidden="true" /> Preferencia registrada: {{ feedbackReasonById[job.id] }}.</p>
             </article>
           </div>
 
@@ -288,10 +250,6 @@ onMounted(() => { void loadRecommendations(); });
           <button type="button" class="guide-action" @click="openPreferences">Actualizar perfil <ArrowRight :size="16" aria-hidden="true" /></button>
         </aside>
       </div>
-
-      <Transition name="notice">
-        <p v-if="notice" class="recommendation-notice" role="status"><Check :size="17" aria-hidden="true" /> {{ notice }}</p>
-      </Transition>
     </section>
   </main>
 </template>
@@ -332,14 +290,13 @@ h1 { margin-bottom: 8px; font-size: clamp(30px, 4vw, 44px); letter-spacing: -0.0
 .recommendation-content { display: grid; grid-template-columns: minmax(0, 1fr) minmax(265px, 320px); gap: 22px; align-items: start; }.recommendation-list-section, .compatibility-guide { border: 1px solid var(--color-border); border-radius: var(--radius-card); background: var(--color-surface); box-shadow: var(--shadow-card); }.list-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 20px 22px; border-bottom: 1px solid var(--color-border-subtle); }.list-heading h2, .compatibility-guide h2 { margin-bottom: 4px; font-size: 18px; letter-spacing: -.02em; }.list-heading p { margin: 0; color: var(--color-text-secondary); font-size: 13px; }.preferences-button { padding: 0 12px; border: 1px solid var(--color-border); background: var(--color-surface); color: var(--color-primary); white-space: nowrap; }
 .recommendation-list { padding: 8px; }.recommendation-row { position: relative; display: grid; grid-template-columns: auto minmax(0, 1fr) minmax(150px, .5fr) auto; gap: 16px; align-items: center; padding: 17px 14px; border-bottom: 1px solid var(--color-border-subtle); transition: background 150ms ease; }.recommendation-row:hover { background: var(--color-surface-subtle); }.recommendation-row:last-child { border-bottom: 0; }.job-summary { min-width: 0; }.job-summary h3 { overflow: hidden; margin-bottom: 4px; text-overflow: ellipsis; white-space: nowrap; font-size: 15px; letter-spacing: -.01em; }.company-name { margin-bottom: 7px; color: var(--color-text-secondary); font-size: 13px; }.job-meta { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 9px; color: var(--color-text-secondary); font-size: 12px; }.job-meta span { display: inline-flex; align-items: center; gap: 4px; }.skill-tags span { background: var(--color-surface-subtle); color: var(--color-text-secondary); font-size: 11px; }
 .row-score { min-width: 0; }.row-score-head { display: flex; align-items: baseline; justify-content: space-between; gap: 6px; margin-bottom: 7px; }.row-score-head strong { color: var(--color-primary); font-size: 18px; }.row-score-head span { overflow: hidden; color: var(--color-text-secondary); font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }.score-track { height: 6px; overflow: hidden; border-radius: var(--radius-pill); background: var(--color-border-subtle); }.score-track span { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, var(--color-primary), #22d3ee 64%, var(--color-brand-lime)); }
-.row-actions { display: flex; align-items: center; gap: 7px; }.icon-feedback { display: grid; place-items: center; width: 38px; height: 38px; padding: 0; border: 1px solid var(--color-border); border-radius: var(--radius-button); background: var(--color-surface); color: var(--color-text-secondary); cursor: pointer; }.icon-feedback:hover, .icon-feedback.is-active { border-color: var(--color-state-success-border); background: var(--color-state-success-bg); color: var(--color-state-success-dark); }.icon-feedback.is-dismissed { border-color: var(--color-state-alert-border); background: var(--color-state-alert-bg); color: var(--color-state-alert-dark); }.row-view-button { padding: 0 11px; border: 1px solid var(--color-primary); background: var(--color-primary); color: #fff; white-space: nowrap; }
-.feedback-inline, .feedback-confirmation { grid-column: 2 / -1; display: flex; align-items: center; gap: 8px; padding: 10px 12px; border-radius: var(--radius-card-sm); background: var(--color-surface-subtle); font-size: 12px; }.feedback-inline > span { margin-right: 2px; font-weight: 700; }.feedback-inline button { min-height: 32px; padding: 0 10px; border: 1px solid var(--color-border); border-radius: var(--radius-button); background: var(--color-surface); color: var(--color-text-secondary); font: inherit; font-weight: 650; cursor: pointer; }.feedback-inline button:hover { border-color: var(--color-primary); color: var(--color-primary); }.feedback-inline .feedback-close { display: grid; place-items: center; width: 32px; padding: 0; margin-left: auto; }.feedback-confirmation { color: var(--color-state-success-dark); }.feedback-confirmation svg { flex: 0 0 auto; }
+.row-actions { display: flex; align-items: center; gap: 7px; }.row-view-button { padding: 0 11px; border: 1px solid var(--color-primary); background: var(--color-primary); color: #fff; white-space: nowrap; }
 .list-footer { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 18px 20px 23px; border-top: 1px solid var(--color-border-subtle); }.load-more { padding: 0 16px; border: 1px solid var(--color-primary); background: transparent; color: var(--color-primary); }.list-footer p { margin: 0; color: var(--color-text-secondary); font-size: 12px; text-align: center; }
 .compatibility-guide { position: sticky; top: 90px; padding: 23px; }.guide-icon { display: grid; place-items: center; width: 43px; height: 43px; margin-bottom: 17px; border-radius: 13px; background: var(--color-lavender); color: var(--color-primary); }.compatibility-guide > p { margin-bottom: 19px; color: var(--color-text-secondary); font-size: 14px; line-height: 1.55; }.compatibility-guide ul { display: grid; gap: 13px; margin: 0; padding: 17px 0; border-top: 1px solid var(--color-border-subtle); border-bottom: 1px solid var(--color-border-subtle); list-style: none; }.compatibility-guide li { display: flex; gap: 8px; color: var(--color-text-secondary); font-size: 13px; line-height: 1.45; }.compatibility-guide li svg { flex: 0 0 auto; margin-top: 2px; color: var(--color-state-success); }.guide-action { width: 100%; margin-top: 18px; border: 1px solid var(--color-primary); background: var(--color-primary); color: #fff; }
-.recommendation-notice { position: fixed; right: 24px; bottom: 24px; z-index: 102; display: flex; align-items: center; gap: 9px; max-width: min(430px, calc(100vw - 48px)); margin: 0; padding: 13px 16px; border: 1px solid var(--color-state-success-border); border-radius: var(--radius-card-sm); background: var(--color-surface); box-shadow: var(--shadow-elevated); color: var(--color-text-primary); font-size: 13px; }.recommendation-notice svg { color: var(--color-state-success); }.notice-enter-active, .notice-leave-active { transition: opacity 180ms ease, transform 180ms ease; }.notice-enter-from, .notice-leave-to { opacity: 0; transform: translateY(8px); }
+
 
 @media (max-width: 1100px) { .featured-match { grid-template-columns: minmax(170px, .75fr) minmax(0, 1.1fr); }.featured-job { grid-column: 1 / -1; border-top: 1px solid var(--color-border-subtle); }.recommendation-content { grid-template-columns: 1fr; }.compatibility-guide { position: static; display: grid; grid-template-columns: auto 1fr; column-gap: 15px; }.compatibility-guide .guide-icon { grid-row: span 2; margin: 0; }.compatibility-guide > p { margin-bottom: 0; }.compatibility-guide ul, .compatibility-guide .guide-action { grid-column: 1 / -1; } }
-@media (max-width: 760px) { .recommendation-page { padding-top: 24px; }.recommendation-header { flex-direction: column; gap: 14px; }.demo-chip { align-self: flex-start; }.featured-match { grid-template-columns: 1fr; }.profile-signal { padding: 22px; border-right: 0; border-bottom: 1px solid var(--color-border-subtle); }.match-route { min-height: 250px; padding: 24px 18px; }.route-line { right: 10%; left: 10%; }.featured-job { grid-column: auto; }.recommendation-content { gap: 16px; }.list-heading { align-items: flex-start; flex-direction: column; }.preferences-button { width: 100%; }.recommendation-row { grid-template-columns: auto minmax(0, 1fr); gap: 12px; }.row-score { grid-column: 2; }.row-actions { grid-column: 1 / -1; justify-content: flex-end; }.feedback-inline, .feedback-confirmation { grid-column: 1 / -1; flex-wrap: wrap; }.feedback-inline .feedback-close { margin-left: 0; }.job-summary h3 { white-space: normal; }.compatibility-guide { display: block; }.compatibility-guide .guide-icon { margin-bottom: 16px; }.recommendation-notice { right: 16px; bottom: 16px; max-width: calc(100vw - 32px); } }
+@media (max-width: 760px) { .recommendation-page { padding-top: 24px; }.recommendation-header { flex-direction: column; gap: 14px; }.demo-chip { align-self: flex-start; }.featured-match { grid-template-columns: 1fr; }.profile-signal { padding: 22px; border-right: 0; border-bottom: 1px solid var(--color-border-subtle); }.match-route { min-height: 250px; padding: 24px 18px; }.route-line { right: 10%; left: 10%; }.featured-job { grid-column: auto; }.recommendation-content { gap: 16px; }.list-heading { align-items: flex-start; flex-direction: column; }.preferences-button { width: 100%; }.recommendation-row { grid-template-columns: auto minmax(0, 1fr); gap: 12px; }.row-score { grid-column: 2; }.row-actions { grid-column: 1 / -1; justify-content: flex-end; }.job-summary h3 { white-space: normal; }.compatibility-guide { display: block; }.compatibility-guide .guide-icon { margin-bottom: 16px; } }
 @media (max-width: 440px) { .featured-actions { flex-direction: column; }.btn-secondary { min-height: 42px; }.route-steps li { font-size: 11px; }.route-steps small { font-size: 10px; }.route-icon { width: 38px; height: 38px; }.row-actions { justify-content: space-between; }.row-view-button { flex: 1; }.skill-tags span:nth-child(n+3) { display: none; } }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; } }
 </style>
