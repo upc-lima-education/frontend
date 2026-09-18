@@ -220,6 +220,10 @@ function useSuggestedPublicationWindow() {
 //Steps for dinamic effect
 const currentStep = ref(1);
 const totalSteps = 5;
+const descriptionLength = computed(() => form.description.trim().length);
+const descriptionMinimum = 20;
+const descriptionMaximum = 500;
+const descriptionProgress = computed(() => Math.min(100, Math.round((descriptionLength.value / descriptionMaximum) * 100)));
 const stepValidation = computed(() => {
     switch (currentStep.value) {
         case 1: return (
@@ -239,6 +243,16 @@ function nextStep() {
         currentStep.value++;
     }
 }
+
+function usePublicationPreset(kind: 'now' | 'tomorrow' | 'week') {
+    const start = new Date();
+    if (kind === 'tomorrow') start.setDate(start.getDate() + 1);
+    if (kind === 'week') start.setDate(start.getDate() + 7);
+    const end = new Date(start.getTime() + 30 * 24 * 60 * 60_000);
+    form.opensAt = toDateTimeLocal(start);
+    form.closesAt = toDateTimeLocal(end);
+    submitError.value = '';
+}
 function prevStep() {
     if (currentStep.value > 1) {
         currentStep.value--;
@@ -253,6 +267,14 @@ const currentStepTitle = computed(() => {
         case 5: return 'publication';
         default: return '';
     }
+});
+
+const publicationPresetMessage = computed(() => {
+    if (!form.opensAt || !form.closesAt) return '';
+    const opensAt = new Date(form.opensAt);
+    const closesAt = new Date(form.closesAt);
+    if (Number.isNaN(opensAt.getTime()) || Number.isNaN(closesAt.getTime())) return '';
+    return `Se abrirá el ${opensAt.toLocaleString('es-PE', { dateStyle: 'medium', timeStyle: 'short' })} y cerrará el ${closesAt.toLocaleString('es-PE', { dateStyle: 'medium', timeStyle: 'short' })}.`;
 });
 
 
@@ -504,9 +526,16 @@ onMounted(loadExistingJob);
                 <div class="input-container">
                     <div class="label-row">
                         <label for="description">{{ $t('job.data.description') }}</label>
-                        <ButtonClueComponent text="Mín: 20 caracteres. Máx: 500 caracteres" />
+                        <span class="field-counter" :class="{ 'field-counter--valid': descriptionLength >= descriptionMinimum && descriptionLength <= descriptionMaximum, 'field-counter--invalid': descriptionLength > descriptionMaximum }">
+                            {{ descriptionLength }} / {{ descriptionMaximum }}
+                        </span>
                     </div>
-                    <textarea id="description" v-model="form.description" placeholder="Describe los roles, responsabilidades y el equipo..."></textarea>
+                    <textarea id="description" v-model="form.description" :aria-describedby="'description-help description-feedback'" placeholder="Describe los roles, responsabilidades y el equipo..."></textarea>
+                    <div class="field-progress" aria-hidden="true"><span :style="{ width: `${descriptionProgress}%` }"></span></div>
+                    <small id="description-help" class="field-help">Mínimo {{ descriptionMinimum }} caracteres y máximo {{ descriptionMaximum }}.</small>
+                    <small id="description-feedback" class="field-feedback" :class="{ 'field-feedback--valid': descriptionLength >= descriptionMinimum && descriptionLength <= descriptionMaximum, 'field-feedback--invalid': descriptionLength > descriptionMaximum }" aria-live="polite">
+                        {{ descriptionLength < descriptionMinimum ? `Faltan ${descriptionMinimum - descriptionLength} caracteres para continuar.` : descriptionLength > descriptionMaximum ? `Reduce ${descriptionLength - descriptionMaximum} caracteres.` : 'Descripción lista para continuar.' }}
+                    </small>
                 </div>
             </section>
 
@@ -635,6 +664,22 @@ onMounted(loadExistingJob);
             </section>
 
             <section v-if="currentStep === 5" class="step-panel animate-fade-in">
+                <div class="publication-status-card" role="status">
+                    <div>
+                        <span class="publication-status-card__eyebrow">Estado de publicación</span>
+                        <strong>{{ isEditing ? 'Publicación existente' : 'Lista para publicar' }}</strong>
+                    </div>
+                    <span class="publication-status-badge">{{ isEditing ? 'EDITANDO' : 'BORRADOR' }}</span>
+                </div>
+                <div class="publication-presets" aria-label="Fechas rápidas de publicación">
+                    <span class="publication-presets__label">Elegir apertura rápida</span>
+                    <div class="publication-presets__actions">
+                        <button type="button" class="publication-preset" @click="usePublicationPreset('now')">Publicar ahora</button>
+                        <button type="button" class="publication-preset" @click="usePublicationPreset('tomorrow')">Mañana</button>
+                        <button type="button" class="publication-preset" @click="usePublicationPreset('week')">En una semana</button>
+                    </div>
+                    <small class="publication-presets__feedback" role="status">{{ publicationPresetMessage }}</small>
+                </div>
                 <div class="input-container">
                     <div class="label-row">
                         <label for="opensAt">{{ $t('job.data.opensAt') }}</label>
@@ -718,6 +763,73 @@ onMounted(loadExistingJob);
     max-width: 880px;
     margin: 0 auto;
     box-sizing: border-box;
+}
+
+.field-counter {
+    color: var(--color-text-muted);
+    font-size: 12px;
+    font-weight: var(--fw-semibold);
+}
+
+.field-counter--valid { color: var(--color-state-success-dark); }
+.field-counter--invalid { color: var(--color-state-error-dark); }
+
+.field-progress {
+    height: 5px;
+    overflow: hidden;
+    border-radius: 999px;
+    background: var(--color-surface-subtle);
+}
+
+.field-progress span {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+    background: var(--color-primary);
+    transition: background-color 160ms ease;
+}
+
+.field-feedback {
+    color: var(--color-text-secondary);
+    font-size: 12px;
+}
+
+.field-feedback--valid { color: var(--color-state-success-dark); font-weight: var(--fw-semibold); }
+.field-feedback--invalid { color: var(--color-state-error-dark); font-weight: var(--fw-semibold); }
+
+.publication-status-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 14px 16px;
+    border: 1px solid color-mix(in srgb, var(--color-primary) 20%, var(--color-border));
+    border-radius: 12px;
+    background: color-mix(in srgb, var(--color-primary) 6%, var(--color-surface));
+}
+
+.publication-status-card div { display: grid; gap: 3px; }
+.publication-status-card__eyebrow { color: var(--color-primary); font-size: 11px; font-weight: var(--fw-bold); text-transform: uppercase; letter-spacing: .04em; }
+.publication-status-card strong { color: var(--color-text-primary); font-size: 14px; }
+.publication-status-badge { padding: 5px 9px; border-radius: 999px; color: var(--color-state-success-dark); background: var(--color-brand-lime-soft); font-size: 10px; font-weight: var(--fw-bold); letter-spacing: .04em; }
+
+.publication-presets { display: grid; gap: 8px; }
+.publication-presets__label { color: var(--color-text-secondary); font-size: 12px; font-weight: var(--fw-semibold); }
+.publication-presets__actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.publication-preset { min-height: 40px; padding: 0 12px; border: 1px solid var(--color-border); border-radius: var(--radius-button); color: var(--color-primary); background: var(--color-surface); font: inherit; font-size: 12px; font-weight: var(--fw-semibold); cursor: pointer; transition: transform 150ms ease, border-color 150ms ease, background-color 150ms ease; }
+.publication-preset:hover { border-color: var(--color-primary); background: var(--color-lavender); transform: translateY(-1px); }
+.publication-preset:active { transform: scale(.97); }
+.publication-preset:focus-visible { outline: 3px solid color-mix(in srgb, var(--color-primary) 28%, transparent); outline-offset: 2px; }
+.publication-presets__feedback { min-height: 18px; color: var(--color-text-secondary); font-size: 12px; line-height: 1.4; }
+
+@media (max-width: 640px) {
+    .publication-status-card { align-items: flex-start; flex-direction: column; }
+    .publication-presets__actions { display: grid; grid-template-columns: 1fr; }
+    .publication-preset { width: 100%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .publication-preset { transition: none; }
 }
 
 .submit-message {

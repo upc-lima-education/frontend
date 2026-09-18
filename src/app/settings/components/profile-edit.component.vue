@@ -361,13 +361,15 @@ const isRucInputValid = computed(() => ruc.value && ruc.value.length === 11 && /
               <button
                 type="button"
                 class="photo-save-button"
+                :class="{ 'photo-save-button--ready': profilePictureFile && !isNewProfile, 'photo-save-button--saving': isSavingProfilePicture }"
                 :disabled="!profilePictureFile || isNewProfile || loading || isSavingProfilePicture"
                 @click="saveProfilePicture"
               >
                 <UploadCloud :size="16" />
                 <span>{{ isSavingProfilePicture ? 'Guardando foto…' : 'Guardar foto' }}</span>
               </button>
-              <p v-if="profilePictureFile && !isNewProfile" class="photo-save-status" role="status">Foto seleccionada. Guárdala para aplicarla al perfil.</p>
+              <p v-if="profilePictureFile && !isNewProfile" class="photo-save-status photo-save-status--ready" role="status">Foto seleccionada. Guárdala para aplicarla al perfil.</p>
+              <p v-else-if="!profilePictureFile && !isNewProfile" class="photo-save-status" role="status">Selecciona una foto para habilitar este botón.</p>
               <p v-else-if="profilePictureFile && isNewProfile" class="photo-save-status" role="status">La foto se guardará al crear tu perfil con “Guardar cambios”.</p>
             </div>
 
@@ -1170,6 +1172,25 @@ const isRucInputValid = computed(() => ruc.value && ruc.value.length === 11 && /
   background: var(--color-primary);
 }
 
+.photo-save-button--ready {
+  color: #fff;
+  background: var(--color-primary);
+  box-shadow: 0 6px 16px color-mix(in srgb, var(--color-primary) 22%, transparent);
+}
+
+.photo-save-button--ready:hover:not(:disabled) {
+  background: var(--color-primary-dark);
+  transform: translateY(-1px);
+}
+
+.photo-save-button:active:not(:disabled) {
+  transform: scale(.98);
+}
+
+.photo-save-button--saving {
+  opacity: .78;
+}
+
 .photo-save-button:disabled {
   opacity: .52;
   cursor: not-allowed;
@@ -1181,6 +1202,15 @@ const isRucInputValid = computed(() => ruc.value && ruc.value.length === 11 && /
   font-size: 11px;
   line-height: 1.4;
   text-align: center;
+}
+
+.photo-save-status--ready {
+  color: var(--color-state-success-dark);
+  font-weight: var(--fw-semibold);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .photo-save-button { transition: none; }
 }
 
 /* Completeness Box */
