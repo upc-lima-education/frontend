@@ -1,6 +1,6 @@
 import router from '@/app/shared/router';
 import { ROUTE_CONSTANTS } from '@/app/shared/router/route-constants';
-import { computed, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { useAuthenticationStore } from '@/app/auth/services/authentication.store';
 import { SignInRequest } from '@/app/auth/model/sign-in/sign-in.request';
 
@@ -12,6 +12,32 @@ export function useSignInForm() {
     const loading = ref(false);
     const error = ref('');
     const submitted = ref(false);
+
+    onMounted(async () => {
+        const route = router.currentRoute.value;
+        const token = route.query.token as string | undefined;
+        const refreshToken = route.query.refreshToken as string | undefined;
+
+        if (token && refreshToken) {
+            loading.value = true;
+            try {
+                authStore.setAccessToken(token);
+                authStore.setRefreshToken(refreshToken);
+                const loaded = await authStore.loadCurrentUser();
+                if (loaded) {
+                    const target = authStore.currentUserType === 'organization'
+                        ? ROUTE_CONSTANTS.HOME_PAGE
+                        : ROUTE_CONSTANTS.JOB_SEARCH;
+                    await router.replace(target);
+                    return;
+                }
+            } catch (err) {
+                console.error('Error al inicializar sesión OAuth:', err);
+            } finally {
+                loading.value = false;
+            }
+        }
+    });
 
     const emailError = computed(() => {
         if (!submitted.value) return '';
