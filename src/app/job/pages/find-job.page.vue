@@ -17,6 +17,7 @@ import {
   Compass,
   DollarSign,
   Filter,
+  GraduationCap,
   MapPin,
   RotateCw,
   Search,
@@ -29,6 +30,7 @@ import {
 import { ROUTE_CONSTANTS } from '@/app/shared/router/route-constants';
 import JobPreviewComponent from '../components/job-preview.component.vue';
 import EmptyState from '@/app/shared/components/ui/empty-state.component.vue';
+import CompanyAvatar from '@/app/shared/components/company-avatar.component.vue';
 import { getJobOriginLabel, isExternalJob } from '../utils/job-origin.util';
 
 const { t } = useI18n();
@@ -90,12 +92,14 @@ function clearLocationInput() {
 const modalityFilter = ref('');
 const salaryFilter = ref<number | null>(null);
 const experienceFilter = ref('');
+const educationFilter = ref('');
 const sortBy = ref<'recent' | 'salary-high' | 'relevance'>('recent');
 
 const appliedSearchText = ref('');
 const appliedUbigeo = ref('');
 const appliedModality = ref('');
 const appliedSalary = ref<number | null>(null);
+const appliedEducation = ref('');
 
 const isRecommendationActive = ref(false);
 const recommendedJobs = ref<GetJobByIdResponse[]>([]);
@@ -410,18 +414,21 @@ async function searchJobs() {
   appliedUbigeo.value = resolveUbigeoFromInput(locationInput.value);
   appliedSalary.value = salaryFilter.value || null;
   appliedModality.value = modalityFilter.value;
+  appliedEducation.value = educationFilter.value;
 
   const queryToUse = appliedSearchText.value;
 
-  if (queryToUse || appliedUbigeo.value || appliedSalary.value || appliedModality.value) {
+  if (queryToUse || appliedUbigeo.value || appliedSalary.value || appliedModality.value || appliedEducation.value || experienceFilter.value) {
     loading.value = true;
     isRecommendationActive.value = true;
     try {
-      const request = {
+      const request: RecommendationRequest = {
         title_search: queryToUse || 'empleo',
         ubigeo: appliedUbigeo.value || undefined,
         min_salary: appliedSalary.value || undefined,
         job_type: appliedModality.value || undefined,
+        education_level: appliedEducation.value || undefined,
+        experience: experienceFilter.value || undefined,
         page: 1,
         page_size: pageSize,
       };
@@ -449,7 +456,7 @@ async function searchJobs() {
 }
 
 async function retryCurrentSearch() {
-  if (appliedSearchText.value || appliedUbigeo.value || appliedSalary.value || appliedModality.value) {
+  if (appliedSearchText.value || appliedUbigeo.value || appliedSalary.value || appliedModality.value || appliedEducation.value || experienceFilter.value) {
     await searchJobs();
     return;
   }
@@ -490,6 +497,7 @@ const filteredJobs = computed(() => {
     }
     if (appliedModality.value && job.jobType !== appliedModality.value) return false;
     if (experienceFilter.value && !matchesExperienceFilter(job.experience, experienceFilter.value)) return false;
+    if (educationFilter.value && job.educationLevel !== educationFilter.value) return false;
     return true;
   });
 });
@@ -552,10 +560,12 @@ async function clearFilters() {
   modalityFilter.value = '';
   salaryFilter.value = null;
   experienceFilter.value = '';
+  educationFilter.value = '';
   appliedSearchText.value = '';
   appliedUbigeo.value = '';
   appliedModality.value = '';
   appliedSalary.value = null;
+  appliedEducation.value = '';
   currentPage.value = 1;
   isRecommendationActive.value = false;
   activeRecommendationRequest.value = null;
@@ -572,15 +582,17 @@ const hasFiltersActive = computed(() =>
     modalityFilter.value ||
     salaryFilter.value ||
     experienceFilter.value ||
+    educationFilter.value ||
     appliedSearchText.value ||
     appliedUbigeo.value ||
     appliedModality.value ||
-    appliedSalary.value
+    appliedSalary.value ||
+    appliedEducation.value
   )
 );
 
 const activeAdvancedFiltersCount = computed(() =>
-  Number(salaryFilter.value !== null) + Number(Boolean(experienceFilter.value))
+  Number(salaryFilter.value !== null) + Number(Boolean(experienceFilter.value)) + Number(Boolean(educationFilter.value))
 );
 
 const popularJobKeywords = [
@@ -754,6 +766,20 @@ onMounted(async () => {
                 </select>
                 <ChevronDown :size="13" class="pill-caret-icon" aria-hidden="true" />
               </div>
+
+              <div class="quick-select-pill">
+                <GraduationCap :size="13" class="pill-prefix-icon" aria-hidden="true" />
+                <select v-model="educationFilter" aria-label="Filtrar por nivel educativo" @change="searchJobs">
+                  <option value="">Cualquier nivel educativo</option>
+                  <option value="Primary">Primaria</option>
+                  <option value="Secondary">Secundaria</option>
+                  <option value="Technical">Técnico / Superior técnico</option>
+                  <option value="University">Universitario</option>
+                  <option value="Master">Maestría</option>
+                  <option value="Doctorate">Doctorado</option>
+                </select>
+                <ChevronDown :size="13" class="pill-caret-icon" aria-hidden="true" />
+              </div>
             </div>
 
             <details class="mobile-advanced-filters">
@@ -788,6 +814,19 @@ onMounted(async () => {
                     <option value="3m">3 meses</option>
                     <option value="6m">6 meses</option>
                     <option value="1y">1 año a más</option>
+                  </select>
+                  <ChevronDown :size="14" class="pill-caret-icon" aria-hidden="true" />
+                </div>
+                <div class="quick-select-pill">
+                  <GraduationCap :size="14" class="pill-prefix-icon" aria-hidden="true" />
+                  <select v-model="educationFilter" aria-label="Filtrar por nivel educativo" @change="searchJobs">
+                    <option value="">Cualquier nivel educativo</option>
+                    <option value="Primary">Primaria</option>
+                    <option value="Secondary">Secundaria</option>
+                    <option value="Technical">Técnico / Superior técnico</option>
+                    <option value="University">Universitario</option>
+                    <option value="Master">Maestría</option>
+                    <option value="Doctorate">Doctorado</option>
                   </select>
                   <ChevronDown :size="14" class="pill-caret-icon" aria-hidden="true" />
                 </div>
@@ -1020,17 +1059,12 @@ onMounted(async () => {
             >
               <!-- Card Main Header (Avatar + Title + Badges) -->
               <div class="opportunity-card__lead">
-                <div class="company-brand-avatar" aria-hidden="true">
-                  <img
-                    v-if="job.companyImage && !failedImages.has(job.id)"
-                    :src="job.companyImage"
-                    :alt="`Logo de ${companyNameFor(job)}`"
-                    class="avatar-img"
-                    loading="lazy"
-                    @error="handleImageError(job.id)"
-                  />
-                  <Building2 v-else :size="24" class="avatar-company-icon" />
-                </div>
+                <CompanyAvatar
+                  :src="job.companyImage"
+                  :company-name="companyNameFor(job)"
+                  :size="48"
+                  class="company-brand-avatar"
+                />
 
                 <div class="opportunity-card__info">
                   <!-- Tag row -->

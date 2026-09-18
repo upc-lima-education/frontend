@@ -173,6 +173,16 @@
                 "OneYear": "1 year",
                 "TwoOrMoreYears": "2 years or more"
             },
+            "educationLevel": {
+                "name": "Education level",
+                "Unspecified": "Unspecified",
+                "Primary": "Primary education",
+                "Secondary": "Secondary education",
+                "Technical": "Technical education",
+                "University": "University degree",
+                "Master": "Master's degree",
+                "Doctorate": "Doctorate"
+            },
             "type": {
                 "name": "Job type",
                 "Remote": "Remote",

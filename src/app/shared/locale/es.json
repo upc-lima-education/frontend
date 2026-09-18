@@ -174,7 +174,17 @@
                 "ThreeMonths": "3 meses",
                 "SixMonths": "6 meses",
                 "OneYear": "1 año",
-                "TwoOrMoreYears": "2 years or more"
+                "TwoOrMoreYears": "2 años a más"
+            },
+            "educationLevel": {
+                "name": "Nivel educativo",
+                "Unspecified": "No especificado",
+                "Primary": "Primaria",
+                "Secondary": "Secundaria",
+                "Technical": "Técnico o superior técnico",
+                "University": "Universitario",
+                "Master": "Maestría",
+                "Doctorate": "Doctorado"
             },
             "type": {
                 "name": "Tipo de trabajo",

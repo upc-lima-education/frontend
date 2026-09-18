@@ -9,6 +9,9 @@ import { JobService } from '../services/job.service';
 import { useRouter } from 'vue-router';
 import { ROUTE_CONSTANTS } from '@/app/shared/router/route-constants';
 import { getExternalJobUrl, getJobOriginLabel, isExternalJob, isInternalJob } from '../utils/job-origin.util';
+import CompanyAvatar from '@/app/shared/components/company-avatar.component.vue';
+import { RecommendationService } from '../services/recommendation.service';
+import { useTrackJobView } from '../composables/useTrackJobView';
 import {
   AlertCircle,
   ArrowLeft,
@@ -40,6 +43,7 @@ import {
 const auth = useAuthenticationStore();
 const router = useRouter();
 const jobService = new JobService();
+const recommendationService = new RecommendationService();
 
 const props = defineProps<{
   job: GetJobByIdResponse;
@@ -48,6 +52,8 @@ const props = defineProps<{
   isCompany: boolean;
   featured?: boolean;
 }>();
+
+useTrackJobView(computed(() => props.job?.id));
 
 const department = ref('');
 const district = ref('');
@@ -259,6 +265,10 @@ function continueInExternalPortal() {
     return;
   }
 
+  if (isCandidate.value && props.job?.id) {
+    void recommendationService.createJobInteraction(props.job.id, 'ExternalApply');
+  }
+
   window.open(destination, '_blank', 'noopener,noreferrer');
 }
 
@@ -338,16 +348,12 @@ onMounted(async () => {
     <header class="job-hero-deck" aria-label="Información principal de la vacante">
       <div class="hero-left-stack">
         <!-- Company Monogram / Logo -->
-        <div class="company-lead-avatar" aria-hidden="true">
-          <img
-            v-if="companyImage && !failedCompanyImage"
-            :src="companyImage"
-            :alt="`Logo de ${displayCompanyName}`"
-            class="avatar-image"
-            @error="handleCompanyImageError"
-          />
-          <Building2 v-else :size="32" class="avatar-company-icon" />
-        </div>
+        <CompanyAvatar
+          :src="companyImage"
+          :company-name="displayCompanyName"
+          :size="64"
+          class="company-lead-avatar"
+        />
 
         <div class="hero-titles-block">
           <div class="hero-pill-row">

@@ -20,6 +20,7 @@ import {
 import { ROUTE_CONSTANTS } from '@/app/shared/router/route-constants';
 import { RecommendationService, type RecommendationResponse } from '@/app/job/services/recommendation.service';
 import { ubigeoService } from '@/app/shared/services/ubigeo.service';
+import CompanyAvatar from '@/app/shared/components/company-avatar.component.vue';
 
 type FeedbackReason = 'Perfil' | 'Modalidad' | 'Salario' | 'Otro';
 type Feedback = 'interested' | 'not-for-me' | null;
@@ -28,6 +29,7 @@ type Recommendation = {
   id: string;
   title: string;
   company: string;
+  companyImage?: string | null;
   location: string;
   modality: string;
   score: number;
@@ -66,6 +68,7 @@ function toRecommendation(item: RecommendationResponse, index: number): Recommen
     id: item.jobId,
     title: item.title?.trim() || 'Empleo sin título',
     company,
+    companyImage: item.companyImage || null,
     location,
     modality,
     score: item.score,
@@ -189,7 +192,12 @@ onMounted(() => { void loadRecommendations(); });
 
         <article class="featured-job">
           <div class="featured-job-top">
-            <div class="company-mark company-mark--blue" aria-hidden="true"><Building2 :size="22" /></div>
+            <CompanyAvatar
+              :src="featuredRecommendation.companyImage"
+              :company-name="featuredRecommendation.company"
+              :size="52"
+              class="featured-company-avatar"
+            />
             <div>
               <div class="verified-line"><span>{{ featuredRecommendation.company }}</span><BadgeCheck :size="16" aria-label="Empresa verificada" /></div>
               <h2 id="featured-title">{{ featuredRecommendation.title }}</h2>
@@ -230,7 +238,12 @@ onMounted(() => { void loadRecommendations(); });
 
           <div class="recommendation-list">
             <article v-for="job in visibleRecommendations" :key="job.id" class="recommendation-row">
-              <div class="company-mark" :class="`company-mark--${job.tone}`" aria-hidden="true"><Building2 :size="20" /></div>
+              <CompanyAvatar
+                :src="job.companyImage"
+                :company-name="job.company"
+                :size="44"
+                class="row-company-avatar"
+              />
               <div class="job-summary">
                 <h3>{{ job.title }}</h3>
                 <p class="company-name">{{ job.company }}</p>

@@ -14,7 +14,9 @@ import { EducationLevel } from '../enums/education-level.enum';
 import { ubigeoService } from '@/app/shared/services/ubigeo.service';
 import ButtonClueComponent from '@/app/shared/components/button-clue.component.vue';
 import SkillPickerComponent from '@/app/shared/components/skill-picker.component.vue';
-import { ArrowLeft, ArrowRight, Save } from 'lucide-vue-next';
+import { ArrowLeft, ArrowRight, CheckCircle2, ExternalLink, Home, PlusCircle, Save } from 'lucide-vue-next';
+import { useRouter } from 'vue-router';
+import { ROUTE_CONSTANTS } from '@/app/shared/router/route-constants';
 
 const props = defineProps<{
     editJobId?: string;
@@ -22,7 +24,12 @@ const props = defineProps<{
 
 const emit = defineEmits<{
     updated: [jobId: string];
+    created: [jobId: string];
 }>();
+
+const router = useRouter();
+const createdJobId = ref('');
+const publishedJobTitle = ref('');
 
 const jobService = new JobService();
 const submitting = ref(false);
@@ -320,14 +327,66 @@ async function submit() {
             return;
         }
 
-        await jobService.createJob(request);
+        const createdJob = await jobService.createJob(request);
+        const savedTitle = form.title.trim();
+        const savedJobId = createdJob.id;
+        // Limpiamos los datos del formulario inmediatamente para asegurar la recarga de vacío
+        resetForm();
+        publishedJobTitle.value = savedTitle;
+        createdJobId.value = savedJobId;
         submitSuccess.value = true;
+        emit('created', savedJobId);
     } catch (e: any) {
         console.error('Error publishing job:', e);
         submitError.value = getApiErrorMessage(e);
     } finally {
         submitting.value = false;
     }
+}
+
+function resetForm() {
+    const suggested = getSuggestedPublicationWindow();
+    form.title = '';
+    form.description = '';
+    form.jobType = JobType.InPerson;
+    form.workHours = WorkHours.FullTime;
+    form.skills = '';
+    form.experience = Experience.NoExperienceNeeded;
+    form.educationLevel = EducationLevel.Unspecified;
+    form.address = '';
+    form.minSalary = 0;
+    form.maxSalary = 0;
+    form.currency = Currency.PEN;
+    form.salaryPeriod = SalaryPeriod.Monthly;
+    form.compensationType = CompensationType.Fixed;
+    form.opensAt = suggested.opensAt;
+    form.closesAt = suggested.closesAt;
+    form.applyUrl = '';
+    selectedDepartment.value = '';
+    selectedProvince.value = '';
+    selectedDistrict.value = '';
+    skillBubbles.value.clear();
+    currentStep.value = 1;
+    submitError.value = '';
+    submitSuccess.value = false;
+    createdJobId.value = '';
+    publishedJobTitle.value = '';
+}
+
+function viewCreatedJob() {
+    if (createdJobId.value) {
+        router.push(`${ROUTE_CONSTANTS.JOB_DETAIL}/${createdJobId.value}`);
+    } else {
+        router.push(ROUTE_CONSTANTS.JOB_SEARCH);
+    }
+}
+
+function publishAnotherJob() {
+    resetForm();
+}
+
+function goToHome() {
+    router.push(ROUTE_CONSTANTS.HOME_PAGE);
 }
 
 onMounted(loadExistingJob);
@@ -348,7 +407,35 @@ onMounted(loadExistingJob);
                 Usar fechas sugeridas
             </button>
         </div>
-        <p v-if="submitSuccess" class="submit-message submit-message--success" role="status">Oferta publicada correctamente.</p>
+
+        <!-- Success State when published (Recarga de vacío / Opciones de navegación) -->
+        <div v-if="submitSuccess && !isEditing" class="publish-success-banner animate-fade-in" role="status">
+            <div class="success-icon-wrap">
+                <CheckCircle2 :size="48" class="success-icon" />
+            </div>
+            <h2 class="success-title">¡Oferta laboral publicada exitosamente!</h2>
+            <p class="success-description">
+                <span v-if="publishedJobTitle">La vacante <strong>"{{ publishedJobTitle }}"</strong> ya se encuentra activa en el directorio de Llanqui y disponible para recibir postulaciones y recomendaciones.</span>
+                <span v-else>Tu vacante se ha registrado correctamente en la plataforma Llanqui.</span>
+            </p>
+            <div class="success-actions">
+                <button type="button" class="btn-success-action btn-success-primary" @click="viewCreatedJob">
+                    <ExternalLink :size="16" />
+                    <span>Ver vacante publicada</span>
+                </button>
+                <button type="button" class="btn-success-action btn-success-secondary" @click="publishAnotherJob">
+                    <PlusCircle :size="16" />
+                    <span>Publicar otra vacante</span>
+                </button>
+                <button type="button" class="btn-success-action btn-success-tertiary" @click="goToHome">
+                    <Home :size="16" />
+                    <span>Volver al inicio</span>
+                </button>
+            </div>
+        </div>
+
+        <template v-else>
+            <p v-if="submitSuccess && isEditing" class="submit-message submit-message--success" role="status">Oferta actualizada correctamente.</p>
         <!-- Horizontal visual stepper -->
         <div class="wizard-stepper">
             <div 
@@ -443,7 +530,7 @@ onMounted(loadExistingJob);
                     </div>
                     <select id="educationLevel" v-model="form.educationLevel">
                         <option v-for="o in educationLevelOptions" :key="o.value" :value="o.value">
-                            {{ EducationLevel[o.value] === 'Unspecified' ? 'No especificado' : EducationLevel[o.value] }}
+                            {{ $t(o.labelKey) }}
                         </option>
                     </select>
                 </div>
@@ -613,6 +700,7 @@ onMounted(loadExistingJob);
                 <span>{{ submitting ? (isEditing ? 'Guardando…' : 'Publicando…') : (isEditing ? 'Guardar cambios' : 'Publicar oferta') }}</span>
             </button>
         </footer>
+        </template>
     </div>
 </template>
 
@@ -1064,5 +1152,105 @@ textarea:focus-visible {
     .submit-message-action {
         margin-left: 0;
     }
+}
+
+/* Success State Styles */
+.publish-success-banner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: clamp(32px, 5vw, 56px) clamp(16px, 3vw, 32px);
+    background: linear-gradient(180deg, color-mix(in srgb, var(--color-brand-lime, #d4f840) 8%, var(--color-surface, #ffffff)) 0%, var(--color-surface, #ffffff) 100%);
+    border: 1px solid color-mix(in srgb, var(--color-brand-lime, #d4f840) 30%, var(--color-border));
+    border-radius: var(--radius-card);
+    margin: 16px 0;
+}
+
+.success-icon-wrap {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: color-mix(in srgb, #247313 12%, transparent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 20px;
+    color: #247313;
+    box-shadow: 0 0 0 8px color-mix(in srgb, #247313 6%, transparent);
+}
+
+.success-title {
+    font-size: clamp(20px, 2.5vw, 26px);
+    font-weight: var(--fw-bold);
+    color: var(--color-text-primary);
+    margin: 0 0 12px 0;
+}
+
+.success-description {
+    max-width: 560px;
+    font-size: var(--fs-body);
+    color: var(--color-text-secondary);
+    line-height: 1.6;
+    margin: 0 0 32px 0;
+}
+
+.success-actions {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    flex-wrap: wrap;
+    width: 100%;
+}
+
+.btn-success-action {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    height: 46px;
+    padding: 0 22px;
+    border-radius: var(--radius-button);
+    font-size: var(--fs-body-sm);
+    font-weight: var(--fw-bold);
+    cursor: pointer;
+    transition: all 160ms ease;
+    text-decoration: none;
+}
+
+.btn-success-primary {
+    background: var(--color-primary);
+    color: #ffffff;
+    border: none;
+    box-shadow: 0 2px 8px color-mix(in srgb, var(--color-primary) 28%, transparent);
+}
+
+.btn-success-primary:hover {
+    background: var(--color-primary-dark);
+    transform: translateY(-1px);
+}
+
+.btn-success-secondary {
+    background: var(--color-surface);
+    color: var(--color-text-primary);
+    border: 1px solid var(--color-border);
+}
+
+.btn-success-secondary:hover {
+    border-color: var(--color-primary);
+    color: var(--color-primary);
+    background: color-mix(in srgb, var(--color-primary) 4%, var(--color-surface));
+}
+
+.btn-success-tertiary {
+    background: transparent;
+    color: var(--color-text-secondary);
+    border: 1px solid transparent;
+}
+
+.btn-success-tertiary:hover {
+    color: var(--color-text-primary);
+    text-decoration: underline;
 }
 </style>

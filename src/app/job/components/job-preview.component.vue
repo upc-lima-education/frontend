@@ -5,6 +5,7 @@ import { GetJobByIdResponse } from '../model/get-job-by-id.response';
 import { ubigeoService } from '@/app/shared/services/ubigeo.service';
 import { ROUTE_CONSTANTS } from '@/app/shared/router/route-constants';
 import { getJobOriginLabel, isExternalJob } from '../utils/job-origin.util';
+import CompanyAvatar from '@/app/shared/components/company-avatar.component.vue';
 import {
   X,
   MapPin,
@@ -240,15 +241,12 @@ function handleViewFullJob() {
           <!-- Header Bar -->
           <header class="preview-header">
             <div class="preview-header-main">
-              <div class="preview-avatar">
-                <img
-                  v-if="job.companyImage && !failedCompanyImage"
-                  :src="job.companyImage"
-                  :alt="`Logo de ${displayCompanyName}`"
-                  @error="handleCompanyImageError"
-                />
-                <Building2 v-else :size="28" class="preview-avatar-icon" />
-              </div>
+              <CompanyAvatar
+                :src="job?.companyImage"
+                :company-name="displayCompanyName"
+                :size="56"
+                class="preview-avatar"
+              />
 
               <div class="preview-header-titles">
                 <div class="preview-badges-row">
