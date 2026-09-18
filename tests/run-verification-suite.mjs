@@ -235,11 +235,14 @@ test('CompanyAvatar component is integrated in preview, detail, recommendations 
   const detail = fs.readFileSync(path.join(rootDir, 'src/app/job/components/job-detail.component.vue'), 'utf-8');
   const recs = fs.readFileSync(path.join(rootDir, 'src/app/job/pages/candidate-recommendations.page.vue'), 'utf-8');
   const findJob = fs.readFileSync(path.join(rootDir, 'src/app/job/pages/find-job.page.vue'), 'utf-8');
+  const avatar = fs.readFileSync(path.join(rootDir, 'src/app/shared/components/company-avatar.component.vue'), 'utf-8');
 
   assert.ok(preview.includes('CompanyAvatar'));
   assert.ok(detail.includes('CompanyAvatar'));
   assert.ok(recs.includes('CompanyAvatar'));
   assert.ok(findJob.includes('CompanyAvatar'));
+  assert.ok(avatar.includes('resolveBackendAssetUrl'));
+  assert.ok(avatar.includes('resolvedSrc'));
 });
 
 console.log('\n======================================================');

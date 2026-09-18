@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
 import { Building2 } from 'lucide-vue-next';
+import { resolveBackendAssetUrl } from '@/app/shared/services/base.service';
 
 interface Props {
   src?: string | null;
@@ -20,8 +21,14 @@ const props = withDefaults(defineProps<Props>(), {
 
 const hasError = ref(false);
 
+const resolvedSrc = computed(() => {
+  const value = props.src?.trim();
+  if (!value) return '';
+  return resolveBackendAssetUrl(value);
+});
+
 watch(
-  () => props.src,
+  resolvedSrc,
   () => {
     hasError.value = false;
   }
@@ -66,8 +73,8 @@ const fontSize = computed(() => {
     aria-hidden="true"
   >
     <img
-      v-if="src && !hasError"
-      :src="src"
+      v-if="resolvedSrc && !hasError"
+      :src="resolvedSrc"
       :alt="`Logo de ${companyName || 'Empresa'}`"
       class="company-avatar__img"
       loading="lazy"
