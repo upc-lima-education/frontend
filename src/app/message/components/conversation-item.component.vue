@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from "vue";
+import { UserRound } from "lucide-vue-next";
 
 const props = defineProps({
     id: { type: String, required: true },
@@ -10,13 +10,12 @@ const props = defineProps({
     active: { type: Boolean, default: false }
 });
 
-const image = computed(() => props.userImage || "/src/app/shared/assets/icons/UsuarioPredeterminado.svg");
 </script>
 
 <template>
     <div class="item" :class="{ active }">
         <div class="avatar">
-            <img draggable="false" :src="image" alt="userImage">
+            <UserRound :size="21" :stroke-width="2" aria-hidden="true" />
         </div>
         <div class="content">
             <div class="top">
@@ -55,16 +54,14 @@ const image = computed(() => props.userImage || "/src/app/shared/assets/icons/Us
 }
 
 .avatar {
-    flex-shrink: 0;
-}
-
-.avatar img {
+    display: grid;
+    place-items: center;
     width: 44px;
     height: 44px;
     border-radius: 12px;
-    object-fit: cover;
-    border: 0;
-    background: var(--color-lavender);
+    color: var(--color-primary);
+    background: color-mix(in srgb, var(--color-primary) 10%, var(--color-surface));
+    flex-shrink: 0;
 }
 
 .content {
@@ -80,7 +77,7 @@ const image = computed(() => props.userImage || "/src/app/shared/assets/icons/Us
 .top {
     display: flex;
     justify-content: space-between;
-    align-items: center;
+    align-items: flex-start;
     gap: 8px;
     min-width: 0;
 }
@@ -90,9 +87,12 @@ const image = computed(() => props.userImage || "/src/app/shared/assets/icons/Us
     font-size: 14px;
     font-weight: var(--fw-semibold);
     color: var(--color-text-primary);
-    white-space: nowrap;
+    line-height: 1.3;
     overflow: hidden;
     text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
 }
 
 .subtitle {
@@ -101,7 +101,8 @@ const image = computed(() => props.userImage || "/src/app/shared/assets/icons/Us
     font-size: 12px;
     font-weight: var(--fw-medium);
     color: var(--color-primary);
-    white-space: nowrap;
+    line-height: 1.35;
+    white-space: normal;
     overflow: hidden;
     text-overflow: ellipsis;
 }
@@ -122,9 +123,17 @@ const image = computed(() => props.userImage || "/src/app/shared/assets/icons/Us
         padding: 13px 14px;
     }
 
-    .avatar img {
+    .avatar {
         width: 42px;
         height: 42px;
+    }
+
+    .item {
+        gap: 10px;
+    }
+
+    .title {
+        font-size: 13px;
     }
 }
 </style>
