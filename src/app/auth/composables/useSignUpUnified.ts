@@ -111,9 +111,11 @@ export function useSignUpUnified() {
         loading.value = true;
 
         try {
+            const profileType = role.value === 'organization' ? 'Company' : 'Candidate';
             const request = new SignUpRequest(
                 email.value,
                 password.value,
+                profileType,
             );
 
             const success = await authStore.signUp(request, role.value);
