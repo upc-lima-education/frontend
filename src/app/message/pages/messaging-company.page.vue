@@ -396,17 +396,29 @@ onMounted(async () => {
     max-height: calc(100dvh - 220px);
     min-height: 540px;
     margin: 0 auto;
+    display: grid;
     grid-template-columns: 360px minmax(0, 1fr);
+    overflow: hidden;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-card-lg);
+    box-shadow: var(--shadow-card);
 }
 
 .conversation-panel {
     display: flex;
     min-height: 0;
+    min-width: 0;
+    overflow: hidden;
     background: var(--color-surface);
+    border-right: 1px solid var(--color-border);
 }
 
 .chat-panel {
+    display: flex;
+    flex-direction: column;
     min-height: 0;
+    min-width: 0;
+    overflow: hidden;
     background: var(--color-surface-subtle);
 }
 
@@ -514,10 +526,11 @@ onMounted(async () => {
         height: calc(100dvh - 76px);
         max-height: none;
         min-height: 520px;
+        grid-template-columns: minmax(0, 1fr);
+        grid-template-rows: minmax(0, 1fr);
         border-right: 0;
         border-left: 0;
         border-radius: 0;
-        grid-template-columns: 1fr;
     }
 
     .conversation-panel.is-mobile-hidden,
