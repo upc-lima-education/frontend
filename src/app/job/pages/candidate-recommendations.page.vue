@@ -27,7 +27,7 @@ type Recommendation = {
   location: string;
   modality: string;
   score: number;
-  scoreLabel: string;
+  scoreLabel: number;
   skills: string[];
   initials: string;
   tone: 'blue' | 'cyan' | 'violet' | 'lime';
@@ -66,7 +66,7 @@ function toRecommendation(item: RecommendationResponse, index: number): Recommen
     location,
     modality,
     score: item.score,
-    scoreLabel: item.score.toFixed(3),
+    scoreLabel: item.score,
     skills: [],
     initials: initialsFor(company),
     tone: ['blue', 'cyan', 'violet', 'lime'][index % 4] as Recommendation['tone'],
@@ -145,10 +145,10 @@ onMounted(() => { void loadRecommendations(); });
 
       <section v-if="featuredRecommendation" class="featured-match" aria-labelledby="featured-title">
         <aside class="profile-signal" aria-label="Origen de la recomendación">
-          <span class="signal-label">Tu perfil</span>
+          <span class="signal-label">Tus interacciones</span>
           <div class="profile-avatar" aria-hidden="true">TU</div>
-          <strong>Interacciones recientes</strong>
-          <span class="profile-role">Señales de empleos que consultaste</span>
+          <strong>Actividad reciente</strong>
+          <span class="profile-role">Empleos que consultaste o postulaste</span>
         </aside>
 
           <div class="match-route" aria-label="Cómo se forma esta recomendación colaborativa">
@@ -192,7 +192,7 @@ onMounted(() => { void loadRecommendations(); });
 
       <section v-if="showMethod" class="method-note" aria-label="Cómo funciona esta recomendación">
         <CircleHelp :size="18" aria-hidden="true" />
-        <p>El modelo colaborativo (ALS) analiza las vacantes que tú y otras personas con intereses similares han visto o postulado para descubrir oportunidades afines. Un puntaje mayor indica mayor afinidad colectiva.</p>
+        <p>Este puntaje representa afinidad colaborativa: el modelo ALS analiza las vacantes que tú y otras personas con patrones similares han visto o postulado. No es un porcentaje de compatibilidad profesional.</p>
       </section>
 
       <p class="data-note"><CircleHelp :size="15" aria-hidden="true" /> Esta selección se basa en interacciones continuas de usuarios: para buscar puestos o habilidades específicas, utiliza el buscador inteligente (CBF).</p>
@@ -204,7 +204,7 @@ onMounted(() => { void loadRecommendations(); });
               <h2 id="more-title">Más oportunidades para ti</h2>
               <p>Resultados recomendados</p>
             </div>
-            <button type="button" class="preferences-button" @click="openPreferences"><SlidersHorizontal :size="16" aria-hidden="true" /> Ajustar preferencias</button>
+            <button type="button" class="preferences-button" @click="openPreferences"><SlidersHorizontal :size="16" aria-hidden="true" /> Ver mi perfil</button>
           </header>
 
           <div class="recommendation-list">
@@ -240,14 +240,14 @@ onMounted(() => { void loadRecommendations(); });
 
         <aside class="compatibility-guide" aria-labelledby="guide-title">
           <div class="guide-icon"><Compass :size="22" aria-hidden="true" /></div>
-          <h2 id="guide-title">Tu compatibilidad</h2>
-          <p>El score resume la similitud entre tus interacciones y las de otros usuarios.</p>
+          <h2 id="guide-title">Cómo leer el puntaje</h2>
+          <p>Este puntaje representa afinidad colaborativa. No es un porcentaje de compatibilidad profesional.</p>
           <ul>
             <li><Check :size="15" aria-hidden="true" /><span>Se consideran empleos que tú y otros usuarios han consultado.</span></li>
             <li><Check :size="15" aria-hidden="true" /><span>Los empleos ya vistos se excluyen de la recomendación.</span></li>
-            <li><Check :size="15" aria-hidden="true" /><span>Tu retroalimentación ayuda a afinar futuros resultados.</span></li>
+            <li><Check :size="15" aria-hidden="true" /><span>Tus nuevas consultas y postulaciones ayudan a actualizar futuros resultados.</span></li>
           </ul>
-          <button type="button" class="guide-action" @click="openPreferences">Actualizar perfil <ArrowRight :size="16" aria-hidden="true" /></button>
+          <button type="button" class="guide-action" @click="openPreferences">Ver mi perfil <ArrowRight :size="16" aria-hidden="true" /></button>
         </aside>
       </div>
     </section>
