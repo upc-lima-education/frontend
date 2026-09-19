@@ -46,9 +46,7 @@ function toDateTimeLocal(date: Date): string {
 }
 
 function getSuggestedPublicationWindow() {
-    // El backend admite una pequeña tolerancia para publicar inmediatamente.
-    // Se resta unos segundos porque datetime-local no conserva milisegundos.
-    const opensAt = new Date(Date.now() - 10_000);
+    const opensAt = new Date();
     const closesAt = new Date(opensAt.getTime() + 30 * 24 * 60 * 60_000);
     return {
         opensAt: toDateTimeLocal(opensAt),
@@ -57,7 +55,7 @@ function getSuggestedPublicationWindow() {
 }
 
 const initialPublicationWindow = getSuggestedPublicationWindow();
-const minimumOpening = ref(toDateTimeLocal(new Date(Date.now() - 2 * 60_000)));
+const minimumOpening = ref(toDateTimeLocal(new Date(Date.now() - 24 * 60 * 60_000)));
 
 const form = reactive({
     //Details
@@ -214,7 +212,7 @@ function useSuggestedPublicationWindow() {
     const window = getSuggestedPublicationWindow();
     form.opensAt = window.opensAt;
     form.closesAt = window.closesAt;
-    minimumOpening.value = toDateTimeLocal(new Date(Date.now() - 2 * 60_000));
+    minimumOpening.value = toDateTimeLocal(new Date(Date.now() - 24 * 60 * 60_000));
     submitError.value = '';
 }
 //Steps for dinamic effect
@@ -278,6 +276,17 @@ const publicationPresetMessage = computed(() => {
 });
 
 
+function toEnumName<T extends Record<string, any>>(enumObj: T, val: any): string {
+    if (typeof val === 'string' && isNaN(Number(val)) && val in enumObj) {
+        return val;
+    }
+    const num = Number(val);
+    if (!isNaN(num) && enumObj[num] !== undefined) {
+        return String(enumObj[num]);
+    }
+    return String(val ?? '');
+}
+
 async function submit() {
     if (submitting.value) return;
     submitError.value = '';
@@ -295,11 +304,17 @@ async function submit() {
             submitError.value = 'Una oferta puede tener como máximo 20 habilidades.';
             return;
         }
-        if (Number.isNaN(opensAt.getTime()) || (!isEditing.value && opensAt.getTime() < Date.now() - 2 * 60_000)) {
-            submitError.value = 'La apertura tiene más de dos minutos de antigüedad. Usa las fechas sugeridas o elige una fecha reciente.';
+
+        // Si la apertura es inmediata (fecha actual o unos minutos en el pasado mientras llenaba el formulario),
+        // refrescamos la fecha al momento de envío para que el empleo quede activo de inmediato.
+        const isImmediate = !props.editJobId && opensAt.getTime() <= Date.now() + 60_000 && opensAt.getTime() >= Date.now() - 24 * 60 * 60_000;
+        const effectiveOpensAt = isImmediate ? new Date() : opensAt;
+
+        if (Number.isNaN(opensAt.getTime()) || (!isEditing.value && opensAt.getTime() < Date.now() - 24 * 60 * 60_000)) {
+            submitError.value = 'La fecha de apertura no puede ser anterior a 24 horas. Usa las fechas sugeridas o elige una fecha reciente.';
             return;
         }
-        if (Number.isNaN(closesAt.getTime()) || closesAt <= opensAt) {
+        if (Number.isNaN(closesAt.getTime()) || closesAt <= effectiveOpensAt) {
             submitError.value = 'La fecha de cierre debe ser posterior a la fecha de apertura.';
             return;
         }
@@ -323,11 +338,11 @@ async function submit() {
         const request: UpdateJobRequest = {
             title: form.title.trim(),
             description: form.description.trim(),
-            jobType: JobType[form.jobType],
-            workHours: WorkHours[form.workHours],
+            jobType: toEnumName(JobType, form.jobType),
+            workHours: toEnumName(WorkHours, form.workHours),
             skills,
-            experience: Experience[form.experience],
-            educationLevel: EducationLevel[form.educationLevel],
+            experience: toEnumName(Experience, form.experience),
+            educationLevel: toEnumName(EducationLevel, form.educationLevel),
             location: {
                 ubigeo: ubigeo.value || undefined,
                 address: form.address.trim() || undefined,
@@ -335,11 +350,11 @@ async function submit() {
             payment: {
                 minSalary: Number(form.minSalary),
                 maxSalary: Number(form.maxSalary),
-                currency: Currency[form.currency],
-                salaryPeriod: SalaryPeriod[form.salaryPeriod],
-                compensationType: CompensationType[form.compensationType],
+                currency: toEnumName(Currency, form.currency),
+                salaryPeriod: toEnumName(SalaryPeriod, form.salaryPeriod),
+                compensationType: toEnumName(CompensationType, form.compensationType),
             },
-            opensAt: opensAt.toISOString(),
+            opensAt: effectiveOpensAt.toISOString(),
             closesAt: closesAt.toISOString(),
             applyUrl: form.applyUrl.trim() || undefined,
         };
@@ -421,7 +436,7 @@ onMounted(loadExistingJob);
         <div v-if="submitError" class="submit-message submit-message--error" role="alert">
             <span>{{ submitError }}</span>
             <button
-                v-if="submitError.includes('apertura tiene más de dos minutos')"
+                v-if="submitError.includes('apertura') || submitError.includes('Opening date')"
                 type="button"
                 class="submit-message-action"
                 @click="useSuggestedPublicationWindow"
