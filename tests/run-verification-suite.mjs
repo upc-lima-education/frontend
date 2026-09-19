@@ -147,6 +147,30 @@ test('Google Auth URL builder encodes userType and mode correctly', () => {
   assert.equal(getGoogleAuthUrlPath(), '/auth/google/url');
 });
 
+test('frontend accepts the Google callback path configured by the backend', () => {
+  const routerFile = fs.readFileSync(
+    path.join(rootDir, 'src/app/shared/router/index.ts'),
+    'utf-8'
+  );
+
+  assert.ok(
+    routerFile.includes("path: '/google-callback'"),
+    'The backend redirects to /google-callback, but the frontend router does not expose that path'
+  );
+});
+
+test('Google callback is public so it can exchange the code before a token exists', () => {
+  const guardFile = fs.readFileSync(
+    path.join(rootDir, 'src/app/auth/services/authentication.guard.ts'),
+    'utf-8'
+  );
+
+  assert.ok(
+    guardFile.includes("'/google-callback'"),
+    'The authentication guard redirects /google-callback to sign-in before OAuth can finish'
+  );
+});
+
 test('Google authenticate payload supports profileType Candidate and Company', () => {
   function createGoogleAuthPayload(code, requestedRole) {
     return {

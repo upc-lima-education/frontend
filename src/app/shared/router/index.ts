@@ -32,7 +32,13 @@ const router = createRouter({
 
     { path: ROUTE_CONSTANTS.SIGN_IN_PAGE, name: 'sign-in', component: SignInPage, meta: { forceDark: true } },
     { path: ROUTE_CONSTANTS.FORGOT_PASSWORD, name: 'forgot-password', component: ForgotPasswordPage, meta: { forceDark: true } },
-    { path: '/auth/callback', name: 'auth-callback', component: GoogleCallbackPage, meta: { forceDark: true } },
+    {
+      path: '/google-callback',
+      alias: '/auth/callback',
+      name: 'auth-callback',
+      component: GoogleCallbackPage,
+      meta: { forceDark: true },
+    },
 
     { path: ROUTE_CONSTANTS.HOME_PAGE, name: 'home', component: HomePage },
     { path: ROUTE_CONSTANTS.PROFILE_PAGE, redirect: ROUTE_CONSTANTS.SETTINGS_PAGE },

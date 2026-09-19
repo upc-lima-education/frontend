@@ -15,7 +15,7 @@ export const authenticationGuard = async (
     const authenticationStore = useAuthenticationStore();
 
     // Rutas públicas sin autenticación (incluye subrutas, ej: /sign-up/...)
-    const publicRoutePrefixes = ['/sign-in', '/sign-up', '/forgot-password', '/auth/callback'];
+    const publicRoutePrefixes = ['/sign-in', '/sign-up', '/forgot-password', '/google-callback', '/auth/callback'];
     const isPublicRoute = publicRoutePrefixes.some(prefix =>
         to.path === prefix || to.path.startsWith(prefix + '/')
     );

@@ -132,8 +132,8 @@ export class AuthenticationService {
         return typeof response.data === 'string' ? response.data : (response.data.authUrl || response.data.url);
     }
 
-    async authenticateGoogle(code: string, profileType?: 'Candidate' | 'Company'): Promise<SignInResponse> {
-        const { data } = await http.post(`${this.endpoint}/google/authenticate`, { code, profileType });
+    async authenticateGoogle(code: string, mode: 'signup' | 'login', profileType?: 'Candidate' | 'Company'): Promise<SignInResponse> {
+        const { data } = await http.post(`${this.endpoint}/google/authenticate`, { code, mode, profileType });
         return new SignInResponse(data.accessToken, data.refreshToken, data.expiresIn, this.mapUser(data.user));
     }
 

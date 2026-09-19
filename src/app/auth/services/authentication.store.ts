@@ -255,10 +255,11 @@ export const useAuthenticationStore = defineStore('authentication', () => {
         }
     }
 
-    async function authenticateGoogle(code: string, requestedRole?: 'employee' | 'organization'): Promise<boolean> {
+    async function authenticateGoogle(code: string, mode: 'signup' | 'login', requestedRole?: 'employee' | 'organization'): Promise<boolean> {
         try {
             const response = await authenticationService.authenticateGoogle(
                 code,
+                mode,
                 requestedRole === 'organization' ? 'Company' : requestedRole === 'employee' ? 'Candidate' : undefined,
             );
             accessToken.value = response.accessToken;
