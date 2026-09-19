@@ -3,6 +3,7 @@ import type {
     AiAssistedCvImprovementRequest,
     CreateStructuredCvRequest,
     CvSummaryResponse,
+    CvProcessingStatusResponse,
     GenerateCvResponse,
     StructuredCvResponse,
 } from '../model/cv.model';
@@ -27,6 +28,12 @@ export class CvService {
     async getMine(): Promise<CvSummaryResponse[]> {
         const { data } = await http.get<CvSummaryResponse[]>(`${this.endpoint}/me`);
         return Array.isArray(data) ? data : [];
+    }
+
+    /** Estado real del consumidor asíncrono que genera o mejora el CV. */
+    async getProcessingStatus(id: string): Promise<CvProcessingStatusResponse> {
+        const { data } = await http.get<CvProcessingStatusResponse>(`${this.endpoint}/${id}/status`);
+        return data;
     }
 
     async createStructured(request: CreateStructuredCvRequest): Promise<string> {

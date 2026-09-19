@@ -53,6 +53,8 @@ const isImprovingCv = ref(false);
 const improvingCvId = ref<string | null>(null);
 const improveSuccessMessage = ref('');
 const improveErrorMessage = ref('');
+const IMPROVEMENT_POLL_INTERVAL_MS = 3000;
+const MAX_IMPROVEMENT_POLLS = 40;
 
 const availableImprovementOptions: Array<{ id: AiAssistedCvImprovementOption; title: string; description: string }> = [
   { id: 'Summary', title: 'Perfil y Resumen Profesional', description: 'Redacta un extracto de alto impacto orientado a palabras clave y ATS' },
@@ -158,6 +160,10 @@ function downloadBlob(blob: Blob, filename: string): void {
 }
 
 async function downloadSavedCv(cv: CvSummaryResponse): Promise<void> {
+  if (cv.processingStatus === 'Processing') {
+    savedCvsError.value = 'Este CV todavía se está procesando.';
+    return;
+  }
   savedCvActionId.value = cv.id;
   savedCvsError.value = '';
   try {
@@ -243,6 +249,22 @@ function toggleImproveOption(optId: AiAssistedCvImprovementOption) {
   }
 }
 
+function delay(milliseconds: number): Promise<void> {
+  return new Promise((resolve) => window.setTimeout(resolve, milliseconds));
+}
+
+async function waitForCvProcessing(cvId: string): Promise<void> {
+  for (let attempt = 0; attempt < MAX_IMPROVEMENT_POLLS; attempt += 1) {
+    const processing = await cvService.getProcessingStatus(cvId);
+    if (processing.status === 'Ready') return;
+    if (processing.status === 'Failed') {
+      throw new Error(processing.error || 'No se pudo mejorar el CV. El crédito utilizado fue devuelto.');
+    }
+    await delay(IMPROVEMENT_POLL_INTERVAL_MS);
+  }
+  throw new Error('La mejora está tardando demasiado. Puedes revisar el estado nuevamente en unos minutos.');
+}
+
 async function confirmImprovement() {
   if (!selectedCvForImprovement.value || !selectedImprovementOptions.value.length) return;
   if (hasNoCredits.value) {
@@ -259,15 +281,18 @@ async function confirmImprovement() {
       cvId: selectedCvForImprovement.value.id,
       options: selectedImprovementOptions.value,
     });
+    await waitForCvProcessing(selectedCvForImprovement.value.id);
     await loadCreditBalance();
-    improveSuccessMessage.value = '¡Solicitud de optimización enviada! La IA actualizará tu versión en segundo plano.';
+    await loadSavedCvs();
+    improveSuccessMessage.value = '¡CV optimizado correctamente! Ya puedes descargar la nueva versión.';
     setTimeout(() => {
       closeImproveModal();
-      void loadSavedCvs();
     }, 2200);
   } catch (err: any) {
     console.error('Error improving CV with AI:', err);
-    improveErrorMessage.value = err?.response?.data?.message || 'No se pudo enviar la solicitud de mejora. Inténtalo nuevamente.';
+    improveErrorMessage.value = err?.response?.data?.detail || err?.message || 'No se pudo mejorar el CV. Inténtalo nuevamente.';
+    await loadCreditBalance();
+    await loadSavedCvs();
   } finally {
     isImprovingCv.value = false;
     improvingCvId.value = null;
@@ -641,6 +666,12 @@ async function copyPreviewLink() {
                     <Sparkles :size="10" aria-hidden="true" /> Destacado
                   </span>
                   <span class="cv-doc-badge-format">PDF</span>
+                  <span v-if="cv.processingStatus === 'Processing'" class="cv-doc-badge-status is-processing">
+                    Procesando
+                  </span>
+                  <span v-else-if="cv.processingStatus === 'Failed'" class="cv-doc-badge-status is-failed">
+                    Falló
+                  </span>
                 </div>
                 <span class="cv-doc-timestamp">
                   Actualizado el {{ formatSavedCvDate(cv.updatedAt) }}
@@ -651,7 +682,7 @@ async function copyPreviewLink() {
                 <button
                   type="button"
                   class="btn-action-improve"
-                  :disabled="isImprovingCv && improvingCvId === cv.id"
+                  :disabled="cv.processingStatus === 'Processing' || (isImprovingCv && improvingCvId === cv.id)"
                   :title="`Mejorar ${cv.title} con IA`"
                   @click="openImproveModal(cv)"
                 >
@@ -663,7 +694,7 @@ async function copyPreviewLink() {
                 <button
                   type="button"
                   class="btn-action-download"
-                  :disabled="savedCvActionId === cv.id"
+                  :disabled="cv.processingStatus === 'Processing' || savedCvActionId === cv.id"
                   :title="`Descargar ${cv.title}`"
                   @click="downloadSavedCv(cv)"
                 >
@@ -1909,6 +1940,24 @@ async function copyPreviewLink() {
   color: var(--color-text-muted);
   font-size: 10px;
   font-weight: var(--fw-bold);
+}
+
+.cv-doc-badge-status {
+  padding: 2px 7px;
+  border-radius: var(--radius-pill);
+  font-size: 10px;
+  font-weight: var(--fw-bold);
+  text-transform: uppercase;
+}
+
+.cv-doc-badge-status.is-processing {
+  background: var(--color-lavender);
+  color: var(--color-primary);
+}
+
+.cv-doc-badge-status.is-failed {
+  background: var(--color-state-error-bg, #fef2f2);
+  color: var(--color-state-error-dark, #991b1b);
 }
 
 .cv-doc-timestamp {

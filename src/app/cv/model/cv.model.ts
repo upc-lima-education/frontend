@@ -76,8 +76,16 @@ export interface CvSummaryResponse {
     title: string;
     isCurrent: boolean;
     hasFileContent: boolean;
+    processingStatus: 'Ready' | 'Processing' | 'Failed';
+    processingError?: string | null;
     createdAt: string;
     updatedAt: string;
+}
+
+export interface CvProcessingStatusResponse {
+    id: string;
+    status: 'Ready' | 'Processing' | 'Failed';
+    error?: string | null;
 }
 
 export interface StructuredCvResponse {

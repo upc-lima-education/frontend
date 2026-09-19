@@ -69,7 +69,7 @@ export function useCvGenerator() {
             const res = await cvService.generate(jobId);
             cvId.value = res.cvId;
             pollCount = 0;
-            schedulePoll();
+            void checkStatus();
         } catch (e: any) {
             fail(
                 e?.response?.data?.detail || e?.response?.data?.message || 'No se pudo iniciar la generación del CV.',
@@ -85,8 +85,24 @@ export function useCvGenerator() {
     async function checkStatus() {
         if (!cvId.value) return;
         try {
-            // El contenido estructurado se crea de forma asíncrona. Cuando ya
-            // existe, esta llamada solo lo convierte a PDF; no invoca la IA.
+            const processing = await cvService.getProcessingStatus(cvId.value);
+            const status = processing.status.toLowerCase();
+
+            if (status === 'failed') {
+                fail(processing.error || 'No se pudo generar el CV. Inténtalo nuevamente.');
+                return;
+            }
+
+            if (status !== 'ready') {
+                pollCount += 1;
+                if (pollCount >= MAX_POLLS) {
+                    fail('La generación está tardando demasiado. Inténtalo nuevamente en unos minutos.');
+                    return;
+                }
+                schedulePoll();
+                return;
+            }
+
             await cvService.transformToPdf(cvId.value);
             const blob = await cvService.getFile(cvId.value);
             revokePreview();
@@ -95,14 +111,8 @@ export function useCvGenerator() {
             stopPolling();
             return;
         } catch (error: any) {
-            if (error?.response?.status === 404 && ++pollCount < MAX_POLLS) {
-                schedulePoll();
-                return;
-            }
             fail(
-                pollCount >= MAX_POLLS
-                    ? 'La generación está tardando demasiado. Revisa que RabbitMQ y OpenRouter estén disponibles e inténtalo nuevamente.'
-                    : 'No se pudo recuperar el CV procesado.',
+                error?.response?.data?.detail || 'No se pudo preparar el PDF del CV procesado.',
                 error?.response?.status,
             );
         }
