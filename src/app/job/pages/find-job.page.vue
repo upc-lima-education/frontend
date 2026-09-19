@@ -865,19 +865,11 @@ onMounted(async () => {
         <div class="for-you-discovery__intro">
           <span class="for-you-discovery__icon" aria-hidden="true"><Compass :size="21" /></span>
           <div>
-            <span class="for-you-discovery__name">Para ti</span>
-            <h2>Descubre vacantes que encajan con tu perfil</h2>
-            <p>Explora una selección ordenada según tus habilidades, experiencia y preferencias.</p>
+            <h2>Para ti</h2>
+            <p>Explora recomendaciones basadas en tus interacciones.</p>
           </div>
         </div>
 
-        <div class="for-you-discovery__route" aria-hidden="true">
-          <span>Habilidades</span>
-          <i></i>
-          <span>Experiencia</span>
-          <i></i>
-          <span>Preferencias</span>
-        </div>
 
         <span class="for-you-discovery__action">Ver Para ti <ArrowRight :size="17" aria-hidden="true" /></span>
       </RouterLink>
@@ -1845,66 +1837,48 @@ onMounted(async () => {
    ============================================================ */
 .for-you-discovery {
   display: grid;
-  grid-template-columns: minmax(0, 1.35fr) minmax(300px, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
-  gap: clamp(18px, 3vw, 36px);
-  min-height: 116px;
-  padding: 22px clamp(22px, 3vw, 32px);
-  border: 1px solid color-mix(in srgb, var(--color-primary) 35%, var(--color-border));
-  border-radius: var(--radius-card-lg);
+  gap: 16px;
+  padding: 12px 18px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
   background: var(--color-surface);
-  box-shadow: 0 10px 28px color-mix(in srgb, var(--color-primary) 9%, transparent);
   color: inherit;
   text-decoration: none;
-  overflow: hidden;
-  transition: border-color 180ms ease, box-shadow 180ms ease, transform 180ms ease;
+  transition: border-color 180ms ease;
 }
 
-.for-you-discovery:hover {
-  border-color: var(--color-primary);
-  box-shadow: 0 16px 34px color-mix(in srgb, var(--color-primary) 16%, transparent);
-  transform: translateY(-2px);
-}
-
+.for-you-discovery:hover { border-color: var(--color-primary); }
 .for-you-discovery:focus-visible {
-  outline: 3px solid color-mix(in srgb, var(--color-primary) 38%, transparent);
+  outline: 3px solid var(--color-primary);
   outline-offset: 3px;
 }
 
 .for-you-discovery__intro {
   display: flex;
-  align-items: flex-start;
-  gap: 14px;
+  align-items: center;
+  gap: 12px;
   min-width: 0;
 }
 
 .for-you-discovery__icon {
   display: grid;
   place-items: center;
-  flex: 0 0 auto;
-  width: 44px;
-  height: 44px;
-  border-radius: 14px;
+  flex: 0 0 36px;
+  height: 36px;
+  border-radius: 10px;
   background: var(--color-lavender);
   color: var(--color-primary);
 }
 
-.for-you-discovery__name {
-  display: inline-block;
-  margin-bottom: 4px;
-  color: var(--color-primary);
-  font-size: 13px;
-  font-weight: var(--fw-bold);
-}
-
 .for-you-discovery h2 {
-  margin: 0 0 5px;
+  margin: 0 0 2px;
   color: var(--color-text-primary);
   font-family: var(--font-display);
-  font-size: clamp(17px, 1.7vw, 21px);
-  font-weight: var(--fw-extrabold);
-  letter-spacing: -0.022em;
-  line-height: 1.22;
+  font-size: 15px;
+  font-weight: var(--fw-bold);
+  line-height: 1.4;
 }
 
 .for-you-discovery p {
@@ -1914,57 +1888,18 @@ onMounted(async () => {
   line-height: 1.45;
 }
 
-.for-you-discovery__route {
-  display: grid;
-  grid-template-columns: auto minmax(24px, 1fr) auto minmax(24px, 1fr) auto;
-  align-items: center;
-  gap: 8px;
-  min-width: 0;
-}
-
-.for-you-discovery__route span {
-  display: grid;
-  place-items: center;
-  min-width: 78px;
-  min-height: 34px;
-  padding: 0 8px;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-pill);
-  background: var(--color-surface-subtle);
-  color: var(--color-text-secondary);
-  font-size: 11px;
-  font-weight: var(--fw-bold);
-  text-align: center;
-}
-
-.for-you-discovery__route i {
-  display: block;
-  height: 3px;
-  min-width: 20px;
-  border-radius: var(--radius-pill);
-  background: linear-gradient(90deg, var(--color-primary), #22d3ee 55%, var(--color-brand-lime));
-}
-
 .for-you-discovery__action {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 7px;
-  min-height: 42px;
-  padding: 0 14px;
-  border: 1px solid var(--color-primary);
-  border-radius: var(--radius-button);
-  background: var(--color-primary);
-  color: #fff;
+  gap: 8px;
+  min-height: 44px;
+  color: var(--color-primary);
   font-size: 13px;
   font-weight: var(--fw-bold);
   white-space: nowrap;
-  transition: background 180ms ease, transform 180ms ease;
 }
-
-.for-you-discovery:hover .for-you-discovery__action {
-  background: var(--color-primary-dark);
-}
+.for-you-discovery__action svg { flex-shrink: 0; }
 
 /* Candidate recommendation workspace */
 .recommendation-sidebar-card {
@@ -2499,7 +2434,7 @@ onMounted(async () => {
    ============================================================ */
 .results-layout-wrapper {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 340px;
+  grid-template-columns: minmax(0, 1fr) 300px;
   gap: var(--space-3);
   align-items: start;
 }
@@ -2819,7 +2754,7 @@ onMounted(async () => {
   letter-spacing: -0.015em;
   overflow: hidden;
   display: -webkit-box;
-  -webkit-line-clamp: 1;
+  -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   word-break: break-word;
 }
@@ -3254,16 +3189,6 @@ onMounted(async () => {
 /* ============================================================
    RESPONSIVE ADAPTATIONS (320px - 1024px)
    ============================================================ */
-@media (max-width: 1120px) {
-  .for-you-discovery {
-    grid-template-columns: minmax(0, 1fr) auto;
-  }
-
-  .for-you-discovery__route {
-    grid-column: 1 / -1;
-  }
-}
-
 @media (max-width: 1024px) {
   .results-layout-wrapper {
     grid-template-columns: 1fr;
@@ -3455,17 +3380,15 @@ onMounted(async () => {
   }
 
   .for-you-discovery {
-    grid-template-columns: 1fr;
-    gap: 16px;
-    padding: 20px;
+    gap: 10px;
+    padding: 12px;
   }
 
-  .for-you-discovery__route {
-    display: none;
-  }
+  .for-you-discovery__icon { display: none; }
 
   .for-you-discovery__action {
-    width: 100%;
+    font-size: 12px;
+    gap: 4px;
   }
 
   .stream-header-toolbar {
