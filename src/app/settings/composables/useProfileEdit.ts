@@ -524,11 +524,9 @@ export function useProfileEdit() {
                     error.value = 'Ingresa la razón social de la empresa.';
                     return;
                 }
-                if (!isNewProfile.value) {
-                    // El RUC solo se informa al crear; el contrato de PUT no
-                    // permite modificarlo después.
-                } else if (!isValidRUC(ruc.value)) {
-                    error.value = 'Ingresa un RUC válido de 11 dígitos antes de crear el perfil de empresa.';
+                const cleanRuc = ruc.value.trim();
+                if (cleanRuc && !isValidRUC(cleanRuc)) {
+                    error.value = 'Ingresa un RUC válido de 11 dígitos o déjalo en blanco si prefieres completarlo después.';
                     return;
                 }
                 if (website.value.trim() && !isValidCorporateWebsite(website.value.trim())) {
@@ -569,7 +567,7 @@ export function useProfileEdit() {
                     const createResponse = await profileService.createOrganizationProfile({
                         companyName: companyName.value,
                         sector: industry.value,
-                        ruc: ruc.value,
+                        ruc: ruc.value.trim() || undefined,
                         website: website.value,
                         companySize: companySize.value,
                         description: companyDescription.value,
@@ -601,7 +599,7 @@ export function useProfileEdit() {
                         skills: keywords.value,
                     });
                 } else {
-                    // PUT /profile/company — el contrato no permite cambiar RUC.
+                    // PUT /profile/company
                     await profileService.updateCompanyProfile(authStore.currentUserId, {
                         companyName: companyName.value,
                         sector: industry.value,
@@ -609,6 +607,7 @@ export function useProfileEdit() {
                         companySize: companySize.value,
                         description: companyDescription.value,
                         ubigeo: districtNameToUbigeo(mainLocation.value),
+                        ruc: ruc.value.trim() || null,
                     });
                 }
             }

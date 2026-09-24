@@ -490,13 +490,14 @@ const isRucInputValid = computed(() => ruc.value && ruc.value.length === 11 && /
                       placeholder="RUC de 11 dígitos"
                       maxlength="11" 
                       class="verify-input text-bold"
-                      :disabled="!isNewProfile || isValidatingRuc"
+                      :disabled="isValidatingRuc"
+                      @input="isRucValidated = false; rucCompanyName = ''; rucError = ''"
                     />
                     <button 
                       type="button" 
                       class="btn-verify" 
                       :class="{ verified: isRucValidated, loading: isValidatingRuc }"
-                      :disabled="!isNewProfile || isValidatingRuc || !isRucInputValid || isRucValidated"
+                      :disabled="isValidatingRuc || !isRucInputValid || isRucValidated"
                       @click="verifyRuc"
                     >
                       <span v-if="isValidatingRuc" class="spinner-verify"></span>
@@ -504,7 +505,7 @@ const isRucInputValid = computed(() => ruc.value && ruc.value.length === 11 && /
                       <span v-else>Verificar con SUNAT</span>
                     </button>
                   </div>
-                  <p class="field-help">Usa el RUC real de la empresa. Se validará contra SUNAT y debe encontrarse activo.</p>
+                  <p class="field-help">Opcional. Si lo ingresas, debe tener 11 dígitos y corresponder a una empresa activa en SUNAT.</p>
                   
                   <Transition name="fade">
                     <p v-if="rucError" class="feedback-msg error-msg">
@@ -518,9 +519,6 @@ const isRucInputValid = computed(() => ruc.value && ruc.value.length === 11 && /
                     <p v-else-if="rucVerified" class="feedback-msg success-msg">
                       <CheckCircle2 :size="14" />
                       <span>Empresa verificada por Llanqui.</span>
-                    </p>
-                    <p v-else-if="!isNewProfile" class="field-help">
-                      El RUC no puede modificarse después de crear la empresa.
                     </p>
                   </Transition>
                 </div>

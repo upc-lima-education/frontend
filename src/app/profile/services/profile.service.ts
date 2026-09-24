@@ -40,7 +40,7 @@ export interface CreateCompanyProfilePayload {
     skills?: string[];
     companyName: string;
     sector?: string;
-    ruc: string;
+    ruc?: string;
     website?: string;
     companySize?: string;
     profilePicture?: File;
@@ -52,6 +52,7 @@ export interface UpdateCompanyProfilePayload {
     phoneNumber?: string;
     companyName?: string;
     sector?: string;
+    ruc?: string | null;
     website?: string;
     companySize?: string;
 }
@@ -132,7 +133,7 @@ export class ProfileService {
         appendSkills(formData, profileData.skills);
         formData.append('CompanyName', profileData.companyName);
         appendOptional(formData, 'Sector', profileData.sector);
-        formData.append('Ruc', profileData.ruc);
+        appendOptional(formData, 'Ruc', profileData.ruc);
         appendOptional(formData, 'Website', profileData.website);
         appendOptional(formData, 'CompanySize', profileData.companySize);
         if (profileData.profilePicture) formData.append('ProfilePicture', profileData.profilePicture);
